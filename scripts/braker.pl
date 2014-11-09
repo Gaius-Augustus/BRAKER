@@ -682,10 +682,12 @@ sub augustus{
 # delete empty files
 sub clean_up{
   print STDOUT "NEXT STEP: delete empty files\n";
-  opendir(DIR, $otherfilesDir) or die "Cannot open path: $otherfilesDir\n";
-  @files = `grep -rl /[A-Za-z0-9] $otherfilesDir`;
+  @files = `grep -rlL [A-Za-z0-9] $otherfilesDir`;
   print MAKE "\# ".localtime.": delete empty files\n";
   for(my $i=0; $i <= $#files; $i++){
+    chomp($files[$i]); 
+  my $size = -s "$files[$i]"; 
+  print STDOUT "$files[$i] \t $size\n";
     if(-z $files[$i]){
       print MAKE "rm $files[$i]\n";
       unlink(rel2abs($files[$i]));
