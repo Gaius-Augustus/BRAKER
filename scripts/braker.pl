@@ -165,7 +165,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'testsize=i'                    => \$testsize,
             'useexisting!'                  => \$useexisting,
             'UTR=s'                         => \$UTR,
-      	    'workingdir=s'                  => \$workDir,
+            'workingdir=s'                  => \$workDir,
             'help!'                         => \$help);
 
 if($help){
@@ -253,7 +253,7 @@ if(defined($species)){
   }
 
   foreach my $word (@forbidden_words){
-	  if($species =~m/\A$word}\Z/){
+    if($species =~m/\A$word}\Z/){
       print STDOUT "WARNING: $species is not allowed as a species name. ";
       $bool_species = "false";
     }
@@ -754,7 +754,7 @@ sub augustus{
 }
 
    
-	
+  
 
          ####################### delete all zero sized files #########################
 # delete empty files
@@ -967,25 +967,25 @@ sub check_fasta_headers{            # see autoAug.pl
       }else{
         if(length($_) > 0){    # see simplifyFastaHeaders.pl
           $genome_length += length($_);
-	        print OUTPUT "$_\n"; # see simplifyFastaHeaders.pl
-	        if($_ !~ m/[ATGCNatgcn]/){ # see simplifyFastaHeaders.pl
+          print OUTPUT "$_\n"; # see simplifyFastaHeaders.pl
+          if($_ !~ m/[ATGCNatgcn]/){ # see simplifyFastaHeaders.pl
             if($dna == 0){ # see simplifyFastaHeaders.pl
-		          print STDOUT "Assuming that this is not a DNA fasta file because other characters than A, T, G, C, N, a, t, g, c, n were contained. If this is supposed to be a DNA fasta file, check the content of your file! If this is supposed to be a protein fasta file, please ignore this message.\n"; # see simplifyFastaHeaders.pl
-		          $dna++;      # see simplifyFastaHeaders.pl
-		        }
+              print STDOUT "Assuming that this is not a DNA fasta file because other characters than A, T, G, C, N, a, t, g, c, n were contained. If this is supposed to be a DNA fasta file, check the content of your file! If this is supposed to be a protein fasta file, please ignore this message.\n"; # see simplifyFastaHeaders.pl
+              $dna++;      # see simplifyFastaHeaders.pl
+            }
           }
           if($_ !~ m/[AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx]/){ # see simplifyFastaHeaders.pl
-		        if($prot == 0){ # see simplifyFastaHeaders.pl
-		          print STDOUT "Assuming that this is not a protein fasta file because other characters than AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx were contained. If this is supposed to be DNA fasta file, please ignore this message.\n"; # see simplifyFastaHeaders.pl
-		          $prot++;      # see simplifyFastaHeaders.pl
-		        }
-	        }
+            if($prot == 0){ # see simplifyFastaHeaders.pl
+              print STDOUT "Assuming that this is not a protein fasta file because other characters than AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx were contained. If this is supposed to be DNA fasta file, please ignore this message.\n"; # see simplifyFastaHeaders.pl
+              $prot++;      # see simplifyFastaHeaders.pl
+            }
+          }
         }else{
-	        if($emptyC < 1){  # see simplifyFastaHeaders.pl
-		        print STDOUT "WARNING: empty line was removed! This warning will be supressed from now on!\n"; # see simplifyFastaHeaders.pl
-	        } 
-	        $emptyC++;        # see simplifyFastaHeaders.pl
-	      }
+          if($emptyC < 1){  # see simplifyFastaHeaders.pl
+            print STDOUT "WARNING: empty line was removed! This warning will be supressed from now on!\n"; # see simplifyFastaHeaders.pl
+          } 
+          $emptyC++;        # see simplifyFastaHeaders.pl
+        }
       }
     }
     close(FASTA) or die("Could not close fasta file $fastaFile!\n");
