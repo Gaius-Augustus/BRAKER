@@ -3,7 +3,7 @@
 # pipeline for GeneMark-ET and AUGUSTUS
 # train AUGUSTUS with GeneMark-ET output for a species
 # incorporate hints from RNAseq data in BAM or gff format
-# execute AUGUSTUS and change its output to gtf format
+# execute AUGUSTUS
 # 05.09.2014 - 
 # ----------------------------------------------------------------------
 # | sub check_upfront              | autoAug.pl           | ??.??.???? |
@@ -11,7 +11,7 @@
 # | helpMod qw(find chec...)       | helpMod.pm           | ??.??.???? |
 # | first outline for braker       | Simone Lange         | 05.09.2014 |
 # | uptodate integrated            |                      | 10.09.2014 |
-# | print stdout,LOG output       |                      | 10.09.2014 |
+# | print stdout,LOG output        |                      | 10.09.2014 |
 # | .pm check for GeneMark         |                      | 10.09.2014 |
 # | add parts from                 |                      | 30.09.2014 |
 # | simplifyFastaHeaders.pl        | Katharina Hoff       | 03.12.2012 |
@@ -21,7 +21,9 @@
 # | add filterIntronsFindStrand.pl |                      | 07.10.2014 |
 # | add check whether augustus and | optimize_augustus.pl | 05.11.2014 |
 # | etraining are executable       | (Mario Stanke)       | 23.04.2007 | 
-# | TODO:add --optcfg option       |                      | ??.??.2014 |
+# | add --optCfgfile, --fungus     | Simone Lange         | 10.11.2014 |
+# | option, PATH also as variable  |                      |            |
+# | fork AUGUSTUS prediction       |                      |            |
 # | TODO: add more options         |                      |            |
 # ----------------------------------------------------------------------
 
@@ -57,7 +59,7 @@ braker.pl     annotate genomes based on RNAseq using GeneMark-ET and AUGUSTUS
 
 SYNOPSIS
 
-braker.pl [OPTIONS] --species=sname --genome=genome.fa --bam=accepted_hits.bam
+braker.pl [OPTIONS] --genome=genome.fa --bam=accepted_hits.bam
 
 
   --genome=fasta              fasta file with DNA sequences
@@ -70,22 +72,23 @@ OPTIONS
 
     --help                          output this help message
     --alternatives-from-evidence    output alternative transcripts based on explicit evidence from hints
+    --AUGUSTUS_CONFIG_PATH=/path/   set path to AUGUSTUS (if not specified as environment variable).
+      to/augustus                   Has higher priority than environment variable.
     --CPU                           specifies the maximum number of CPUs that can be used during computation
-    --augustus-cfg-path=/path/to/   set path to AUGUSTUS (instead of using environment variable).
-      augustus                      Has higher priority than environment variable.
     --fungus                        GeneMark-ET option: to run algorithm with branch point model (most useful for fungal genomes)
-    --GeneMark-ET-path=/path/       set path to GeneMark-ET (instead of using environment variable).
+    --GENEMARK_PATH=/path/          set path to GeneMark-ET (if not specified as environment variable).
       to/gmes_petap.pl              Has higher priority than environment variable.
-    --hints=hints.gff               additional hint files for gene predictions with AUGUSTUS in gff format
+    --hints=hints.gff               additional hints files for gene predictions with AUGUSTUS in gff format
     --optCfgFile=ppx.cfg            optional config file for AUGUSTUS
-    --overwrite                     overwrite existing files. Default is off
+    --overwrite                     overwrite existing files (except for species parameter files)
     --skipGeneMark-ET               skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
                                     different source) 
     --skipOptimize                  skip optimize parameter step
-    --species=sname                 species name. Existing species will not be overwritten unless the --overwrite option is used. Uses Sp_1 etc., if no species is assigned
-    --useexisting                   use and change the present config and parameter files if they exist for 'species'
+    --species=sname                 species name. Existing species will not be overwritten. Uses Sp_1 etc., if no species is assigned
+    --useexisting                   use the present config and parameter files if they exist for 'species'
     --UTR                           predict untranslated regions. Default is off
-    --workingdir=/path/to/wd/       in the working directory results and temporary files are stored
+    --workingdir=/path/to/wd/       set path to working directory. In the working directory results and
+                                    temporary files are stored
 
                            
 
@@ -125,7 +128,7 @@ my $limit = 10000000;                 # maximum for generic species Sp_$limit
 my $logfile;                          # contains used shell commands
 my $optCfgFile;                       # optinional config file for AUGUSTUS
 my $otherfilesDir;                    # directory for other files besides GeneMark-ET output and parameter files
-my $overwrite = 0;                    # overwrite existing files
+my $overwrite = 0;                    # overwrite existing files (except for species parameter files)
 my $parameterDir;                     # parameter files for species
 my $perlCmdString;                    # to store perl commands
 my $scriptPath=dirname($0);           # the path of directory where this script is placed
@@ -150,11 +153,11 @@ if(@ARGV==0){
 }
 
 GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
-            'augustus-cfg-path=s'           => \$augustus_cfg_path,
+            'AUGUSTUS_CONFIG_PATH=s'        => \$augustus_cfg_path,
             'bam=s'                         => \@bam,
             'CPU=i'                         => \$CPU,
             'fungus!'                       => \$fungus,
-            'GeneMark-ET-path=s'            => \$GMET_path,
+            'GENEMARK_PATH=s'               => \$GMET_path,
             'genome=s'                      => \$genome,
             'hints=s'                       => \@hints,
             'optCfgFile=s'                  => \$optCfgFile,
@@ -284,6 +287,9 @@ if(-d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting){
   exit(1);
 }
 
+if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
+  print STDOUT "WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not exist. Braker will create  the necessary files for species $species.\n";
+}
 
 # check whether $rootDir already exists
 my $rootDir = "$workDir/braker";
@@ -515,7 +521,6 @@ sub new_species{
     print LOG "\# ".localtime.": create new species $species\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
-
   }
 
   # create extrinsic file
@@ -610,65 +615,67 @@ sub training{
     print STDOUT "genbank file splitted.\n";
   }
 
-  # train AUGUSTUS for the first time
-  if(!uptodate(["$otherfilesDir/genbank.good.gb.train"],["$otherfilesDir/firstetraining.stdout"])  || $overwrite){
-    print STDOUT "NEXT STEP: first etraining\n"; 
-    $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
-    $errorfile = "$errorfilesDir/firstetraining.stderr";
-    $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$otherfilesDir/firstetraining.out 2>$errorfile";
-    print LOG "\# ".localtime.": first etraining\n";
-    print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
-    print STDOUT "first training complete.\n";
-  }
-
-  # first test
-  if(!uptodate(["$otherfilesDir/genbank.good.gb.test"],["$otherfilesDir/firsttest.out"])  || $overwrite){
-    print STDOUT "NEXT STEP: first test\n";
-    $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
-    $errorfile = "$errorfilesDir/firsttest.stderr";
-    $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $otherfilesDir/firsttest.out 2>$errorfile";
-    print LOG "\# ".localtime.": first test\n";
-    print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
-    print STDOUT "first test finished.\n";
-  }
-
-  # optimize parameters
-  if(!$skipoptimize){
-    if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb.test"],[$AUGUSTUS_CONFIG_PATH."/species/$species/$species\_exon_probs.pbl"]) || $overwrite){
-      print STDOUT "NEXT STEP: optimize AUGUSTUS parameter\n";
-      $string=find("optimize_augustus.pl");
-      $errorfile = "$errorfilesDir/optimize_augustus.stderr";
-      $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>optimize_augustus.out 2>$errorfile";
-      print LOG "\# ".localtime.": optimize AUGUSTUS parameter\n";
-      print LOG "$perlCmdString\n\n";
-      system("$perlCmdString")==0 or die("failed to execute: $!\n");
-      print STDOUT "parameter optimized.\n";
+  if(!$useexisting){
+    # train AUGUSTUS for the first time
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.train"],["$otherfilesDir/firstetraining.stdout"])){
+      print STDOUT "NEXT STEP: first etraining\n"; 
+      $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+      $errorfile = "$errorfilesDir/firstetraining.stderr";
+      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$otherfilesDir/firstetraining.out 2>$errorfile";
+      print LOG "\# ".localtime.": first etraining\n";
+      print LOG "$cmdString\n\n";
+      system("$cmdString")==0 or die("failed to execute: $!\n");
+      print STDOUT "first training complete.\n";
     }
-  }
 
-  # train AUGUSTUS for the second time
-  if(!uptodate(["$otherfilesDir/genbank.good.gb.train"],["$otherfilesDir/secondetraining.stdout"]) || $overwrite){
-    print STDOUT "NEXT STEP: second etraining\n";
-    $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
-    $errorfile = "$errorfilesDir/secondetraining.stderr";
-    $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$otherfilesDir/secondetraining.stdout 2>$errorfile";
-    print LOG "\# ".localtime.": second etraining\n";
-    print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
-    print STDOUT "second etraining complete\n";
-  }
+    # first test
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.test"],["$otherfilesDir/firsttest.out"])  || $overwrite){
+      print STDOUT "NEXT STEP: first test\n";
+      $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
+      $errorfile = "$errorfilesDir/firsttest.stderr";
+      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $otherfilesDir/firsttest.out 2>$errorfile";
+      print LOG "\# ".localtime.": first test\n";
+      print LOG "$cmdString\n\n";
+      system("$cmdString")==0 or die("failed to execute: $!\n");
+      print STDOUT "first test finished.\n";
+    }
 
-  # second test
-  if(!uptodate(["$otherfilesDir/genbank.good.gb.test"],["$otherfilesDir/secondtest.out"]) || $overwrite){
-    print STDOUT "NEXT STEP: second test\n";
-    $errorfile = "$errorfilesDir/secondtest.stderr";
-    $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $otherfilesDir/secondtest.out 2>$errorfile";
-    print LOG "\# ".localtime.": second test\n";
-    print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
-    print STDOUT "second test finished.\n";  
+    # optimize parameters
+    if(!$skipoptimize){
+      if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb.test"],[$AUGUSTUS_CONFIG_PATH."/species/$species/$species\_exon_probs.pbl"])){
+        print STDOUT "NEXT STEP: optimize AUGUSTUS parameter\n";
+        $string=find("optimize_augustus.pl");
+        $errorfile = "$errorfilesDir/optimize_augustus.stderr";
+        $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>optimize_augustus.out 2>$errorfile";
+        print LOG "\# ".localtime.": optimize AUGUSTUS parameter\n";
+        print LOG "$perlCmdString\n\n";
+        system("$perlCmdString")==0 or die("failed to execute: $!\n");
+        print STDOUT "parameter optimized.\n";
+      }
+    }
+
+    # train AUGUSTUS for the second time
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.train"],["$otherfilesDir/secondetraining.stdout"])){
+      print STDOUT "NEXT STEP: second etraining\n";
+      $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+      $errorfile = "$errorfilesDir/secondetraining.stderr";
+      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$otherfilesDir/secondetraining.stdout 2>$errorfile";
+      print LOG "\# ".localtime.": second etraining\n";
+      print LOG "$cmdString\n\n";
+      system("$cmdString")==0 or die("failed to execute: $!\n");
+      print STDOUT "second etraining complete\n";
+    }
+
+    # second test
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.test"],["$otherfilesDir/secondtest.out"]) || $overwrite){
+      print STDOUT "NEXT STEP: second test\n";
+      $errorfile = "$errorfilesDir/secondtest.stderr";
+      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $otherfilesDir/secondtest.out 2>$errorfile";
+      print LOG "\# ".localtime.": second test\n";
+      print LOG "$cmdString\n\n";
+      system("$cmdString")==0 or die("failed to execute: $!\n");
+      print STDOUT "second test finished.\n";  
+    }
   }
   
   # copy species files to working directory

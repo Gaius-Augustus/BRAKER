@@ -92,7 +92,7 @@ if(! -f "$genome"){
 }
 
 if(! -f "$introns"){
-  print "Introns file $genome does not exist. Please check.\n";
+  print "Introns file $introns does not exist. Please check.\n";
   exit(1);
 }
 
