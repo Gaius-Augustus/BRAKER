@@ -646,7 +646,7 @@ sub training{
         print STDOUT "NEXT STEP: optimize AUGUSTUS parameter\n";
         $string=find("optimize_augustus.pl");
         $errorfile = "$errorfilesDir/optimize_augustus.stderr";
-        $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>optimize_augustus.out 2>$errorfile";
+        $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$otherfilesDir/optimize_augustus.stdout 2>$errorfile";
         print LOG "\# ".localtime.": optimize AUGUSTUS parameter\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString")==0 or die("failed to execute: $!\n");
