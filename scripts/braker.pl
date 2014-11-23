@@ -458,6 +458,10 @@ sub make_hints{
       unlink($hintsfile_temp);
       print STDOUT "hints file complete.\n";
     }
+    if(-z $hintsfile){
+      print STDERR "ERROR: The hints file is empty. Maybe the genome and the RNA-seq file do not belong together.\n";
+      exit(1);
+    } 
   }
 }
 
@@ -709,7 +713,7 @@ sub augustus{
       print STDOUT "NEXT STEP: split genome file in smaller parts\n";
       $string = find("splitMfasta.pl");    
       $errorfile = "$errorfilesDir/splitMfasta.stderr";
-      my $minsize = $genome_length / $CPU;
+      my $minsize = floor($genome_length / $CPU);
       $perlCmdString = "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
       @genome_files = `find $otherfilesDir -name "genome.split.*"`;
@@ -749,7 +753,7 @@ sub augustus{
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "join AUGUSTUS predictions complete.\n";
       for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
-        unlink("$otherfilesDir/augustus.$idx.gff");
+        #unlink("$otherfilesDir/augustus.$idx.gff");
       }
     }else{
       $cmdString = "mv $otherfilesDir/augustus.1.gff $otherfilesDir/augustus.gff";
