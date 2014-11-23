@@ -753,7 +753,7 @@ sub augustus{
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "join AUGUSTUS predictions complete.\n";
       for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
-        #unlink("$otherfilesDir/augustus.$idx.gff");
+        unlink("$otherfilesDir/augustus.$idx.gff");
       }
     }else{
       $cmdString = "mv $otherfilesDir/augustus.1.gff $otherfilesDir/augustus.gff";
