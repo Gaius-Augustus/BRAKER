@@ -135,6 +135,7 @@ my $scriptPath=dirname($0);           # the path of directory where this script 
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source) 
 my $skipoptimize = 0;                 # skip optimize parameter step
 my $species;                          # species name
+my $stdoutfile;                       # to store current standard output
 my $string;                           # string for storing script path
 my $testsize;                         # number of genes used for test genbank file default value is min{200, 10% of all genes}. warning if file contains less than 300 genes 
 my $useexisting = 0;                  # start with and change existing config, parameter and result files
@@ -480,11 +481,12 @@ sub GeneMark_ET{
       print STDOUT "NEXT STEP: execute GeneMark-ET\n"; 
       $string = "$GENEMARK_PATH/gmes_petap.pl";
       $errorfile = "$errorfilesDir/GeneMark-ET.stderr";
+      $stdoutfile = "$otherfilesDir/GeneMark-ET.stdout";
       $perlCmdString = "perl $string --sequence=$genome --ET=$hintsfile --cores=$CPU";
       if($fungus){
         $perlCmdString .= " --fungus";
       }
-      $perlCmdString .= " 2>$errorfile";
+      $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
       print LOG "\# ".localtime.": execute GeneMark-ET\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $perlCmdString\n");
@@ -499,7 +501,8 @@ sub GeneMark_ET{
 
     $string=find("filterGenemark.pl");
     $errorfile = "$errorfilesDir/filterGenemark.stderr";
-    $perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --output=$genemarkDir/genemark.c.gtf 2>$errorfile";
+    $stdoutfile = "$otherfilesDir/filterGenemark.stdout";
+    $perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --output=$genemarkDir/genemark.c.gtf 1>$stdoutfile 2>$errorfile";
     print LOG "\# ".localtime.": convert GeneMark-ET output to real gtf format\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
@@ -625,7 +628,8 @@ sub training{
       print STDOUT "NEXT STEP: first etraining\n"; 
       $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
       $errorfile = "$errorfilesDir/firstetraining.stderr";
-      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$otherfilesDir/firstetraining.out 2>$errorfile";
+      $stdoutfile = "$otherfilesDir/firstetraining.stdout";
+      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       print LOG "\# ".localtime.": first etraining\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -633,11 +637,12 @@ sub training{
     }
 
     # first test
-    if(!uptodate(["$otherfilesDir/genbank.good.gb.test"],["$otherfilesDir/firsttest.out"])  || $overwrite){
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.test"],["$otherfilesDir/firsttest.stdout"])  || $overwrite){
       print STDOUT "NEXT STEP: first test\n";
       $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
       $errorfile = "$errorfilesDir/firsttest.stderr";
-      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $otherfilesDir/firsttest.out 2>$errorfile";
+      $stdoutfile = "$otherfilesDir/firsttest.stdout"
+      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $stdoutfile 2>$errorfile";
       print LOG "\# ".localtime.": first test\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -650,7 +655,8 @@ sub training{
         print STDOUT "NEXT STEP: optimize AUGUSTUS parameter\n";
         $string=find("optimize_augustus.pl");
         $errorfile = "$errorfilesDir/optimize_augustus.stderr";
-        $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$otherfilesDir/optimize_augustus.stdout 2>$errorfile";
+        $stdoutfile = "$otherfilesDir/optimize_augustus.stdout";
+        $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
         print LOG "\# ".localtime.": optimize AUGUSTUS parameter\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString")==0 or die("failed to execute: $!\n");
@@ -663,7 +669,8 @@ sub training{
       print STDOUT "NEXT STEP: second etraining\n";
       $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
       $errorfile = "$errorfilesDir/secondetraining.stderr";
-      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$otherfilesDir/secondetraining.stdout 2>$errorfile";
+      $stdoutfile = "$otherfilesDir/secondetraining.stdout";
+      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       print LOG "\# ".localtime.": second etraining\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -674,7 +681,8 @@ sub training{
     if(!uptodate(["$otherfilesDir/genbank.good.gb.test"],["$otherfilesDir/secondtest.out"]) || $overwrite){
       print STDOUT "NEXT STEP: second test\n";
       $errorfile = "$errorfilesDir/secondtest.stderr";
-      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $otherfilesDir/secondtest.out 2>$errorfile";
+      $stdoutfile = "$otherfilesDir/secondtest.stdout";
+      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $stdoutfile 2>$errorfile";
       print LOG "\# ".localtime.": second test\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -730,11 +738,12 @@ sub augustus{
       my $pid = $pm->start and next;
       my $idx = $i + 1;
       $errorfile = "$errorfilesDir/augustus.$idx.stderr";
+      $stdoutfile = "$otherfilesDir/augustus.$idx.gff";
       $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsic --hintsfile=$hintsfile --UTR=$UTR";
       if(defined($optCfgFile)){
         $cmdString .= " --optCfgFile=$optCfgFile"; 
       }
-      $cmdString .= " $genome_files[$i] 1>$otherfilesDir/augustus.$idx.gff 2>$errorfile";
+      $cmdString .= " $genome_files[$i] 1>$stdoutfile 2>$errorfile";
       print LOG "\# ".localtime.": run AUGUSTUS for file $genome_files[$i]\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
