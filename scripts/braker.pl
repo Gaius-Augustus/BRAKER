@@ -641,7 +641,7 @@ sub training{
       print STDOUT "NEXT STEP: first test\n";
       $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
       $errorfile = "$errorfilesDir/firsttest.stderr";
-      $stdoutfile = "$otherfilesDir/firsttest.stdout"
+      $stdoutfile = "$otherfilesDir/firsttest.stdout";
       $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $stdoutfile 2>$errorfile";
       print LOG "\# ".localtime.": first test\n";
       print LOG "$cmdString\n\n";
