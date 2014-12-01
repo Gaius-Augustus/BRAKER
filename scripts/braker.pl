@@ -651,7 +651,7 @@ sub training{
 
     # optimize parameters
     if(!$skipoptimize){
-      if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb.test"],[$AUGUSTUS_CONFIG_PATH."/species/$species/$species\_exon_probs.pbl"])){
+      if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb.test"],[$AUGUSTUS_CONFIG_PATH."/species/$species/$species\_exon_probs.pbl", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_weightmatrix.txt"])){
         print STDOUT "NEXT STEP: optimize AUGUSTUS parameter\n";
         $string=find("optimize_augustus.pl");
         $errorfile = "$errorfilesDir/optimize_augustus.stderr";
