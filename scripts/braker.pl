@@ -24,6 +24,8 @@
 # | add --optCfgfile, --fungus     | Simone Lange         | 10.11.2014 |
 # | option, PATH also as variable  |                      |            |
 # | fork AUGUSTUS prediction       |                      |            |
+# | add parts from autoAugTrain.pl | Simone Lange         | 12.12.2014 |
+# | parts from sub train           | autoAugTrain.pl      | ??.??.???? |
 # | TODO: add more options         |                      |            |
 # ----------------------------------------------------------------------
 
@@ -46,7 +48,7 @@ BEGIN{
   our $directory = dirname($0);
 } 
 use lib $directory;
-use helpMod qw(find checkFile relToAbs uptodate);
+use helpMod qw(find checkFile formatDetector relToAbs setParInConfig uptodate);
 use Term::ANSIColor qw(:constants); #?
 
 use strict;
@@ -114,7 +116,8 @@ my $errorfilesDir;                    # directory for error files
 my @files;                            # contains all files in $rootDir
 my $flanking_DNA;                     # length of flanking DNA, default value is min{ave. gene length/2, 10000}
 my @forbidden_words;                  # words/commands that are not allowed in species name (e.g. unlink)
-my $fungus = 0;                       # option for GeneMark-ET                         
+my $fungus = 0;                       # option for GeneMark-ET
+my $gb_good_size;                      # number of LOCUS entries in 'genbank.good.gb'                         
 my $genbank;                          # genbank file name
 my $genemarkDir;                      # directory for GeneMark-ET output
 my $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script
@@ -540,23 +543,55 @@ sub new_species{
     print STDOUT "species $species created.\n";
     open (EXTRINSIC, $extrinsic) or die "Cannot open file: $extrinsic\n";
     open (OUT, ">".$extrinsic_cp) or die "Cannot open file: $extrinsic_cp\n";
+    my $GENERAL = "false";
     while(<EXTRINSIC>){
       chomp;
+      next if($GENERAL eq "true" && $_ !~ m /^\#/);
+      if($GENERAL eq "true" && $_ =~ m /^\#/){
+        $GENERAL = "false";
+      }
       print OUT "$_\n";
-      if($_ =~ m/M RM E W/){
+      
+      if($_ =~ m/^\[GENERAL\]/){
+        $GENERAL = "true";
         print OUT "\n";
-        print OUT "exonpart    1   .992    M 1 1e+100 RM 1 1    E 1 1   W 1 1.005\n";
-        print OUT "intron      1   .34     M 1 1e+100 RM 1 1    E 1 1e5 W 1 1\n";
-        print OUT "CDSpart     1   1 0.985 M 1 1e+100 RM 1 1    E 1 1   W 1 1\n";
-        print OUT "UTRpart     1   1 0.985 M 1 1e+100 RM 1 1    E 1 1   W 1 1\n";
-        print OUT "nonexonpart 1   1       M 1 1e+100 RM 1 1.01 E 1 1   W 1 1\n";
+        print OUT "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "        tss        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1.003\n";
+        print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "     intron        1       .2  M    1  1e+100  RM  1     1    E 1   50    W 1    1\n";
+        print OUT "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print OUT "nonexonpart        1        1  M    1  1e+100  RM  1     1.15 E 1    1    W 1    1\n";
+        print OUT "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
 
         print LOG "\# ".localtime.": edit extrinsic file and add\n$_\n";
-        print LOG "exonpart    1   .992    M 1 1e+100 RM 1 1    E 1 1   W 1 1.005\n";
-        print LOG "intron      1   .34     M 1 1e+100 RM 1 1    E 1 1e5 W 1 1\n";
-        print LOG "CDSpart     1   1 0.985 M 1 1e+100 RM 1 1    E 1 1   W 1 1\n";
-        print LOG "UTRpart     1   1 0.985 M 1 1e+100 RM 1 1    E 1 1   W 1 1\n";
-        print LOG "nonexonpart 1   1       M 1 1e+100 RM 1 1.01 E 1 1   W 1 1\n\n";
+        print LOG "\n";
+        print LOG "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "        tss        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1.003\n";
+        print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "     intron        1       .2  M    1  1e+100  RM  1     1    E 1   50    W 1    1\n";
+        print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        print LOG "nonexonpart        1        1  M    1  1e+100  RM  1     1.15 E 1    1    W 1    1\n";
+        print LOG "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
       }
     }
     close(OUT) or die("Could not close extrinsic file $extrinsic_cp!\n");
@@ -582,6 +617,10 @@ sub training{
   if(!uptodate([$genome,"$genemarkDir/genemark.c.gtf"],[$genbank])  || $overwrite){
     print STDOUT "NEXT STEP: create genbank file\n";
     $errorfile = "$errorfilesDir/gff2gbSmallDNA.stderr";
+    if(-z "$genemarkDir/genemark.c.gtf"){
+      print STDERR "ERROR: The GeneMark-ET output file is empty. Please check.\n";
+      exit(1);
+    }
     $perlCmdString = "perl $string $genemarkDir/genemark.c.gtf $genome $flanking_DNA $genbank 2>$errorfile";
     print LOG "\# ".localtime.": create genbank file\n";
     print LOG "$perlCmdString\n\n";
@@ -594,6 +633,10 @@ sub training{
     print STDOUT "NEXT STEP: filter genbank file\n";
     $string=find("filterGenesIn_mRNAname.pl");
     $errorfile = "$errorfilesDir/filterGenesIn_mRNAname.stderr";
+    if(-z "$genemarkDir/genemark.f.good.gtf"){
+      print STDERR "ERROR: The GeneMark-ET output file does not contain genes that are supported by the intron hints.\n";
+      exit(1);
+    }
     $perlCmdString = "perl $string $genemarkDir/genemark.f.good.gtf $genbank 1>$otherfilesDir/genbank.good.gb 2>$errorfile";
     print LOG "\# ".localtime.": filter genbank file\n";
     print LOG "$perlCmdString\n\n";
@@ -606,43 +649,101 @@ sub training{
     print STDOUT "NEXT STEP: split genbank file into train and test file\n";
     $string = find("randomSplit.pl");
     $errorfile = "$errorfilesDir/randomSplit.stderr";
-    my $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+    $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
     if($gb_good_size < 300){
       print STDOUT "WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
-    }    
-    $testsize = min((floor($gb_good_size/10), 200));
-    if($testsize == 0){
-      print STDERR "ERROR: Number of genes is too low ($gb_good_size). Cannot split into test and train file.\n";
-      exit(1);
     }
-    $perlCmdString = "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
-    print LOG "\# ".localtime.": split genbank file into train and test file\n";
-    print LOG "$perlCmdString\n\n";
-    system("$perlCmdString")==0 or die("failed to execute: $!\n");
-    print STDOUT "genbank file splitted.\n";
+    if($gb_good_size > 1000){
+      $testsize = 1000;
+      $perlCmdString = "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
+      print LOG "\# ".localtime.": split genbank file into train and test file\n";
+      print LOG "$perlCmdString\n\n";
+      system("$perlCmdString")==0 or die("failed to execute: $!\n");
+      print STDOUT "genbank file splitted.\n";
+    }
   }
 
   if(!$useexisting){
     # train AUGUSTUS for the first time
-    if(!uptodate(["$otherfilesDir/genbank.good.gb.train"],["$otherfilesDir/firstetraining.stdout"])){
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firstetraining.stdout"])){
+      # set "stopCodonExcludedFromCDS" to true
+      print STDOUT "NEXT STEP: Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n"; # see autoAugTrain.pl
+      print LOG "\# ".localtime.": Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
+      setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "true"); # see autoAugTrain.pl
+      print STDOUT "NEXT STEP: Seting value of \"alternatives-from-evidence\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n"; # see autoAugTrain.pl
+      print LOG "\# ".localtime.": Seting value of \"alternatives-from-evidence\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
+      setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "alternatives-from-evidence", "true"); # see autoAugTrain.pl
+
+      # first try with etraining
       print STDOUT "NEXT STEP: first etraining\n"; 
       $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
       $errorfile = "$errorfilesDir/firstetraining.stderr";
       $stdoutfile = "$otherfilesDir/firstetraining.stdout";
-      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+      $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      if($gb_good_size <= 1000){
+        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+      }else{
+        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+      }
       print LOG "\# ".localtime.": first etraining\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "first training complete.\n";
+
+      # set "stopCodonExcludedFromCDS" to false and run etraining again if necessary
+      my $t_b_t = $gb_good_size - $testsize;      # see autoAugTrain.pl
+      my $err_stopCodonExcludedFromCDS = `grep -c "exon doesn't end in stop codon" $errorfile`; # see autoAugTrain.pl
+      my $err_rate =  $err_stopCodonExcludedFromCDS / $t_b_t;  # see autoAugTrain.pl
+      print STDOUT "Error rate of missing stop codon is $err_rate\n";  # see autoAugTrain.pl
+      print LOG "\# ".localtime."Error rate of missing stop codon is $err_rate\n"; # see autoAugTrain.pl
+      if($err_rate >= 0.5){ # see autoAugTrain.pl
+        print STDOUT "The appropriate value for \"stopCodonExcludedFromCDS\" seems to be \"false\".\n"; # see autoAugTrain.pl
+        print STDOUT "next step: Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"false\"\n"; # see autoAugTrain.pl
+        setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "false");  # see autoAugTrain.pl
+        print STDOUT "NEXT STEP: Trying etraining again\n";
+        print LOG "\# ".localtime.": Trying etraining again\n";
+        print LOG "$cmdString\n\n";
+        system("$cmdString")==0 or die("failed to execute: $!\n");
+        print STDOUT "trying etraining again complete.\n";
+      }
+
+
+      # adjust the stop-codon frequency in species_parameters.cfg according to train.out
+      print LOG "\# ".localtime.": adjust the stop-codon frequency in species_parameters.cfg according to $stdoutfile\n";
+      my $freqOfTag;            # see autoAugTrain.pl
+      my $freqOfTaa;            # see autoAugTrain.pl
+      my $freqOfTga;            # see autoAugTrain.pl
+      open(TRAIN, "$stdoutfile") or die ("Can not open file $stdoutfile\n"); # see autoAugTrain.pl
+      while(<TRAIN>){                 # see autoAugTrain.pl
+        if(/tag:\s*.*\((.*)\)/){      # see autoAugTrain.pl
+          $freqOfTag = $1;            # see autoAugTrain.pl
+        }elsif(/taa:\s*.*\((.*)\)/){  # see autoAugTrain.pl
+          $freqOfTaa = $1;            # see autoAugTrain.pl
+        }elsif(/tga:\s*.*\((.*)\)/){  # see autoAugTrain.pl    
+          $freqOfTga = $1;            # see autoAugTrain.pl
+        }
+      }
+      close(TRAIN) or die("Could not close gff file $stdoutfile!\n");
+      print LOG "\# ".localtime."Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
+      print STDOUT "NEXT STEP: Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
+      setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "/Constant/amberprob", $freqOfTag);  # see autoAugTrain.pl
+      setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "/Constant/ochreprob", $freqOfTaa);  # see autoAugTrain.pl
+      setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "/Constant/opalprob", $freqOfTga);   # see autoAugTrain.pl
+      print STDOUT "frequency adjusted\n";
     }
 
     # first test
-    if(!uptodate(["$otherfilesDir/genbank.good.gb.test"],["$otherfilesDir/firsttest.stdout"])  || $overwrite){
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firsttest.stdout"])  || $overwrite){
       print STDOUT "NEXT STEP: first test\n";
       $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
       $errorfile = "$errorfilesDir/firsttest.stderr";
       $stdoutfile = "$otherfilesDir/firsttest.stdout";
-      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $stdoutfile 2>$errorfile";
+      $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      if($gb_good_size <= 1000){
+        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+      }else{
+        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+      }
       print LOG "\# ".localtime.": first test\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -651,12 +752,17 @@ sub training{
 
     # optimize parameters
     if(!$skipoptimize){
-      if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb.test"],[$AUGUSTUS_CONFIG_PATH."/species/$species/$species\_exon_probs.pbl", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_weightmatrix.txt"])){
+      if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb"],[$AUGUSTUS_CONFIG_PATH."/species/$species/$species\_exon_probs.pbl", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_weightmatrix.txt"])){
         print STDOUT "NEXT STEP: optimize AUGUSTUS parameter\n";
         $string=find("optimize_augustus.pl");
         $errorfile = "$errorfilesDir/optimize_augustus.stderr";
         $stdoutfile = "$otherfilesDir/optimize_augustus.stdout";
-        $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+        $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+        if($gb_good_size <= 1000){
+          $perlCmdString = "perl $string --species=$species --cpus=$CPU $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+        }else{
+          $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+        }
         print LOG "\# ".localtime.": optimize AUGUSTUS parameter\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString")==0 or die("failed to execute: $!\n");
@@ -665,12 +771,17 @@ sub training{
     }
 
     # train AUGUSTUS for the second time
-    if(!uptodate(["$otherfilesDir/genbank.good.gb.train"],["$otherfilesDir/secondetraining.stdout"])){
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondetraining.stdout"])){
       print STDOUT "NEXT STEP: second etraining\n";
       $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
       $errorfile = "$errorfilesDir/secondetraining.stderr";
       $stdoutfile = "$otherfilesDir/secondetraining.stdout";
-      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+      $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      if($gb_good_size <= 1000){
+        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+      }else{
+        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+      }
       print LOG "\# ".localtime.": second etraining\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -678,11 +789,16 @@ sub training{
     }
 
     # second test
-    if(!uptodate(["$otherfilesDir/genbank.good.gb.test"],["$otherfilesDir/secondtest.out"]) || $overwrite){
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondtest.out"]) || $overwrite){
       print STDOUT "NEXT STEP: second test\n";
       $errorfile = "$errorfilesDir/secondtest.stderr";
       $stdoutfile = "$otherfilesDir/secondtest.stdout";
-      $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test | tee $stdoutfile 2>$errorfile";
+      $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      if($gb_good_size <= 1000){
+        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
+      }else{
+        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
+      }
       print LOG "\# ".localtime.": second test\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
