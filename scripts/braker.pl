@@ -117,7 +117,7 @@ my @files;                            # contains all files in $rootDir
 my $flanking_DNA;                     # length of flanking DNA, default value is min{ave. gene length/2, 10000}
 my @forbidden_words;                  # words/commands that are not allowed in species name (e.g. unlink)
 my $fungus = 0;                       # option for GeneMark-ET
-my $gb_good_size;                      # number of LOCUS entries in 'genbank.good.gb'                         
+my $gb_good_size;                     # number of LOCUS entries in 'genbank.good.gb'                         
 my $genbank;                          # genbank file name
 my $genemarkDir;                      # directory for GeneMark-ET output
 my $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script
@@ -670,9 +670,6 @@ sub training{
       print STDOUT "NEXT STEP: Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n"; # see autoAugTrain.pl
       print LOG "\# ".localtime.": Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
       setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "true"); # see autoAugTrain.pl
-      print STDOUT "NEXT STEP: Seting value of \"alternatives-from-evidence\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n"; # see autoAugTrain.pl
-      print LOG "\# ".localtime.": Seting value of \"alternatives-from-evidence\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
-      setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "alternatives-from-evidence", "true"); # see autoAugTrain.pl
 
       # first try with etraining
       print STDOUT "NEXT STEP: first etraining\n"; 
