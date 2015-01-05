@@ -1,39 +1,48 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                                                %
-%           Pipeline for GeneMark-ET and AUGUSTUS                                                %
+%           BRAKER1                                                                              %
 %                                                                                                %
+%           Authors: Simone Lange and Katharina J. Hoff                                          %
 %                                                                                                %
+%           Contact: katharina.hoff@uni-greifswald.de                                            %
 %                                                                                                %
-%             Date: November 23rd, 2014                                                          %
+%           Date: January 5th, 2015                                                              %
 %                                                                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   1.  INTRODUCTION
   2.  INSTALLATION
-  3.  RUNNING BRAKER
-
-
+  3.  RUNNING BRAKER1
 
               1. INTRODUCTION
               ---------------
-Braker is a pipeline to combine GeneMark-ET and AUGUSTUS for unsupervised gene prediction on eukaryotic genomes. It trains AUGUSTUS with GeneMark-ET output for a species and incorporates hints from RNA-seq data in BAM or gff format. For more information on AUGUSTUS or GeneMark-ET see their respective README files.
-
-
+BRAKER1 is a pipeline for unsupervised RNA-Seq-based genome annotation that combines the advantages of GeneMark-ET and AUGUSTUS. BRAKER1 requires an RNA-Seq read alignment file (in the bam format) and a genome file as input. First,  GeneMark-ET performs iterative training and generates initial gene structures using support from RNA-Seq. Second, AUGUSTUS uses predicted genes for training and then integrates RNA-Seq read information as extrinsic evidence into final gene predictions. For more information on AUGUSTUS or GeneMark-ET see their respective README files.
 
               2. INSTALLATION
               ---------------
 
-1. unpack and install AUGUSTUS and GeneMark-ET as described in their respective README files
+1. Download GeneMark-ET from http://exon.gatech.edu/GeneMark/license_download.cgi
+
+2. Download AUGUSTUS from http://bioinf.uni-greifswald.de/augustus/downloads/index.php
+
+3. Unpack and install AUGUSTUS and GeneMark-ET as described in their respective README files
+
+4. Install the required PERL modules available on CPAN:
+   			File::Spec::Functions
+				Hash::Merge
+				List::Util
+				Logger::Simple
+				Module::Load::Conditional
+				Parallel::ForkManager
+				POSIX
+				Scalar::Util::Numeric
+				YAML 
+   (on Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]")
 
 
-2. Additionally, some Perl modules are needed.
-   - File::Spec::Functions, Hash::Merge, List::Util, Logger::Simple, Module::Load::Conditional, Parallel::ForkManager, POSIX, Scalar::Util::Numeric, YAML 
-     (on Ubuntu e.g. with CPANminus: cpanm [Module::Name])
+5. Add the directory in which braker.pl resides to your PATH environment variable, e.g. for your current bash session:
 
-
-3. As a normal user, add the directory of the executables to the PATH environment variable. E.g. issue
-
-PATH=$PATH:~/augustus/bin:~/augustus/scripts
+PATH=~/path-to-braker:$PATH
 export PATH
 
 4. Optional: set environment variables AUGUSTUS_CONFIG_PATH and GENEMARK_PATH
@@ -56,7 +65,7 @@ and
               3. RUNNING BRAKER
               -----------------
 
-Braker has 2 mandatory arguments. The query file and the RNA-seq file.
+Braker has 2 mandatory arguments. The genome file and the RNA-seq file.
 The query file contains the DNA input sequence and must be in uncompressed (multiple) fasta format,
 e.g. the file may look like this
 
