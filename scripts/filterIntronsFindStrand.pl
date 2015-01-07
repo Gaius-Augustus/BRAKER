@@ -1,13 +1,25 @@
 #!/usr/bin/perl
-# filterIntronsFindStrand.pl
-# find corresponding strand for introns in fasta file
-# optionally set the score column to the 'mult' entry with --score
-# 06.10.2014 - 07.10.2014
+
+####################################################################################################
+#                                                                                                  #
+# filterIntronsFindStrand.pl - finds corresponding strand for introns in fasta file                #
+#                              optionally set the score column to the 'mult' entry with --score    #
+#                                                                                                  #
+# Author: Simone Lange                                                                             #
+#                                                                                                  #
+# Contact: katharina.hoff@uni-greifswald.de                                                        #
+#                                                                                                  #
+# Release date: January 7th 2015                                                                   #
+#                                                                                                  #
+# This script is under the Artistic Licence                                                        #
+# (http://www.opensource.org/licenses/artistic-license.php)                                        #
+#                                                                                                  #
+####################################################################################################
+
 # ----------------------------------------------------------------
 # | file creation and findStrand()  | Simone Lange   |06.10.2014 |
 # | add getScore() for score option |                |07.10.2014 |
 # ----------------------------------------------------------------
-#
 
 use strict;
 use warnings;

@@ -1,18 +1,33 @@
 #!/usr/bin/perl
-# filterGenemark.pl
-# add double quotes around ID to match gtf format 
-# filter GeneMark-ET output into good and bad genes, i.e.
-# genes included and not included in introns file respectively
-# 03.10.2014 - 08.10.2014
+
+####################################################################################################
+#                                                                                                  #
+# filterGenemark.pl - reformats and filters the GeneMark-ET output for usage with braker.pl:       #
+#                     adds double quotes around ID to match gtf format                             #
+#                     filters GeneMark-ET output into good and bad genes, i.e.                     #
+#                     genes included and not included in introns file respectively                 #
+#                                                                                                  #
+# Author: Simone Lange                                                                             #
+#                                                                                                  #
+# Contact: katharina.hoff@uni-greifswald.de                                                        #
+#                                                                                                  #
+# Release date: January 7th 2015                                                                   #
+#                                                                                                  #
+# This script is under the Artistic Licence                                                        #
+# (http://www.opensource.org/licenses/artistic-license.php)                                        #
+#                                                                                                  #
+#################################################################################################### 
+
+
 # ----------------------------------------------------------------
 # | first outline from old version  | Simone Lange   |29.07.2014 |
 # | changed to adapt to             |                |03.10.2014 |  
-# | GeneMark-ET changes up to       |                |           |
-# | Version 4.15                    |                |           |
+# | GeneMark-ET changes up to       |                |08.10.2014 |
+# | Version 4.15                    |                |08.10.2014 |
 # | minor corrections and           |                |07.10.2014 |
-# | simplifications                 |                |           |
+# | simplifications                 |                |08.10.2014 |
 # ----------------------------------------------------------------
-# 
+ 
 use strict;
 use warnings;
 use Getopt::Long;
