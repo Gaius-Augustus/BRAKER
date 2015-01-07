@@ -106,11 +106,12 @@ IMPORTANT: the names of contigs in <seqname> column in gff must be found as sequ
 Usage:
 
 perl braker.pl [OPTIONS] --genome=genome.fa --bam=RNAseq.bam
-perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseq.bam
+perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseq.gff
 
 
 'genome.fa' is the filename (including relative path) to the file containing the query sequence(s) in fasta format.
-'RNAseq.bam' is the filename (including relative path) to the file containing the RNA-seq data in bam or gff format.
+'RNAseq.bam' is the filename (including relative path) to the file containing the RNA-seq alingment data in bam format.
+'RNAseq.gff' is the filename (including relative path) to the file containing introns extracted from RNA-Seq information in gff format.
 
 Selected parameters:
 

@@ -61,37 +61,49 @@ braker.pl     annotate genomes based on RNAseq using GeneMark-ET and AUGUSTUS
 
 SYNOPSIS
 
-braker.pl [OPTIONS] --genome=genome.fa --bam=accepted_hits.bam
+braker.pl [OPTIONS] --genome=genome.fa --bam=rnaseq.bam
 
 
-  --genome=fasta              fasta file with DNA sequences
-  --bam=bamfiles              produce hints for AUGUSTUS from bam files
+  --genome=genome.fa          fasta file with DNA sequences
+  --bam=rnaseq.bam            bam file with spliced alignments from RNA-Seq
 
 
     
     
 OPTIONS
 
-    --help                          output this help message
-    --alternatives-from-evidence    output alternative transcripts based on explicit evidence from hints
-    --AUGUSTUS_CONFIG_PATH=/path/   set path to AUGUSTUS (if not specified as environment variable).
-      to/augustus                   Has higher priority than environment variable.
-    --CPU                           specifies the maximum number of CPUs that can be used during computation
-    --fungus                        GeneMark-ET option: to run algorithm with branch point model (most useful for fungal genomes)
-    --GENEMARK_PATH=/path/          set path to GeneMark-ET (if not specified as environment variable).
-      to/gmes_petap.pl              Has higher priority than environment variable.
-    --hints=hints.gff               additional hints files for gene predictions with AUGUSTUS in gff format
-    --optCfgFile=ppx.cfg            optional config file for AUGUSTUS
-    --overwrite                     overwrite existing files (except for species parameter files)
-    --skipGeneMark-ET               skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
-                                    different source) 
-    --skipOptimize                  skip optimize parameter step
-    --species=sname                 species name. Existing species will not be overwritten. Uses Sp_1 etc., if no species is assigned
-    --useexisting                   use the present config and parameter files if they exist for 'species'
-    --UTR                           predict untranslated regions. Default is off
-    --workingdir=/path/to/wd/       set path to working directory. In the working directory results and
-                                    temporary files are stored
-
+    --help                               Print this help message
+    --alternatives-from-evidence=true    Output alternative transcripts based on explicit evidence from 
+                                         hints (default is true).
+    --AUGUSTUS_CONFIG_PATH=/path/        Set path to AUGUSTUS (if not specified as environment variable).
+      to/augustus                        Has higher priority than environment variable.
+    --CPU                                Specifies the maximum number of CPUs that can be used during 
+                                         computation
+    --fungus                             GeneMark-ET option: run algorithm with branch point model (most 
+                                         useful for fungal genomes)
+    --GENEMARK_PATH=/path/to/            Set path to GeneMark-ET (if not specified as environment 
+      gmes_petap.pl                      variable).
+                                         Has higher priority than environment variable.
+    --hints=hints.gff                    Alternatively to calling braker.pl with a bam file, it is 
+                                         possible to call it with a file that contains introns extracted 
+                                         from RNA-Seq data in gff format. This flag also allows the usage
+                                         of hints from additional extrinsic sources for gene prediction 
+                                         with AUGUSTUS. To consider such additional extrinsic information,
+                                         you need to use the flag --optCfgFile to specify parameters for 
+                                         all sources in the hints file
+                                         (including the source "E" for intron hints from RNA-Seq).
+    --optCfgFile=ppx.cfg                 Optional custom config file for AUGUSTUS (see --hints).
+    --overwrite                          Overwrite existing files (except for species parameter files)
+    --skipGeneMark-ET                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
+                                         different source) 
+    --skipOptimize                       Skip optimize parameter step (not recommended).
+    --species=sname                      Species name. Existing species will not be overwritten. 
+                                         Uses Sp_1 etc., if no species is assigned
+    --useexisting                        Use the present config and parameter files if they exist for 
+                                         'species'
+    --UTR                                Predict untranslated regions. Default is off.
+    --workingdir=/path/to/wd/            Set path to working directory. In the working directory results
+                                         and temporary files are stored
                            
 
 DESCRIPTION
@@ -104,14 +116,14 @@ ENDUSAGE
 
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;
-my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH
+my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
 my $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
 my @bam;                              # bam file names
 my $bool_species = "true";            # false, if $species contains forbidden words (e.g. chmod)
 my $cmdString;                        # to store shell commands
 my $CPU = 1;                          # number of CPUs that can be used
 my $currentDir = cwd();               # working superdirectory where program is called from
-my $errorfile;                        # to store current error file name
+my $errorfile;                        # stores current error file name
 my $errorfilesDir;                    # directory for error files
 my @files;                            # contains all files in $rootDir
 my $flanking_DNA;                     # length of flanking DNA, default value is min{ave. gene length/2, 10000}
@@ -120,27 +132,32 @@ my $fungus = 0;                       # option for GeneMark-ET
 my $gb_good_size;                     # number of LOCUS entries in 'genbank.good.gb'                         
 my $genbank;                          # genbank file name
 my $genemarkDir;                      # directory for GeneMark-ET output
-my $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script
+my $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script on system
 my $GMET_path;                        # GeneMark-ET path, higher priority than $GENEMARK_PATH
-my $genome;                           # name of sequece file
+my $genome;                           # name of sequence file
 my $genome_length = 0;                # length of genome file
 my $help;                             # print usage
 my @hints;                            # input hints file names
 my $hintsfile;                        # hints file later used by AUGUSTUS
 my $limit = 10000000;                 # maximum for generic species Sp_$limit
 my $logfile;                          # contains used shell commands
-my $optCfgFile;                       # optinional config file for AUGUSTUS
+my $optCfgFile;                       # optinonal extrinsic config file for AUGUSTUS
 my $otherfilesDir;                    # directory for other files besides GeneMark-ET output and parameter files
 my $overwrite = 0;                    # overwrite existing files (except for species parameter files)
-my $parameterDir;                     # parameter files for species
-my $perlCmdString;                    # to store perl commands
-my $scriptPath=dirname($0);           # the path of directory where this script is placed
+my $parameterDir;                     # directory of parameter files for species
+my $perlCmdString;                    # stores perl commands
+my $scriptPath=dirname($0);           # path of directory where this script is located
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source) 
 my $skipoptimize = 0;                 # skip optimize parameter step
 my $species;                          # species name
-my $stdoutfile;                       # to store current standard output
+my $stdoutfile;                       # stores current standard output
 my $string;                           # string for storing script path
-my $testsize;                         # number of genes used for test genbank file default value is min{200, 10% of all genes}. warning if file contains less than 300 genes 
+my $testsize;                         # AUGUSTUS training parameter: number of genes in a file that is
+                                      # used to measure accuracy during parameter estimation with
+                                      # optimize_augustus.pl. Default: 1000. If there are less than 1000
+                                      # genes, all genes are used to measure accuracy. Decreasing this
+                                      # parameter speeds up braker.pl but decreases prediction accuracy.
+                                      # At least 300 genes are required for training AUGUSTUS.
 my $useexisting = 0;                  # start with and change existing config, parameter and result files
 my $UTR = "off";
 my $workDir;                          # in the working directory results and temporary files are stored
@@ -148,7 +165,7 @@ my $bam;
 my $hints;
 
 # list of forbidden words for species name
-@forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top"); 
+@forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while"); 
 
 
 if(@ARGV==0){
@@ -255,7 +272,7 @@ if(@hints){
 # check whether species is specified
 if(defined($species)){
   if($species =~ /[\s]/){
-    print STDOUT "WARNING: Species name contains invalid white spaces characters. Will replace white spaces with underline character '_' \n";
+    print STDOUT "WARNING: Species name contains invalid white space characters. Will replace white spaces with underline character '_' \n";
     $species =~ s/\s/\_/g; print "species $species\n";
   }
 
@@ -298,7 +315,7 @@ if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
 # check whether $rootDir already exists
 my $rootDir = "$workDir/braker";
 if (-d "$rootDir/$species" && !$overwrite){
-  print STDOUT "WARNING: $rootDir/$species already exists. braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite\n";
+  print STDOUT "WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite\n";
 }
 
 
@@ -349,7 +366,7 @@ if(! -f "$genome"){
     print LOG "\# ".localtime.": create working directory $genemarkDir\n";
     print LOG "mkdir $genemarkDir\n\n";
   }
-  # check whether genemark.gtf file exists, if the skipGeneMark-ET option is used
+  # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
   if($skipGeneMarkET){
     print STDOUT "REMARK: The GeneMark-ET step will be skipped.\n";
     if(! -f "$genemarkDir/genemark.gtf"){
@@ -896,7 +913,7 @@ sub clean_up{
   @files = `find $otherfilesDir -empty`;
   print LOG "\# ".localtime.": delete empty files\n";
   for(my $i=0; $i <= $#files; $i++){
-    chomp($files[$i]); # to prevent this error: Unsuccessful stat on filename containing newline
+    chomp($files[$i]); # to prevent error: Unsuccessful stat on filename containing newline
     if(-f $files[$i]){
       print LOG "rm $files[$i]\n";
       unlink(rel2abs($files[$i]));
@@ -909,7 +926,7 @@ sub clean_up{
 
          ########################### some checks beforehand ############################
 # check upfront whether any common problems will occur later
-# find out that some programs are not installed.
+# find out if some programs are not installed.
 # TODO: put more checks in here: blat, samtools, gmap, tophat 
 # checks for GeneMark-ET: perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager
 # checks for braker: perl modules: Scalar::Util::Numeric
@@ -956,7 +973,7 @@ sub check_upfront{ # see autoAug.pl
   find("splitMfasta.pl");
   find("join_aug_pred.pl");
 
-  # check whether necessary perl modules are installed (perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager)
+  # check whether required perl modules are installed (perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager)
   my $module_list = {
     "YAML",
     "Hash::Merge",
@@ -1037,7 +1054,7 @@ sub check_options{
       print STDOUT "WARNING: Your system does not have $CPU cores available, only $cpus_available. Braker will use the $cpus_available available instead of the chosen $CPU.\n";
     }
   }
-  print STDOUT "option check complete.\n";
+  print STDOUT "... options check complete.\n";
 }
 
 # check fasta headers
@@ -1103,7 +1120,7 @@ sub check_fasta_headers{            # see autoAug.pl
           print OUTPUT "$_\n"; # see simplifyFastaHeaders.pl
           if($_ !~ m/[ATGCNatgcn]/){ # see simplifyFastaHeaders.pl
             if($dna == 0){ # see simplifyFastaHeaders.pl
-              print STDOUT "Assuming that this is not a DNA fasta file because other characters than A, T, G, C, N, a, t, g, c, n were contained. If this is supposed to be a DNA fasta file, check the content of your file! If this is supposed to be a protein fasta file, please ignore this message.\n"; # see simplifyFastaHeaders.pl
+              print STDOUT "Assuming that this is not a DNA fasta file because other characters than A, T, G, C, N, a, t, g, c, n were contained. If this is supposed to be a DNA fasta file, check the content of your file! If this is supposed to be a protein fasta file, please ignore this message!\n"; # see simplifyFastaHeaders.pl
               $dna++;      # see simplifyFastaHeaders.pl
             }
           }
