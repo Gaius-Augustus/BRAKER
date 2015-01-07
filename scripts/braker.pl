@@ -1,13 +1,26 @@
 #!/usr/bin/perl
-# braker.pl
-# pipeline for GeneMark-ET and AUGUSTUS
-# train AUGUSTUS with GeneMark-ET output for a species
-# incorporate hints from RNAseq data in BAM or gff format
-# execute AUGUSTUS
-# 05.09.2014 - 
+
+####################################################################################################
+#                                                                                                  #
+# braker.pl                                                                                        #
+# Pipeline for predicting genes with GeneMark-ET and AUGUSTUS with RNA-Seq                         #
+#                                                                                                  #
+# Authors: Simone Lange, Katharina Hoff, Alexandre Lomsadze, Mark Borodovsky, Mario Stanke         #
+#                                                                                                  #
+# Contact: katharina.hoff@uni-greifswald.de                                                        #
+#                                                                                                  #
+# Release date: January 7th 2015                                                                   #
+#                                                                                                  #
+# This script is under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007.                     #
+#                                                                                                  #
+# Usage:                                                                                           #
+# braker.pl [OPTIONS] --genome=genome.fa --bam=rnaseq.bam                                          #
+#                                                                                                  #
+####################################################################################################
+
 # ----------------------------------------------------------------------
-# | sub check_upfront              | autoAug.pl           | ??.??.???? |
-# | sub check_fasta_headers        | autoAug.pl           | ??.??.???? |
+# | sub check_upfront              | autoAug.pl           | 07.01.2015 |
+# | sub check_fasta_headers        | autoAug.pl           | 07.02.2015 |
 # | helpMod qw(find chec...)       | helpMod.pm           | ??.??.???? |
 # | first outline for braker       | Simone Lange         | 05.09.2014 |
 # | uptodate integrated            |                      | 10.09.2014 |
@@ -25,7 +38,7 @@
 # | option, PATH also as variable  |                      |            |
 # | fork AUGUSTUS prediction       |                      |            |
 # | add parts from autoAugTrain.pl | Simone Lange         | 12.12.2014 |
-# | parts from sub train           | autoAugTrain.pl      | ??.??.???? |
+# | parts from sub train           | autoAugTrain.pl      | 07.02.2015 |
 # | TODO: add more options         |                      |            |
 # ----------------------------------------------------------------------
 
@@ -104,6 +117,7 @@ OPTIONS
     --UTR                                Predict untranslated regions. Default is off.
     --workingdir=/path/to/wd/            Set path to working directory. In the working directory results
                                          and temporary files are stored
+    --version                            print version number of braker.pl
                            
 
 DESCRIPTION
@@ -114,6 +128,7 @@ DESCRIPTION
 
 ENDUSAGE
 
+my $version = 1.0 # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
@@ -190,11 +205,17 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'useexisting!'                  => \$useexisting,
             'UTR=s'                         => \$UTR,
             'workingdir=s'                  => \$workDir,
-            'help!'                         => \$help);
+            'help!'                         => \$help,
+            'version!'                      => \$printVersion);
 
 if($help){
   print $usage;
   exit(0);
+}
+
+if($printVersion){
+    print "braker.pl version $version\n";
+    exit(0);
 }
 
              ############ make some regular checks ##############
