@@ -14,6 +14,7 @@
   2.  INSTALLATION
   3.  RUNNING BRAKER1
   4.  OUTPUT OF BRAKER1
+  5.  EXAMPLE DATA
 
               1. INTRODUCTION
               ---------------
@@ -265,3 +266,12 @@ HS04636   AUGUSTUS   internal   1818    1934    .       +       2       transcri
 The columns (fields) contain: 
 seqname   source     feature    start   end   score   strand   frame    transcript ID and gene ID
 
+
+              5. EXAMPLE DATA
+              ---------------
+
+Due to file size, an example data for testing BRAKER1 is separately available for download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and http://exon.gatech.edu/ as archive BRAKER1examples.tar.gz.
+
+After extraction, test BRAKER1 with the following command:
+
+perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam
