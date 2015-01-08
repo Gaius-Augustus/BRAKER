@@ -1,0 +1,45 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                                                %
+%           BRAKER1 example data                                                                 %
+%                                                                                                %
+%           Authors: Simone Lange and Katharina J. Hoff                                          %
+%                                                                                                %
+%           Contact: katharina.hoff@uni-greifswald.de                                            %
+%                                                                                                %
+%           Date: January 8th, 2015                                                              %
+%                                                                                                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  1.  DATA DESCRIPTION
+  2.  RUNNING BRAKER1 WITH EXAMPLE DATA
+
+              1. DATA DESCRIPTION
+              -------------------
+
+This archive contains an example data set for testing the BRAKER1 pipeline, which is availabe for 
+Download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and http://exon.gatech.edu. 
+
+Data corresponds to Drosophila melanogaster chromosome 2R from flybase release R5. RNA-Seq alignments 
+were obtained by mapping Illumina paired-end libraries SRR023505, SRR023546, SRR023608, SRR026433, 
+SRR027108 against the complete genome using Tophat2 with the options 
+--microexon-search   --mate-std-dev 26   --mate-inner-dist 38  --min-intron-length 30  
+--min-coverage-intron 30 --min-segment-intron 30.
+The example data set contains only those RNA-Seq alignments that correspond to sequence 2R.
+
+Files:
+   example.fa    - genome file in fasta format
+   example.bam   - RNA-Seq alignment file in bam format
+   hintsfile.gff - RNA-Seq intron hints file in gff format
+
+              2.  RUNNING BRAKER1 WITH EXAMPLE DATA
+              -------------------------------------
+
+BRAKER1 can be run with two different input file combinations.
+
+   a) with a genome file and an RNA-Seq alignment file:
+
+      perl braker --species=new_species  --genome=example.fa  --bam=example.bam
+
+   b) with a file that contains intron "hints" extracted from RNA-Seq alignments in gff format:
+
+      perl braker --species=new_species  --genome=example.fa  --hints=hintsfile.gff
