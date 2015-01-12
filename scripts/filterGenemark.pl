@@ -75,6 +75,7 @@ ENDUSAGE
 
 my ($genemark, $introns, $output_file, $help);
 my $average_gene_length;    # for length determination
+my $bool_exon = "false";    # true, if GeneMark-ET version contain exon lines
 my $bool_good = "true";     # if true gene is good, if false, gene is bad
 my $bool_intron = "false";  # true, if currently between exons, false otherwise
 my $bool_start = "false";   # true, gene has start codon
@@ -200,17 +201,19 @@ sub convert_and_filter{
     @ID_old = split(/\s/,$line[8]);
     chop($ID_old[1]);
     chop($ID_old[3]);
-    my $last_char = substr($line[8], -1);
     if($ID_old[1] =~m/^"\w+"$/ && $ID_old[3] =~m/^"\w+"$/){
       $ID_new = $line[8];
     }else{
       $ID_new = "$ID_old[0] \"$ID_old[1]\"\; $ID_old[2] \"$ID_old[3]\"\;";
     }
-     # new gene starts
+    # new gene starts
     if($prev_ID ne $ID_old[1]){
       if(@CDS){
         print_gene();
       }
+    }
+    if($line[2] eq "exon"){
+      $bool_exon = "true";
     }
     if( ($line[2] eq "start_codon" && $line[6] eq "+") || ($line[2] eq "stop_codon" && $line[6] eq "-") ){
       $bool_start = "true";
@@ -275,7 +278,11 @@ sub convert{
     @ID_old = split(/\s/,$line[8]);
     chop($ID_old[1]);
     chop($ID_old[3]);
-    $ID_new = "$ID_old[0] \"$ID_old[1]\"\; $ID_old[2] \"$ID_old[3]\"\;";
+    if($ID_old[1] =~m/^"\w+"$/ && $ID_old[3] =~m/^"\w+"$/){
+      $ID_new = $line[8];
+    }else{
+      $ID_new = "$ID_old[0] \"$ID_old[1]\"\; $ID_old[2] \"$ID_old[3]\"\;";
+    }
     # new gene starts
     if( ($line[2] eq "start_codon" && $line[6] eq "+") || ($line[2] eq "stop_codon" && $line[6] eq "-") ){
       $bool_start = "true";
@@ -299,10 +306,17 @@ sub convert{
 
 
 sub print_gene{
-  if( ($true_count + 1 ) != scalar(@CDS) && scalar(@CDS) != 1){
+  my $size;
+  if($bool_exon eq "true"){
+    $size = scalar(@CDS) / 2;
+    $true_count = $true_count /2;
+  }else{
+    $size = scalar(@CDS);
+  } 
+  if( ($true_count + 1 ) != $size && $size != 1){
     $bool_good = "false";
   }
-  if(scalar(@CDS) == 1){
+  if($size == 1){
     $one_exon_gene_count++;
   }
   # all exons in intron file
