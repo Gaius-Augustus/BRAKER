@@ -75,7 +75,6 @@ ENDUSAGE
 
 my ($genemark, $introns, $output_file, $help);
 my $average_gene_length;    # for length determination
-my $bool_exon = "false";    # true, if GeneMark-ET version contain exon lines
 my $bool_good = "true";     # if true gene is good, if false, gene is bad
 my $bool_intron = "false";  # true, if currently between exons, false otherwise
 my $bool_start = "false";   # true, gene has start codon
@@ -212,9 +211,6 @@ sub convert_and_filter{
         print_gene();
       }
     }
-    if($line[2] eq "exon"){
-      $bool_exon = "true";
-    }
     if( ($line[2] eq "start_codon" && $line[6] eq "+") || ($line[2] eq "stop_codon" && $line[6] eq "-") ){
       $bool_start = "true";
       $start_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
@@ -231,20 +227,24 @@ sub convert_and_filter{
       
     # exons, CDS usw., i.e. no start or stop codon
     }elsif($line[2] ne "start_codon" && $line[2] ne "stop_codon"){
-      if($bool_intron eq "false"){
-        $intron_start = $line[4]+1;
-        $bool_intron = "true";
-      }else{
-        $intron_end = $line[3]-1;
-      
-        # check if exons are defined in intron hash made of intron input
-        if(defined($introns{$line[0]}{$line[6]}{$intron_start}{$intron_end})){
-          $true_count++; 
+      if($line[2] eq "CDS"){
+        if($bool_intron eq "false"){
+          $intron_start = $line[4]+1;
+          $bool_intron = "true";
+        }else{
+          $intron_end = $line[3]-1;
+        
+          # check if exons are defined in intron hash made of intron input
+          if(defined($introns{$line[0]}{$line[6]}{$intron_start}{$intron_end})){
+            $true_count++;
+          }
+          $intron_start = $line[4]+1;
         }
-        $intron_start = $line[4]+1;
+        $exon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new";
+        push(@CDS, $exon);
+        $exon = "$line[0]\t$line[1]\texon\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new";
+        push(@CDS, $exon);
       }
-      $exon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new";
-      push(@CDS, $exon);
     }
 
     print OUTPUT "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
@@ -306,13 +306,7 @@ sub convert{
 
 
 sub print_gene{
-  my $size;
-  if($bool_exon eq "true"){
-    $size = scalar(@CDS) / 2;
-    $true_count = $true_count /2;
-  }else{
-    $size = scalar(@CDS);
-  } 
+  my $size = scalar(@CDS) / 2; 
   if( ($true_count + 1 ) != $size && $size != 1){
     $bool_good = "false";
   }
