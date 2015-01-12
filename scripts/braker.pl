@@ -129,7 +129,7 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 1.0 # braker.pl version number
+my $version = 1.0; # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
@@ -162,6 +162,7 @@ my $otherfilesDir;                    # directory for other files besides GeneMa
 my $overwrite = 0;                    # overwrite existing files (except for species parameter files)
 my $parameterDir;                     # directory of parameter files for species
 my $perlCmdString;                    # stores perl commands
+my $printVersion = 0;
 my $scriptPath=dirname($0);           # path of directory where this script is located
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source) 
 my $skipoptimize = 0;                 # skip optimize parameter step

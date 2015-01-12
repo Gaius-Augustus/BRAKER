@@ -3,7 +3,7 @@
 ####################################################################################################
 #                                                                                                  #
 # filterGenemark.pl - reformats and filters the GeneMark-ET output for usage with braker.pl:       #
-#                     adds double quotes around ID to match gtf format                             #
+#                     adds double quotes around ID to match gtf format if necessary                #
 #                     filters GeneMark-ET output into good and bad genes, i.e.                     #
 #                     genes included and not included in introns file respectively                 #
 #                                                                                                  #
@@ -23,7 +23,7 @@
 # | first outline from old version  | Simone Lange   |29.07.2014 |
 # | changed to adapt to             |                |03.10.2014 |  
 # | GeneMark-ET changes up to       |                |08.10.2014 |
-# | Version 4.15                    |                |08.10.2014 |
+# | Version 4.17 & 4.21             |                |12.01.2015 |
 # | minor corrections and           |                |07.10.2014 |
 # | simplifications                 |                |08.10.2014 |
 # ----------------------------------------------------------------
