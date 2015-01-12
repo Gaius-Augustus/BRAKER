@@ -200,7 +200,12 @@ sub convert_and_filter{
     @ID_old = split(/\s/,$line[8]);
     chop($ID_old[1]);
     chop($ID_old[3]);
-    $ID_new = "$ID_old[0] \"$ID_old[1]\"\; $ID_old[2] \"$ID_old[3]\"\;";
+    my $last_char = substr($line[8], -1);
+    if($ID_old[1] =~m/^"\w+"$/ && $ID_old[3] =~m/^"\w+"$/){
+      $ID_new = $line[8];
+    }else{
+      $ID_new = "$ID_old[0] \"$ID_old[1]\"\; $ID_old[2] \"$ID_old[3]\"\;";
+    }
      # new gene starts
     if($prev_ID ne $ID_old[1]){
       if(@CDS){
