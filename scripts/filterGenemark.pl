@@ -242,7 +242,7 @@ sub convert_and_filter{
         }
         $exon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new";
         push(@CDS, $exon);
-        $exon = "$line[0]\t$line[1]\texon\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new";
+        $exon = "$line[0]\t$line[1]\texon\t$line[3]\t$line[4]\t0\t$line[6]\t.\t$ID_new";
         push(@CDS, $exon);
       }
     }
