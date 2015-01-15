@@ -252,7 +252,9 @@ sub convert_and_filter{
   }
   @ID_old = split(/\_/,$ID_old[1]);
   print_gene(); # print last gene, since print_gene() was only executed after the ID changed
-
+  if($ID_old[1] =~m/^"\w+/){
+    $ID_old[0] = substr($ID_old[0],1);
+  }
   close GENEMARK;
   close OUTPUT;
   close BAD;
