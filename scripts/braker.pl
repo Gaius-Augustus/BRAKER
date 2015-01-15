@@ -274,6 +274,7 @@ if(@bam){
       print STDERR "ERROR: BAM file $bam[$i] does not exist. Please check.\n";
       exit(1);
     }
+    $bam[$i] = rel2abs($bam[$i]);
   }
 }
 
