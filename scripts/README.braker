@@ -49,11 +49,15 @@ export PATH
 
 You may want to add these lines to a startup script (like ~/.bashrc).
 
+Exporting the location of AUGUSTUS and AUGUSTUS scripts is not required by BRAKER1 if you set the environment variable $AUGUSTUS_CONFIG_PATH in step 4.
+
 4. Optional: set environment variables $AUGUSTUS_CONFIG_PATH and $GENEMARK_PATH
 
 The $AUGUSTUS_CONFIG_PATH determines which directory is used for reading and writing configuration files. During training, AUGUSTUS writes species-specific parameter files to this directory. Therefore, you need write permissions for the directory that is $AUGUSTUS_CONFIG_PATH. If the $AUGUSTUS_CONFIG_PATH environment variable is not set, then the programs will look in the path ../config relative to the directory in which the AUGUSTUS executable is located. If required, export the variable e.g. for your current bash session:
 
 export AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/
+
+$AUGUSTUS_CONFIG_PATH - if exported - is also used by BRAKER1 to determine the relative path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints. 
 
 If the environment variable $GENEMARK_PATH is set, BRAKER1 will look there for the gmes_petap.pl script. Export the variable e.g. for your current bash session:
 
@@ -270,8 +274,10 @@ seqname   source     feature    start   end   score   strand   frame    transcri
               5. EXAMPLE DATA
               ---------------
 
-Due to file size, an example data for testing BRAKER1 is separately available for download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and http://exon.gatech.edu/ as archive BRAKER1examples.tar.gz.
+Due to file size, example data for testing BRAKER1 is separately available for download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and http://exon.gatech.edu/ as archive BRAKER1examples.tar.gz.
 
 After extraction, test BRAKER1 with the following command:
 
 perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam
+
+The runtime of this example should be around 46 hours on a 2.27 GHz single CPU.
