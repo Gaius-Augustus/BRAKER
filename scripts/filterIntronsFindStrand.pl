@@ -16,10 +16,13 @@
 #                                                                                                  #
 ####################################################################################################
 
-# ----------------------------------------------------------------
-# | file creation and findStrand()  | Simone Lange   |06.10.2014 |
-# | add getScore() for score option |                |07.10.2014 |
-# ----------------------------------------------------------------
+# ------------------------------------------------------------------
+# | file creation and findStrand()    | Simone Lange   |06.10.2014 |
+# | add getScore() for score option   |                |07.10.2014 |
+# | add error message if sequence     |                |23.01.2015 |
+# | name of hints and fasta file do   |                |           |
+# | not match -> programme stops then |                |           |
+# ------------------------------------------------------------------
 
 use strict;
 use warnings;
@@ -150,17 +153,25 @@ sub findStrand{
   my $seqname = shift;
   my $start = shift;
   my $end = shift;
-  my $type = lc(substr($annos{$seqname}, $start-1,2)).lc(substr($annos{$seqname}, $end-2,2));
-  my $reverse = reverse($type);
-  $reverse =~ tr/agct/tcga/;
-  foreach (@allowed){
-    if($_ eq $type){
-      return "+";
-    }elsif($_ eq $reverse){
-      return "-";
+  my $type;
+  my $reverse;
+  if(defined($annos{$seqname})){
+    $type = lc(substr($annos{$seqname}, $start-1,2)).lc(substr($annos{$seqname}, $end-2,2));
+    $reverse = reverse($type);
+    $reverse =~ tr/agct/tcga/;
+    foreach (@allowed){
+      if($_ eq $type){
+        return "+";
+      }elsif($_ eq $reverse){
+        return "-";
+      }
     }
+    return 0;
+  }else{
+    print STDERR "'$seqname' does not match any sequence in the fasta file. Maybe the two files do not belong together.\n";
+    print STDERR "The programme terminates here.\n";
+    exit(1)
   }
-  return 0;
 }
 
 # get score from mult entry

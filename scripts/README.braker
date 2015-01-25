@@ -41,17 +41,18 @@ BRAKER1 is a pipeline for unsupervised RNA-Seq-based genome annotation that comb
 				YAML 
    (on Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]")
 
+BRAKER1 also uses an additional PERL module helpMod.pm that is part of AUGUSTUS and not available on CPAN.
 
 5. Add the directories in which braker.pl, AUGUSTUS executables and AUGUSTUS scripts reside to your $PATH environment variable, e.g. for your current bash session:
 
-PATH=/my_path_to_braker:/my_path_to_augustus/bin:/my_path_to_augustus/scripts:$PATH
+PATH=/my_path_to_braker:/my_path_to_augustus/bin:/my_path_to_augustus/scripts:/my_path_to_bamtools/bin/:$PATH
 export PATH
 
 You may want to add these lines to a startup script (like ~/.bashrc).
 
 Exporting the location of AUGUSTUS and AUGUSTUS scripts is not required by BRAKER1 if you set the environment variable $AUGUSTUS_CONFIG_PATH in step 4.
 
-4. Optional: set environment variables $AUGUSTUS_CONFIG_PATH and $GENEMARK_PATH
+4. Optional: set environment variables $AUGUSTUS_CONFIG_PATH, $GENEMARK_PATH and $BAMTOOLS_PATH
 
 The $AUGUSTUS_CONFIG_PATH determines which directory is used for reading and writing configuration files. During training, AUGUSTUS writes species-specific parameter files to this directory. Therefore, you need write permissions for the directory that is $AUGUSTUS_CONFIG_PATH. If the $AUGUSTUS_CONFIG_PATH environment variable is not set, then the programs will look in the path ../config relative to the directory in which the AUGUSTUS executable is located. If required, export the variable e.g. for your current bash session:
 
@@ -63,12 +64,17 @@ If the environment variable $GENEMARK_PATH is set, BRAKER1 will look there for t
 
 export GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
 
+If the environment variable $BAMTOOLS_PATH is set, BRAKER1 will look there for the bamtools executable. Export the variable e.g. for your current bash session:
+
+export BAMTOOLS_PATH=/my_path_to_bamtools/bin/
+
 You may want to add these lines to a startup script (like ~/.bashrc).
 
 Alternatively, you can specify these directories on the command line when running BRAKER1:
 
 --AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/ 
 --GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
+--BAMTOOLS_PATH=/my_path_to_bamtools/bin/
 
 
 
@@ -137,6 +143,14 @@ Selected parameters:
   Path to GeneMark-ET (if not specified as environment variable). Has higher priority than environment
   variable.
 
+--BAMTOOLS_PATH=/path/to/bamtools
+  Path to bamtools (if not specified as environment variable). Has higher priority than the
+  environment variable.
+
+--SAMTOOLS_PATH=/path/to/samtools
+  Optionally set path to samtools (if not specified as environment variable) to fix BAM files automatically, if 
+  necessary. Has higher priority than environment variable.
+
 --hints=hints.gff            
   Additional hints files for gene predictions with AUGUSTUS in gff format (should only be used in combination
   with --optCfgFile)
@@ -154,6 +168,8 @@ Selected parameters:
 --skipOptimize
   Skip optimize parameter step (not recommended!)
 
+--softmasking
+
 --useexisting
   Use the present config and parameter files if they exist for 'speciesname'
 
@@ -162,7 +178,7 @@ Selected parameters:
   human, galdieria, toxoplasma and caenorhabditis.
 
 --workingdir=/path/to/wd/
-  path to working directory in which results and temporary files are stored (default: current directory).
+  Path to working directory in which results and temporary files are stored (default: current directory).
 
 --species=speciesname
   speciesname is a directory in ${AUGUSTUS_CONFIG_PATH}/species, which is used to read AUGUSTUS species
@@ -170,6 +186,9 @@ Selected parameters:
   the speciesname should be a species name that does not already exist in ${AUGUSTUS_CONFIG_PATH}/species.
   Existing species files will not be overwritten. If the argument --species is not used, BRAKER1 generates
   speciesnames of the type Sp_1 etc. For example you may type
+
+--version
+  Print version number of braker.pl
 
   perl braker --species=new_species  --genome=../examples/example.fa  --bam=../examples/example.bam
 

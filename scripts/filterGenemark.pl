@@ -26,6 +26,8 @@
 # | Version 4.17 & 4.21             |                |12.01.2015 |
 # | minor corrections and           |                |07.10.2014 |
 # | simplifications                 |                |08.10.2014 |
+# | removed '"' in 'Number of       |                |25.01.2015 |
+# | genes: "nr' output              |                |           |
 # ----------------------------------------------------------------
  
 use strict;
@@ -252,7 +254,7 @@ sub convert_and_filter{
   }
   @ID_old = split(/\_/,$ID_old[1]);
   print_gene(); # print last gene, since print_gene() was only executed after the ID changed
-  if($ID_old[1] =~m/^"\w+/){
+  if($ID_old[0] =~ m/^"\w+/){
     $ID_old[0] = substr($ID_old[0],1);
   }
   close GENEMARK;
@@ -300,6 +302,9 @@ sub convert{
     print OUTPUT "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
   }
   @ID_old = split(/\_/,$ID_old[1]);
+  if($ID_old[0] =~m/^"\w+/){
+    $ID_old[0] = substr($ID_old[0],1);
+  }
   close GENEMARK;
   close OUTPUT;
   $average_gene_length = ceil($length / $nr_of_complete);

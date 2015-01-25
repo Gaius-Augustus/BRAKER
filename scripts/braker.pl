@@ -21,7 +21,7 @@
 
 # ----------------------------------------------------------------------
 # | sub check_upfront              | autoAug.pl           | 07.01.2015 |
-# | sub check_fasta_headers        | autoAug.pl           | 07.02.2015 |
+# | sub check_fasta_headers        | autoAug.pl           | 07.01.2015 |
 # | helpMod qw(find chec...)       | helpMod.pm           | ??.??.???? |
 # | first outline for braker       | Simone Lange         | 05.09.2014 |
 # | uptodate integrated            |                      | 10.09.2014 |
@@ -38,8 +38,14 @@
 # | add --optCfgfile, --fungus     | Simone Lange         | 10.11.2014 |
 # | option, PATH also as variable  |                      |            |
 # | fork AUGUSTUS prediction       |                      |            |
-# | add parts from autoAugTrain.pl | Simone Lange         | 12.12.2014 |
-# | parts from sub train           | autoAugTrain.pl      | 07.02.2015 |
+# | add parts from autoAugTrain.pl |                      | 12.12.2014 |
+# | parts from sub train           | autoAugTrain.pl      | 07.01.2015 |
+# | made BRAKER1 compatible with   | Simone Lange         | 12.01.2015 |
+# | GeneMark-ET version 4.21       |                      |            |
+# | add softmasking option         |                      | 22.01.2015 |
+# | add BAM header check and       |                      | 23.01.2015 |
+# | optionally create corrected    |                      | 24.01.2015 |
+# | BAM file with samtools         |                      |            |
 # | TODO: add more options         |                      |            |
 # ----------------------------------------------------------------------
 
@@ -54,8 +60,8 @@ use Parallel::ForkManager;
 
 use Cwd;
 
-use File::Spec::Functions qw(rel2abs); # $abs_path = File::Spec->rel2abs($path)
-use File::Basename qw(dirname basename); # ?
+use File::Spec::Functions qw(rel2abs);
+use File::Basename qw(dirname basename);
 
 BEGIN{
   $0 = rel2abs($0);
@@ -63,7 +69,7 @@ BEGIN{
 } 
 use lib $directory;
 use helpMod qw(find checkFile formatDetector relToAbs setParInConfig uptodate);
-use Term::ANSIColor qw(:constants); #?
+use Term::ANSIColor qw(:constants);
 
 use strict;
 use warnings;
@@ -91,13 +97,14 @@ OPTIONS
                                          hints (default is true).
     --AUGUSTUS_CONFIG_PATH=/path/        Set path to AUGUSTUS (if not specified as environment variable).
       to/augustus                        Has higher priority than environment variable.
+    --BAMTOOLS_PATH=/path/to/            Set path to bamtools (if not specified as environment 
+      bamtools                           variable). Has higher priority than the environment variable.
     --CPU                                Specifies the maximum number of CPUs that can be used during 
                                          computation
     --fungus                             GeneMark-ET option: run algorithm with branch point model (most 
                                          useful for fungal genomes)
     --GENEMARK_PATH=/path/to/            Set path to GeneMark-ET (if not specified as environment 
-      gmes_petap.pl                      variable).
-                                         Has higher priority than environment variable.
+      gmes_petap.pl                      variable). Has higher priority than environment variable.
     --hints=hints.gff                    Alternatively to calling braker.pl with a bam file, it is 
                                          possible to call it with a file that contains introns extracted 
                                          from RNA-Seq data in gff format. This flag also allows the usage
@@ -108,11 +115,15 @@ OPTIONS
                                          (including the source "E" for intron hints from RNA-Seq).
     --optCfgFile=ppx.cfg                 Optional custom config file for AUGUSTUS (see --hints).
     --overwrite                          Overwrite existing files (except for species parameter files)
+    --SAMTOOLS_PATH=/path/to/            Optionally set path to samtools (if not specified as environment 
+      samtools                           variable) to fix BAM files automatically, if necessary. Has higher     
+                                         priority than environment variable.
     --skipGeneMark-ET                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
                                          different source) 
     --skipOptimize                       Skip optimize parameter step (not recommended).
+    --softmasking
     --species=sname                      Species name. Existing species will not be overwritten. 
-                                         Uses Sp_1 etc., if no species is assigned
+                                         Uses Sp_1 etc., if no species is assigned                          
     --useexisting                        Use the present config and parameter files if they exist for 
                                          'species'
     --UTR                                Predict untranslated regions. Default is off.
@@ -129,12 +140,14 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 1.2; # braker.pl version number
+my $version = 1.3;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
 my $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
 my @bam;                              # bam file names
+my $bamtools_path;                    # path to bamtools executable, higher priority than $BAMTOOLS_BIN_PATH on system
+my $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'};
 my $bool_species = "true";            # false, if $species contains forbidden words (e.g. chmod)
 my $cmdString;                        # to store shell commands
 my $CPU = 1;                          # number of CPUs that can be used
@@ -162,11 +175,14 @@ my $otherfilesDir;                    # directory for other files besides GeneMa
 my $overwrite = 0;                    # overwrite existing files (except for species parameter files)
 my $parameterDir;                     # directory of parameter files for species
 my $perlCmdString;                    # stores perl commands
-my $printVersion = 0;
+my $printVersion = 0;                 # print version number, if set
+my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'};
+my $SAMTOOLS_PATH_OP;                 # path to samtools executable, higher priority than $SAMTOOLS_PATH on system
 my $scriptPath=dirname($0);           # path of directory where this script is located
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source) 
 my $skipoptimize = 0;                 # skip optimize parameter step
 my $species;                          # species name
+my $soft_mask = 0;                    # soft-masked flag
 my $stdoutfile;                       # stores current standard output
 my $string;                           # string for storing script path
 my $testsize;                         # AUGUSTUS training parameter: number of genes in a file that is
@@ -175,11 +191,10 @@ my $testsize;                         # AUGUSTUS training parameter: number of g
                                       # genes, all genes are used to measure accuracy. Decreasing this
                                       # parameter speeds up braker.pl but decreases prediction accuracy.
                                       # At least 300 genes are required for training AUGUSTUS.
-my $useexisting = 0;                  # start with and change existing config, parameter and result files
+my $useexisting = 0;                  # use existing species config and parameter files, no changes on those files
 my $UTR = "off";
 my $workDir;                          # in the working directory results and temporary files are stored
-my $bam;
-my $hints;
+
 
 # list of forbidden words for species name
 @forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while"); 
@@ -193,6 +208,7 @@ if(@ARGV==0){
 GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'AUGUSTUS_CONFIG_PATH=s'        => \$augustus_cfg_path,
             'bam=s'                         => \@bam,
+            'BAMTOOLS_PATH=s'               => \$bamtools_path,
             'CPU=i'                         => \$CPU,
             'fungus!'                       => \$fungus,
             'GENEMARK_PATH=s'               => \$GMET_path,
@@ -200,9 +216,11 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'hints=s'                       => \@hints,
             'optCfgFile=s'                  => \$optCfgFile,
             'overwrite!'                    => \$overwrite,
+            'SAMTOOLS_PATH=s'               => \$SAMTOOLS_PATH_OP,
             'skipGeneMark-ET!'              => \$skipGeneMarkET,
             'skipOptimize!'                 => \$skipoptimize,
             'species=s'                     => \$species,
+            'softmasking!'                  => \$soft_mask,
             'testsize=i'                    => \$testsize,
             'useexisting!'                  => \$useexisting,
             'UTR=s'                         => \$UTR,
@@ -243,15 +261,36 @@ if(! -w $workDir){
 
 # set path to augustus config folder
 if(defined($augustus_cfg_path)){
+  my $last_char = substr($augustus_cfg_path, -1);
+  if($last_char eq "\/"){
+    chop($augustus_cfg_path);
+  }
  $AUGUSTUS_CONFIG_PATH = $augustus_cfg_path;
 }
 
 
 # set path to GeneMark-ETs gmes_petap.pl script
 if(defined($GMET_path)){
+  my $last_char = substr($GMET_path, -1);
+  if($last_char eq "\/"){
+    chop($GMET_path);
+  }
   $GENEMARK_PATH = $GMET_path;
 }
 
+# set path to bamtools
+if(defined($bamtools_path)){
+  my $last_char = substr($bamtools_path, -1);
+  if($last_char eq "\/"){
+    chop($bamtools_path);
+  }
+  $BAMTOOLS_BIN_PATH = $bamtools_path;
+}
+
+# set path to samtools (optional)
+if(defined($SAMTOOLS_PATH_OP)){
+  $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
+}
 
 # check upfront whether any common problems will occur later # see autoAug.pl
 print STDOUT "NEXT STEP: check files and settings\n"; 
@@ -443,8 +482,9 @@ sub make_hints{
     for(my $i=0; $i<scalar(@bam); $i++){
       $errorfile = "$errorfilesDir/bam2hints.$i.stderr";
       if(!uptodate([$bam[$i]],[$hintsfile])  || $overwrite){
+        $bam[$i] = check_bam_headers($bam[$i]);
         print STDOUT "NEXT STEP: make hints from BAM file $bam[$i]\n";
-        $augpath = "$AUGUSTUS_CONFIG_PATH/../auxprogs/bam2hints/bam2hints";
+        $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
         $cmdString = "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
         print LOG "\# ".localtime.": make hints from BAM file $bam[$i]\n";
         print LOG "$cmdString\n\n";
@@ -529,6 +569,9 @@ sub GeneMark_ET{
       $perlCmdString = "perl $string --sequence=$genome --ET=$hintsfile --cores=$CPU";
       if($fungus){
         $perlCmdString .= " --fungus";
+      }
+      if($soft_mask){
+        $perlCmdString .= " --soft_mask";
       }
       $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
       print LOG "\# ".localtime.": execute GeneMark-ET\n";
@@ -897,6 +940,9 @@ sub augustus{
       if(defined($optCfgFile)){
         $cmdString .= " --optCfgFile=$optCfgFile"; 
       }
+      if($soft_mask){
+        $cmdString .= " --softmasking=on";
+      }
       $cmdString .= " $genome_files[$i] 1>$stdoutfile 2>$errorfile";
       print LOG "\# ".localtime.": run AUGUSTUS for file $genome_files[$i]\n";
       print LOG "$cmdString\n\n";
@@ -910,7 +956,11 @@ sub augustus{
     if($CPU > 1){
       print STDOUT "NEXT STEP: concatenate and join AUGUSTUS output files\n";
       $string = find("join_aug_pred.pl");
-      $cmdString = "cat $otherfilesDir/augustus.*gff | $string >$otherfilesDir/augustus.gff";
+      my $cat_string = "";
+      for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
+        $cat_string .= "$otherfilesDir/augustus.$idx.gff "
+      }
+      $cmdString = "cat $cat_string | $string >$otherfilesDir/augustus.gff";
       print LOG "\# ".localtime.": concatenate and join AUGUSTUS output files\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -957,12 +1007,17 @@ sub clean_up{
 sub check_upfront{ # see autoAug.pl
   my $pmodule;
   if(!$ENV{'AUGUSTUS_CONFIG_PATH'} && !defined($augustus_cfg_path)){ # see autoAug.pl
-    print STDERR "ERROR: The environment variable AUGUSTUS_CONFIG_PATH is not defined. Please export an environment variable for AUGUSTUS or use --augustus-cfg-path=path/to/augustus.\n"; # see autoAug.pl
+    print STDERR "ERROR: The environment variable AUGUSTUS_CONFIG_PATH is not defined. Please export an environment variable for AUGUSTUS or use --AUGUSTUS_CONFIG_PATH=path/to/augustus.\n"; # see autoAug.pl
     exit(1);
   }
   
-  if(!$ENV{'GENEMARK_PATH'}){
-    print STDERR "ERROR: The environment variable GENEMARK_PATH to the 'gmes_petap.pl' script is not defined. Please export an environment variable or use --genemark-ET-path=path/to/gemes_petap.pl.\n"; 
+  if(!$ENV{'GENEMARK_PATH'} && !defined($GMET_path)){
+    print STDERR "ERROR: The environment variable GENEMARK_PATH to the 'gmes_petap.pl' script is not defined. Please export an environment variable or use --GENEMARK_PATH=path/to/gmes_petap.pl.\n"; 
+    exit(1);
+  }
+
+  if(!$ENV{'BAMTOOLS_PATH'} && !defined($bamtools_path)){ # see autoAug.pl
+    print STDERR "ERROR: The environment variable BAMTOOLS_PATH is not defined. Please export an environment variable for bamtools or use --BAMTOOLS_PATH=path/to/bamtools.\n"; # see autoAug.pl
     exit(1);
   }
 
@@ -974,6 +1029,11 @@ sub check_upfront{ # see autoAug.pl
       print STDERR "ERROR: $augpath not executable on this machine.\n";   # see autoAug.pl
     }
     exit(1);
+  }
+  
+  if(system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0){
+    print STDERR "Error: bamtools not installed. Please install it first.\n";
+    exit (1);
   }
 
   my $etrainpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
@@ -1093,7 +1153,7 @@ sub check_fasta_headers{            # see autoAug.pl
   my $prot = 0;                     # see simplifyFastaHeaders.pl
   my $dna = 0;                      # see simplifyFastaHeaders.pl
   my $mapFile = "$otherfilesDir/header.map";
-  my $stdStr = "This may later on cause problems! The pipeline will create a new file without spaces and a header.map file to look up the old and new headers. This message will be suppressed from now on!\n";
+  my $stdStr = "This may later on cause problems! The pipeline will create a new file without spaces or \"|\" characters and a header.map file to look up the old and new headers. This message will be suppressed from now on!\n";
   if(!uptodate([$genome],["$otherfilesDir/genome.fa"]) || $overwrite){
     print STDOUT "NEXT STEP: check fasta headers\n";
     open(FASTA, "<", $fastaFile) or die("Could not open fasta file $fastaFile!\n");
@@ -1136,6 +1196,7 @@ sub check_fasta_headers{            # see autoAug.pl
         my $line = substr($_,1);
         # remove whitespaces, if necessary
         my @fasta_line = split(/\s/, $line);
+        @fasta_line = split(/\|/, $fasta_line[0]);
         print OUTPUT ">$fasta_line[0]\n";   # see simplifyFastaHeaders.pl
         print MAP ">$fasta_line[0]\t$_\n";  # see simplifyFastaHeaders.pl  
       }else{
@@ -1169,4 +1230,139 @@ sub check_fasta_headers{            # see autoAug.pl
   } 
   $genome = "$otherfilesDir/genome.fa";
 }
+
+# check bam headers
+sub check_bam_headers{
+  
+  my $bamFile = shift;
+  my $someThingWrongWithHeader = 0; # see autoAug.pl
+  my $spaces = 0;                   # see autoAug.pl
+  my $orSign = 0;                   # see autoAug.pl
+  my %map_hash;
+  my $mapFile = "$otherfilesDir/bam_header.map";
+  my $stdStr = "This may later on cause problems! The pipeline will create a new file without spaces or \"|\" characters and a bam_header.map file to look up the old and new headers, if samtools is working on your system. This message will be suppressed from now on!\n";
+
+  @_ = split(/\//, $bamFile); 
+  @_ = split(/\./, $_[-1]);
+  my $samHeaderFile = "$otherfilesDir/".$_[0]."_header.sam";
+  my $samHeaderFile_new = "$otherfilesDir/".$_[0]."_new_header.sam";
+  
+  if(!uptodate([$bamFile],["$otherfilesDir/$bamFile"]) || $overwrite){
+    # extract header information 
+    print STDOUT "NEXT STEP: create SAM header file $samHeaderFile.\n";
+    $cmdString = "$BAMTOOLS_BIN_PATH/bamtools header -in $bamFile > $samHeaderFile";
+    print LOG "\# ".localtime.": create header file $samHeaderFile\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString")==0 or die("failed to execute: $!\n");
+    print STDOUT "SAM file $samHeaderFile complete.\n";
+
+    print STDOUT "NEXT STEP: check BAM headers\n";
+    open(SAM, "<", $samHeaderFile) or die("Could not open SAM file $samHeaderFile!\n");
+    open(OUTPUT, ">", "$samHeaderFile_new") or die("Could not open SAM file $samHeaderFile_new!\n");
+    open(MAP, ">", $mapFile) or die("Could not open map file $mapFile.\n");
+    while(<SAM>){
+      chomp;
+      # only check sequence entries
+      if($_ =~ m/^\@SQ/){
+        my @seq_line = split(/\t/, $_);
+        my $seq_end = $seq_line[-1];
+
+        @seq_line = split(/\:/, $seq_line[1]);
+        my $old_name = $seq_line[1];
+        # remove whitespaces, if necessary
+        @seq_line = split(/\s/, $seq_line[1]);
+
+        if(scalar(@seq_line) > 1){
+          if($spaces == 0){
+            print STDOUT "WARNING: Detected whitespace in BAM header of file $bamFile. ".$stdStr; # see autoAug.pl
+            $spaces++;        # see autoAug.pl
+          }
+        }
+        @seq_line = split(/\|/, $seq_line[0]);
+        $map_hash{$old_name} = $seq_line[0];
+        $seq_line[0] = "\@SQ\tSN:$seq_line[0]\t$seq_end";
+        if(scalar(@seq_line) > 1){
+          if($orSign == 0){   # see autoAug.pl
+            print STDOUT "WARNING: Detected | in header of file $bamFile. ".$stdStr; # see autoAug.pl
+            $orSign++;        # see autoAug.pl
+          }
+        }
+        if($seq_line[0] !~ m/[>a-zA-Z0-9]/){
+          if($someThingWrongWithHeader==0){   # see autoAug.pl
+            print STDOUT "WARNING: BAM headers in file $bamFile seem to contain non-letter and non-number characters. That means they may contain some kind of special character. ".$stdStr; # see autoAug.pl
+            $someThingWrongWithHeader++;      # see autoAug.pl
+          }
+        }
+
+        print OUTPUT "$seq_line[0]\n";   # see simplifyFastaHeaders.pl
+        print MAP "$map_hash{$old_name}\t$old_name\n";  # see simplifyFastaHeaders.pl
+      }elsif(eof){
+        print OUTPUT "$_";
+      }else{
+        print OUTPUT "$_\n";
+      }
+    }
+    close(SAM) or die("Could not close header file $samHeaderFile!\n");
+    close(OUTPUT) or die("Could not close output SAM file $samHeaderFile_new!\n");
+    close(MAP) or die("Could not close map file $mapFile!\n");
+    print STDOUT "headers check for BAM file $bamFile complete.\n";
+    unlink($samHeaderFile);
+    # something wrong with header part
+    if($spaces != 0 || $orSign != 0 || $someThingWrongWithHeader != 0){
+      # no samtools installed. stop here
+      if(system("which samtools > /dev/null") != 0){
+        print STDOUT "'samtools' not installed. BAM file cannot be fixed automatically.\n";
+        print STDERR "BAM file $bamFile contains spaces, \"|\" or some other kind of special characters.\n";
+        exit(1);
+      # samtools installed. try to correct BAM file
+      }else{
+        if(!$ENV{'SAMTOOLS_PATH'} && !defined($SAMTOOLS_PATH_OP)){
+          print STDOUT "WARNING: The environment variable SAMTOOLS_PATH is not defined. Please export an environment variable for samtools or use --SAMTOOLS_PATH=path/to/samtools.\n"; # see autoAug.pl
+          print STDOUT "The programme will try to use 'samtools' to start samtools, which may not work on your system.\n"; # see autoAug.pl
+          $SAMTOOLS_PATH = "samtools";
+        }
+        print STDOUT "NEXT STEP: convert BAM file to SAM format.\n";
+        my $samFile = "$otherfilesDir/".$_[0].".sam";
+        my $samFile_new = "$otherfilesDir/".$_[0]."_new.sam";
+        $cmdString = "$SAMTOOLS_PATH view $bamFile > $samFile";
+        print LOG "\# ".localtime.": convert BAM to SAM file $samFile\n";
+        print LOG "$cmdString\n\n";
+        system("$cmdString")==0 or die("failed to execute: $!\n");
+        print STDOUT "SAM file $samFile created.\n";
+        open(SAM, "<", $samFile) or die("Could not open SAM file $samFile!\n");
+        open(OUTPUT, ">", "$samFile_new") or die("Could not open SAM file $samFile_new!\n");
+        while(<SAM>){
+          chomp;
+          my @line = split(/\t/, $_);
+          $line[2] = $map_hash{$line[2]};
+          if(eof){
+            print OUTPUT join("\t", @line);
+          }else{
+            print OUTPUT join("\t", @line)."\n";
+          }
+        }
+        close(SAM) or die("Could not close SAM file $samFile!\n");
+        close(OUTPUT) or die("Could not close output SAM file $samFile_new!\n");
+        print STDOUT "NEXT STEP: concatenate new header and SAM file.\n";
+        $cmdString = "cat $samHeaderFile_new $samFile_new > $samFile";
+        print LOG "\# ".localtime.": concatenate new header and SAM file\n";
+        print LOG "$cmdString\n\n";
+        system("$cmdString")==0 or die("failed to execute: $!\n");
+        print STDOUT "new SAM file created.\n";
+        unlink($samFile_new);
+
+        print STDOUT "NEXT STEP: convert new SAM file to BAM format.\n";
+        $cmdString = "$SAMTOOLS_PATH view -bSh $samFile > $otherfilesDir/".$_[0].".bam";
+        print LOG "\# ".localtime.": convert new SAM file to BAM format\n";
+        print LOG "$cmdString\n\n";
+        system("$cmdString")==0 or die("failed to execute: $!\n");
+        print STDOUT "new BAM file created.\n";
+        unlink($samFile);
+        $bamFile = "$otherfilesDir/".$_[0].".bam";
+      }
+    }
+    unlink($samHeaderFile_new);
+  } 
+  return $bamFile;
+} 
 
