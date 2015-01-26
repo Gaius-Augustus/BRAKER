@@ -22,7 +22,7 @@
 # ----------------------------------------------------------------------
 # | sub check_upfront              | autoAug.pl           | 07.01.2015 |
 # | sub check_fasta_headers        | autoAug.pl           | 07.01.2015 |
-# | helpMod qw(find chec...)       | helpMod.pm           | ??.??.???? |
+# | helpMod qw(find chec...)       | helpMod.pm           |            |
 # | first outline for braker       | Simone Lange         | 05.09.2014 |
 # | uptodate integrated            |                      | 10.09.2014 |
 # | print stdout,LOG output        |                      | 10.09.2014 |
@@ -96,15 +96,15 @@ OPTIONS
     --alternatives-from-evidence=true    Output alternative transcripts based on explicit evidence from 
                                          hints (default is true).
     --AUGUSTUS_CONFIG_PATH=/path/        Set path to AUGUSTUS (if not specified as environment variable).
-      to/augustus                        Has higher priority than environment variable.
+      to/augustus/                       Has higher priority than environment variable.
     --BAMTOOLS_PATH=/path/to/            Set path to bamtools (if not specified as environment 
-      bamtools                           variable). Has higher priority than the environment variable.
+      bamtools/                          variable). Has higher priority than the environment variable.
     --CPU                                Specifies the maximum number of CPUs that can be used during 
                                          computation
     --fungus                             GeneMark-ET option: run algorithm with branch point model (most 
                                          useful for fungal genomes)
     --GENEMARK_PATH=/path/to/            Set path to GeneMark-ET (if not specified as environment 
-      gmes_petap.pl                      variable). Has higher priority than environment variable.
+      gmes_petap.pl/                     variable). Has higher priority than environment variable.
     --hints=hints.gff                    Alternatively to calling braker.pl with a bam file, it is 
                                          possible to call it with a file that contains introns extracted 
                                          from RNA-Seq data in gff format. This flag also allows the usage
@@ -116,7 +116,7 @@ OPTIONS
     --optCfgFile=ppx.cfg                 Optional custom config file for AUGUSTUS (see --hints).
     --overwrite                          Overwrite existing files (except for species parameter files)
     --SAMTOOLS_PATH=/path/to/            Optionally set path to samtools (if not specified as environment 
-      samtools                           variable) to fix BAM files automatically, if necessary. Has higher     
+      samtools/                          variable) to fix BAM files automatically, if necessary. Has higher     
                                          priority than environment variable.
     --skipGeneMark-ET                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
                                          different source) 
