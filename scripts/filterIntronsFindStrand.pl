@@ -44,9 +44,9 @@ filterIntronsFindStrand.pl genome.fa introns.gff [OPTIONS] > introns.s.f.gff
     
 OPTIONS
 
-    --help                          output this help message
-    --allowed=gtag,gcaag,atac       allowed acceptor and donor splice site types
-    --score                         set score to 'mult' entry or '1', if the last column does not contain a 'mult' entry
+    --help                          Print this help message
+    --allowed=gtag,gcaag,atac       Allowed acceptor and donor splice site types
+    --score                         Set score to 'mult' entry or '1', if the last column does not contain a 'mult' entry
     --genome=genome.fa              see above
     --introns=introns.gff           see above
                                     
@@ -168,9 +168,9 @@ sub findStrand{
     }
     return 0;
   }else{
-    print STDERR "'$seqname' does not match any sequence in the fasta file. Maybe the two files do not belong together.\n";
-    print STDERR "The programme terminates here.\n";
-    exit(1)
+    print STDERR "WARNING: '$seqname' does not match any sequence in the fasta file. Maybe the two files do not belong together.\n";
+  #  print STDERR "The programme terminates here.\n";
+  #  exit(1)
   }
 }
 

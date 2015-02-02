@@ -583,13 +583,13 @@ sub GeneMark_ET{
 
   # convert GeneMark-ET output to gtf format with doublequotes
 
-  if(!uptodate(["$genemarkDir/genemark.gtf"],["$genemarkDir/genemark.c.gtf"])  || $overwrite){
+  if(!uptodate(["$genemarkDir/genemark.gtf"],["$genemarkDir/genemark.c.gtf","$genemarkDir/genemark.f.good.gtf", "$genemarkDir/genemark.average_gene_length.out"])  || $overwrite){
     print STDOUT "NEXT STEP: convert GeneMark-ET to real gtf format\n"; 
 
     $string=find("filterGenemark.pl");
     $errorfile = "$errorfilesDir/filterGenemark.stderr";
     $stdoutfile = "$otherfilesDir/filterGenemark.stdout";
-    $perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --output=$genemarkDir/genemark.c.gtf 1>$stdoutfile 2>$errorfile";
+    $perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
     print LOG "\# ".localtime.": convert GeneMark-ET output to real gtf format\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");

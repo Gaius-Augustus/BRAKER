@@ -55,10 +55,10 @@ filterGenemark.pl [OPTIONS] genemark.gtf introns.gff
     
 OPTIONS
 
-    --help                          output this help message
-    --introns=introns.gff           corresponding intron file in gff format
-    --genemark=genemark.gtf         file in gtf format
-    --output=newfile.gtf            specifies output file name. Default is 'genemark-input_file_name.c.gtf' 
+    --help                          Print this help message
+    --introns=introns.gff           Corresponding intron file in gff format
+    --genemark=genemark.gtf         File in gtf format
+    --output=newfile.gtf            Specifies output file name. Default is 'genemark-input_file_name.c.gtf' 
                                     and 'genemark-input_file_name.f.good.gtf'
                                     and 'genemark-input_file_name.f.bad.gtf' for filtered genes included and not included in intron file respectively
 
@@ -81,6 +81,7 @@ my $bool_good = "true";     # if true gene is good, if false, gene is bad
 my $bool_intron = "false";  # true, if currently between exons, false otherwise
 my $bool_start = "false";   # true, gene has start codon
 my @CDS;                    # contains coding region lines
+my $file_name;              # file name
 my $gene_start;             # for length determination
 my $ID_new;                 # new ID with doublequotes for each gene
 my @ID_old;                 # old ID without quotes
@@ -123,6 +124,13 @@ if(!defined($introns)){
   $introns = $ARGV[1];
 }
 
+# set $file_name
+if(!defined($output_file)){
+  $file_name = substr($genemark,0,-4);
+}else{
+  $file_name = substr($output_file,0,-4);
+}
+
 # check whether the genemark file exists
 if(!defined($genemark)){
   print "No genemark file specified. Please set a file with --genemark=genemark-ET.gtf.\n";
@@ -153,8 +161,7 @@ print STDOUT "Number of complete genes: $nr_of_complete\n";
 print STDOUT "Number of good genes: $nr_of_good\n";
 print STDOUT "Number of one-exon-genes: $one_exon_gene_count\n";
 print STDOUT "Number of bad genes: $nr_of_bad\n";
-@_ = split(/\./, $genemark);
-open (GENELENGTH, ">".$_[0].".average_gene_length.out") or die "Cannot open file: $_[0].average_gene_length.out\n";
+open (GENELENGTH, ">genemark.average_gene_length.out") or die "Cannot open file: $_[0].average_gene_length.out\n";
 print GENELENGTH "$average_gene_length\n";
 close GENELENGTH;
 
@@ -177,19 +184,15 @@ sub introns{
 # convert genemark file into regular gtf file with double quotes around IDs
 # and split genes into good and bad ones
 sub convert_and_filter{
-  my @file_name;              # array for splitting file name
   my $exon;                   # current exon
   my $intron_start;
   my $intron_end;
   my $prev_ID = "no_ID";
   if(!defined($output_file)){
-    @file_name = split(/\./, $genemark);
-    $output_file = "$file_name[0].c.gtf";
-  }else{
-    @file_name = split(/\./, $output_file);
+    $output_file = "$file_name.c.gtf";
   }
-  my $output_file_good = "$file_name[0].f.good.gtf";
-  my $output_file_bad  = "$file_name[0].f.bad.gtf";
+  my $output_file_good = "$file_name.f.good.gtf";
+  my $output_file_bad  = "$file_name.f.bad.gtf";
 
   open (GOOD, ">".$output_file_good) or die "Cannot open file: $output_file_good\n";
   open (BAD, ">".$output_file_bad) or die "Cannot open file: $output_file_bad\n";
@@ -269,8 +272,7 @@ sub convert_and_filter{
 # convert genemark file into regular gtf file with double quotes around IDs
 sub convert{
   if(!defined($output_file)){
-    my @file_name = split(/\./, $genemark);
-    $output_file = "$file_name[0].c.gtf";
+    $output_file = "$file_name.c.gtf";
   }
 
   open (OUTPUT, ">".$output_file) or die "Cannot open file: $output_file\n";
