@@ -1,4 +1,5 @@
 \documentclass{bioinfo}
+\usepackage{hyperref}
 \copyrightyear{2015}
 \pubyear{2015}
 
@@ -22,26 +23,33 @@ $^{5}$Joint Georgia Tech and Emory University Wallace H Coulter Department of Bi
 \begin{abstract}
 
 \section{Motivation:}
-Text Text Text  Text Text Text Text Text Text Text Text
-Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text.
+Many genome sequencing projects are accompanied by transcriptome sequencing. GeneMark-ET is a gene prediction tool that incorporates unassembled RNA-Seq reads into unsupervised training and subsequently generates \textit{ab initio} gene predictions. AUGUSTUS is a gene finder that usually requires supervised training and uses information form unassembled RNA-Seq reads in the prediction step. 
 
 \section{Results:}
-Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text
+We present BRAKER1, a pipeline for unsupervised RNA-Seq-based genome annotation that combines the advantages of GeneMark-ET and AUGUSTUS. BRAKER1 requires an RNA-Seq read alignment file and a genome file as input. First, GeneMark-ET performs iternative training and generates initial gene structures. Second, AUGUSTUS uses predicted genes for training and then integrates RNA-Seq read information into final gene predictions. In our experiments, we observed that BRAKER1 was more accurate than MAKER2 when it is using RNA-Seq as sole source for training and prediction. BRAKER1 does not require pre-trained parameters or a separate training step.
 
 \section{Availability:}
-Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text Text Text Text  Text
+BRAKER1 is available for download at \url{http://bioinf.uni-greifswald.de/downloads/} and \url{http://exon.gatech.edu/.}.
 
-\section{Contact:} \href{name@bio.com}{name@bio.com}
+\section{Contact:} \href{katharina.hoff@uni-greifswald.de}{katharina.hoff@uni-greifswald.de}
 \end{abstract}
 
 \section{Introduction}
 
 
+
 \begin{methods}
-\section{Methods}
+\section{Pipeline Description}
+
+BRAKER1 is implemented in Perl and requires two input files: an RNA-Seq alignment file in \texttt{bam}-format, and a corresponding genome file in \texttt{fasta}-format. Spliced alignment information is extracted from the RNA-Seq file and stored in \texttt{gff}-format. GeneMark-ET uses the genome file and  the spliced alignment \texttt{gff}-file for RNA-Seq supported unsupervised training. After training, GeneMark-ET creates an \textit{ab initio} gene set. Those gene structures that have support by RNA-Seq alignments in all introns are selected for automated training of AUGUSTUS. After training, AUGUSTUS predicts genes in the intput genome file using spliced alignment information from RNA-Seq as extrinsic evidence. The pipeline is illustrated in figure \ref{pipeline}.
+
+\begin{figure}[!tpb]%figure1
+\centerline{\includegraphics[width=\linewidth]{figs/braker_graph2.png}}
+\caption{Schematic view of the BRAKER1 pipeline.}\label{pipeline}
+\end{figure}
 
 
-
+\section{Test Data}
 
 
 % \begin{table}[!t]
@@ -57,10 +65,7 @@ Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Tex
 
 \end{methods}
 
-% \begin{figure}[!tpb]%figure1
-% %\centerline{\includegraphics{fig01.eps}}
-% \caption{Caption, caption.}\label{fig:01}
-% \end{figure}
+
 % 
 % \begin{figure}[!tpb]%figure2
 % %\centerline{\includegraphics{fig02.eps}}
@@ -104,34 +109,14 @@ We would like to thank Mark Yandell and Carson Holt for valuable advice on runni
 
 
 \begin{thebibliography}{}
-\bibitem[Bofelli {\it et~al}., 2000]{Boffelli03} Bofelli,F., Name2, Name3 (2003) Article title, {\it Journal Name}, {\bf 199}, 133-154.
+\bibitem[Steijger {\it et~al}., 2013]{RGASP} Steijger,T. and Abril,J.F. and Engstr\"{o}m,P.G. and Kokocinski,F. and The RGASP Consortium, Hubard,T.J. and Guigo,R. and Harrow, J. and Bertone, P. (2013) Assessment of transcript reconstruction methods for
+ RNA-seq, {\it Nature Methods}, doi:10.1038/nmeth.271.
 
-\bibitem[Bag {\it et~al}., 2001]{Bag01} Bag,M., Name2, Name3 (2001) Article title, {\it Journal Name}, {\bf 99}, 33-54.
+\bibitem[Lomsadze {\it et~al}., 2014]{GeneMark-ET} Lomsadze, A. and Burns, P.D. and Borodovsky, M. (2014) Integration of mapped RNA-Seq reads into automatic training of eukaryotic gene finding algorithm, {\it Nucleic Acids Research}, doi:10.1093/nar/gku557.
 
-\bibitem[Yoo \textit{et~al}., 2003]{Yoo03}
-Yoo,M.S. \textit{et~al}. (2003) Oxidative stress regulated genes
-in nigral dopaminergic neurnol cell: correlation with the known
-pathology in Parkinson's disease. \textit{Brain Res. Mol. Brain
-Res.}, \textbf{110}(Suppl. 1), 76--84.
+\bibitem[Stanke \textit{et~al}., 2008]{AUGUSTUS}
+Stanke, M. and Diekhans, M. and Baertsch, R. and Haussler, D. (2008) Using native and syntenically mapped cDNA alignments to improve de novo gene finding, \textit{Bioinformatics}, \textbf{24}(5), 637.
 
-\bibitem[Lehmann, 1986]{Leh86}
-Lehmann,E.L. (1986) Chapter title. \textit{Book Title}. Vol.~1, 2nd edn. Springer-Verlag, New York.
-
-\bibitem[Crenshaw and Jones, 2003]{Cre03}
-Crenshaw, B.,III, and Jones, W.B.,Jr (2003) The future of clinical
-cancer management: one tumor, one chip. \textit{Bioinformatics},
-doi:10.1093/bioinformatics/btn000.
-
-\bibitem[Auhtor \textit{et~al}. (2000)]{Aut00}
-Auhtor,A.B. \textit{et~al}. (2000) Chapter title. In Smith, A.C.
-(ed.), \textit{Book Title}, 2nd edn. Publisher, Location, Vol. 1, pp.
-???--???.
-
-\bibitem[Bardet, 1920]{Bar20}
-Bardet, G. (1920) Sur un syndrome d'obesite infantile avec
-polydactylie et retinite pigmentaire (contribution a l'etude des
-formes cliniques de l'obesite hypophysaire). PhD Thesis, name of
-institution, Paris, France.
 
 \end{thebibliography}
 \end{document}
