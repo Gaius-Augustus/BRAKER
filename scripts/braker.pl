@@ -625,6 +625,12 @@ sub new_species{
     print LOG "\# ".localtime.": create extrinsic file\n";
     print LOG "cp $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg $AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg\n\n"; 
     print STDOUT "species $species created.\n";
+
+    open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
+    @_ = split(/\t/,<GENELENGTH>);
+    my $average_nr_introns = $_[1];
+    close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
+
     open (EXTRINSIC, $extrinsic) or die "Cannot open file: $extrinsic\n";
     open (OUT, ">".$extrinsic_cp) or die "Cannot open file: $extrinsic_cp\n";
     my $GENERAL = "false";
@@ -692,7 +698,8 @@ sub training{
   # get average gene length for flanking region
   print STDOUT "NEXT STEP: get flanking DNA size\n"; 
   open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
-  my $average_length = <GENELENGTH>;
+  @_ = split(/\t/,<GENELENGTH>);
+  my $average_length = $_[0];
   close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
   $flanking_DNA = min((floor($average_length/2), 10000));
   # create genbank file from fasta input and GeneMark-ET output
@@ -736,6 +743,10 @@ sub training{
     $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
     if($gb_good_size < 300){
       print STDOUT "WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
+    }
+    if($gb_good_size == 0){
+      print STDERR "ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
+      exit(1);
     }
     if($gb_good_size > 1000){
       $testsize = 1000;
@@ -900,7 +911,7 @@ sub training{
 
 
 
-         ####################### run AUGUSTUS and convert its output #########################
+         ####################### run AUGUSTUS  #########################
 # run AUGUSTUS for given species with given options
 sub augustus{
   $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
@@ -936,7 +947,7 @@ sub augustus{
       my $idx = $i + 1;
       $errorfile = "$errorfilesDir/augustus.$idx.stderr";
       $stdoutfile = "$otherfilesDir/augustus.$idx.gff";
-      $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsic --hintsfile=$hintsfile --UTR=$UTR";
+      $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsic --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
       if(defined($optCfgFile)){
         $cmdString .= " --optCfgFile=$optCfgFile"; 
       }
