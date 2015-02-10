@@ -77,6 +77,8 @@ ENDUSAGE
 
 my ($genemark, $introns, $output_file, $help);
 my $average_gene_length;    # for length determination
+my $average_nr_introns = 0; # average number of introns (only complete genes)
+my $bool_complete = "false";# true if gene is complete, i.e. genes with start and stop codon
 my $bool_good = "true";     # if true gene is good, if false, gene is bad
 my $bool_intron = "false";  # true, if currently between exons, false otherwise
 my $bool_start = "false";   # true, gene has start codon
@@ -150,25 +152,25 @@ if(defined($introns)){
     exit(1);
   }else{
     introns();
-    convert_and_filter();
   }
-}else{
-  convert();
 }
+convert_and_filter();
+
 print STDOUT "Average gene length: $average_gene_length\n";
+print STDOUT "Average number of introns: $average_nr_introns\n";
 print STDOUT "Number of genes: $ID_old[0]\n";
 print STDOUT "Number of complete genes: $nr_of_complete\n";
 print STDOUT "Number of good genes: $nr_of_good\n";
 print STDOUT "Number of one-exon-genes: $one_exon_gene_count\n";
 print STDOUT "Number of bad genes: $nr_of_bad\n";
 open (GENELENGTH, ">genemark.average_gene_length.out") or die "Cannot open file: $_[0].average_gene_length.out\n";
-print GENELENGTH "$average_gene_length\n";
+print GENELENGTH "$average_gene_length\t$average_nr_introns\n";
 close GENELENGTH;
 
 
                            ############### sub functions ##############
 
-# read in introns and convert them to exon format
+# read in introns
 sub introns{
   open (INTRONS, $introns) or die "Cannot open file: $introns\n";
   while(<INTRONS>){
@@ -191,11 +193,14 @@ sub convert_and_filter{
   if(!defined($output_file)){
     $output_file = "$file_name.c.gtf";
   }
-  my $output_file_good = "$file_name.f.good.gtf";
-  my $output_file_bad  = "$file_name.f.bad.gtf";
+  
+  if(defined($introns)){
+    my $output_file_good = "$file_name.f.good.gtf";
+    my $output_file_bad  = "$file_name.f.bad.gtf";
 
-  open (GOOD, ">".$output_file_good) or die "Cannot open file: $output_file_good\n";
-  open (BAD, ">".$output_file_bad) or die "Cannot open file: $output_file_bad\n";
+    open (GOOD, ">".$output_file_good) or die "Cannot open file: $output_file_good\n";
+    open (BAD, ">".$output_file_bad) or die "Cannot open file: $output_file_bad\n";
+  }
   open (OUTPUT, ">".$output_file) or die "Cannot open file: $output_file\n";
   open (GENEMARK, "<".$genemark) or die "Cannot open file: $genemark\n";
 
@@ -211,7 +216,7 @@ sub convert_and_filter{
       $ID_new = "$ID_old[0] \"$ID_old[1]\"\; $ID_old[2] \"$ID_old[3]\"\;";
     }
     # new gene starts
-    if($prev_ID ne $ID_old[1]){
+    if($prev_ID ne $ID_old[1] && defined($introns)){
       if(@CDS){
         print_gene();
       }
@@ -221,17 +226,18 @@ sub convert_and_filter{
       $start_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
       $gene_start = $line[3];
 
-     # gene ends
+    # gene ends
     }elsif(($line[2] eq "stop_codon" && $line[6] eq "+") || ($line[2] eq "start_codon" && $line[6] eq "-") ){
       if($bool_start eq "true"){
         $length += $line[4] - $gene_start;
         $nr_of_complete++;
+        $bool_complete = "true";
       }
       $bool_start = "false";
       $stop_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
       
     # exons, CDS usw., i.e. no start or stop codon
-    }elsif($line[2] ne "start_codon" && $line[2] ne "stop_codon"){
+    }elsif($line[2] ne "start_codon" && $line[2] ne "stop_codon" && defined($introns)){
       if($line[2] eq "CDS"){
         if($bool_intron eq "false"){
           $intron_start = $line[4]+1;
@@ -256,64 +262,23 @@ sub convert_and_filter{
     $prev_ID = $ID_old[1];
   }
   @ID_old = split(/\_/,$ID_old[1]);
-  print_gene(); # print last gene, since print_gene() was only executed after the ID changed
+  if(defined($introns)){
+    print_gene(); # print last gene, since print_gene() was only executed after the ID changed
+    close BAD;
+    close GOOD;
+  }
   if($ID_old[0] =~ m/^"\w+/){
     $ID_old[0] = substr($ID_old[0],1);
   }
   close GENEMARK;
   close OUTPUT;
-  close BAD;
-  close GOOD;
+
   $average_gene_length = ceil($length / $nr_of_complete);
+  $average_nr_introns = $average_nr_introns / $nr_of_complete;
 }
 
 
-
-# convert genemark file into regular gtf file with double quotes around IDs
-sub convert{
-  if(!defined($output_file)){
-    $output_file = "$file_name.c.gtf";
-  }
-
-  open (OUTPUT, ">".$output_file) or die "Cannot open file: $output_file\n";
-  open (GENEMARK, "<".$genemark) or die "Cannot open file: $genemark\n";
-
-  while(<GENEMARK>){
-    chomp;
-    @line = split(/\t/, $_);
-    @ID_old = split(/\s/,$line[8]);
-    chop($ID_old[1]);
-    chop($ID_old[3]);
-    if($ID_old[1] =~m/^"\w+"$/ && $ID_old[3] =~m/^"\w+"$/){
-      $ID_new = $line[8];
-    }else{
-      $ID_new = "$ID_old[0] \"$ID_old[1]\"\; $ID_old[2] \"$ID_old[3]\"\;";
-    }
-    # new gene starts
-    if( ($line[2] eq "start_codon" && $line[6] eq "+") || ($line[2] eq "stop_codon" && $line[6] eq "-") ){
-      $bool_start = "true";
-      $gene_start = $line[3];
-    # gene ends
-    }elsif(($line[2] eq "stop_codon" && $line[6] eq "+") || ($line[2] eq "start_codon" && $line[6] eq "-") ){
-      if($bool_start eq "true"){
-        $length += $line[4] - $gene_start;
-        $nr_of_complete++;
-      }
-      $bool_start = "false";
-    }
-    print OUTPUT "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
-  }
-  @ID_old = split(/\_/,$ID_old[1]);
-  if($ID_old[0] =~m/^"\w+/){
-    $ID_old[0] = substr($ID_old[0],1);
-  }
-  close GENEMARK;
-  close OUTPUT;
-  $average_gene_length = ceil($length / $nr_of_complete);
-}
-
-
-
+# print genes in corresponding file (good or bad)
 sub print_gene{
   my $size = scalar(@CDS) / 2; 
   if( ($true_count + 1 ) != $size && $size != 1){
@@ -322,16 +287,21 @@ sub print_gene{
   if($size == 1){
     $one_exon_gene_count++;
   }
+  if($bool_complete eq "true"){
+    $average_nr_introns += $size - 1;
+  }
   # all exons in intron file
   if($bool_good eq "true"){
-    print GOOD "$start_codon"; $nr_of_good++;
+    print GOOD "$start_codon";
+    $nr_of_good++;
     foreach (@CDS){
       print GOOD "$_\n";
     }
     print GOOD "$stop_codon";
    # not all exons in intron file
    }else{
-    print BAD "$start_codon"; $nr_of_bad++;
+    print BAD "$start_codon";
+    $nr_of_bad++;
     foreach (@CDS){
       print BAD "$_\n";
     }
@@ -343,6 +313,7 @@ sub print_gene{
   $stop_codon = "";
   $bool_intron = "false";
   $bool_good = "true";
+  $bool_complete = "false";
 }
 
 
