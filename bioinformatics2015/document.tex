@@ -37,7 +37,7 @@ BRAKER1 is available for download at \url{http://bioinf.uni-greifswald.de/downlo
 
 \section{Introduction}
 
-
+Structural gene prediction is an important step in the analysis of sequenced genomes because downstream analysis depends on accurate prediction. One approach towards gene prediction is the usage of statistical models that have species-specific parameters. 
 
 
 \begin{methods}
@@ -46,7 +46,7 @@ BRAKER1 is available for download at \url{http://bioinf.uni-greifswald.de/downlo
 BRAKER1 is implemented in Perl and requires two input files: an RNA-Seq alignment file in \texttt{bam}-format, and a corresponding genome file in \texttt{fasta}-format. Spliced alignment information is extracted from the RNA-Seq file and stored in \texttt{gff}-format. GeneMark-ET uses the genome file and  the spliced alignment \texttt{gff}-file for RNA-Seq supported unsupervised training. After training, GeneMark-ET creates an \textit{ab initio} gene set. Those gene structures that have support by RNA-Seq alignments in all introns are selected for automated training of AUGUSTUS. After training, AUGUSTUS predicts genes in the intput genome file using spliced alignment information from RNA-Seq as extrinsic evidence. The pipeline is illustrated in figure \ref{pipeline}.
 
 \begin{figure}[!tpb]%figure1
-\centerline{\includegraphics[width=\linewidth]{figs/braker_graph2.png}}
+\centerline{\includegraphics[width=0.6\linewidth]{figs/simple_braker.pdf}}
 \caption{Schematic view of the BRAKER1 pipeline.}\label{pipeline}
 \end{figure}
 
