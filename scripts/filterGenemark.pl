@@ -129,13 +129,6 @@ if(!defined($introns)){
   $introns = $ARGV[1];
 }
 
-# set $file_name
-if(!defined($output_file)){
-  $file_name = substr($genemark,0,-4);
-}else{
-  $file_name = substr($output_file,0,-4);
-}
-
 # check whether the genemark file exists
 if(!defined($genemark)){
   print "No genemark file specified. Please set a file with --genemark=genemark-ET.gtf.\n";
@@ -145,6 +138,13 @@ if(!defined($genemark)){
     print "Genemark file $genemark does not exist. Please check.\n";
     exit(1);
   }
+}
+
+# set $file_name
+if(!defined($output_file)){
+  $file_name = substr($genemark,0,-4);
+}else{
+  $file_name = substr($output_file,0,-4);
 }
 
 # check for option
