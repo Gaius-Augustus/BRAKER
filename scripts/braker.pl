@@ -654,7 +654,7 @@ sub new_species{
         print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-        print OUT "     intron      .25       .2  M    1  1e+100  RM  1     1    E 1   50    W 1    1\n";
+        print OUT "     intron      .25       .2  M    1  1e+100  RM  1  1.15    E 1   50    W 1    1\n";
         print OUT "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -674,7 +674,7 @@ sub new_species{
         print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-        print LOG "     intron      .25       .2  M    1  1e+100  RM  1     1    E 1   50    W 1    1\n";
+        print LOG "     intron      .25       .2  M    1  1e+100  RM  1  1.15    E 1   50    W 1    1\n";
         print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
