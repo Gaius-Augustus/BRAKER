@@ -140,7 +140,7 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 1.3;                    # braker.pl version number
+my $version = 1.4;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
@@ -651,7 +651,7 @@ sub new_species{
         print OUT "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-        print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1.003\n";
+        print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "     intron      .25       .2  M    1  1e+100  RM  1     1    E 1   50    W 1    1\n";
@@ -660,7 +660,7 @@ sub new_species{
         print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-        print OUT "nonexonpart        1        1  M    1  1e+100  RM  1     1.15 E 1    1    W 1    1\n";
+        print OUT "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print OUT "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
 
         print LOG "\# ".localtime.": edit extrinsic file and add\n$_\n";
@@ -671,7 +671,7 @@ sub new_species{
         print LOG "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-        print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1.003\n";
+        print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "     intron      .25       .2  M    1  1e+100  RM  1     1    E 1   50    W 1    1\n";
@@ -680,7 +680,7 @@ sub new_species{
         print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-        print LOG "nonexonpart        1        1  M    1  1e+100  RM  1     1.15 E 1    1    W 1    1\n";
+        print LOG "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
         print LOG "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
       }
     }

@@ -28,13 +28,13 @@
 # | simplifications                 |                |08.10.2014 |
 # | removed '"' in 'Number of       |                |25.01.2015 |
 # | genes: "nr' output              |                |           |
+# | added more information to       |                |05.03.2015 |
+# | standard output                 |                |           |
 # ----------------------------------------------------------------
  
 use strict;
 use warnings;
 use Getopt::Long;
-use File::Compare;
-use Data::Dumper;
 use POSIX qw(ceil);
 
 
@@ -85,12 +85,15 @@ my $bool_start = "false";   # true, gene has start codon
 my @CDS;                    # contains coding region lines
 my $file_name;              # file name
 my $gene_start;             # for length determination
+my $good_mults = 0;         # all suppoted intron 'mult' entries summed up
 my $ID_new;                 # new ID with doublequotes for each gene
 my @ID_old;                 # old ID without quotes
 my %introns;                # Hash of arrays of hashes. Contains information from intron file input. 
                             # Format $intron{seqname}{strand}[index]->{start} and ->{end}
+my $intron_mults = 0;       # all intron 'mult' entries summed up
 my $length = 0;             # for length determination
 my @line;                   # each input file line
+my $mults = 0;              # current 'mult' entries
 my $nr_of_bad = 0;          # number of good genes
 my $nr_of_complete = 0;     # number of complete genes, i.e. genes with start and stop codon
 my $nr_of_good = 0;         # number of bad genes
@@ -163,7 +166,16 @@ print STDOUT "Number of complete genes: $nr_of_complete\n";
 print STDOUT "Number of good genes: $nr_of_good\n";
 print STDOUT "Number of one-exon-genes: $one_exon_gene_count\n";
 print STDOUT "Number of bad genes: $nr_of_bad\n";
-open (GENELENGTH, ">genemark.average_gene_length.out") or die "Cannot open file: $_[0].average_gene_length.out\n";
+my $rate_mult = $good_mults / $intron_mults;
+my $rate_genes_g = $nr_of_good / $ID_old[0];
+my $rate_genes_b = $nr_of_bad / $ID_old[0];
+my $onex_rate_g = $one_exon_gene_count / $nr_of_good;
+my $onex_rate_a = $one_exon_gene_count / $ID_old[0];
+print STDOUT "Good intron rate: $rate_mult\n";
+print STDOUT "Good gene rate: $rate_genes_g\n";
+print STDOUT "One exon gene rate (of good genes): $onex_rate_g\n";
+print STDOUT "One exon gene rate (of all genes): $onex_rate_a\n";
+open (GENELENGTH, ">$file_name.average_gene_length.out") or die "Cannot open file: $file_name.average_gene_length.out\n";
 print GENELENGTH "$average_gene_length\t$average_nr_introns\n";
 close GENELENGTH;
 
@@ -176,7 +188,8 @@ sub introns{
   while(<INTRONS>){
     chomp;
     my @line = split(/\t/, $_);
-    $introns{$line[0]}{$line[6]}{$line[3]}{$line[4]} = "";
+    $introns{$line[0]}{$line[6]}{$line[3]}{$line[4]} = $line[5];
+    $intron_mults += $line[5];
   }  
   close INTRONS;
 }
@@ -248,6 +261,7 @@ sub convert_and_filter{
           # check if exons are defined in intron hash made of intron input
           if(defined($introns{$line[0]}{$line[6]}{$intron_start}{$intron_end})){
             $true_count++;
+            $mults += $introns{$line[0]}{$line[6]}{$intron_start}{$intron_end};
           }
           $intron_start = $line[4]+1;
         }
@@ -291,14 +305,15 @@ sub print_gene{
     $average_nr_introns += $size - 1;
   }
   # all exons in intron file
-  if($bool_good eq "true"){
+  if($bool_good eq "true" && $bool_complete eq "true"){
     print GOOD "$start_codon";
     $nr_of_good++;
     foreach (@CDS){
       print GOOD "$_\n";
     }
     print GOOD "$stop_codon";
-   # not all exons in intron file
+    $good_mults += $mults;
+   # not all exons in intron file or gene incomplete
    }else{
     print BAD "$start_codon";
     $nr_of_bad++;
@@ -314,6 +329,7 @@ sub print_gene{
   $bool_intron = "false";
   $bool_good = "true";
   $bool_complete = "false";
+  $mults = 0;
 }
 
 
