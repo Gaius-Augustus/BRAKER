@@ -101,6 +101,9 @@ OPTIONS
       bamtools/                          variable). Has higher priority than the environment variable.
     --CPU                                Specifies the maximum number of CPUs that can be used during 
                                          computation
+    --extrinsicCfgFile                   Optional. This file contains the list of used sources for the 
+                                         hints and their boni and mali. If not specified the file "extrinsic.cfg" 
+                                         in the config directory $AUGUSTUS_CONFIG_PATH is copied and adjusted.
     --fungus                             GeneMark-ET option: run algorithm with branch point model (most 
                                          useful for fungal genomes)
     --GENEMARK_PATH=/path/to/            Set path to GeneMark-ET (if not specified as environment 
@@ -154,6 +157,7 @@ my $CPU = 1;                          # number of CPUs that can be used
 my $currentDir = cwd();               # working superdirectory where program is called from
 my $errorfile;                        # stores current error file name
 my $errorfilesDir;                    # directory for error files
+my $extrinsicCfgFile;                 # assigned extrinsic file
 my @files;                            # contains all files in $rootDir
 my $flanking_DNA;                     # length of flanking DNA, default value is min{ave. gene length/2, 10000}
 my @forbidden_words;                  # words/commands that are not allowed in species name (e.g. unlink)
@@ -211,6 +215,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'BAMTOOLS_PATH=s'               => \$bamtools_path,
             'CPU=i'                         => \$CPU,
             'fungus!'                       => \$fungus,
+            'extrinsicCfgFile=s'            => \$extrinsicCfgFile,
             'GENEMARK_PATH=s'               => \$GMET_path,
             'genome=s'                      => \$genome,
             'hints=s'                       => \@hints,
@@ -336,7 +341,7 @@ if(@hints){
 if(defined($species)){
   if($species =~ /[\s]/){
     print STDOUT "WARNING: Species name contains invalid white space characters. Will replace white spaces with underline character '_' \n";
-    $species =~ s/\s/\_/g; print "species $species\n";
+    $species =~ s/\s/\_/g;
   }
 
   foreach my $word (@forbidden_words){
@@ -367,12 +372,12 @@ if(!defined($species) || $bool_species eq "false"){
 
 # check species directory
 if(-d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting){
-  print STDERR "ERROR: $AUGUSTUS_CONFIG_PATH/species/$species already exists. Choose another species name, delete this directory or use the existing species with the option --useexisting.\n";
+  print STDERR "ERROR:$AUGUSTUS_CONFIG_PATH/species/$species already exists. Choose another species name, delete this directory or use the existing species with the option --useexisting.\n";
   exit(1);
 }
 
 if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
-  print STDOUT "WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not exist. Braker will create  the necessary files for species $species.\n";
+  print STDOUT "WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not exist. Braker will create the necessary files for species $species.\n";
 }
 
 # check whether $rootDir already exists
@@ -381,13 +386,16 @@ if (-d "$rootDir/$species" && !$overwrite){
   print STDOUT "WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite\n";
 }
 
+# check whether assigned extrinsic file exists
+if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile){
+  print STDOUT "WARNING: Assigned extrinsic file $extrinsicCfgFile does not exist. Program will create extrinsic file instead.\n";
+}
 
 # check whether genome file is set
 if(!defined($genome)){
   print STDERR "ERROR: No genome file was specified. Please set a genome file.\n";
   exit(1);
 }
-
 
 # check whether genome file exist
 if(! -f "$genome"){
@@ -620,7 +628,7 @@ sub new_species{
   # create extrinsic file
   my $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
   my $extrinsic_cp = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-  if(! -e $extrinsic_cp){
+  if(! -e $extrinsic_cp && !defined($extrinsicCfgFile)){
     print STDOUT "NEXT STEP: create extrinsic file: $extrinsic_cp\n";
     print LOG "\# ".localtime.": create extrinsic file\n";
     print LOG "cp $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg $AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg\n\n"; 
@@ -919,11 +927,15 @@ sub augustus{
   my $extrinsic;
   my @genome_files;
   my $pm;
-  if(!$useexisting){
-    $extrinsic = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-  }else{
+  if(defined($extrinsicCfgFile) && -f $extrinsicCfgFile){
+    $extrinsic = $extrinsicCfgFile;
+    print STDOUT "Use assigned $extrinsicCfgFile as extrinsic file\n";
+  }elsif($useexisting || ! -f "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"){
     $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
+  }else{
+    $extrinsic = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
   }
+
   if(!uptodate([$extrinsic,$hintsfile, $genome],["$otherfilesDir/augustus.gff"])  || $overwrite){
     if($CPU > 1){
       print STDOUT "NEXT STEP: split genome file in smaller parts\n";
