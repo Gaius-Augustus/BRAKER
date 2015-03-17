@@ -6,7 +6,7 @@
 %                                                                                                %
 %           Contact: katharina.hoff@uni-greifswald.de                                            %
 %                                                                                                %
-%           Date: January 5th, 2015                                                              %
+%           Date: March 17th, 2015                                                               %
 %                                                                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -23,19 +23,60 @@ BRAKER1 is a pipeline for unsupervised RNA-Seq-based genome annotation that comb
               2. INSTALLATION
               ---------------
 
+At the time of release, this BRAKER1 version, the pipeline was tested with:
+
+   * AUGUSTUS 3.0.2
+   * GeneMark-ET 4.21
+   * BAMTOOLS 2.3.0
+   * SAMTOOLS 1.2-17-ge91985a (using htslib 1.2.1-29-gf83dfd2)
+
 1. Download GeneMark-ET from http://exon.gatech.edu/GeneMark/license_download.cgi
 
 2. Download AUGUSTUS from http://bioinf.uni-greifswald.de/augustus/downloads/index.php
 
-3. Unpack and install AUGUSTUS and GeneMark-ET as described in their respective README files. (AUGUSTUS 
-   requires BAMTOOLS for compiling bam2hints.)
+3. Download BAMTOOLS (e.g. e.g. git clone https://github.com/pezmaster31/bamtools.git)
 
-   Optionally: download and install SAMTOOLS (e.g. git clone git://github.com/samtools/samtools.git, 
-   subsequently follow SAMTOOLS documentation for installation). SAMTOOLS is not required for running BRAKER1 
-   if all your files are formatted, correctly (i.e. all sequences should have short an unique fasta names).
+4. Install BAMTOOLS by typing the following in your shell:
 
-4. Install the required PERL modules available on CPAN:
-   			File::Spec::Functions
+   cd your-bamtools-directory
+   mkdir build
+   cd build
+   cmake ..
+   make
+
+5. Unpack and install GeneMark-ET as described in GeneMark-ET's README file.
+
+6. Unpack and install AUGUSTUS. AUGUSTUS comes with pre-compiled binaries (located in the 
+   augustus-x.x.x/bin folder). However, you should compile AUGUSTUS on your own system in order
+   to avoid future problems. Compilation instructions are provided in the AUGUSTUS README file.
+   However, bam2hints compilation is not covered by the AUGUSTUS README. Therefore, compile
+   bam2hints as described, here. First, you need to edit the Makefile of bam2hints in order
+   point to the correct location of BAMTOOLS on your system. Therefore open the file with 
+   an editor of your choice, e.g. emacs:
+
+   emacs augustus-x.x.x/auxprogs/bam2hints/Makefile
+   
+   Replace "/home/mario/tools/bamtools" by your individual path to BAMTOOLS.
+
+   cd augustus-x.x.x/auxprogs/bam2hints
+   make
+   mv bam2hints ../../bin
+   
+7. Optional: 
+      SAMTOOLS is not required for running BRAKER1 if all your files are formatted, correctly
+      (i.e. all sequences should have short and unique fasta names). If you are not sure
+      whether all your files are fomatted correctly, it might be helpful to have SAMTOOLS
+      installed (BRAKER1 will then try to use SAMTOOLS to solve certain issues).
+
+      As a prerequisite for SAMTOOLS, download and install htslib (e.g. 
+      git clone https://github.com/samtools/htslib.git, follow the htslib documentation for 
+      installation).
+
+      Download and install SAMTOOLS (e.g. git clone git://github.com/samtools/samtools.git), 
+      subsequently follow SAMTOOLS documentation for installation). 
+
+8. Install the required PERL modules available on CPAN:
+   			     	File::Spec::Functions
 				Hash::Merge
 				List::Util
 				Logger::Simple
@@ -46,45 +87,59 @@ BRAKER1 is a pipeline for unsupervised RNA-Seq-based genome annotation that comb
 				YAML 
    (on Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]")
 
-BRAKER1 also uses the PERL module helpMod.pm that is not available on CPAN. This module is part of the BRAKER1 relase and does not need require separate installation.
+   BRAKER1 also uses the PERL module helpMod.pm that is not available on CPAN. This module is 
+   part of the BRAKER1 relase and does not require separate installation.
 
-5. Add the directories in which braker.pl, AUGUSTUS executables, AUGUSTUS scripts, BAMTOOLS and SAMTOOLS reside to your $PATH environment variable, e.g. for your current bash session:
+9. Add the directories in which braker.pl, AUGUSTUS executables, AUGUSTUS scripts reside to 
+   your $PATH environment variable, e.g. for your current bash session:
 
-PATH=/my_path_to_braker/:/my_path_to_augustus/bin/:/my_path_to_augustus/scripts/:/my_path_to_bamtools/bin/:/my/path/to/samtools/:$PATH
-export PATH
+   PATH=/my_path_to_braker/:/my_path_to_augustus/bin/:/my_path_to_augustus/scripts/:$PATH
+   export PATH
 
-You may want to add these lines to a startup script (like ~/.bashrc).
+   You may want to add these lines to a startup script (like ~/.bashrc).
 
-Exporting the location of AUGUSTUS, AUGUSTUS scripts, BAMTOOLS and SAMTOOLS is not required by BRAKER1 if you set the environment variables in step 4.
+   Exporting the location of AUGUSTUS and AUGUSTUS scripts is not required 
+   by BRAKER1 if you set the environment variables in step 10.
 
-4. Optional: set environment variables $AUGUSTUS_CONFIG_PATH, $GENEMARK_PATH and $BAMTOOLS_PATH
+10. Optional: set environment variables $AUGUSTUS_CONFIG_PATH, $GENEMARK_PATH and $BAMTOOLS_PATH 
+              (and $SAMTOOLS_PATH)
+    The $AUGUSTUS_CONFIG_PATH determines which directory is used for reading and writing species 
+    configuration files. During training, AUGUSTUS writes species-specific parameter files to this 
+    directory. Therefore, you need write permissions for the directory that is $AUGUSTUS_CONFIG_PATH. 
+    If the $AUGUSTUS_CONFIG_PATH environment variable is not set, then the programs will look in the 
+    path ../config relative to the directory in which the AUGUSTUS executable is located. If required,
+    export the variable e.g. for your current bash session:
 
-The $AUGUSTUS_CONFIG_PATH determines which directory is used for reading and writing configuration files. During training, AUGUSTUS writes species-specific parameter files to this directory. Therefore, you need write permissions for the directory that is $AUGUSTUS_CONFIG_PATH. If the $AUGUSTUS_CONFIG_PATH environment variable is not set, then the programs will look in the path ../config relative to the directory in which the AUGUSTUS executable is located. If required, export the variable e.g. for your current bash session:
+    export AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/
 
-export AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/
+    $AUGUSTUS_CONFIG_PATH - if exported - is also used by BRAKER1 to determine the relative 
+    			    path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints. 
 
-$AUGUSTUS_CONFIG_PATH - if exported - is also used by BRAKER1 to determine the relative path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints. 
+    If the environment variable $GENEMARK_PATH is set, BRAKER1 will look there for the gmes_petap.pl 
+    script. Export the variable e.g. for your current bash session:
 
-If the environment variable $GENEMARK_PATH is set, BRAKER1 will look there for the gmes_petap.pl script. Export the variable e.g. for your current bash session:
+    export GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
 
-export GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
+    If the environment variable $BAMTOOLS_PATH is set, BRAKER1 will look there for the bamtools 
+    executable. Export the variable e.g. for your current bash session:
 
-If the environment variable $BAMTOOLS_PATH is set, BRAKER1 will look there for the bamtools executable. Export the variable e.g. for your current bash session:
+    export BAMTOOLS_PATH=/my_path_to_bamtools/bin/
 
-export BAMTOOLS_PATH=/my_path_to_bamtools/bin/
+    If the environment variable $SAMTOOLS_PATH is set, BRAKER1 will look there for the samtools 
+    executable. Export the variable e.g. for your current bash session:
 
-If the environment variable $SAMTOOLS_PATH is set, BRAKER1 will look there for the bamtools executable. Export the variable e.g. for your current bash session:
+    export SAMTOOLS_PATH=/my_path_to_samtools/
 
-export SAMTOOLS_PATH=/my_path_to_samtools/
+    You may want to add these lines to a startup script (like ~/.bashrc). Pay attention, that you 
+    do not specify the actual executable when exporting paths, but only the path to where the 
+    executable resides.
 
-You may want to add these lines to a startup script (like ~/.bashrc). Pay attention, that you do not specify the actual executable when exporting paths, but only the path to where the executable resides.
+    Alternatively, you can specify these directories on the command line when running BRAKER1:
 
-Alternatively, you can specify these directories on the command line when running BRAKER1:
-
---AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/ 
---GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
---BAMTOOLS_PATH=/my_path_to_bamtools/bin/
---SAMTOOLS_PATH=/my/path_to_samtools/
+    --AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/ 
+    --GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
+    --BAMTOOLS_PATH=/my_path_to_bamtools/bin/
+    --SAMTOOLS_PATH=/my/path_to_samtools/
 
               3. RUNNING BRAKER1
               ------------------
@@ -156,7 +211,7 @@ Selected parameters:
   environment variable.
 
 --SAMTOOLS_PATH=/path/to/samtools/
-  Optionally set path to samtools (if not specified as environment variable). In some cases, users of BRAKER1 reported that they "shortend" the headers of FASTA files after their first attempt to run BRAKER1, but they forgot to fix the same sequence names in the BAM file. SAMTOOLS is used by BRAKER1 to automatically fix such issues. The command line flag has higher priority than environment variable.
+  Optional: set path to samtools (if not specified as environment variable). In some cases, users of BRAKER1 reported that they "shortend" the headers of FASTA files after their first attempt to run BRAKER1, but they forgot to fix the same sequence names in the BAM file. SAMTOOLS is used by BRAKER1 to automatically fix such issues. The command line flag has higher priority than environment variable.
 
 --hints=hints.gff            
   Additional hints files for gene predictions with AUGUSTUS in gff format (should only be used in combination

@@ -710,6 +710,10 @@ sub training{
   my $average_length = $_[0];
   close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
   $flanking_DNA = min((floor($average_length/2), 10000));
+  if($flanking_DNA < 0){
+      print STDOUT "\$flanking_DNA has the value $flanking_DNA , which is smaller than 0. Something must have gone wrong, there. Replacing by value 500. It is completely unclear whether 500 is a good or a bad choice.\n";
+      $flanking_DNA = 500;
+  }
   # create genbank file from fasta input and GeneMark-ET output
   $string=find("gff2gbSmallDNA.pl");
   $genbank = "$otherfilesDir/genbank.gb";
