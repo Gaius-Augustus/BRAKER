@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: January 7th 2015                                                                   #
+# Release date: March 17th 2015                                                                    #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -20,6 +20,7 @@
 ####################################################################################################
 
 # ----------------------------------------------------------------------
+# | fixed gene length problem      | braker.pl (Hoff)     | 17.03.2015 |
 # | sub check_upfront              | autoAug.pl           | 07.01.2015 |
 # | sub check_fasta_headers        | autoAug.pl           | 07.01.2015 |
 # | helpMod qw(find chec...)       | helpMod.pm           |            |
@@ -143,7 +144,7 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 1.4;                    # braker.pl version number
+my $version = 1.5;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
@@ -633,7 +634,6 @@ sub new_species{
     print LOG "\# ".localtime.": create extrinsic file\n";
     print LOG "cp $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg $AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg\n\n"; 
     print STDOUT "species $species created.\n";
-
     open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
     @_ = split(/\t/,<GENELENGTH>);
     my $average_nr_introns = $_[1];
@@ -705,10 +705,25 @@ sub new_species{
 sub training{
   # get average gene length for flanking region
   print STDOUT "NEXT STEP: get flanking DNA size\n"; 
-  open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
-  @_ = split(/\t/,<GENELENGTH>);
-  my $average_length = $_[0];
-  close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
+   # compute average gene length from genemark.gtf                                                       
+    open (GENEMARKGTF, "<", "$genemarkDir/genemark.gtf") or die("Cannot open file: $genemarkDir/genemark.gtf\n");
+  my $cumulativeGeneMarkGeneLength = 0;
+  my $geneMarkGenesNo = 0;
+  my %geneMarkGeneHash;
+  while(<GENEMARKGTF>){
+      if(m/\tCDS\t/){
+	  @_ = split(/\t/);
+	  $cumulativeGeneMarkGeneLength += $_[4]-$_[3]+1;
+	  if(not(defined($geneMarkGeneHash{$_[8]}))){$geneMarkGeneHash{$_[8]} = 1;}
+      }
+  }
+  $geneMarkGenesNo = keys %geneMarkGeneHash;
+  my $average_length = $cumulativeGeneMarkGeneLength/$geneMarkGenesNo;
+  close (GENEMARKGTF) or die("Cannot close file: $genemarkDir/genemark.gtf\n");
+#  open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
+#  @_ = split(/\t/,<GENELENGTH>);
+#  my $average_length = $_[0];
+#  close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
   $flanking_DNA = min((floor($average_length/2), 10000));
   if($flanking_DNA < 0){
       print STDOUT "\$flanking_DNA has the value $flanking_DNA , which is smaller than 0. Something must have gone wrong, there. Replacing by value 500. It is completely unclear whether 500 is a good or a bad choice.\n";
