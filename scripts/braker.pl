@@ -635,10 +635,10 @@ sub new_species{
       print LOG "\# ".localtime.": create extrinsic file\n";
       print LOG "cp $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg $AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg\n\n"; 
       print STDOUT "species $species created.\n";
-      open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
-      @_ = split(/\t/,<GENELENGTH>);
-      my $average_nr_introns = $_[1];
-      close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
+#      open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
+#      @_ = split(/\t/,<GENELENGTH>);
+#      my $average_nr_introns = $_[1];
+#      close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
 
       open (EXTRINSIC, $extrinsic) or die "Cannot open file: $extrinsic\n";
       open (OUT, ">".$extrinsic_cp) or die "Cannot open file: $extrinsic_cp\n";
