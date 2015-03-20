@@ -590,14 +590,16 @@ sub GeneMark_ET{
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $perlCmdString\n");
       print STDOUT "GeneMark-ET finished.\n";
+      $cmdString = "cd $rootDir";
+      print LOG "\# ".localtime.": change to working directory $rootDir\n";
+      print LOG "$cmdString\n\n";
+      chdir $rootDir or die ("Could not change to directory $rootDir.\n");
     }
   }
 
   # convert GeneMark-ET output to gtf format with doublequotes
-
-  if(!uptodate(["$genemarkDir/genemark.gtf"],["$genemarkDir/genemark.c.gtf","$genemarkDir/genemark.f.good.gtf", "$genemarkDir/genemark.average_gene_length.out"])  || $overwrite){
+  if(!uptodate(["$genemarkDir/genemark.gtf", $hintsfile],["$genemarkDir/genemark.c.gtf","$genemarkDir/genemark.f.good.gtf", "$genemarkDir/genemark.average_gene_length.out"])  || $overwrite){
     print STDOUT "NEXT STEP: convert GeneMark-ET to real gtf format\n"; 
-
     $string=find("filterGenemark.pl");
     $errorfile = "$errorfilesDir/filterGenemark.stderr";
     $stdoutfile = "$otherfilesDir/filterGenemark.stdout";
@@ -606,10 +608,6 @@ sub GeneMark_ET{
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "GeneMark-ET conversion.\n";
-    $cmdString = "cd $rootDir";
-    print LOG "\# ".localtime.": change to working directory $rootDir\n";
-    print LOG "$cmdString\n\n";
-    chdir $rootDir or die ("Could not change to directory $rootDir.\n");
   }
 }
 
