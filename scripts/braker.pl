@@ -155,7 +155,7 @@ my $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'};
 my $bool_species = "true";            # false, if $species contains forbidden words (e.g. chmod)
 my $cmdString;                        # to store shell commands
 my $CPU = 1;                          # number of CPUs that can be used
-my $currentDir = cwd();               # working superdirectory where program is called from
+my $currentDir = cwd();               # working superdirectory where programme is called from
 my $errorfile;                        # stores current error file name
 my $errorfilesDir;                    # directory for error files
 my $extrinsicCfgFile;                 # assigned extrinsic file
@@ -364,9 +364,9 @@ if(!defined($species) || $bool_species eq "false"){
     }
   }
   if($bool_species eq "false"){
-    print STDOUT "Program will use $species instead.\n";
+    print STDOUT "Programme will use $species instead.\n";
   }else{
-    print STDOUT "No species was set. Program will use $species.\n";
+    print STDOUT "No species was set. Programme will use $species.\n";
   }
 }
     
@@ -387,9 +387,12 @@ if (-d "$rootDir/$species" && !$overwrite){
   print STDOUT "WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite\n";
 }
 
-# check whether assigned extrinsic file exists
+# set path and check whether assigned extrinsic file exists
+if(defined($extrinsicCfgFile)){
+  $extrinsicCfgFile = rel2abs($extrinsicCfgFile);
+}
 if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile){
-  print STDOUT "WARNING: Assigned extrinsic file $extrinsicCfgFile does not exist. Program will create extrinsic file instead.\n";
+  print STDOUT "WARNING: Assigned extrinsic file $extrinsicCfgFile does not exist. Programme will create extrinsic file instead.\n";
 }
 
 # check whether genome file is set
@@ -629,8 +632,11 @@ sub new_species{
   # create extrinsic file
   my $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
   my $extrinsic_cp = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-  if(! -e $extrinsic_cp){
-    if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile) ){
+  if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -e $extrinsicCfgFile) ){
+    if(!defined($extrinsicCfgFile)){
+      print STDOUT "No extrinsic file assigned. Programme will create one.\n"; # other check/warning see beginning 
+    }
+    if(! -e $extrinsic_cp){
       print STDOUT "NEXT STEP: create extrinsic file: $extrinsic_cp\n";
       print LOG "\# ".localtime.": create extrinsic file\n";
       print LOG "cp $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg $AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg\n\n"; 
@@ -697,6 +703,8 @@ sub new_species{
       close(EXTRINSIC) or die("Could not close extrinsic file $extrinsic!\n");
       print STDOUT "extrinsic file created.\n";
     }
+  }else{
+    print STDOUT "No extrinsic file was created. Programme uses assigned extrinsic file: $extrinsicCfgFile\n";
   }
 }
 
@@ -1045,7 +1053,7 @@ sub clean_up{
 
          ########################### some checks beforehand ############################
 # check upfront whether any common problems will occur later
-# find out if some programs are not installed.
+# find out if some programmes are not installed.
 # TODO: put more checks in here: blat, samtools, gmap, tophat 
 # checks for GeneMark-ET: perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager
 # checks for braker: perl modules: Scalar::Util::Numeric
