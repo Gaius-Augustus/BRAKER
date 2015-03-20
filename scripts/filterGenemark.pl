@@ -286,9 +286,12 @@ sub convert_and_filter{
   }
   close GENEMARK;
   close OUTPUT;
-
-  $average_gene_length = ceil($length / $nr_of_complete);
-  $average_nr_introns = $average_nr_introns / $nr_of_complete;
+  if($nr_of_complete > 0){
+    $average_gene_length = ceil($length / $nr_of_complete);
+    $average_nr_introns = $average_nr_introns / $nr_of_complete;
+  }else{
+    print STDERR "Average gene length cannot be computed since all genes are incomplete.\n";
+  }
 }
 
 
