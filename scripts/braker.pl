@@ -707,25 +707,26 @@ sub new_species{
 sub training{
   # get average gene length for flanking region
   print STDOUT "NEXT STEP: get flanking DNA size\n"; 
-   # compute average gene length from genemark.gtf                                                       
-    open (GENEMARKGTF, "<", "$genemarkDir/genemark.gtf") or die("Cannot open file: $genemarkDir/genemark.gtf\n");
-  my $cumulativeGeneMarkGeneLength = 0;
-  my $geneMarkGenesNo = 0;
-  my %geneMarkGeneHash;
-  while(<GENEMARKGTF>){
-      if(m/\tCDS\t/){
-	  @_ = split(/\t/);
-	  $cumulativeGeneMarkGeneLength += $_[4]-$_[3]+1;
-	  if(not(defined($geneMarkGeneHash{$_[8]}))){$geneMarkGeneHash{$_[8]} = 1;}
-      }
-  }
-  $geneMarkGenesNo = keys %geneMarkGeneHash;
-  my $average_length = $cumulativeGeneMarkGeneLength/$geneMarkGenesNo;
-  close (GENEMARKGTF) or die("Cannot close file: $genemarkDir/genemark.gtf\n");
-#  open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
-#  @_ = split(/\t/,<GENELENGTH>);
-#  my $average_length = $_[0];
-#  close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
+  # compute average gene length from genemark.gtf                                                       
+  # The following code was introduced after Katharina observed a negative average gene length in the GeneMark-ET output file. However, this seems to be an artefact from an interrupted GeneMark-ET run. Therefore, we return to the original parsing of GeneMark-ET output file.
+  #    open (GENEMARKGTF, "<", "$genemarkDir/genemark.gtf") or die("Cannot open file: $genemarkDir/genemark.gtf\n");
+  #  my $cumulativeGeneMarkGeneLength = 0;
+  #  my $geneMarkGenesNo = 0;
+  #  my %geneMarkGeneHash;
+  #  while(<GENEMARKGTF>){
+  #      if(m/\tCDS\t/){
+  #	  @_ = split(/\t/);
+  #	  $cumulativeGeneMarkGeneLength += $_[4]-$_[3]+1;
+  #	  if(not(defined($geneMarkGeneHash{$_[8]}))){$geneMarkGeneHash{$_[8]} = 1;}
+  #      }
+  #  }
+  #  $geneMarkGenesNo = keys %geneMarkGeneHash;
+  #  my $average_length = $cumulativeGeneMarkGeneLength/$geneMarkGenesNo;
+  #  close (GENEMARKGTF) or die("Cannot close file: $genemarkDir/genemark.gtf\n");
+  open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
+  @_ = split(/\t/,<GENELENGTH>);
+  my $average_length = $_[0];
+  close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
   $flanking_DNA = min((floor($average_length/2), 10000));
   if($flanking_DNA < 0){
       print STDOUT "\$flanking_DNA has the value $flanking_DNA , which is smaller than 0. Something must have gone wrong, there. Replacing by value 500. It is completely unclear whether 500 is a good or a bad choice.\n";
