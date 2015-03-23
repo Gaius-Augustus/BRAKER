@@ -733,6 +733,9 @@ sub training{
   @_ = split(/\t/,<GENELENGTH>);
   my $average_length = $_[0];
   close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
+  if($average_length < 0){
+      die("Average gene length of genes predicted by GeneMark-ET is negative. This indicates GeneMark-ET did not finish, properly. Please delete the GeneMark-ET folder and restart BRAKER1!\n");
+  }
   $flanking_DNA = min((floor($average_length/2), 10000));
   if($flanking_DNA < 0){
       print STDOUT "\$flanking_DNA has the value $flanking_DNA , which is smaller than 0. Something must have gone wrong, there. Replacing by value 500. It is completely unclear whether 500 is a good or a bad choice.\n";
