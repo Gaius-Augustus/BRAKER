@@ -38,6 +38,10 @@ BRAKER1 is available for download at \url{http://bioinf.uni-greifswald.de/downlo
 
 \section{Introduction}
 
+
+
+Today, many genome sequencing projects are accompanied by high throughput transcriptome sequencing (RNA-Seq). RNA-Seq can aid the structural annotation of (highly) expressed protein coding genes. The RGASP
+
 Structural gene prediction is an important step in the analysis of sequenced genomes because downstream analysis depends on accurate prediction. Many genome sequencing projects are accompanied by transcriptome sequencing. Transcriptome sequencing can aid structural genome annotation with tools that rely on statistical models. Such tools usually require a training step to adapt species specific parameters. With few exceptions, a previously existing set of reliable genes is required for training (e.g.~generated from ESTs or protein to genome alignments). Since large scale transcriptome sequencing became available, it has been tried to gene finders on assembled RNA-Seq data [cite MAKER2 here?]. Assembled RNA-Seq has also been used to improve gene prediction after training. However, transcriptome assembly is prone to errors, and using such erroroneus data for training and prediction bears the risk of transferring errors into structural genome annotation [check what GeneMark-ET paper cited for this]. If raw read mappings are used instead of assembled transcripts, this problem is avoided.
 
 GeneMark-ET is a gene prediction tool that incorporates unassembled RNA-Seq reads into unsupervised training and subsequently generates \textit{ab initio} gene predictions. 
