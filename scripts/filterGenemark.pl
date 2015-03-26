@@ -76,7 +76,7 @@ ENDUSAGE
 
 
 my ($genemark, $introns, $output_file, $help);
-my $average_gene_length;    # for length determination
+my $average_gene_length =0; # for length determination
 my $average_nr_introns = 0; # average number of introns (only complete genes)
 my $bool_complete = "false";# true if gene is complete, i.e. genes with start and stop codon
 my $bool_good = "true";     # if true gene is good, if false, gene is bad
@@ -96,6 +96,7 @@ my @line;                   # each input file line
 my $mults = 0;              # current 'mult' entries
 my $nr_of_bad = 0;          # number of good genes
 my $nr_of_complete = 0;     # number of complete genes, i.e. genes with start and stop codon
+my $nr_of_genes = 0;        # number of all genes
 my $nr_of_good = 0;         # number of bad genes
 my $one_exon_gene_count = 0;# counts the number of genes which only consist of one exon
 my $start_codon = "";       # contains current start codon for "+" strand (stop codon for "-" strand)
@@ -161,16 +162,16 @@ convert_and_filter();
 
 print STDOUT "Average gene length: $average_gene_length\n";
 print STDOUT "Average number of introns: $average_nr_introns\n";
-print STDOUT "Number of genes: $ID_old[0]\n";
+print STDOUT "Number of genes: $nr_of_genes\n";
 print STDOUT "Number of complete genes: $nr_of_complete\n";
 print STDOUT "Number of good genes: $nr_of_good\n";
 print STDOUT "Number of one-exon-genes: $one_exon_gene_count\n";
 print STDOUT "Number of bad genes: $nr_of_bad\n";
 my $rate_mult = $good_mults / $intron_mults;
-my $rate_genes_g = $nr_of_good / $ID_old[0];
-my $rate_genes_b = $nr_of_bad / $ID_old[0];
+my $rate_genes_g = $nr_of_good / $nr_of_complete;
+my $rate_genes_b = $nr_of_bad / $nr_of_complete;
 my $onex_rate_g = $one_exon_gene_count / $nr_of_good;
-my $onex_rate_a = $one_exon_gene_count / $ID_old[0];
+my $onex_rate_a = $one_exon_gene_count / $nr_of_complete;
 print STDOUT "Good intron rate: $rate_mult\n";
 print STDOUT "Good gene rate: $rate_genes_g\n";
 print STDOUT "One exon gene rate (of good genes): $onex_rate_g\n";
@@ -187,9 +188,11 @@ sub introns{
   open (INTRONS, $introns) or die "Cannot open file: $introns\n";
   while(<INTRONS>){
     chomp;
-    my @line = split(/\t/, $_);
-    $introns{$line[0]}{$line[6]}{$line[3]}{$line[4]} = $line[5];
-    $intron_mults += $line[5];
+    @line = split(/\t/, $_);
+    if(scalar(@line) == 9){
+      $introns{$line[0]}{$line[6]}{$line[3]}{$line[4]} = $line[5];
+      $intron_mults += $line[5];
+    }
   }  
   close INTRONS;
 }
@@ -220,70 +223,72 @@ sub convert_and_filter{
   while(<GENEMARK>){
     chomp;
     @line = split(/\t/, $_);
-    @ID_old = split(/\s/,$line[8]);
-    chop($ID_old[1]);
-    chop($ID_old[3]);
-    if($ID_old[1] =~m/^"\w+"$/ && $ID_old[3] =~m/^"\w+"$/){
-      $ID_new = $line[8];
-    }else{
-      $ID_new = "$ID_old[0] \"$ID_old[1]\"\; $ID_old[2] \"$ID_old[3]\"\;";
-    }
-    # new gene starts
-    if($prev_ID ne $ID_old[1] && defined($introns)){
-      if(@CDS){
-        print_gene();
+    if(scalar(@line) == 9){
+      @ID_old = split(/\s/,$line[8]);
+      chop($ID_old[1]);
+      chop($ID_old[3]);
+      if($ID_old[1] =~m/^"\w+"$/ && $ID_old[3] =~m/^"\w+"$/){
+        $ID_new = $line[8];
+      }else{
+        $ID_new = "$ID_old[0] \"$ID_old[1]\"\; $ID_old[2] \"$ID_old[3]\"\;";
       }
-    }
-    if( ($line[2] eq "start_codon" && $line[6] eq "+") || ($line[2] eq "stop_codon" && $line[6] eq "-") ){
-      $bool_start = "true";
-      $start_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
-      $gene_start = $line[3];
-
-    # gene ends
-    }elsif(($line[2] eq "stop_codon" && $line[6] eq "+") || ($line[2] eq "start_codon" && $line[6] eq "-") ){
-      if($bool_start eq "true"){
-        $length += $line[4] - $gene_start;
-        $nr_of_complete++;
-        $bool_complete = "true";
-      }
-      $bool_start = "false";
-      $stop_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
-      
-    # exons, CDS usw., i.e. no start or stop codon
-    }elsif($line[2] ne "start_codon" && $line[2] ne "stop_codon" && defined($introns)){
-      if($line[2] eq "CDS"){
-        if($bool_intron eq "false"){
-          $intron_start = $line[4]+1;
-          $bool_intron = "true";
-        }else{
-          $intron_end = $line[3]-1;
-        
-          # check if exons are defined in intron hash made of intron input
-          if(defined($introns{$line[0]}{$line[6]}{$intron_start}{$intron_end})){
-            $true_count++;
-            $mults += $introns{$line[0]}{$line[6]}{$intron_start}{$intron_end};
-          }
-          $intron_start = $line[4]+1;
+      # new gene starts
+      if($prev_ID ne $ID_old[1] && defined($introns)){
+        if(@CDS){
+          $nr_of_genes++;
+          print_gene();
         }
-        $exon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new";
-        push(@CDS, $exon);
-        $exon = "$line[0]\t$line[1]\texon\t$line[3]\t$line[4]\t0\t$line[6]\t.\t$ID_new";
-        push(@CDS, $exon);
       }
-    }
+      if( ($line[2] eq "start_codon" && $line[6] eq "+") || ($line[2] eq "stop_codon" && $line[6] eq "-") ){
+        $bool_start = "true";
+        $start_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
+        $gene_start = $line[3];
 
-    print OUTPUT "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
-    $prev_ID = $ID_old[1];
+      # gene ends
+      }elsif(($line[2] eq "stop_codon" && $line[6] eq "+") || ($line[2] eq "start_codon" && $line[6] eq "-") ){
+        if($bool_start eq "true"){
+          $length += $line[4] - $gene_start;
+          $nr_of_complete++;
+          $bool_complete = "true";
+        }
+        $bool_start = "false";
+        $stop_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
+        
+      # exons, CDS usw., i.e. no start or stop codon
+      }elsif($line[2] ne "start_codon" && $line[2] ne "stop_codon" && defined($introns)){
+        if($line[2] eq "CDS"){
+          if($bool_intron eq "false"){
+            $intron_start = $line[4]+1;
+            $bool_intron = "true";
+          }else{
+            $intron_end = $line[3]-1;
+          
+            # check if exons are defined in intron hash made of intron input
+            if(defined($introns{$line[0]}{$line[6]}{$intron_start}{$intron_end})){
+              $true_count++;
+              $mults += $introns{$line[0]}{$line[6]}{$intron_start}{$intron_end};
+            }
+            $intron_start = $line[4]+1;
+          }
+          $exon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new";
+          push(@CDS, $exon);
+          $exon = "$line[0]\t$line[1]\texon\t$line[3]\t$line[4]\t0\t$line[6]\t.\t$ID_new";
+          push(@CDS, $exon);
+        }
+      }
+
+      print OUTPUT "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
+      $prev_ID = $ID_old[1];
+    }
   }
   @ID_old = split(/\_/,$ID_old[1]);
   if(defined($introns)){
+    $nr_of_genes++;
     print_gene(); # print last gene, since print_gene() was only executed after the ID changed
     close BAD;
     close GOOD;
   }
-  if($ID_old[0] =~ m/^"\w+/){
-    $ID_old[0] = substr($ID_old[0],1);
-  }
+
   close GENEMARK;
   close OUTPUT;
   if($nr_of_complete > 0){
