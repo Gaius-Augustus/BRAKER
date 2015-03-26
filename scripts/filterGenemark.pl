@@ -30,6 +30,10 @@
 # | genes: "nr' output              |                |           |
 # | added more information to       |                |05.03.2015 |
 # | standard output                 |                |           |
+# | added suppress option           |                |26.03.2015 |
+# | (only standard output)          |                |           |
+# | more if-conditions (no division |                |           |
+# | by zero errors)                 |                |           |
 # ----------------------------------------------------------------
  
 use strict;
@@ -81,7 +85,6 @@ my $average_nr_introns = 0; # average number of introns (only complete genes)
 my $bool_complete = "false";# true if gene is complete, i.e. genes with start and stop codon
 my $bool_good = "true";     # if true gene is good, if false, gene is bad
 my $bool_intron = "false";  # true, if currently between exons, false otherwise
-my $bool_start = "false";   # true, gene has start codon
 my @CDS;                    # contains coding region lines
 my $file_name;              # file name
 my $gene_start;             # for length determination
@@ -100,7 +103,9 @@ my $nr_of_genes = 0;        # number of all genes
 my $nr_of_good = 0;         # number of bad genes
 my $one_exon_gene_count = 0;# counts the number of genes which only consist of one exon
 my $start_codon = "";       # contains current start codon for "+" strand (stop codon for "-" strand)
+my $start_ID = "";          # ID of current start codon (only important for files without 'stop_codon' entries)
 my $stop_codon = "";        # contains current stop codon for "+" strand (start codon for "-" strand)
+my $suppress;               # suppress file output
 my $true_count = 0;         # counts the number of true cases per gene
 
 
@@ -113,6 +118,7 @@ if(@ARGV==0){
 GetOptions( 'genemark=s' => \$genemark,
             'introns=s'  => \$introns,
             'output=s'   => \$output_file,
+            'suppress!'  => \$suppress,
             'help!'      => \$help);
 
 if($help){
@@ -160,25 +166,47 @@ if(defined($introns)){
 }
 convert_and_filter();
 
-print STDOUT "Average gene length: $average_gene_length\n";
-print STDOUT "Average number of introns: $average_nr_introns\n";
+if($nr_of_complete > 0){
+  $average_gene_length = ceil($length / $nr_of_complete);
+  print STDOUT "Average gene length: $average_gene_length\n";
+  $average_nr_introns = $average_nr_introns / $nr_of_complete;
+  print STDOUT "Average number of introns: $average_nr_introns\n";
+  my $rate_genes_g = $nr_of_good / $nr_of_complete;
+  print STDOUT "Good gene rate: $rate_genes_g\n";
+}else{
+  print STDERR "Average gene length cannot be computed since all genes are incomplete.\n";
+  print STDERR "Average number of introns cannot be computed since all genes are incomplete.\n";
+  print STDERR "Rate of genes cannot be computed since all genes are incomplete.\n";
+}
 print STDOUT "Number of genes: $nr_of_genes\n";
 print STDOUT "Number of complete genes: $nr_of_complete\n";
 print STDOUT "Number of good genes: $nr_of_good\n";
 print STDOUT "Number of one-exon-genes: $one_exon_gene_count\n";
 print STDOUT "Number of bad genes: $nr_of_bad\n";
-my $rate_mult = $good_mults / $intron_mults;
-my $rate_genes_g = $nr_of_good / $nr_of_complete;
-my $rate_genes_b = $nr_of_bad / $nr_of_complete;
-my $onex_rate_g = $one_exon_gene_count / $nr_of_good;
-my $onex_rate_a = $one_exon_gene_count / $nr_of_complete;
-print STDOUT "Good intron rate: $rate_mult\n";
-print STDOUT "Good gene rate: $rate_genes_g\n";
-print STDOUT "One exon gene rate (of good genes): $onex_rate_g\n";
-print STDOUT "One exon gene rate (of all genes): $onex_rate_a\n";
-open (GENELENGTH, ">$file_name.average_gene_length.out") or die "Cannot open file: $file_name.average_gene_length.out\n";
-print GENELENGTH "$average_gene_length\t$average_nr_introns\n";
-close GENELENGTH;
+if($intron_mults > 0){
+  my $rate_mult = $good_mults / $intron_mults;
+  print STDOUT "Good intron rate: $rate_mult\n";
+}else{
+  print STDERR "Rate of good introns cannot be computed since there are no 'mult' entries.\n";
+}
+if($nr_of_good > 0){ 
+  my $onex_rate_g = $one_exon_gene_count / $nr_of_good;
+  print STDOUT "One exon gene rate (of good genes): $onex_rate_g\n";
+}else{
+  print STDERR "Rate of one exon genes (of good genes) cannot be computed since only complete genes can be 'goood'.\n";
+}
+if($nr_of_genes > 0){
+  my $onex_rate_a = $one_exon_gene_count / $nr_of_genes;
+  print STDOUT "One exon gene rate (of all genes): $onex_rate_a\n";
+}else{
+  print STDERR "Rate of one exon genes (of all genes) cannot be computed because there are no genes in the input file with the correct format.\n";
+}
+
+if(!defined($suppress)){
+  open (GENELENGTH, ">$file_name.average_gene_length.out") or die "Cannot open file: $file_name.average_gene_length.out\n";
+  print GENELENGTH "$average_gene_length\t$average_nr_introns\n";
+  close GENELENGTH;
+}
 
 
                            ############### sub functions ##############
@@ -210,14 +238,16 @@ sub convert_and_filter{
     $output_file = "$file_name.c.gtf";
   }
   
-  if(defined($introns)){
+  if(defined($introns) && !defined($suppress)){
     my $output_file_good = "$file_name.f.good.gtf";
     my $output_file_bad  = "$file_name.f.bad.gtf";
 
     open (GOOD, ">".$output_file_good) or die "Cannot open file: $output_file_good\n";
     open (BAD, ">".$output_file_bad) or die "Cannot open file: $output_file_bad\n";
   }
-  open (OUTPUT, ">".$output_file) or die "Cannot open file: $output_file\n";
+  if(!defined($suppress)){
+    open (OUTPUT, ">".$output_file) or die "Cannot open file: $output_file\n";
+  }
   open (GENEMARK, "<".$genemark) or die "Cannot open file: $genemark\n";
 
   while(<GENEMARK>){
@@ -240,18 +270,16 @@ sub convert_and_filter{
         }
       }
       if( ($line[2] eq "start_codon" && $line[6] eq "+") || ($line[2] eq "stop_codon" && $line[6] eq "-") ){
-        $bool_start = "true";
         $start_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
         $gene_start = $line[3];
-
+        $start_ID = $ID_old[1];
       # gene ends
       }elsif(($line[2] eq "stop_codon" && $line[6] eq "+") || ($line[2] eq "start_codon" && $line[6] eq "-") ){
-        if($bool_start eq "true"){
+        if($start_ID eq $ID_old[1]){
           $length += $line[4] - $gene_start;
           $nr_of_complete++;
           $bool_complete = "true";
         }
-        $bool_start = "false";
         $stop_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
         
       # exons, CDS usw., i.e. no start or stop codon
@@ -276,26 +304,24 @@ sub convert_and_filter{
           push(@CDS, $exon);
         }
       }
-
-      print OUTPUT "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
+      if(!defined($suppress)){
+        print OUTPUT "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
+      }
       $prev_ID = $ID_old[1];
     }
   }
-  @ID_old = split(/\_/,$ID_old[1]);
   if(defined($introns)){
     $nr_of_genes++;
     print_gene(); # print last gene, since print_gene() was only executed after the ID changed
-    close BAD;
-    close GOOD;
+    if(!defined($suppress)){
+      close BAD;
+      close GOOD;
+    }
   }
 
   close GENEMARK;
-  close OUTPUT;
-  if($nr_of_complete > 0){
-    $average_gene_length = ceil($length / $nr_of_complete);
-    $average_nr_introns = $average_nr_introns / $nr_of_complete;
-  }else{
-    print STDERR "Average gene length cannot be computed since all genes are incomplete.\n";
+  if(!defined($suppress)){
+    close OUTPUT;
   }
 }
 
@@ -314,21 +340,25 @@ sub print_gene{
   }
   # all exons in intron file
   if($bool_good eq "true" && $bool_complete eq "true"){
-    print GOOD "$start_codon";
     $nr_of_good++;
-    foreach (@CDS){
-      print GOOD "$_\n";
-    }
-    print GOOD "$stop_codon";
     $good_mults += $mults;
+    if(!defined($suppress)){
+      print GOOD "$start_codon";
+      foreach (@CDS){
+        print GOOD "$_\n";
+      }
+      print GOOD "$stop_codon";
+    }
    # not all exons in intron file or gene incomplete
    }else{
-    print BAD "$start_codon";
     $nr_of_bad++;
-    foreach (@CDS){
-      print BAD "$_\n";
+    if(!defined($suppress)){
+      print BAD "$start_codon";
+      foreach (@CDS){
+        print BAD "$_\n";
+      }
+      print BAD "$stop_codon";
     }
-    print BAD "$stop_codon";
   }
   @CDS =();
   $true_count = 0;
