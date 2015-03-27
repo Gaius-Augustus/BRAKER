@@ -44,9 +44,9 @@ The prediction of protein coding regions in genomes is often accomplished by too
 
 The statistical models of gene prediction tools usually require a training  step to adjust parameters to the genomic properties of individual species. For many tools, including AUGUSTUS, the training step has to be performed on an initially existing example gene set. Training gene sets have in the past often been compiled on the basis of expressed sequence tags (ESTs) or protein data, and have been subject to validation by experts. With the rapidly growing number or novel sequences genomes, this becomes infeasible. Fast and fully automated methods for training gene prediction tools, ideally using the nowadays often available RNA-Seq data, are urgently needed.
 
-In principle, RNA-Seq reads can be assembled into longer contigs, and such contigs can be used similarly to EST data in training of gene finders and for the prediction step. One of the tools that follow this idea is the MAKER2 pipeline [Holt and Yandell, 2011]. However, the RNA-Seq Genome Annotation Assessment Project (RGASP) [Steijger {\it et~al}., 2013] has shown that transcriptome assembly is prone to errors. To avoid transferring assembly errors into gene prediction, it is therefore advantagous to use the information from unassembled mapped reads.
+In principle, RNA-Seq reads can be assembled into longer contigs, and such contigs can be used similarly to EST data in training of gene finders and for the prediction step. One of the tools that follow this idea is the MAKER2 pipeline [Holt and Yandell, 2011]. However, the RNA-Seq Genome Annotation Assessment Project (RGASP) [\cite{RGASP}] has shown that transcriptome assembly is prone to errors. To avoid transferring assembly errors into gene prediction, it is therefore advantagous to use the information from unassembled mapped reads.
 
-We have developed BRAKER1, a pipeline that combines the advantages of two gene prediction tools: GeneMark-ET [Lomsadze {\it et~al}., 2014] is a gene prediction tool that incorporates unassembled RNA-Seq reads into unsupervised training and subsequently generates \textit{ab initio} gene predictions.  Genes predicted by GeneMark-ET are subsequently used to train AUGUSTUS [Stanke \textit{et~al}., 2008]. AUGUSTUS is a gene prediction tool that lacks an unsupervised training procedure but incorporates unassembled RNA-Seq reads into the prediction step; AUGUSTUS was one of the most accurate tools for predicting protein coding genes with RNA-Seq in RGASP. We report accuracy results for BRAKER1 on four model organisms and compare to the accuracy of MAKER2. Recently, CodingQuarry [Testa \textit{et~al}., 2015], a pipeline particularly for RNA-Seq assembly supported training and gene prediction in fungi was published. We compare the results of BRAKER1 on \textit{Schizosaccharomyces pombe} to CodingQuarry.
+We have developed BRAKER1, a pipeline that combines the advantages of two gene prediction tools: GeneMark-ET [\cite{GeneMark-ET}] is a gene prediction tool that incorporates unassembled RNA-Seq reads into unsupervised training and subsequently generates \textit{ab initio} gene predictions.  Genes predicted by GeneMark-ET are subsequently used to train AUGUSTUS [\cite{AUGUSTUS}]. AUGUSTUS is a gene prediction tool that lacks an unsupervised training procedure but incorporates unassembled RNA-Seq reads into the prediction step; AUGUSTUS was one of the most accurate tools for predicting protein coding genes with RNA-Seq in RGASP. We report accuracy results for BRAKER1 on four model organisms and compare to the accuracy of MAKER2. Recently, CodingQuarry [\cite{CodingQuarry}], a pipeline particularly for RNA-Seq assembly supported training and gene prediction in fungi was published. We compare the results of BRAKER1 on \textit{Schizosaccharomyces pombe} to CodingQuarry.
 
 
 \begin{methods}
@@ -60,7 +60,7 @@ BRAKER1 is implemented in Perl and requires two input files: an RNA-Seq alignmen
 \end{figure}
 
 \begin{table*}[!b]
-\processtable{Accuracy results of BRAKER1 and MAKER2 in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq.\label{Tab:01}}
+\processtable{Accuracy results of BRAKER1 and MAKER2 in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry.\label{Tab:01}}
 {\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\toprule
  & \multicolumn{3}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{3}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{3}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{4}{c}{\textit{Schizosaccharomyces pombe}}\\
  & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} &\tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
@@ -93,14 +93,15 @@ SRR097925, SRR402833 (for \textit{S.~pombe}).
 Since BRAKER1 uses AUGUSTUS being trained on GeneMark-ET, and since AUGUSTUS incorporates RNA-Seq into the prediction step, we expect to see an increase in accuracy when comparing AUGUSTUS to GeneMark-ET. This is the case for \textit{A.~thaliana}, \textit{C.~elegans} and \textit{D.~melanogaster} (see table \ref{Tab:01}). On the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1. This is due to the fact that compared to all other test species, the fungus has fewer introns and many intron-less genes. AUGUSTUS parameters can be adapted to improve prediction accuracy in such species, but we here report results with the BRAKER1 default settings. Table \ref{Tab:01} also shows that Transcript sensitivity and specificity of AUGUSTUS is higher because AUGUSTUS reports alternative tanscripts that are supported by RNA-Seq data. 
 
 For the comparison to MAKER2, we followed the tutorial for training and prediction at 
+\url{http://weatherby.genetics.utah.edu/MAKER/wiki/index.php/MAKER_Tutorial_for_GMOD_Online_Training_2014}, details can be found in Supplementary Methods. BRAKER1-AUGUSTUS gains 15 percent points in accuracy on gene level when compared to MAKER2. 
 
+On \textit{S.~pombe}, BRAKER1-AUGUSTUS is on average $\sim$4\% more accurate on gene level than CodingQuarry. Notably, GeneMark-ET is even more accurate on this species (when BRAKER1 is used with standard parameters).
 
-
-
-
+In terms of runtime, BRAKER1 required $\sim$24 hours on a single CPU for training and prediction on \textit{D.~melanogaster}. 
 
 \section{Conclusion}
 
+BRAKER1 is a pipeline for training and prediction with the gene finders GeneMark-ET and AUGUSTUS and RNA-Seq data. In contrast to MAKER2, BRAKER1 is a ``one step process'', meaning that after starting it once, it will execute training and prediction without the need for manual command execution. BRAKER1 predicts genes more accurately than MAKER2 and CodingQuarry.
 
 \section*{Acknowledgement}
 
@@ -128,9 +129,9 @@ We would like to thank Mark Yandell and Carson Holt for valuable advice on runni
 \bibitem[Stanke \textit{et~al}., 2008]{AUGUSTUS}
 Stanke, M. and Diekhans, M. and Baertsch, R. and Haussler, D. (2008) Using native and syntenically mapped cDNA alignments to improve de novo gene finding, \textit{Bioinformatics}, \textbf{24}(5), 637.
 
-\bibitem[Holt and Yandell, 2011] Holt, C. and Yandell, M. (2011) MAKER2: an annotation pipeline and genome-database management tool for second-generation genome projects, \textit{BMC Bioinformatics}, \textbf{12}:491.
+\bibitem[Holt and Yandell, 2011]{MAKER2} Holt, C. and Yandell, M. (2011) MAKER2: an annotation pipeline and genome-database management tool for second-generation genome projects, \textit{BMC Bioinformatics}, \textbf{12}:491.
 
-\bibitem[Testa \textit{et~al}., 2015] Testa, A.C. and Hane, J.K. and Ellwood, S.R. and Oliver R.P. (2015) CodingQuarry: highly accurate hidden Markov model gene prediction in fungal genomes using RNA-seq transcripts, \textit{BMC Genomics} \textbf{16}:170.
+\bibitem[Testa \textit{et~al}., 2015]{CodingQuarry} Testa, A.C. and Hane, J.K. and Ellwood, S.R. and Oliver R.P. (2015) CodingQuarry: highly accurate hidden Markov model gene prediction in fungal genomes using RNA-seq transcripts, \textit{BMC Genomics} \textbf{16}:170.
 
 %\bibitem[Haas \textit{et~al}., 2008] Haas, B. and Salzberg, S. and Zhu, W. and Pertea, M. and Allen, J. and Orvis, J. and White, O. and Buell, C.R. and Wortman, J. (2008) Automated eukaryotic gene structure annotation using EvidenceModeler and the program to assemble spliced reads, {\it Genome Biology}, \textbf{9}(1):R7.
 
