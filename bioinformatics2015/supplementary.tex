@@ -1,0 +1,74 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{rotating}
+
+%opening
+\title{BRAKER1: Unsupervised RNA-Seq-Based Genome Annotation with GeneMark-ET and AUGUSTUS - \textbf{Supplementary Methods}}
+\author{Katharina J. Hoff, Simone Lange, Alexandre Lomsadze,\\ Mark Borodovsky and Mario Stanke}
+
+
+\begin{document}
+
+\maketitle
+
+\section{RNA-Seq Alignment}
+
+RNA-Seq libraries were aligned against the respective genomes with TopHat2 version 2.0.11 \cite{TopHat2} using Bowtie2 version 2.2.2\\ \cite{Bowtie2}.
+
+In order to determine library specific characteristics such as insert size, TopHat2 was first run with standard parameters. Initial alignments were processed with Cufflinks \cite{Cufflinks} version 2.2.0. The Cufflinks run was interrupted after the output showed ``Fragment Length Distribution'' parameters. Subsequently, TopHat2 was run with the such determined mean insert size and standard deviation. Table \ref{Tab:01} shows Tophat2 parameters that were used for all sets of RNA-Seq libraries in this publication.
+
+\begin{sidewaystable}
+\begin{center}
+\begin{tiny}
+ \begin{tabular}{p{0.2\textwidth} c c c c c c c}
+ \hline
+Library & \texttt{--mate-inner-dist} & \texttt{--mate-std-dev} & \texttt{--min-intron-length} & \texttt{--min-coverage-intron} & \texttt{--min-segment-intron} & \texttt{--microexon-search} & \texttt{--max-intron-length} \\
+\hline
+SRR934391 & 20 & 46 & -- &  -- & -- & on & 100000\\
+SRR065719 & 14 & 25 &20&20&20& on & 100000\\
+SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 & 38 & 26 & 30 & 30 & 30 & on & --\\
+SRR097898, SRR097899, SRR097900, SRR097902, SRR097903, SRR097905, SRR097906, SRR097907, SRR097908, SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR097925, SRR402833  & -- & -- & 20 & 20 & 20 & on & 100000\\
+\hline
+ \end{tabular}
+ \end{tiny}
+ \end{center}
+\caption{\label{Tab:01}TopHat2 parameters used for RNA-Seq alignment.}
+\end{sidewaystable}
+
+\section{Cufflinks Assembly}
+
+MAKER2 \cite{MAKER2} and CodingQuarry \cite{CodingQuarry} require an RNA-Seq assembly. We used Cufflinks version 2.2.0 with standard parameters to assemble the libraries that had previously been aligned to the genome with TopHat2. 
+
+
+
+\begin{thebibliography}{}
+\bibitem[Kim {\it et~al}., 2013]{TopHat2} Kim, D. and Pertea, G. and Trapnell, C. and Pimentel, H. and Kelley, R. and Salzberg, S.L. (2013) TopHat2: accurate alignment of transcriptomes in the presence of insertions, deletions and gene fusions, {\it Genome Biology} \textbf{14}:R36.
+
+\bibitem[Langmead and Salzberg, 2012]{Bowtie2} Langmead, B. and Salzberg, S.L. (2012) Fast gapped-read alignment with Bowtie 2, \textit{Nature Methods} \textbf{9}: 357-359.
+
+\bibitem[Mortazavi {\it et~al}., 2008]{Cufflinks} Mortazavi, A. and Williams, B.A. and McCue, K. and Schaeffer, L. and Wold, B. (2008) Mapping and quantifying mammalian transcriptomes by RNA-Seq, \textit{Nature Methods} \textbf{5}: 621-628.
+
+\bibitem[Holt and Yandell, 2011]{MAKER2} Holt, C. and Yandell, M. (2011) MAKER2: an annotation pipeline and genome-database management tool for second-generation genome projects, \textit{BMC Bioinformatics}, \textbf{12}:491.
+
+\bibitem[Testa \textit{et~al}., 2015]{CodingQuarry} Testa, A.C. and Hane, J.K. and Ellwood, S.R. and Oliver R.P. (2015) CodingQuarry: highly accurate hidden Markov model gene prediction in fungal genomes using RNA-seq transcripts, \textit{BMC Genomics} \textbf{16}:170.
+
+%\bibitem[Steijger {\it et~al}., 2013]{RGASP} Steijger,T. and Abril,J.F. and Engstr\"{o}m,P.G. and Kokocinski,F. and The RGASP Consortium, Hubard,T.J. and Guigo,R. and Harrow, J. and Bertone, P. (2013) Assessment of transcript reconstruction methods for
+% RNA-seq, {\it Nature Methods}, doi:10.1038/nmeth.271.
+
+%\bibitem[Lomsadze {\it et~al}., 2014]{GeneMark-ET} Lomsadze, A. and Burns, P.D. and Borodovsky, M. (2014) Integration of mapped RNA-Seq reads into automatic training of eukaryotic gene finding algorithm, {\it Nucleic Acids Research}, doi:10.1093/nar/gku557.
+
+%\bibitem[Stanke \textit{et~al}., 2008]{AUGUSTUS}
+%Stanke, M. and Diekhans, M. and Baertsch, R. and Haussler, D. (2008) Using native and syntenically mapped cDNA alignments to improve de novo gene finding, \textit{Bioinformatics}, \textbf{24}(5), 637.
+
+%\bibitem[Holt and Yandell, 2011]{MAKER2} Holt, C. and Yandell, M. (2011) MAKER2: an annotation pipeline and genome-database management tool for second-generation genome projects, \textit{BMC Bioinformatics}, \textbf{12}:491.
+
+%\bibitem[Testa \textit{et~al}., 2015]{CodingQuarry} Testa, A.C. and Hane, J.K. and Ellwood, S.R. and Oliver R.P. (2015) CodingQuarry: highly accurate hidden Markov model gene prediction in fungal genomes using RNA-seq transcripts, \textit{BMC Genomics} \textbf{16}:170.
+
+%\bibitem[Haas \textit{et~al}., 2008] Haas, B. and Salzberg, S. and Zhu, W. and Pertea, M. and Allen, J. and Orvis, J. and White, O. and Buell, C.R. and Wortman, J. (2008) Automated eukaryotic gene structure annotation using EvidenceModeler and the program to assemble spliced reads, {\it Genome Biology}, \textbf{9}(1):R7.
+
+%\bibitem[Keller \textit{et~al}., 2008] Keller, O. and Odronitz, F. and Stanke, M. and Kollmar, M. and Waack, S. (2008) Scipio: Using protein sequences to determine the precise exon/intron structures of genes and their orthologs in closely related species, {\it BMC Bioinformatics}, \textbf{9}(1):278.
+
+\end{thebibliography}
+
+\end{document}
