@@ -1,5 +1,6 @@
 \documentclass{bioinfo}
 \usepackage{hyperref}
+%%%%%%%%%%%%%%%%%%%%%% comment boxes
 
 \copyrightyear{2015}
 \pubyear{2015}
@@ -25,10 +26,10 @@ $^{5}$Joint Georgia Tech and Emory University Wallace H Coulter Department of Bi
 
 \section{Motivation:}
 
-GeneMark-ET is a gene prediction tool that incorporates unassembled RNA-Seq reads into unsupervised training and subsequently generates \textit{ab initio} gene predictions. AUGUSTUS is a gene finder that usually requires supervised training and uses information form unassembled RNA-Seq reads in the prediction step. 
+GeneMark-ET is a gene prediction tool that incorporates RNA-Seq data into unsupervised training and subsequently generates \textit{ab initio} gene predictions. AUGUSTUS is a gene finder that usually requires supervised training and uses information from RNA-Seq reads in the prediction step.
 
 \section{Results:}
-We present BRAKER1, a pipeline for unsupervised RNA-Seq-based genome annotation that combines the advantages of GeneMark-ET and AUGUSTUS. BRAKER1 requires an RNA-Seq read alignment file and a genome file as input. First, GeneMark-ET performs iternative training and generates initial gene structures. Second, AUGUSTUS uses predicted genes for training and then integrates RNA-Seq read information into final gene predictions. In our experiments, we observed that BRAKER1 was more accurate than MAKER2 when it is using RNA-Seq as sole source for training and prediction. BRAKER1 does not require pre-trained parameters or a separate training step.
+We present BRAKER1, a pipeline for unsupervised RNA-Seq-based genome annotation that combines the advantages of GeneMark-ET and AUGUSTUS. BRAKER1 requires a file with spliced alignments of RNA-Seq reads and a genome file as input. First, GeneMark-ET performs iterative training and generates initial gene structures. Second, AUGUSTUS uses predicted genes for training and then integrates RNA-Seq read information into final gene predictions. In our experiments, we observed that BRAKER1 was more accurate than MAKER2 when it is using RNA-Seq as sole source for training and prediction. BRAKER1 does not require pre-trained parameters or a separate training step.
 
 \section{Availability:}
 BRAKER1 is available for download at \url{http://bioinf.uni-greifswald.de/downloads/} and \url{http://exon.gatech.edu/.}.
@@ -38,21 +39,21 @@ BRAKER1 is available for download at \url{http://bioinf.uni-greifswald.de/downlo
 
 \section{Introduction}
 
-Transcriptome sequencing data (RNA-Seq) that has been aligned to a genome sequence has great potential to improve the accuracy of structural genome annotation: spliced alignments may indicate intron positions, and coverage increase and decrease may give information about exon-noncoding region borders. Nevertheless, RNA-Seq alone does not indicate the presence or absence of protein coding regions. 
+Transcriptome sequencing data (RNA-Seq) that has been aligned to a genome sequence has great potential to improve the accuracy of structural genome annotation: spliced alignments may indicate intron positions, and coverage increase and decrease may give information about exon-noncoding region borders. Nevertheless, RNA-Seq coverage alone is no reliable indicator of protein coding regions. 
 
 The prediction of protein coding regions in genomes is often accomplished by tools that use statistical models to discriminate genes from other genomic regions. Some of these gene prediction tools can additionally use RNA-Seq alignments to improve prediction accuracy.
 
-The statistical models of gene prediction tools usually require a training  step to adjust parameters to the genomic properties of individual species. For many tools, including AUGUSTUS, the training step has to be performed on an initially existing example gene set. Training gene sets have in the past often been compiled on the basis of expressed sequence tags (ESTs) or protein data, and have been subject to validation by experts. With the rapidly growing number or novel sequences genomes, this becomes infeasible. Fast and fully automated methods for training gene prediction tools, ideally using the nowadays often available RNA-Seq data, are urgently needed.
+The statistical models of gene prediction tools usually require a training  step to adjust parameters to the genomic properties of individual species. For many tools, including AUGUSTUS, the training step has to be performed on an initially existing example gene set. Training gene sets have in the past often been compiled on the basis of expressed sequence tags (ESTs) or protein data, and sometimes have been subject to validation by experts. With the rapidly growing number or novel sequences genomes, this becomes infeasible. Fast and fully automated methods for training gene prediction tools, ideally using the nowadays often available RNA-Seq data, are urgently needed.
 
-In principle, RNA-Seq reads can be assembled into longer contigs, and such contigs can be used similarly to EST data in training of gene finders and for the prediction step. One of the tools that follow this idea is the MAKER2 pipeline [Holt and Yandell, 2011]. However, the RNA-Seq Genome Annotation Assessment Project (RGASP) [\cite{RGASP}] has shown that transcriptome assembly is prone to errors. To avoid transferring assembly errors into gene prediction, it is therefore advantagous to use the information from unassembled mapped reads.
+In principle, RNA-Seq reads can be assembled into longer contigs, and such contigs can be used similarly to EST data in training of gene finders and for the prediction step. One of the tools that follow this idea is the MAKER2 pipeline [Holt and Yandell, 2011]. However, the RNA-Seq Genome Annotation Assessment Project (RGASP) \cite{RGASP} has shown that transcriptome assembly is prone to errors. To avoid transferring assembly errors into gene prediction, it is therefore advantagous to use the information from unassembled mapped reads.
 
-We have developed BRAKER1, a pipeline that combines the advantages of two gene prediction tools: GeneMark-ET [\cite{GeneMark-ET}] is a gene prediction tool that incorporates unassembled RNA-Seq reads into unsupervised training and subsequently generates \textit{ab initio} gene predictions.  Genes predicted by GeneMark-ET are subsequently used to train AUGUSTUS [\cite{AUGUSTUS}]. AUGUSTUS is a gene prediction tool that lacks an unsupervised training procedure but incorporates unassembled RNA-Seq reads into the prediction step; AUGUSTUS was one of the most accurate tools for predicting protein coding genes with RNA-Seq in RGASP. We report accuracy results for BRAKER1 on four model organisms and compare to the accuracy of MAKER2. Recently, CodingQuarry [\cite{CodingQuarry}], a pipeline particularly for RNA-Seq assembly supported training and gene prediction in fungi was published. We compare the results of BRAKER1 on \textit{Schizosaccharomyces pombe} to CodingQuarry.
+We have developed BRAKER1, a pipeline that combines the advantages of two gene prediction tools: [TODO: less repetition in this paragraph. be more specific] GeneMark-ET \cite{GeneMark-ET} is a gene prediction tool that incorporates unassembled RNA-Seq reads into unsupervised training and subsequently generates \textit{ab initio} gene predictions.  Genes predicted by GeneMark-ET are subsequently used to train AUGUSTUS \cite{AUGUSTUS}. AUGUSTUS is a gene prediction tool that lacks an unsupervised training procedure but incorporates unassembled RNA-Seq reads into the prediction step; AUGUSTUS was one of the most accurate tools for predicting protein coding genes with RNA-Seq in RGASP. We report accuracy results for BRAKER1 on four model organisms and compare to the accuracy of MAKER2. Recently, Testa et al.~published CodingQuarry, a pipeline for RNA-Seq assembly supported training and gene prediction, but currently recommend its application only to fungi \cite{CodingQuarry}. We compare the results of BRAKER1 on \textit{Schizosaccharomyces pombe} to CodingQuarry.
 
 
 \begin{methods}
 \section{Pipeline Description}
 
-BRAKER1 is implemented in Perl and requires two input files: an RNA-Seq alignment file in \texttt{bam}-format, and a corresponding genome file in \texttt{fasta}-format. Spliced alignment information is extracted from the RNA-Seq file and stored in \texttt{gff}-format. GeneMark-ET uses the genome file and  the spliced alignment \texttt{gff}-file for RNA-Seq supported unsupervised training. After training, GeneMark-ET creates an \textit{ab initio} gene set. Those gene structures that have support by RNA-Seq alignments in all introns are selected for automated training of AUGUSTUS. After training, AUGUSTUS predicts genes in the intput genome file using spliced alignment information from RNA-Seq as extrinsic evidence. The pipeline is illustrated in figure \ref{pipeline}.
+BRAKER1 is implemented in Perl and requires two input files: an RNA-Seq alignment file in \texttt{bam}-format, and a corresponding genome file in \texttt{fasta}-format. Spliced alignment information is extracted from the RNA-Seq file and stored in \texttt{GFF}-format. GeneMark-ET uses the genome file and  the spliced alignment \texttt{GFF}-file for RNA-Seq supported unsupervised training. After training, GeneMark-ET creates an \textit{ab initio} gene set. Those gene structures that have support by RNA-Seq alignments in all introns are selected for automated training of AUGUSTUS. After training, AUGUSTUS predicts genes in the intput genome file using spliced alignment information from RNA-Seq as extrinsic evidence. The pipeline is illustrated in Figure \ref{pipeline}.
 
 \begin{figure}[!tpb]%figure1
 \centerline{\includegraphics[width=0.6\linewidth]{figs/simple_braker.pdf}}
@@ -78,10 +79,8 @@ Exon specificity & 72.4 & 78.5 & 76.1& 78.2& 85.4& 62.3 & 57.9 & 66.2 & 55.0 & 8
 
 \section{Test Data}
 
-In order to demonstrate prediction accuracy, genomes, reference annotations and RNA-Seq libraries were retrieved for four model organisms from the respective databases: for \textit{Arabidopsis thaliana}, TAIR 10 was downloaded from http://arabidopsis.org/; for \textit{Caenorhabditis elegans}, WS240 was downloaded from http://www.wormbase.org/; for \textit{Drosophila melanogaster}, R5 was downloaded from http://flybase.org/; for \textit{Schizosaccharomyces pombe}, ASM294v2.23 was downloaded from http://www.pombase.org/. The following RNA-Seq libraries were retrieved from the short read archive at NCBI: SRR934391 (for \textit{A.~thaliana}); SRR065719 (for \textit{C.~elegans}); SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 (for \textit{D.~melanogaster}); SRR097898, SRR097899, SRR097900, SRR097902, SRR097903,
-SRR097905, SRR097906, SRR097907, SRR097908, SRR097909,
-SRR097912, SRR097915, SRR097917, SRR097921, SRR097922,
-SRR097925, SRR402833 (for \textit{S.~pombe}).
+In order to demonstrate prediction accuracy, genomes, reference annotations and RNA-Seq libraries were retrieved for four model organisms from the respective databases: for \textit{Arabidopsis thaliana}, TAIR 10 from \url{http://arabidopsis.org}; for \textit{Caenorhabditis elegans}, WS240 from \url{http://www.wormbase.org}; for \textit{Drosophila melanogaster}, R5 from \url{http://flybase.org}; for \textit{Schizosaccharomyces pombe}, ASM294v2.23 from \url{http://www.pombase.org}. The following RNA-Seq libraries were retrieved from the short read archive at NCBI: SRR934391 (for \textit{A.~thaliana}); SRR065719 (for \textit{C.~elegans}); SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 (for \textit{D.~melanogaster}); SRR097898-SRR097900, SRR097902, SRR097903,
+SRR097905-SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR097925, SRR402833 (for \textit{S.~pombe}).
 
 
 
@@ -97,7 +96,8 @@ For the comparison to MAKER2, we followed the tutorial for training and predicti
 
 On \textit{S.~pombe}, BRAKER1-AUGUSTUS is on average $\sim$4\% more accurate on gene level than CodingQuarry. Notably, GeneMark-ET is even more accurate on this species (when BRAKER1 is used with standard parameters).
 
-In terms of runtime, BRAKER1 required $\sim$24 hours on a single CPU for training and prediction on \textit{D.~melanogaster}. 
+BRAKER1 required $\sim$24 hours on a single CPU for training and prediction on \textit{D.~melanogaster}.
+[but can be run in parallel?]
 
 \section{Conclusion}
 
