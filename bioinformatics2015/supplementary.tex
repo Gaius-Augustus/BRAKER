@@ -1,16 +1,22 @@
-\documentclass[a4paper,10pt]{article}
+\documentclass[a4paper,10pt]{report}
 \usepackage[utf8]{inputenc}
 \usepackage{hyperref}
 \usepackage{rotating}
+\usepackage{amssymb}
+
 
 %opening
-\title{BRAKER1: Unsupervised RNA-Seq-Based Genome Annotation with GeneMark-ET and AUGUSTUS - \textbf{Supplementary Methods}}
+\title{BRAKER1: Unsupervised RNA-Seq-Based Genome Annotation with GeneMark-ET and AUGUSTUS - \textbf{Supplementary}}
 \author{Katharina J. Hoff, Simone Lange, Alexandre Lomsadze,\\ Mark Borodovsky and Mario Stanke}
 
 
 \begin{document}
 
 \maketitle
+
+\tableofcontents
+
+\chapter{Supplementary Methods}
 
 \section{RNA-Seq Alignment}
 
@@ -25,10 +31,10 @@ In order to determine library specific characteristics such as insert size, TopH
  \hline
 Library & \texttt{--mate-inner-dist} & \texttt{--mate-std-dev} & \texttt{--min-intron-length} & \texttt{--min-coverage-intron} & \texttt{--min-segment-intron} & \texttt{--microexon-search} & \texttt{--max-intron-length} \\
 \hline
-SRR934391 & 20 & 46 & -- &  -- & -- & on & 100000\\
-SRR065719 & 14 & 25 &20&20&20& on & 100000\\
-SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 & 38 & 26 & 30 & 30 & 30 & on & --\\
-SRR097898, SRR097899, SRR097900, SRR097902, SRR097903, SRR097905, SRR097906, SRR097907, SRR097908, SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR097925, SRR402833  & -- & -- & 20 & 20 & 20 & on & 100000\\
+SRR934391 & 20 & 46 & -- &  -- & -- & \checkmark & 100000\\
+SRR065719 & 14 & 25 &20&20&20& \checkmark & 100000\\
+SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 & 38 & 26 & 30 & 30 & 30 & \checkmark & --\\
+SRR097898, SRR097899, SRR097900, SRR097902, SRR097903, SRR097905, SRR097906, SRR097907, SRR097908, SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR097925, SRR402833  & -- & -- & 20 & 20 & 20 & \checkmark & 100000\\
 \hline
  \end{tabular}
  \end{tiny}
@@ -40,7 +46,351 @@ SRR097898, SRR097899, SRR097900, SRR097902, SRR097903, SRR097905, SRR097906, SRR
 
 MAKER2 \cite{MAKER2} and CodingQuarry \cite{CodingQuarry} require an RNA-Seq assembly. We used Cufflinks version 2.2.0 with standard parameters to assemble the libraries that had previously been aligned to the genome with TopHat2. 
 
+\section{Running BRAKER1}
 
+The command for running BRAKER1 was\\
+
+\noindent \texttt{braker.pl --genome=genome.fa --species=speciesname --bam=accepted\_hits.bam}\\
+
+\noindent where \texttt{accepted\_hits.bam} is the TopHat2 alignment file.
+
+\section{Running MAKER2}
+
+For running MAKER2, we followed the tutorial at \url{http://weatherby.genetics.utah.edu/MAKER/wiki/index.php/MAKER_Tutorial_for_GMOD_Online_Training_2014}, mostly.
+
+MAKER2 was run with the gene finders SNAP \cite{SNAP}, AUGUSTUS \cite{AUGUSTUS}, and GeneMark-ES \cite{GeneMark-ES}. Running MAKER on a novel species consists of three steps: 
+
+\begin{enumerate}
+ \item Generating training gene structures for SNAP and AUGUSTUS with MAKER2,
+ \item training SNAP and AUGUSTUS (outside of MAKER2), and
+ \item predicing genes with MAKER2 using GeneMark-ES, SNAP and AUGUSTUS.
+\end{enumerate}
+
+Training gene structures can be improved an iterative fashion. We computed two iterations.
+
+Training of the gene prediction tool GeneMark-ES depends on the genome sequence, only, and is therefore independent from MAKER2 generated training gene structures. GeneMark-ES was trained using the command\\
+
+\noindent \texttt{gm\_es.pl genome.fa}
+
+\subsection{Generating training gene structures for SNAP and AUGUSTUS (first iteration)} \label{training_genes_it1}
+
+MAKER2 configuration files were generated\\
+
+\noindent \texttt{maker -CTL}\\
+
+\noindent The file \texttt{maker\_opts.ctl} was edited to contain (besides default parameters):
+
+\begin{verbatim}
+genome=genome.fasta
+est=transcripts.fa # Cufflinks assembly
+est2genome=1
+\end{verbatim}
+
+\noindent No HMMs for gene finders were configured. MAKER2 was run with the following command:\\
+
+\noindent \texttt{maker}\\
+
+\noindent Chromosome-specific \texttt{gff} files were converted to \texttt{ann/zff} and \texttt{dna} files (native format for training SNAP):
+
+\begin{verbatim}
+# maker2zff belongs to MAKER2
+maker2zff Chr.gff
+mv genome.ann genome.Chr.ann
+mv genome.dna genome.Chr.dna
+cat genome.Chr.ann ... > genome.ann
+cat genome.Chr.dna ... > genome.dna
+\end{verbatim}
+
+\noindent To obtain a training gene file for AUGUSTUS, \texttt{ann/zff} files were first converted to \texttt{gff3}, and from there to \texttt{gtf}:
+
+\begin{verbatim}
+# zff2gff3.pl belongs to SNAP
+zff2gff3.pl genome.Chr.ann > Chr.gff3
+cat Chr.gff3 | perl -ne '
+  if(not(m/^\#/)){
+    chomp; @t = split(/\t/); 
+    @t2 = split(/=/, $t[7]);
+    print "$t[0]\t$t[1]\t$t[2]\t$t[3]\t$t[4]\t$t[5]\t$t[6]\t";
+    print "\tgene_id \"$t2[1]Chr\"; transcript_id"; 
+    print "  \"$t2[1]Chr\"\n";
+  }'> Chr.gtf
+# the last two lines makes gene/transcript IDs unique across 
+# different chromosomes
+
+# join gtf files from different chromosomes:
+cat Chr.gtf ... > all.gtf
+\end{verbatim}
+
+\noindent AUGUSTUS training genes are excised with a flanking noncoding region. In BRAKER1, the average gene length divided by two is used as a flanking region length. The average gene length and resulting flanking region length were computed:
+
+\begin{verbatim}
+cat all.gtf | perl -ne '
+  @t = split(/\t/);
+  $seen{$t[8]} += ($t[4] - $t[3] + 1); 
+  if(eof()){
+    $sum = 0; $c = 0; 
+    foreach my $key ( keys %seen ){
+    $c=$c+1; $sum += $seen{$key};} 
+    print $sum."/".$c."=".($sum/$c); 
+    print "\n";
+  }'
+# the resulting number was divided by two
+\end{verbatim}
+
+\noindent This resulted in the following flanking region lengths:\\
+
+\begin{center}
+\begin{tabular}{l r}
+\hline
+Species & Flanking region length (nt)\\
+\hline
+\textit{Arabidopsis thaliana} & 644\\
+\textit{Caenorhabditis elegans} & 616\\
+\textit{Drosophila melanogaster} & 972\\
+\textit{Schizosaccharomyces pombe} & 1050\\
+\hline
+\end{tabular}
+\end{center}
+
+\noindent The \texttt{gtf} file was converted to a \texttt{gb} file with above flanking region:\\
+
+\begin{verbatim}
+# gff2gbSmallDNA.pl belongs to AUGUSTUS
+gff2gbSmallDNA.pl all.gtf genome.fasta $flanking_region_length first.gb
+\end{verbatim}
+
+\noindent Above described procedure lead to the generation of the following numbers of training genes:
+
+\begin{center}
+\begin{tabular}{l r}
+\hline
+Species & Flanking region length (nt)\\
+\hline
+\textit{Arabidopsis thaliana} & 13547\\
+\textit{Caenorhabditis elegans} & 7660\\
+\textit{Drosophila melanogaster} & 7049\\
+\textit{Schizosaccharomyces pombe} & 307\\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Training SNAP and AUGUSTUS (first iteration)}
+
+\subsubsection{Training SNAP} \label{train_snap_it1}
+
+\begin{verbatim}
+# fathom, forge and hmm-assembler.pl are part of SNAP
+fathom -categorize 1000 genome.ann genome.dna
+fathom -export 1000 -plus uni.ann uni.dna
+forge export.ann export.dna
+hmm-assembler.pl ${species} . > ${species}.hmm
+\end{verbatim}
+
+\subsubsection{Training AUGUSTUS} \label{train_augustus_it1}
+
+A new species for AUGUSTUS parameters was created:\\
+
+\begin{verbatim}
+# new_species.pl is part of AUGUSTUS
+new_species.pl --species=${species}
+\end{verbatim}
+
+
+\noindent The original training gene structure contained errors, such as occasionally missing start- or stop-codons. Such error containing genes were filtered out:\\
+
+\begin{verbatim}
+# etraining and filgerGenesOut_mRNAname.pl are part of AUGUSTUS \
+etraining --species=maker2_spomb1 first.gb 1> etrain-test.out 
+   2> etrain-test.err
+   
+fgrep "gene" etrain-test.err | cut -f 2 -d " " > bad.etraining-test.lst
+
+filterGenesOut_mRNAname.pl bad.etraining-test.lst first.gb > second.gb
+
+etraining --species=maker2_spomb1 second.gb
+\end{verbatim}
+
+\noindent The training gene set was split into two sets, the second set was subsequently further split in another two sets, resulting in three different files:
+
+\begin{enumerate}
+ \item A small ``test set'' of 200 (in case of \textit{S.~pombe} first iteration: 23) genes for measuring accuracy after \texttt{etraining} and \texttt{optimize\_augustus.pl}, 
+ \item a large gene set for \texttt{etraining}, that was further split into:
+ \begin{enumerate}
+ \item a large gene set for for the option \texttt{--onlytrain} of \\\texttt{optimize\_augustus.pl},
+ \item a small gene set for \texttt{optimize\_augustus.pl}, the size was 1000 for all species except for \texttt{S.~pombe}, where genes were not split for \\ \texttt{optimize\_augustus.pl}
+ \end{enumerate}
+\end{enumerate}
+
+\begin{verbatim}
+# randomSplit.pl is part of AUGUSTUS
+randomSplit.pl second.gb 200
+randomSplit.pl second.gb.train 1000
+# this results in the following files:
+# 1) second.gb.test -> measuring accuracy
+# 2) second.gb.train -> etraining
+# 2a) second.gb.train.train -> --onlytrain in optimize_augustus.pl
+# 2b) second.gb.train.test -> optimize_augustus.pl
+\end{verbatim}
+
+\noindent Major AUGUSTUS parameters were trained with \texttt{etraining}:\\
+
+\noindent \texttt{etraining --species=\$\{species\} second.gb.train}\\
+
+%\noindent Accuracy after \texttt{etraining} was tested with:\\
+
+%\noindent \texttt{augustus --species=\$\{species\} second.gb.test}\\
+
+%\noindent Accuracy results after different training steps are summarized in table \ref{TrainAcc}.
+\noindent Other parameters were optimized with \texttt{optimize\_augustus.pl:}\\
+
+\noindent \texttt{optimize\_augustus.pl --species=\$\{species\} --onlytrain=second.gb.train.train second.gb.train.test}\\
+
+%\noindent Accuracy after \texttt{optimize\_augustus.pl} was tested with:\\
+
+%\noindent \texttt{augustus --species=\$\{species\} second.gb.test}\\
+
+\subsection{Generating training gene structures (second iteration)}
+
+\subsubsection{Generating training gene structures for SNAP}
+
+MAKER2 parameters were generated:\\
+
+\noindent \texttt{maker -CTL}\\
+
+\noindent The file \texttt{maker\_opts.ctl} was edited to contain (besides default parameters):
+
+\begin{verbatim}
+genome=genome.fasta
+est=transcripts.fa # Cufflinks assembly
+snaphmm=${species}.hmm
+\end{verbatim}
+
+\noindent MAKER2 was run with the following command:\\
+
+\noindent \texttt{maker}\\
+
+\noindent Training gene extraction for SNAP was performed as described for iteration 1 in section \ref{training_genes_it1}.
+
+\subsubsection{Generating training gene structures for AUGUSTUS}
+
+MAKER2 parameters were generated:\\
+
+\noindent \texttt{maker -CTL}\\
+
+\noindent The file \texttt{maker\_opts.ctl} was edited to contain (besides default parameters):
+
+\begin{verbatim}
+genome=genome.fasta
+est=transcripts.fa # Cufflinks assembly
+augustus_species=${species}
+\end{verbatim}
+
+\noindent MAKER2 was run with the following command:\\
+
+\noindent \texttt{maker}\\
+
+\noindent Training gene extraction for AUGUSTUS was performed as described for iteration 1 in section \ref{training_genes_it1}, leading to the following numbers of training genes:
+
+\begin{center}
+\begin{tabular}{l r}
+\hline
+Species & Flanking region length (nt)\\
+\hline
+\textit{Arabidopsis thaliana} & 11887\\
+\textit{Caenorhabditis elegans} & 5711\\
+\textit{Drosophila melanogaster} & 7568\\
+\textit{Schizosaccharomyces pombe} & 1013\\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Training SNAP and AUGUSTUS (second iteration)}
+
+\subsubsection{Training SNAP}
+
+Training SNAP was performed as described in section \ref{train_snap_it1}.
+
+\subsubsection{Training AUGUSTUS}
+
+Training AUGUSTUS was performed as described in section \ref{train_augustus_it1}, except that no new species was created (parameters of iteration 1 were refined).
+
+\subsection{Predicting genes with MAKER2}
+
+\subsubsection{Preparing \texttt{rnaseq.gff3}}
+
+Junctions generated by TopHat2 were converted to \texttt{gff3} format, as well as Cufflinks transcripts (\texttt{gtf} to \texttt{gff3}):
+
+\begin{verbatim}
+tophat2gff3 junctions.bed > tophat.gff3
+cufflinks2gff3 transcripts.gtf > cufflinks.gff3
+cat tophat.gff3 cufflinks.gff3 > rnaseq.gff3
+\end{verbatim}
+
+
+\subsubsection{Running MAKER2}
+
+MAKER2 parameters were generated:\\
+
+\noindent \texttt{maker -CTL}\\
+
+\noindent The file \texttt{maker\_opts.ctl} was edited to contain (besides default parameters):
+
+\begin{verbatim}
+genome=genome.fasta
+est=transcripts.fa # Cufflinks assembly
+est_gff=rnaseq.gff3 # TopHat2 and Cufflinks
+augustus_species=${species}
+snaphmm=${species}.hmm #SNAP HMM file
+gmhmm=${species}/gmhmm.mod #GeneMark HMM file
+augustus_species=${species} # AUGUSTUS model
+keep_preds=1
+\end{verbatim}
+
+\noindent MAKER2 was run with the following command:\\
+
+\noindent \texttt{maker}\\
+
+\section{Running CodingQuarry}
+
+As a tool specific for fungi, we ran CodingQuarry on \textit{S.~pombe}, only. First, Cufflinks assemblies were converted from \texttt{gtf} to \texttt{gff3}, then CodingQuarry was executed:\\
+
+\begin{verbatim}
+CufflinksGTF_to_CodingQuarryGFF3.py transcripts.gtf > transcripts.gff3
+
+CodingQuarry -f genome.fasta -t transcripts.gff3 -d -p 8
+\end{verbatim}
+
+
+\section{Measuring Accuracy}
+
+Accuracy was measured using the Eval package \cite{Eval}.
+
+\chapter{Supplementary Results}
+
+High quality repeat libraries are available for the four model organisms used in this study. BRAKER1 supports the usage of softmasked genomes. In contrast to MAKER2, BRAKER1 does not automatically call repeats, genomes must be masked prior calling BRAKER1. The command for running BRAKER1 on softmasked genomes is:\\
+
+\begin{verbatim}
+braker.pl --genome=genome_softmasked.fa --species=speciesname \
+  --bam=accepted_hits.bam --softmasking
+\end{verbatim}
+
+Results of BRAKER1 on softmasked genomes (according to repeat annotation from the respective organism database) are shown in table \ref{softmasked}.
+
+% \begin{table*}[!b]
+% \processtable{Accuracy results of BRAKER1 (applied to softmasked genomes) and MAKER2 (with automatic repeat masking) in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Results for BRAKER1 with repeat masking can be found in Supplementary Materials.\label{softmasked}}
+% {\begin{tabular}{lrrrr}\toprule
+%  & \textit{Arabidopsis thaliana} & \textit{Caenorhabditis elegans}&  \textit{Drosophila melanogaster}& \textit{Schizosaccharomyces pombe}\\
+%  \midrule
+% Gene sensitivity & q
+% Gene specificity &
+% Transcript sensitivity & 
+% Transcript specificity & 
+% Exon sensitivity &
+% Exon specificity & 
+% \botrule
+% 
+% \end{tabular}}{}
+% \end{table*}
 
 \begin{thebibliography}{}
 \bibitem[Kim {\it et~al}., 2013]{TopHat2} Kim, D. and Pertea, G. and Trapnell, C. and Pimentel, H. and Kelley, R. and Salzberg, S.L. (2013) TopHat2: accurate alignment of transcriptomes in the presence of insertions, deletions and gene fusions, {\it Genome Biology} \textbf{14}:R36.
@@ -52,6 +402,15 @@ MAKER2 \cite{MAKER2} and CodingQuarry \cite{CodingQuarry} require an RNA-Seq ass
 \bibitem[Holt and Yandell, 2011]{MAKER2} Holt, C. and Yandell, M. (2011) MAKER2: an annotation pipeline and genome-database management tool for second-generation genome projects, \textit{BMC Bioinformatics}, \textbf{12}:491.
 
 \bibitem[Testa \textit{et~al}., 2015]{CodingQuarry} Testa, A.C. and Hane, J.K. and Ellwood, S.R. and Oliver R.P. (2015) CodingQuarry: highly accurate hidden Markov model gene prediction in fungal genomes using RNA-seq transcripts, \textit{BMC Genomics} \textbf{16}:170.
+
+\bibitem[Korf, 2004]{SNAP} Korf, I. (2004) Gene finding in novel genomes, \textit{BMC Bioinformatics} \textbf{5}:59 S1-S9.
+
+\bibitem[Stanke \textit{et~al}., 2008]{AUGUSTUS}
+Stanke, M. and Diekhans, M. and Baertsch, R. and Haussler, D. (2008) Using native and syntenically mapped cDNA alignments to improve de novo gene finding, \textit{Bioinformatics}, \textbf{24}(5), 637.
+
+\bibitem[Lomsadze \textit{et~al}., 2005]{GeneMark-ES} Lomsadeze, A. and Ter-Hovhannisyan, V. and Chernoff, Y. and Borodovsky, M. (2005) Gene identification in novel eukaryotic genomes by self-training algorithm, \textit{Nucleic Acids Research} \textbf{33}:20 6494-6506.
+
+\bibitem[Keibler and Brent, (2003)]{Eval} Keibler, E. and Brent, M.R. (2003) Eval: a software package for analysis of genome annotations, \textit{BMC Bioinformatics} \textbf{4}:50.
 
 %\bibitem[Steijger {\it et~al}., 2013]{RGASP} Steijger,T. and Abril,J.F. and Engstr\"{o}m,P.G. and Kokocinski,F. and The RGASP Consortium, Hubard,T.J. and Guigo,R. and Harrow, J. and Bertone, P. (2013) Assessment of transcript reconstruction methods for
 % RNA-seq, {\it Nature Methods}, doi:10.1038/nmeth.271.

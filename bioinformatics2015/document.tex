@@ -61,7 +61,7 @@ BRAKER1 is implemented in Perl and requires two input files: an RNA-Seq alignmen
 \end{figure}
 
 \begin{table*}[!b]
-\processtable{Accuracy results of BRAKER1 and MAKER2 in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry.\label{Tab:01}}
+\processtable{Accuracy results of BRAKER1 (without repeat masking) and MAKER2 (with automatic repeat masking) in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Results for BRAKER1 with repeat masking can be found in Supplementary Materials.\label{Tab:01}}
 {\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\toprule
  & \multicolumn{3}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{3}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{3}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{4}{c}{\textit{Schizosaccharomyces pombe}}\\
  & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} &\tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
@@ -79,10 +79,8 @@ Exon specificity & 72.4 & 78.5 & 76.1& 78.2& 85.4& 62.3 & 57.9 & 66.2 & 55.0 & 8
 
 \section{Test Data}
 
-In order to demonstrate prediction accuracy, genomes, reference annotations and RNA-Seq libraries were retrieved for four model organisms from the respective databases: for \textit{Arabidopsis thaliana}, TAIR 10 from \url{http://arabidopsis.org}; for \textit{Caenorhabditis elegans}, WS240 from \url{http://www.wormbase.org}; for \textit{Drosophila melanogaster}, R5 from \url{http://flybase.org}; for \textit{Schizosaccharomyces pombe}, ASM294v2.23 from \url{http://www.pombase.org}. The following RNA-Seq libraries were retrieved from the short read archive at NCBI: SRR934391 (for \textit{A.~thaliana}); SRR065719 (for \textit{C.~elegans}); SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 (for \textit{D.~melanogaster}); SRR097898-SRR097900, SRR097902, SRR097903,
+In order to demonstrate prediction accuracy, nuclear genomes, reference annotations and RNA-Seq libraries were retrieved for four model organisms from the respective databases: for \textit{Arabidopsis thaliana}, TAIR 10 from \url{http://arabidopsis.org}; for \textit{Caenorhabditis elegans}, WS240 from \url{http://www.wormbase.org}; for \textit{Drosophila melanogaster}, R5 from \url{http://flybase.org}; for \textit{Schizosaccharomyces pombe}, ASM294v2.23 from \url{http://www.pombase.org}. The following RNA-Seq libraries were retrieved from the short read archive at NCBI: SRR934391 (for \textit{A.~thaliana}); SRR065719 (for \textit{C.~elegans}); SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 (for \textit{D.~melanogaster}); SRR097898-SRR097900, SRR097902, SRR097903,
 SRR097905-SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR097925, SRR402833 (for \textit{S.~pombe}).
-
-
 
 \end{methods}
 
@@ -91,8 +89,7 @@ SRR097905-SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR0
 
 Since BRAKER1 uses AUGUSTUS being trained on GeneMark-ET, and since AUGUSTUS incorporates RNA-Seq into the prediction step, we expect to see an increase in accuracy when comparing AUGUSTUS to GeneMark-ET. This is the case for \textit{A.~thaliana}, \textit{C.~elegans} and \textit{D.~melanogaster} (see table \ref{Tab:01}). On the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1. This is due to the fact that compared to all other test species, the fungus has fewer introns and many intron-less genes. AUGUSTUS parameters can be adapted to improve prediction accuracy in such species, but we here report results with the BRAKER1 default settings. Table \ref{Tab:01} also shows that Transcript sensitivity and specificity of AUGUSTUS is higher because AUGUSTUS reports alternative tanscripts that are supported by RNA-Seq data. 
 
-For the comparison to MAKER2, we followed the tutorial for training and prediction at 
-\url{http://weatherby.genetics.utah.edu/MAKER/wiki/index.php/MAKER_Tutorial_for_GMOD_Online_Training_2014}, details can be found in Supplementary Methods. BRAKER1-AUGUSTUS gains 15 percent points in accuracy on gene level when compared to MAKER2. 
+When comparing BRAKER1 to MAKER2, one should consider that MAKER2 automatically calls and masks repeats (details on the MAKER2 run are desribed in Supplementary Materials), while BRAKER1 was applied to unmasked genomes. This might give MAKER2 an advance in specificity. However, BRAKER1-AUGUSTUS gains on average $~$15 percent points in accuracy on gene level when compared to MAKER2. 
 
 On \textit{S.~pombe}, BRAKER1-AUGUSTUS is on average $\sim$4\% more accurate on gene level than CodingQuarry. Notably, GeneMark-ET is even more accurate on this species (when BRAKER1 is used with standard parameters).
 
