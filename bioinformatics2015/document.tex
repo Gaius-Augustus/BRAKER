@@ -56,7 +56,7 @@ We have developed BRAKER1, a pipeline that combines the advantages of two gene p
 BRAKER1 is implemented in Perl and requires two input files: an RNA-Seq alignment file in \texttt{bam}-format, and a corresponding genome file in \texttt{fasta}-format. Spliced alignment information is extracted from the RNA-Seq file and stored in \texttt{GFF}-format. GeneMark-ET uses the genome file and  the spliced alignment \texttt{GFF}-file for RNA-Seq supported unsupervised training. After training, GeneMark-ET creates an \textit{ab initio} gene set. Those gene structures that have support by RNA-Seq alignments in all introns are selected for automated training of AUGUSTUS. After training, AUGUSTUS predicts genes in the intput genome file using spliced alignment information from RNA-Seq as extrinsic evidence. The pipeline is illustrated in Figure \ref{pipeline}.
 
 \begin{figure}[!tpb]%figure1
-\centerline{\includegraphics[width=0.6\linewidth]{figs/simple_braker.pdf}}
+\centerline{\includegraphics[width=0.9\linewidth]{figs/Figure1.pdf}}
 \caption{Schematic view of the BRAKER1 pipeline.}\label{pipeline}
 \end{figure}
 
