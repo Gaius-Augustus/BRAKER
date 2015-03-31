@@ -76,15 +76,15 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
       subsequently follow SAMTOOLS documentation for installation). 
 
 8. Install the required PERL modules available on CPAN:
-   			     	File::Spec::Functions
-				Hash::Merge
-				List::Util
-				Logger::Simple
-				Module::Load::Conditional
-				Parallel::ForkManager
-				POSIX
-				Scalar::Util::Numeric
-				YAML 
+                                File::Spec::Functions
+                                Hash::Merge
+                                List::Util
+                                Logger::Simple
+                                Module::Load::Conditional
+                                Parallel::ForkManager
+                                POSIX
+                                Scalar::Util::Numeric
+                                YAML 
    (on Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]")
 
    BRAKER1 also uses the PERL module helpMod.pm that is not available on CPAN. This module is 
@@ -113,7 +113,7 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
     export AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/
 
     $AUGUSTUS_CONFIG_PATH - if exported - is also used by BRAKER1 to determine the relative 
-    			    path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints. 
+                            path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints. 
 
     If the environment variable $GENEMARK_PATH is set, BRAKER1 will look there for the gmes_petap.pl 
     script. Export the variable e.g. for your current bash session:
@@ -159,7 +159,7 @@ The bam file contains unassembled RNA-Seq read alignments.
 
 Alternatively to the bam file, spliced alignment information may be passed as "intron hints" in gff format using the argument --hints=gff-hintsfilename, the file may look like this:
 
-contig_name	TopHat2	intron	2740	2888	25	+	.	.
+contig_name     TopHat2 intron   2740   2888     25     +       .       .
 
 Required values in the gff format file for GeneMark-ET (for more details, see http://www.sanger.ac.uk/resources/software/gff/spec.html):
 
