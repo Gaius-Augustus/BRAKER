@@ -159,7 +159,7 @@ The bam file contains unassembled RNA-Seq read alignments.
 
 Alternatively to the bam file, spliced alignment information may be passed as "intron hints" in gff format using the argument --hints=gff-hintsfilename, the file may look like this:
 
-contig_name     TopHat2 intron   2740   2888     25     +       .       .
+contig_name     TopHat2 intron  2740    2888    25      +       .       .
 
 Required values in the gff format file for GeneMark-ET (for more details, see http://www.sanger.ac.uk/resources/software/gff/spec.html):
 
