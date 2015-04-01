@@ -311,7 +311,7 @@ if(!@bam && !@hints){
 }
 
 
-# check whether bam files exists
+# check whether bam files exist
 if(@bam){
   @bam = split(/[\s,]/, join(',',@bam));
   for(my $i=0; $i<scalar(@bam); $i++){
@@ -362,6 +362,10 @@ if(!defined($species) || $bool_species eq "false"){
     }else{
       $no++;
     }
+  }
+  if($no > $limit){
+    print STDERR "ERROR: There are already $limit species folders under $AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move some of those folders or assign a valid species identifier with --species=name.\n";
+    exit(1);
   }
   if($bool_species eq "false"){
     print STDOUT "Programme will use $species instead.\n";
@@ -826,7 +830,7 @@ sub training{
       my $err_stopCodonExcludedFromCDS = `grep -c "exon doesn't end in stop codon" $errorfile`; # see autoAugTrain.pl
       my $err_rate =  $err_stopCodonExcludedFromCDS / $t_b_t;  # see autoAugTrain.pl
       print STDOUT "Error rate of missing stop codon is $err_rate\n";  # see autoAugTrain.pl
-      print LOG "\# ".localtime."Error rate of missing stop codon is $err_rate\n"; # see autoAugTrain.pl
+      print LOG "\# ".localtime.": Error rate of missing stop codon is $err_rate\n"; # see autoAugTrain.pl
       if($err_rate >= 0.5){ # see autoAugTrain.pl
         print STDOUT "The appropriate value for \"stopCodonExcludedFromCDS\" seems to be \"false\".\n"; # see autoAugTrain.pl
         print STDOUT "next step: Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"false\"\n"; # see autoAugTrain.pl
@@ -855,7 +859,7 @@ sub training{
         }
       }
       close(TRAIN) or die("Could not close gff file $stdoutfile!\n");
-      print LOG "\# ".localtime."Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
+      print LOG "\# ".localtime.": Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
       print STDOUT "NEXT STEP: Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
       setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "/Constant/amberprob", $freqOfTag);  # see autoAugTrain.pl
       setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "/Constant/ochreprob", $freqOfTaa);  # see autoAugTrain.pl
@@ -890,9 +894,9 @@ sub training{
         $stdoutfile = "$otherfilesDir/optimize_augustus.stdout";
         $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
         if($gb_good_size <= 1000){
-          $perlCmdString = "perl $string --species=$species --cpus=$CPU $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+          $perlCmdString = "perl $string --sample=0 --species=$species --cpus=$CPU $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
         }else{
-          $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+          $perlCmdString = "perl $string --sample=0 --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
         }
         print LOG "\# ".localtime.": optimize AUGUSTUS parameter\n";
         print LOG "$perlCmdString\n\n";
