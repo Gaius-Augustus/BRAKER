@@ -152,6 +152,7 @@ my $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
 my @bam;                              # bam file names
 my $bamtools_path;                    # path to bamtools executable, higher priority than $BAMTOOLS_BIN_PATH on system
 my $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'};
+my @bonus;                            # array of bonus values for extrinsic file
 my $bool_species = "true";            # false, if $species contains forbidden words (e.g. chmod)
 my $cmdString;                        # to store shell commands
 my $CPU = 1;                          # number of CPUs that can be used
@@ -159,6 +160,7 @@ my $currentDir = cwd();               # working superdirectory where programme i
 my $errorfile;                        # stores current error file name
 my $errorfilesDir;                    # directory for error files
 my $extrinsicCfgFile;                 # assigned extrinsic file
+my $extrinsicfilesDir;                # directory for test extrinsic files
 my @files;                            # contains all files in $rootDir
 my $flanking_DNA;                     # length of flanking DNA, default value is min{ave. gene length/2, 10000}
 my @forbidden_words;                  # words/commands that are not allowed in species name (e.g. unlink)
@@ -175,6 +177,7 @@ my @hints;                            # input hints file names
 my $hintsfile;                        # hints file later used by AUGUSTUS
 my $limit = 10000000;                 # maximum for generic species Sp_$limit
 my $logfile;                          # contains used shell commands
+my @malus;                            # array of malus values for extrinsic file
 my $optCfgFile;                       # optinonal extrinsic config file for AUGUSTUS
 my $otherfilesDir;                    # directory for other files besides GeneMark-ET output and parameter files
 my $overwrite = 0;                    # overwrite existing files (except for species parameter files)
@@ -204,6 +207,9 @@ my $workDir;                          # in the working directory results and tem
 # list of forbidden words for species name
 @forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while"); 
 
+# lists for extrinsic files
+@bonus = ("1e1", "12.5", "1e2", "1e3", "1e4", "1e5");
+@malus = ("0.1", "0.2", "0.4", "0.6", "0.8", "1.0");  
 
 if(@ARGV==0){
   print "$usage\n"; 
@@ -422,6 +428,7 @@ if(! -f "$genome"){
   $parameterDir = "$rootDir/$species/species";
   $otherfilesDir = "$rootDir/$species";
   $errorfilesDir = "$rootDir/$species/errors";
+  $extrinsicfilesDir = "$rootDir/$species/species/extrinsic";
 
   $logfile = "$otherfilesDir/braker.log";
   # create other directories if necessary
@@ -459,6 +466,13 @@ if(! -f "$genome"){
     print LOG "\# ".localtime.": create working directory $parameterDir\n";
     print LOG "mkdir mkdir $parameterDir\n\n";
   }
+
+  if(! -d $extrinsicfilesDir){
+    make_path($extrinsicfilesDir);
+    print LOG "\# ".localtime.": create working directory $extrinsicfilesDir\n";
+    print LOG "mkdir $extrinsicfilesDir\n\n";
+  }
+
   if(! -d $errorfilesDir){
     make_path($errorfilesDir);
     print LOG "\# ".localtime.": create working directory $errorfilesDir\n";
@@ -710,6 +724,146 @@ sub new_species{
   }
 }
 
+
+         ####################### create and run different extrinsic tests #########################
+# create a number of different extrinsic files and find the best combination of bonus and malus values
+sub extrinsic_tests{
+  $augpath = "$AUGUSTUS_CONFIG_PATH/species/$species";
+  my $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
+  # create extrinsic files (malus)
+  for(my $i=0; $i<scalar(@malus); $i++){
+    my $extrinsic_cp = "$extrinsicfilesDir/extrinsic.malus.$malus[$i].cfg";
+    if((!uptodate([$extrinsic],[$extrinsic_cp]) && !$useexisting) || $overwrite){
+      print STDOUT "NEXT STEP: create malus test extrinsic file: $extrinsic_cp\n";
+      print LOG "\# ".localtime.": create extrinsic file\n";
+      print LOG "cp $extrinsic $extrinsic_cp\n\n"; 
+
+      open (EXTRINSIC, $extrinsic) or die "Cannot open file: $extrinsic\n";
+      open (OUT, ">".$extrinsic_cp) or die "Cannot open file: $extrinsic_cp\n";
+      my $GENERAL = "false";
+      while(<EXTRINSIC>){
+        chomp;
+        next if($GENERAL eq "true" && $_ !~ m /^\#/);
+        if($GENERAL eq "true" && $_ =~ m /^\#/){
+          $GENERAL = "false";
+        }
+        print OUT "$_\n";
+            
+        if($_ =~ m/^\[GENERAL\]/){
+          $GENERAL = "true";
+          print OUT "\n";
+          print OUT "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        tss        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "     intron        1      $malus[$i]  M    1  1e+100  RM  1  1.15    E 1    1    W 1    1\n";
+          print OUT "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+
+          print LOG "\# ".localtime.": edit extrinsic file and add\n$_\n";
+          print LOG "\n";
+          print LOG "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        tss        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "     intron        1      $malus[$i]  M    1  1e+100  RM  1  1.15    E 1    1    W 1    1\n";
+          print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        }
+      }
+      close(OUT) or die("Could not close extrinsic file $extrinsic_cp!\n");
+      close(EXTRINSIC) or die("Could not close extrinsic file $extrinsic!\n");
+      print STDOUT "extrinsic file $$extrinsic_cp created.\n";
+    }
+  }
+
+  # create extrinsic files (bonus)
+  for(my $i=0; $i<scalar(@bonus); $i++){
+    my $extrinsic_cp = "$extrinsicfilesDir/extrinsic.bonus.$bonus[$i].cfg";
+    if((!uptodate([$extrinsic],[$extrinsic_cp]) && !$useexisting) || $overwrite){
+      print STDOUT "NEXT STEP: create bonus test extrinsic file: $extrinsic_cp\n";
+      print LOG "\# ".localtime.": create extrinsic file\n";
+      print LOG "cp $extrinsic $extrinsic_cp\n\n"; 
+
+      open (EXTRINSIC, $extrinsic) or die "Cannot open file: $extrinsic\n";
+      open (OUT, ">".$extrinsic_cp) or die "Cannot open file: $extrinsic_cp\n";
+      my $GENERAL = "false";
+      while(<EXTRINSIC>){
+        chomp;
+        next if($GENERAL eq "true" && $_ !~ m /^\#/);
+        if($GENERAL eq "true" && $_ =~ m /^\#/){
+          $GENERAL = "false";
+        }
+        print OUT "$_\n";
+            
+        if($_ =~ m/^\[GENERAL\]/){
+          $GENERAL = "true";
+          print OUT "\n";
+          print OUT "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        tss        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "     intron        1      $bonus[$i]  M    1  1e+100  RM  1  1.15    E 1    1    W 1    1\n";
+          print OUT "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print OUT "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+
+          print LOG "\# ".localtime.": edit extrinsic file and add\n$_\n";
+          print LOG "\n";
+          print LOG "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        tss        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "     intron        1      $bonus[$i]  M    1  1e+100  RM  1  1.15    E 1    1    W 1    1\n";
+          print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+          print LOG "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
+        }
+      }
+      close(OUT) or die("Could not close extrinsic file $extrinsic_cp!\n");
+      close(EXTRINSIC) or die("Could not close extrinsic file $extrinsic!\n");
+      print STDOUT "extrinsic file $$extrinsic_cp created.\n";
+    }
+  }
+}
 
 
          ####################### train AUGUSTUS #########################
@@ -1114,6 +1268,9 @@ sub check_upfront{ # see autoAug.pl
   find("optimize_augustus.pl");
   find("splitMfasta.pl");
   find("join_aug_pred.pl");
+  find("getAnnoFasta.pl");
+  find("blastEx.pl");
+  find("gtf2gff.pl");
 
   # check whether required perl modules are installed (perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager)
   my $module_list = {
