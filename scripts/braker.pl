@@ -47,6 +47,7 @@
 # | add BAM header check and       |                      | 23.01.2015 |
 # | optionally create corrected    |                      | 24.01.2015 |
 # | BAM file with samtools         |                      |            |
+# | add sub extrinsic_tests        | Simone Lange         | 06.04.2015 |
 # | TODO: add more options         |                      |            |
 # ----------------------------------------------------------------------
 

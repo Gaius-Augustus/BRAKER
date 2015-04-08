@@ -301,7 +301,7 @@ sub get_random_seq{
       }
       
       if($j % 2){
-        $j -= 1;
+        $j += 1;
       }
       if($i % 2){
         $i += 1;
