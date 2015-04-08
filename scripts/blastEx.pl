@@ -56,7 +56,7 @@ OPTIONS
 
     --help                          Print this help message
     --DB=path/to/blast/DB           path to local blast database
-    --dir=pathh/to/dir              working directory
+    --dir=path/to/dir               working directory
     --log=lastEx.log                log file
     --out=output.out                contains file index of highest scoring file
     --introns=hintsfile.gff         gff files with intron hints

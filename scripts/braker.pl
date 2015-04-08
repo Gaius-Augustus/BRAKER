@@ -101,6 +101,8 @@ OPTIONS
       to/augustus/                       Has higher priority than environment variable.
     --BAMTOOLS_PATH=/path/to/            Set path to bamtools (if not specified as environment 
       bamtools/                          variable). Has higher priority than the environment variable.
+    --BLAST_PATH=/path/to/               Optional. Set path to local blast database. Has higher priority than
+      blast/database                     blast via internet server.
     --CPU                                Specifies the maximum number of CPUs that can be used during 
                                          computation
     --extrinsicCfgFile                   Optional. This file contains the list of used sources for the 
@@ -153,6 +155,9 @@ my $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
 my @bam;                              # bam file names
 my $bamtools_path;                    # path to bamtools executable, higher priority than $BAMTOOLS_BIN_PATH on system
 my $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'};
+my $blast_path;                       # path to local blast database, higher priority than blast via internet
+my $best_bonus;                       # file containing best bonus index
+my $best_malus;                       # file containing best malus index
 my @bonus;                            # array of bonus values for extrinsic file
 my $bool_species = "true";            # false, if $species contains forbidden words (e.g. chmod)
 my $cmdString;                        # to store shell commands
@@ -188,6 +193,7 @@ my $printVersion = 0;                 # print version number, if set
 my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'};
 my $SAMTOOLS_PATH_OP;                 # path to samtools executable, higher priority than $SAMTOOLS_PATH on system
 my $scriptPath=dirname($0);           # path of directory where this script is located
+my $skipExtrinsic = 0;                # skip extrinsic file optimisation tests
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source) 
 my $skipoptimize = 0;                 # skip optimize parameter step
 my $species;                          # species name
@@ -221,6 +227,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'AUGUSTUS_CONFIG_PATH=s'        => \$augustus_cfg_path,
             'bam=s'                         => \@bam,
             'BAMTOOLS_PATH=s'               => \$bamtools_path,
+            'BLAST_PATH=s'                  => \$blast_path,
             'CPU=i'                         => \$CPU,
             'fungus!'                       => \$fungus,
             'extrinsicCfgFile=s'            => \$extrinsicCfgFile,
@@ -230,6 +237,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'optCfgFile=s'                  => \$optCfgFile,
             'overwrite!'                    => \$overwrite,
             'SAMTOOLS_PATH=s'               => \$SAMTOOLS_PATH_OP,
+            'skipExtrinsic!'                => \$skipExtrinsic,
             'skipGeneMark-ET!'              => \$skipGeneMarkET,
             'skipOptimize!'                 => \$skipoptimize,
             'species=s'                     => \$species,
@@ -489,7 +497,10 @@ if(! -f "$genome"){
   check_fasta_headers($genome);
   make_hints();
   GeneMark_ET(); 
-  new_species(); 
+  new_species();
+  if(!defined($extrinsicCfgFile) && !$skipExtrinsic){
+    extrinsic_tests();
+  }
   training(); 
   augustus();
   clean_up();
@@ -666,6 +677,8 @@ sub new_species{
       open (EXTRINSIC, $extrinsic) or die "Cannot open file: $extrinsic\n";
       open (OUT, ">".$extrinsic_cp) or die "Cannot open file: $extrinsic_cp\n";
       my $GENERAL = "false";
+      my $bonus_idx = 1; # 1 => 12.5  (standard)
+      my $malus_idx = 1; # 1 => 0.2   (standard)
       while(<EXTRINSIC>){
         chomp;
         next if($GENERAL eq "true" && $_ !~ m /^\#/);
@@ -686,7 +699,19 @@ sub new_species{
           print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "     intron      .25       .2  M    1  1e+100  RM  1  1.15    E 1   50    W 1    1\n";
+          if(!$skipExtrinsic){
+            open (BONUS, "<$best_bonus") or die "Cannot open file: $best_bonus\n";
+            $bonus_idx = <BONUS>;
+            close(BONUS) or die("Could not close file $best_bonus!\n");
+
+            open (MALUS, "<$best_malus") or die "Cannot open file: $best_malus\n";
+            $malus_idx = <MALUS>;
+            close(MALUS) or die("Could not close file $best_malus!\n");
+
+          print OUT "     intron        1      $malus[$malus_idx]  M    1  1e+100  RM  1  1.15    E 1   $bonus[$bonus_idx]    W 1    1\n";
+          }else{
+            print OUT "     intron        1       .2  M    1  1e+100  RM  1  1.15    E 1  12.5    W 1    1\n";
+          }
           print OUT "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -706,7 +731,11 @@ sub new_species{
           print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "     intron      .25       .2  M    1  1e+100  RM  1  1.15    E 1   50    W 1    1\n";
+          if(!$skipExtrinsic){
+            print LOG "     intron        1      $malus[$malus_idx]  M    1  1e+100  RM  1  1.15    E 1   $bonus[$bonus_idx]    W 1    1\n";
+          }else{
+            print LOG "     intron        1       .2  M    1  1e+100  RM  1  1.15    E 1  12.5    W 1    1\n";
+          }
           print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -729,12 +758,27 @@ sub new_species{
          ####################### create and run different extrinsic tests #########################
 # create a number of different extrinsic files and find the best combination of bonus and malus values
 sub extrinsic_tests{
-  $augpath = "$AUGUSTUS_CONFIG_PATH/species/$species";
+  $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
   my $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
+  @_ = split(/./, $genome);
+  $_[-2] .= ".part.fa";
+  undef($_[-1]);
+  my $genome_part = join('',@_);
+  if(!uptodate([$genome, "$genemarkDir/genemark.c.gtf"],[$genome_part]) || $overwrite){
+    $errorfile = "$errorfilesDir/randomSeq.stderr";
+    $string = find("randomSeq.pl");
+    print STDOUT "NEXT STEP: create a smaller genome file: $genome_part\n";
+    $perlCmdString = "perl $string --genome=$genome --out=$genome_part --log=$logfile --GMET=$genemarkDir/genemark.c.gtf 2>$errorfile";
+    print LOG "\# ".localtime.": create a smaller genome file: $genome_part\n";
+    print LOG "$perlCmdString\n\n";
+    system("$perlCmdString")==0 or die("failed to execute: $!\n");
+    print STDOUT "small genome file complete.\n";
+  }
+
   # create extrinsic files (malus)
   for(my $i=0; $i<scalar(@malus); $i++){
     my $extrinsic_cp = "$extrinsicfilesDir/extrinsic.malus.$malus[$i].cfg";
-    if((!uptodate([$extrinsic],[$extrinsic_cp]) && !$useexisting) || $overwrite){
+    if(!uptodate([$extrinsic],[$extrinsic_cp]) || $overwrite){
       print STDOUT "NEXT STEP: create malus test extrinsic file: $extrinsic_cp\n";
       print LOG "\# ".localtime.": create extrinsic file\n";
       print LOG "cp $extrinsic $extrinsic_cp\n\n"; 
@@ -797,6 +841,45 @@ sub extrinsic_tests{
       print STDOUT "extrinsic file $$extrinsic_cp created.\n";
     }
   }
+  
+  if(!uptodate(["$extrinsicfilesDir/extrinsic.malus.$malus[0].cfg", "$extrinsicfilesDir/extrinsic.malus.$malus[-1].cfg"],["$extrinsicfilesDir/augustus.malus.$malus[0].gff", "$extrinsicfilesDir/augustus.malus.$malus[-1].gff"]) || $overwrite){
+    my $pm = new Parallel::ForkManager($CPU);
+    print STDOUT "NEXT STEP: run AUGUSTUS extrinsic tests (malus)\n";
+    my $augustus_files = "";
+    for(my $i = 0; $i < scalar(@malus); $i++){
+      my $pid = $pm->start and next;
+      $errorfile = "$errorfilesDir/augustus.malus.$malus[$i].stderr";
+      $stdoutfile = "$extrinsicfilesDir/augustus.malus.$malus[$i].gff";
+      $augustus_files .= "$stdoutfile,";
+      $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsicfilesDir/extrinsic.malus.$malus[$i].cfg --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
+      if(defined($optCfgFile)){
+        $cmdString .= " --optCfgFile=$optCfgFile"; 
+      }
+      if($soft_mask){
+        $cmdString .= " --softmasking=on";
+      }
+      $cmdString .= " $genome_part 1>$stdoutfile 2>$errorfile";
+      print LOG "\# ".localtime.": run AUGUSTUS for extrinsic file $extrinsicfilesDir/extrinsic.malus.$malus[$i].cfg\n";
+      print LOG "$cmdString\n\n";
+      system("$cmdString")==0 or die("failed to execute: $!\n");
+      $pm->finish;
+    }
+    $pm->wait_all_children;
+    chop($augustus_files);
+    $errorfile = "$errorfilesDir/blastEx.malus.stderr";
+    $string = find("blastEx.pl");
+    $best_malus = "$extrinsicfilesDir/best_malus.out";
+    print STDOUT "NEXT STEP: blast AUGUSTUS predictions (malus)\n";
+    $perlCmdString = "perl $string --files=$augustus_files --out=$best_malus --log=$logfile --introns=$hintsfile ";
+    if(defined($blast_path)){
+      $perlCmdString .= "--DB=$blast_path ";
+    }
+    $perlCmdString .= "2>$errorfile";
+    print LOG "\# ".localtime.": blast AUGUSTUS predictions (malus)\n";
+    print LOG "$perlCmdString\n\n";
+    system("$perlCmdString")==0 or die("failed to execute: $!\n");
+    print STDOUT "blast (malus) finished.\n";   
+  }
 
   # create extrinsic files (bonus)
   for(my $i=0; $i<scalar(@bonus); $i++){
@@ -829,7 +912,7 @@ sub extrinsic_tests{
           print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "     intron        1      $bonus[$i]  M    1  1e+100  RM  1  1.15    E 1    1    W 1    1\n";
+          print OUT "     intron        1        1  M    1  1e+100  RM  1  1.15    E 1  $bonus[$i]    W 1    1\n";
           print OUT "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -849,7 +932,7 @@ sub extrinsic_tests{
           print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "     intron        1      $bonus[$i]  M    1  1e+100  RM  1  1.15    E 1    1    W 1    1\n";
+          print LOG "     intron        1        1  M    1  1e+100  RM  1  1.15    E 1  $bonus[$i]    W 1    1\n";
           print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -863,6 +946,44 @@ sub extrinsic_tests{
       close(EXTRINSIC) or die("Could not close extrinsic file $extrinsic!\n");
       print STDOUT "extrinsic file $$extrinsic_cp created.\n";
     }
+  }
+  if(!uptodate(["$extrinsicfilesDir/extrinsic.bonus.$bonus[0].cfg", "$extrinsicfilesDir/extrinsic.bonus.$bonus[-1].cfg"],["$extrinsicfilesDir/augustus.bonus.$bonus[0].gff", "$extrinsicfilesDir/augustus.bonus.$bonus[-1].gff"]) || $overwrite){
+    my $pm = new Parallel::ForkManager($CPU);
+    print STDOUT "NEXT STEP: run AUGUSTUS extrinsic tests (malus)\n";
+    my $augustus_files = "";
+    for(my $i = 0; $i < scalar(@bonus); $i++){
+      my $pid = $pm->start and next;
+      $errorfile = "$errorfilesDir/augustus.bonus.$bonus[$i].stderr";
+      $stdoutfile = "$extrinsicfilesDir/augustus.bonus.$bonus[$i].gff";
+      $augustus_files .= "$stdoutfile,";
+      $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsicfilesDir/extrinsic.bonus.$bonus[$i].cfg --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
+      if(defined($optCfgFile)){
+        $cmdString .= " --optCfgFile=$optCfgFile"; 
+      }
+      if($soft_mask){
+        $cmdString .= " --softmasking=on";
+      }
+      $cmdString .= " $genome_part 1>$stdoutfile 2>$errorfile";
+      print LOG "\# ".localtime.": run AUGUSTUS for extrinsic file $extrinsicfilesDir/extrinsic.bonus.$bonus[$i].cfg\n";
+      print LOG "$cmdString\n\n";
+      system("$cmdString")==0 or die("failed to execute: $!\n");
+      $pm->finish;
+    }
+    $pm->wait_all_children;
+    chop($augustus_files);
+    $errorfile = "$errorfilesDir/blastEx.bonus.stderr";
+    $string = find("blastEx.pl");
+    $best_bonus = "$extrinsicfilesDir/best_bonus.out";
+    print STDOUT "NEXT STEP: blast AUGUSTUS predictions (bonus)\n";
+    $perlCmdString = "perl $string --files=$augustus_files --out=$best_bonus --log=$logfile --introns=$hintsfile ";
+    if(defined($blast_path)){
+      $perlCmdString .= "--DB=$blast_path ";
+    }
+    $perlCmdString .= "2>$errorfile";
+    print LOG "\# ".localtime.": blast AUGUSTUS predictions (bonus)\n";
+    print LOG "$perlCmdString\n\n";
+    system("$perlCmdString")==0 or die("failed to execute: $!\n");
+    print STDOUT "blast (bonus) finished.\n";   
   }
 }
 
@@ -901,7 +1022,7 @@ sub training{
       $flanking_DNA = 500;
   }
   # create genbank file from fasta input and GeneMark-ET output
-  $string=find("gff2gbSmallDNA.pl");
+  $string = find("gff2gbSmallDNA.pl");
   $genbank = "$otherfilesDir/genbank.gb";
   if(!uptodate([$genome,"$genemarkDir/genemark.c.gtf"],[$genbank])  || $overwrite){
     print STDOUT "NEXT STEP: create genbank file\n";
@@ -1218,7 +1339,30 @@ sub clean_up{
 # checks for GeneMark-ET: perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager
 # checks for braker: perl modules: Scalar::Util::Numeric
 sub check_upfront{ # see autoAug.pl
+
+  # check whether required perl modules are installed
   my $pmodule;
+  my @module_list = (
+    "YAML",
+    "Hash::Merge",
+    "Logger::Simple",
+    "Parallel::ForkManager",
+    "Scalar::Util::Numeric",
+  );
+
+  if(!$skipExtrinsic){
+    push(@module_list, "Bio::Tools::Run::RemoteBlast");
+    push(@module_list, "Bio::Tools::Run::StandAloneBlast");
+    push(@module_list, "Bio::SeqIO");
+  }
+
+  foreach my $module (@module_list){  
+    $pmodule = check_install(module => $module);
+    if(!$pmodule){
+      print STDOUT "WARNING: Perl module '$module' is required but not installed yet.\n";
+    }
+  }
+
   if(!$ENV{'AUGUSTUS_CONFIG_PATH'} && !defined($augustus_cfg_path)){ # see autoAug.pl
     print STDERR "ERROR: The environment variable AUGUSTUS_CONFIG_PATH is not defined. Please export an environment variable for AUGUSTUS or use --AUGUSTUS_CONFIG_PATH=path/to/augustus.\n"; # see autoAug.pl
     exit(1);
@@ -1259,6 +1403,13 @@ sub check_upfront{ # see autoAug.pl
     exit(1);
   }
 
+  if(defined($blast_path)){
+    if(! -d $blast_path){
+      print STDERR "ERROR: path to blast database $blast_path does not exist. Programme will try to connect to server instead.\n";
+      undef($blast_path);
+    }
+  }
+
   find("gff2gbSmallDNA.pl");
   find("filterGenemark.pl");
   find("filterIntronsFindStrand.pl");
@@ -1271,40 +1422,9 @@ sub check_upfront{ # see autoAug.pl
   find("join_aug_pred.pl");
   find("getAnnoFasta.pl");
   find("blastEx.pl");
+  find("randomSeq.pl");
   find("gtf2gff.pl");
 
-  # check whether required perl modules are installed (perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager)
-  my $module_list = {
-    "YAML",
-    "Hash::Merge",
-    "Logger::Simple",
-    "Parallel::ForkManager",
-  };
-
-  $pmodule = check_install(module => "YAML");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'YAML' is required but not installed yet.\n";
-  }
-
-  $pmodule = check_install(module => "Hash::Merge");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'Hash::Merge' is required but not installed yet.\n";
-  }
-
-  $pmodule = check_install(module => "Logger::Simple");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'Logger::Simple' is required but not installed yet.\n";
-  }
-
-  $pmodule = check_install(module => "Parallel::ForkManager");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'Parallel::ForkManager' is required but not installed yet.\n";
-  }
-
-  $pmodule = check_install(module => "Scalar::Util::Numeric");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'Scalar::Util::Numeric' is required but not installed yet.\n";
-  }
 }
 
 
