@@ -496,11 +496,11 @@ if(! -f "$genome"){
 
   check_fasta_headers($genome);
   make_hints();
-  GeneMark_ET(); 
-  new_species();
+  GeneMark_ET();
   if(!defined($extrinsicCfgFile) && !$skipExtrinsic){
     extrinsic_tests();
   }
+  new_species();
   training(); 
   augustus();
   clean_up();
