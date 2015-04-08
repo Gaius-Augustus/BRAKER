@@ -251,7 +251,7 @@ sub get_random_seq{
   my $part_seq;
   my $part_start;
   my $start = 0;
-  if(length($seqInfo[$index] -> {"seq"}) > $min_size){
+  if(length($seqInfo[$index] -> {"seq"}) >= $min_size){
     $rand = floor(rand(length($seqInfo[$index] -> {"seq"}) + 1));
     $start = $rand;
     if($rand > length($seqInfo[$index] -> {"seq"}) - $min_size){
@@ -261,56 +261,60 @@ sub get_random_seq{
       $subseq = substr($seqInfo[$index] -> {"seq"}, $rand, $min_size);
       $part_seq = substr($seqInfo[$index] -> {"seq"}, $rand + $min_size + 1);
       $part_start = $rand + $min_size + 1;
-      $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, 0, $rand - 1);
+      if($rand != 0){
+        $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, 0, $rand - 1);
+      }else{
+        $seqInfo[$index] -> {"seq"} = "";
+      }
       my %hash = ("name"   => $seqInfo[$index] -> {"name"},
                   "seq"    => $part_seq,
                   "start"  => $part_start);
       push(@seqInfo, \%hash);     
     }
   }else{
-    $subseq = $seqInfo[$index] -> {"seq"};
-    $seqInfo[$index] -> {"seq"} = "";
+#    $subseq = $seqInfo[$index] -> {"seq"};
+#    $seqInfo[$index] -> {"seq"} = "";
   }
   $whole_length -= length($subseq);
 
-  if($seqInfo[$index] -> {"start"} + $start + $min_size < $seqs{$seqInfo[$index] -> {"name"}}[1]){
-    $nr_of_genes += 0;
-  }else{
-    $low_boundary = 0;
-    my $i = 0;
-    
-    until($seqInfo[$index] -> {"start"}  + $start < $low_boundary){
-      $low_boundary = $seqs{$seqInfo[$index] -> {"name"}}[$i];
-      $i++;
-    }
-    $i -= 1;
-    if($seqInfo[$index] -> {"start"} + $start + length($subseq) < $low_boundary){
+  if(length($subseq) > 0){
+    if($seqInfo[$index] -> {"start"} + $start + $min_size < $seqs{$seqInfo[$index] -> {"name"}}[1]){
       $nr_of_genes += 0;
     }else{
-      my $j = $i;
-
-      $up_boundary = $seqs{$seqInfo[$index] -> {"name"}}[$j];
-      while($seqInfo[$index] -> {"start"} + $start + length($subseq) > $up_boundary && $j < scalar(@{$seqs{$seqInfo[$index] -> {"name"}}})){
-        $up_boundary = $seqs{$seqInfo[$index] -> {"name"}}[$j];
-        $j++;
-      }
-      if($j == scalar(@{$seqs{$seqInfo[$index] -> {"name"}}})){
-        $j -= 1;
-      }else{
-        $j -= 2;
-      }
+      $low_boundary = 0;
+      my $i = 0;
       
-      if($j % 2){
-        $j += 1;
+      until($seqInfo[$index] -> {"start"}  + $start < $low_boundary){
+        $low_boundary = $seqs{$seqInfo[$index] -> {"name"}}[$i];
+        $i++;
       }
-      if($i % 2){
-        $i += 1;
-      }
-      $nr_of_genes += ($j - $i) / 2;
-    }
-  }
+      $i -= 1;
+      if($seqInfo[$index] -> {"start"} + $start + length($subseq) < $low_boundary){
+        $nr_of_genes += 0;
+      }else{
+        my $j = $i;
 
-  if(length($subseq) > 0){
+        $up_boundary = $seqs{$seqInfo[$index] -> {"name"}}[$j];
+        while($seqInfo[$index] -> {"start"} + $start + length($subseq) > $up_boundary && $j < scalar(@{$seqs{$seqInfo[$index] -> {"name"}}})){
+          $up_boundary = $seqs{$seqInfo[$index] -> {"name"}}[$j];
+          $j++;
+        }
+        if($j == scalar(@{$seqs{$seqInfo[$index] -> {"name"}}})){
+          $j -= 1;
+        }else{
+          $j -= 2;
+        }
+        
+        if($j % 2){
+          $j += 1;
+        }
+        if($i % 2){
+          $i += 1;
+        }
+        $nr_of_genes += ($j - $i) / 2;
+      }
+    }
+
     push(@new_seq, $subseq);
   }
   @seqInfo = sort{length($a -> {"seq"}) <=> length($b -> {"seq"})} @seqInfo;
