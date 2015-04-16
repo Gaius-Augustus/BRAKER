@@ -20,6 +20,8 @@
 # | first outline                   | Simone Lange   |06.04.2015 |
 # | some adjustments to the         | Simone Lange   |07.04.2015 |
 # | subroutines                     |                |           |
+# | hintsfile adjustments to new    | Simone Lange   |14.04.2015 |
+# | genome sequence part            |                |           |
 # ----------------------------------------------------------------
  
 use Getopt::Long;
@@ -48,9 +50,10 @@ OPTIONS
 
     --help                          Print this help message
     --GMET=genemark.gtf             GeneMark-ET prediction
-    --dir=pathh/to/dir              working directory
+    --dir=path/to/dir               working directory
     --log=lastEx.log                log file
-    --out=newGenome.fa              new genome file in fasta format
+    --out_fasta=newGenome.fa        new genome file in fasta format
+    --out_hints=newhints.gff        new intron hints in gff format
 
 
                           
@@ -65,14 +68,17 @@ ENDUSAGE
 
 
 
-my ($dir, $GMET, $genome, $log, $out, $help); # necessary input files and other options
+my ($dir, $GMET, $genome, $log, $introns, $out_fasta, $out_hints, $help); # necessary input files and other options
 my $gene_start;             # for storing GeneMark-ET genes
 my @GMET_bounds;            # start and end position of genes
 my $GMET_genes = 0;         # number of genes in GeneMark-ET prediction
 my @ID;                     # gene ID
+my %introns;                # Hash of arrays. Contains information from intron file input. 
+                            # Format $intron{seqname}[]
 my $max_length = 0;         # maximal sequence length
 my $min_size = 100000;      # minimal sequence part length
 my $min_genes = 200;        # minimal number of genes in sequence parts
+my $min_seqs = 9;           # minimal number of sequence parts (only necessary if no GeneMark-ET file is assigned)
 my @new_seq;                # new fasta sequences
 my $nr_of_genes = 0;        # number of genes in sequence part
 my %seqs;                   # sequence information
@@ -85,12 +91,14 @@ if(@ARGV==0){
   exit(0);
 }
 
-GetOptions( 'genome=s'  => \$genome,
-            'GMET=s'    => \$GMET,
-            'dir=s'     => \$dir,
-            'log=s'     => \$log,
-            'out=s'     => \$out, 
-            'help!'     => \$help);
+GetOptions( 'genome=s'    => \$genome,
+            'GMET=s'      => \$GMET,
+            'introns=s'   => \$introns,
+            'dir=s'       => \$dir,
+            'log=s'       => \$log,
+            'out_fasta=s' => \$out_fasta,
+            'out_hints=s' => \$out_hints, 
+            'help!'       => \$help);
 
 if($help){
   print $usage;
@@ -111,9 +119,25 @@ if(!defined($log)){
 }
 open (LOG, ">>".$log) or die "Cannot open file: $log\n";
   
-if(!defined($out)){
-  $out = "new.genome.fa"; 
+if(!defined($out_fasta)){
+  $out_fasta = "new.genome.fa"; 
 }
+
+if(!defined($out_hints)){
+  $out_hints = "new.hintsfile.gff"; 
+}
+
+# check whether hints file is specified
+if(defined($introns)){
+  # check whether hints file exists
+  if(! -e $introns){
+    print STDOUT "WARNING: Hints file $introns does not exist. Please check.\nProgramme will only blast protein sequence files.\n";
+  }else{
+    $introns = rel2abs($introns);
+    introns();
+  }
+}
+
 # check whether GeneMark-ET file is specified
 if(defined($GMET)){
   # check whether GeneMark-ET file exists
@@ -135,17 +159,19 @@ if(defined($genome)){
   }
   $genome = rel2abs($genome);
 
-  if($GMET_genes > $min_genes){
+  if($GMET_genes > $min_genes || !defined($GMET)){
     print LOG "\# ".localtime.": Get fasta sequences from $genome\n";
     get_fasta();
     print LOG "\# ".localtime.": Get fasta sequence parts\n";
-    while($nr_of_genes <= $min_genes){
+    open (HINTS, ">".$out_hints) or die "Cannot open file: $out_hints\n";
+    while(($nr_of_genes <= $min_genes && defined($GMET)) || (scalar(@new_seq) < $min_seqs && !defined($GMET))){
       get_random_seq();
     }
-    print LOG "\# ".localtime.": Print fasta sequence parts to $out\n";
-    open (OUT, ">".$out) or die "Cannot open file: $out\n";
+    close(HINTS) or die("Could not close file $out_hints!\n");
+    print LOG "\# ".localtime.": Print fasta sequence parts to $out_fasta\n";
+    open (OUT, ">".$out_fasta) or die "Cannot open file: $out_fasta\n";
     for(my $i=0; $i<scalar(@new_seq); $i++){
-      my $name = $i + 1;
+      my $name = "Sequence".($i + 1);
       print OUT ">$name\n";
       while(length($new_seq[$i]) > 50 ){
         print OUT substr($new_seq[$i],0 ,50)."\n";
@@ -153,12 +179,12 @@ if(defined($genome)){
       }
       print OUT $new_seq[$i]."\n";
     }
-    close(OUT) or die("Could not close file $out!\n");
+    close(OUT) or die("Could not close file $out_fasta!\n");
   }else{
     print STDOUT "WARNING: Number of genes in $GMET is less ($GMET_genes) than $min_genes. Programme will use the whole fasta file $genome\n";
     print LOG "\# ".localtime.": copy fasta file\n";
-    print LOG "cp $genome $out\n\n";
-    my $cmdString = "cp $genome $out";
+    print LOG "cp $genome $out_fasta\n\n";
+    my $cmdString = "cp $genome $out_fasta";
     system("$cmdString")==0 or die("failed to execute: $!\n");
   }
   close(LOG) or die("Could not close file $log!\n");
@@ -166,7 +192,6 @@ if(defined($genome)){
   print STDERR "ERROR: No genome file assigned. Please check.\n";
   exit(1);
 }
-
 
 
                            ############### sub functions ##############
@@ -208,7 +233,7 @@ sub GMET{
 
 
 sub get_fasta{
-  open (FASTA, $genome) or die "Cannot open file: $%hashgenome\n";
+  open (FASTA, $genome) or die "Cannot open file: $genome\n";
   print LOG "\# ".localtime.": read in DNA sequence from $genome\n";
   $/ = ">";
   while(<FASTA>){
@@ -247,38 +272,39 @@ sub get_random_seq{
     }
   }
   
-  my $subseq;
+  my $subseq = "";
   my $part_seq;
   my $part_start;
   my $start = 0;
   if(length($seqInfo[$index] -> {"seq"}) >= $min_size){
-    $rand = floor(rand(length($seqInfo[$index] -> {"seq"}) + 1));
-    $start = $rand;
-    if($rand > length($seqInfo[$index] -> {"seq"}) - $min_size){
-      $subseq = substr($seqInfo[$index] -> {"seq"}, - $min_size);
-      $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, $min_size);
-    }else{
-      $subseq = substr($seqInfo[$index] -> {"seq"}, $rand, $min_size);
-      $part_seq = substr($seqInfo[$index] -> {"seq"}, $rand + $min_size + 1);
-      $part_start = $rand + $min_size + 1;
-      if($rand != 0){
-        $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, 0, $rand - 1);
+    if(length($seqInfo[$index] -> {"seq"}) >= $min_size){
+      $rand = floor(rand(length($seqInfo[$index] -> {"seq"}) - $min_size + 1));
+      $start = $rand;
+      if($rand > length($seqInfo[$index] -> {"seq"}) - $min_size){
+        $subseq = substr($seqInfo[$index] -> {"seq"}, - $min_size);
+        $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, $min_size);
       }else{
-        $seqInfo[$index] -> {"seq"} = "";
+        $subseq = substr($seqInfo[$index] -> {"seq"}, $rand, $min_size);
+        $part_seq = substr($seqInfo[$index] -> {"seq"}, $rand + $min_size + 1);
+        $part_start = $rand + $min_size + 1;
+        if($rand != 0){
+          $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, 0, $rand - 1);
+        }else{
+          $seqInfo[$index] -> {"seq"} = "";
+        }
+        my %hash = ("name"   => $seqInfo[$index] -> {"name"},
+                    "seq"    => $part_seq,
+                    "start"  => $part_start);
+        push(@seqInfo, \%hash);     
       }
-      my %hash = ("name"   => $seqInfo[$index] -> {"name"},
-                  "seq"    => $part_seq,
-                  "start"  => $part_start);
-      push(@seqInfo, \%hash);     
     }
-  }else{
-#    $subseq = $seqInfo[$index] -> {"seq"};
-#    $seqInfo[$index] -> {"seq"} = "";
   }
   $whole_length -= length($subseq);
-
-  if(length($subseq) > 0){
-    if($seqInfo[$index] -> {"start"} + $start + $min_size < $seqs{$seqInfo[$index] -> {"name"}}[1]){
+  
+  if(length($subseq) > 0 && defined($GMET)){
+    push(@new_seq, $subseq);
+    # end of subseq < end of first gene -> no gene in region
+    if($seqInfo[$index] -> {"start"} + $start + $min_size < $seqs{$seqInfo[$index] -> {"name"}}[1]){  first gene
       $nr_of_genes += 0;
     }else{
       $low_boundary = 0;
@@ -314,9 +340,37 @@ sub get_random_seq{
         $nr_of_genes += ($j - $i) / 2;
       }
     }
-
-    push(@new_seq, $subseq);
+    if(defined($introns)){
+      my $hints_line;
+      for(my $k=0; $k<scalar(@{$introns{$seqInfo[$index] -> {"name"}}}); $k++){
+        my @line = split(/\t/, ${$introns{$seqInfo[$index] -> {"name"}}}[$k]);
+        if($line[4] > $seqInfo[$index] -> {"start"} + $start + $min_size){
+          last;
+        }
+        if($line[3] >= ($seqInfo[$index] -> {"start"} + $start)){
+          $hints_line = join("\t", @line);
+          $line[0] = "Sequence".scalar(@new_seq);
+          $line[3] = $line[3] - ($seqInfo[$index] -> {"start"} + $start);
+          $line[4] = $line[4] - ($seqInfo[$index] -> {"start"} + $start);
+          $hints_line = join("\t", @line);
+          print HINTS "$hints_line\n";
+        }  
+      }
+    } 
   }
   @seqInfo = sort{length($a -> {"seq"}) <=> length($b -> {"seq"})} @seqInfo;
 }
 
+# read in introns
+sub introns{
+  open (INTRONS, $introns) or die "Cannot open file: $introns\n";
+  print LOG "\# ".localtime.": read in introns from $introns\n";
+  while(<INTRONS>){
+    chomp;
+    my @line = split(/\t/, $_);
+    if(scalar(@line) == 9){
+      push(@{$introns{$line[0]}}, $_);
+    }
+  }  
+  close(INTRONS) or die("Could not close file $introns!\n");
+}
