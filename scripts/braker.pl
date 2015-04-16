@@ -398,6 +398,7 @@ if(-d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting){
 
 if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
   print STDOUT "WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not exist. Braker will create the necessary files for species $species.\n";
+  $useexisting = 0;
 }
 
 # check whether $rootDir already exists
@@ -504,6 +505,10 @@ if(! -f "$genome"){
   }
   extrinsic();
   augustus();
+  if(-e "$otherfilesDir/augustus.gff"){
+    getAnnoFasta("$otherfilesDir/augustus.gff");
+    make_gtf("$otherfilesDir/augustus.gff");
+  }
   clean_up();
   close(LOG) or die("Could not close log file $logfile!\n");
 }
@@ -765,26 +770,27 @@ sub extrinsic_tests{
   my $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
   my @a = split(/\./, $genome);
   my $genome_part;
+  my $hints_part = "$extrinsicfilesDir/hintsfile.part.gff";
   my $end = $a[-1];
   if(scalar(@a) != 1){ # only necessary if proper file ending is missing
     $a[-1] = "";
   }
   if(scalar(@a) != 1){
-    $genome_part = join('.', @a)."part.$end"; print "gp $genome_part\n";
+    $genome_part = join('.', @a)."part.$end";
   }else{
-    $genome_part = "$a[0].part.$end"; print "gp1 $genome_part\n";
+    $genome_part = "$a[0].part.$end";
   }
   if(!uptodate([$genome, "$genemarkDir/genemark.c.gtf"],[$genome_part]) || $overwrite){
     $errorfile = "$errorfilesDir/randomSeq.stderr";
     $string = find("randomSeq.pl");
     print STDOUT "NEXT STEP: create a smaller genome file: $genome_part\n";
-    $perlCmdString = "perl $string --genome=$genome --out=$genome_part --log=$logfile --GMET=$genemarkDir/genemark.c.gtf 2>$errorfile";
+    $perlCmdString = "perl $string --genome=$genome --introns=$hintsfile --out_fasta=$genome_part --out_hints=$hints_part --log=$logfile --GMET=$genemarkDir/genemark.c.gtf 2>$errorfile";
     print LOG "\# ".localtime.": create a smaller genome file: $genome_part\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "small genome file complete.\n";
   }
-
+#  $genome_part = $genome;
   # create extrinsic files (malus)
   for(my $i=0; $i<scalar(@malus); $i++){
     my $extrinsic_cp = "$extrinsicfilesDir/extrinsic.malus.$malus[$i].cfg";
@@ -854,14 +860,15 @@ sub extrinsic_tests{
   
   if(!uptodate(["$extrinsicfilesDir/extrinsic.malus.$malus[0].cfg", "$extrinsicfilesDir/extrinsic.malus.$malus[-1].cfg"],["$extrinsicfilesDir/augustus.malus.$malus[0].gff", "$extrinsicfilesDir/augustus.malus.$malus[-1].gff", "$extrinsicfilesDir/best_malus.out"]) || $overwrite){
     my $pm = new Parallel::ForkManager($CPU);
-    print STDOUT "NEXT STEP: run AUGUSTUS extrinsic tests (malus)\n";
+    print STDOUT "NEXT STEP: run AUGUSTUS extrinsic tests (malus) for ...\n";
     my $augustus_files = "";
     for(my $i = 0; $i < scalar(@malus); $i++){
-      my $pid = $pm->start and next;
       $errorfile = "$errorfilesDir/augustus.malus.$malus[$i].stderr";
       $stdoutfile = "$extrinsicfilesDir/augustus.malus.$malus[$i].gff";
       $augustus_files .= "$stdoutfile,";
-      $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsicfilesDir/extrinsic.malus.$malus[$i].cfg --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
+      print STDOUT "\t... $stdoutfile\n";
+      my $pid = $pm->start and next;
+      $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsicfilesDir/extrinsic.malus.$malus[$i].cfg --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hints_part --UTR=$UTR";
       if(defined($optCfgFile)){
         $cmdString .= " --optCfgFile=$optCfgFile"; 
       }
@@ -869,9 +876,11 @@ sub extrinsic_tests{
         $cmdString .= " --softmasking=on";
       }
       $cmdString .= " $genome_part 1>$stdoutfile 2>$errorfile";
-      print LOG "\# ".localtime.": run AUGUSTUS for extrinsic file $extrinsicfilesDir/extrinsic.malus.$malus[$i].cfg\n";
-      print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
+      if(! -e $stdoutfile || $overwrite){
+        print LOG "\# ".localtime.": run AUGUSTUS for extrinsic file $extrinsicfilesDir/extrinsic.malus.$malus[$i].cfg\n";
+        print LOG "$cmdString\n\n";
+        system("$cmdString")==0 or die("failed to execute: $!\n");
+      }
       $pm->finish;
     }
     $pm->wait_all_children;
@@ -880,7 +889,7 @@ sub extrinsic_tests{
     $string = find("blastEx.pl");
     $best_malus = "$extrinsicfilesDir/best_malus.out";
     print STDOUT "NEXT STEP: blast AUGUSTUS predictions (malus)\n";
-    $perlCmdString = "perl $string --files=$augustus_files --out=$best_malus --log=$logfile --introns=$hintsfile ";
+    $perlCmdString = "perl $string --files=$augustus_files --out=$best_malus --dir=$otherfilesDir --log=$logfile --introns=$hints_part ";
     if(defined($blast_path)){
       $perlCmdString .= "--DB=$blast_path ";
     }
@@ -894,7 +903,7 @@ sub extrinsic_tests{
   # create extrinsic files (bonus)
   for(my $i=0; $i<scalar(@bonus); $i++){
     my $extrinsic_cp = "$extrinsicfilesDir/extrinsic.bonus.$bonus[$i].cfg";
-    if((!uptodate([$extrinsic],[$extrinsic_cp]) && !$useexisting) || $overwrite){
+    if((!uptodate([$extrinsic],[$extrinsic_cp])) || $overwrite){
       print STDOUT "NEXT STEP: create bonus test extrinsic file: $extrinsic_cp\n";
       print LOG "\# ".localtime.": create extrinsic file\n";
       print LOG "cp $extrinsic $extrinsic_cp\n\n"; 
@@ -957,16 +966,17 @@ sub extrinsic_tests{
       print STDOUT "extrinsic file $extrinsic_cp created.\n";
     }
   }
-  if(!uptodate(["$extrinsicfilesDir/extrinsic.bonus.$bonus[0].cfg", "$extrinsicfilesDir/extrinsic.bonus.$bonus[-1].cfg"],["$extrinsicfilesDir/augustus.bonus.$bonus[0].gff", "$extrinsicfilesDir/augustus.bonus.$bonus[-1].gff", "$extrinsicfilesDir/best_bonus.out"]) || $overwrite){
+  if(!uptodate(["$extrinsicfilesDir/extrinsic.bonus.$bonus[0].cfg", "$extrinsicfilesDir/extrinsic.bonus.$bonus[-1].cfg"],["$extrinsicfilesDir/augustus.bonus.$bonus[0].gff", "$extrinsicfilesDir/augustus.bonus.$bonus[-1].gff", "$extrinsicfilesDir/best_bonus.out", "$extrinsicfilesDir/augustus.bonus.$bonus[0].aa"]) || $overwrite){
     my $pm = new Parallel::ForkManager($CPU);
-    print STDOUT "NEXT STEP: run AUGUSTUS extrinsic tests (bonus)\n";
+    print STDOUT "NEXT STEP: run AUGUSTUS extrinsic tests (bonus) for ...\n";
     my $augustus_files = "";
     for(my $i = 0; $i < scalar(@bonus); $i++){
-      my $pid = $pm->start and next;
       $errorfile = "$errorfilesDir/augustus.bonus.$bonus[$i].stderr";
       $stdoutfile = "$extrinsicfilesDir/augustus.bonus.$bonus[$i].gff";
       $augustus_files .= "$stdoutfile,";
-      $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsicfilesDir/extrinsic.bonus.$bonus[$i].cfg --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
+      print STDOUT "\t... $stdoutfile\n";
+      my $pid = $pm->start and next;
+      $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsicfilesDir/extrinsic.bonus.$bonus[$i].cfg --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hints_part --UTR=$UTR";
       if(defined($optCfgFile)){
         $cmdString .= " --optCfgFile=$optCfgFile"; 
       }
@@ -985,7 +995,7 @@ sub extrinsic_tests{
     $string = find("blastEx.pl");
     $best_bonus = "$extrinsicfilesDir/best_bonus.out";
     print STDOUT "NEXT STEP: blast AUGUSTUS predictions (bonus)\n";
-    $perlCmdString = "perl $string --files=$augustus_files --out=$best_bonus --log=$logfile --introns=$hintsfile ";
+    $perlCmdString = "perl $string --files=$augustus_files --out=$best_bonus --dir=$otherfilesDir --log=$logfile --introns=$hints_part ";
     if(defined($blast_path)){
       $perlCmdString .= "--DB=$blast_path ";
     }
@@ -1103,7 +1113,9 @@ sub training{
       $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
       if($gb_good_size <= 1000){
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+        $testsize = $gb_good_size - 1;
       }else{
+        $testsize = 1000;
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       }
       print LOG "\# ".localtime.": first etraining\n";
@@ -1321,7 +1333,33 @@ sub augustus{
   }
 }
 
-   
+# call getAnnoFasta.pl
+sub getAnnoFasta{
+  my $AUG_pred = shift;
+  @_ = split(/\//, $AUG_pred);
+  my $name_base = substr($_[-1],0,-4);
+  my $string = find("getAnnoFasta.pl");
+  my $errorfile = "$errorfilesDir/getAnnoFasta.$name_base.stderr";
+  my $perlCmdString = "perl $string $AUG_pred 2>$errorfile";
+  print LOG "\# ".localtime.": make a fasta file with protein sequences for $AUG_pred\n";
+  print LOG "$perlCmdString\n\n";
+  system("$perlCmdString")==0 or die("failed to execute: $!\n");
+}
+
+# make gtf file
+sub make_gtf{
+  my $AUG_pred = shift;
+  @_ = split(/\//, $AUG_pred);
+  my $name_base = substr($_[-1],0,-4);
+  my $gtf_file = substr($AUG_pred,0,-4).".gtf";
+  my $errorfile = "$errorfilesDir/gtf2gff.$name_base.stderr";
+  my $perlstring = find("gtf2gff.pl");
+  my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
+  print "$cmdString\n\n";
+  print LOG "\# ".localtime.": make a gtf file from $AUG_pred\n";
+  print LOG "$cmdString\n\n";
+  system("$cmdString")==0 or die("failed to execute: $!\n");
+}   
   
 
          ####################### delete all zero sized files #########################
