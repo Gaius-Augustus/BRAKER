@@ -16,6 +16,51 @@
 
 \tableofcontents
 
+\chapter{Supplementary Results}
+
+High quality repeat libraries are available for the four model organisms used in this study. BRAKER1 supports the usage of softmasked genomes. In contrast to MAKER2, BRAKER1 does not automatically call repeats, genomes must be masked prior calling BRAKER1. The command for running BRAKER1 on softmasked genomes is:\\
+
+\begin{verbatim}
+braker.pl --genome=genome_softmasked.fa --species=speciesname \
+  --bam=accepted_hits.bam --softmasking
+\end{verbatim}
+
+Results of BRAKER1 on softmasked genomes (according to repeat annotation from the respective organism database) are shown in table \ref{softmasked}.
+
+
+\begin{table*}[!b]
+\processtable{Accuracy results of BRAKER1 (on softmasked genomes) and MAKER2 (with fully automatic repeat masking) in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Results for BRAKER1 with repeat masking can be found in Supplementary Materials.\label{Tab:01}}
+{\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\toprule
+ & \multicolumn{3}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{3}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{3}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{4}{c}{\textit{Schizosaccharomyces pombe}}\\
+ & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} &\tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
+ \midrule
+Gene sensitivity        & 53.9 & 63.4 & 51.3 & 43.0 & 50.2 & 41.0 & 58.5 & 66.4 & 58.0 & 80.0 & 81.5 & 42.7 & 79.7\\
+Gene specificity        & 46.1 & 51.0 & 52.5 & 41.7 & 52.7 & 30.8 & 49.9 & 55.9 & 46.9 & 84.9 & 85.3 & 68.6 & 72.6\\
+Transcript sensitivity  & 45.4 & 53.3 & 43.5 & 32.9 & 39.5 & 31.3 & 42.3 & 49.3 & 42.3 & 80.0 & 81.5 & 42.7 & 79.7\\
+Transcript specificity  & 46.1 & 49.7 & 52.5 & 41.7 & 50.6 & 30.8 & 49.9 & 54.7 & 47.9 & 84.9 & 81.1 & 68.6 & 72.6\\
+Exon sensitivity        & 81.1 & 83.0 & 76.1 & 79.9 & 79.9 & 69.4 & 68.5 & 74.2 & 64.9 & 85.2 & 88.1 & 50.1 & 79.6\\
+Exon specificity        & 72.4 & 77.1 & 76.1 & 78.2 & 83.5 & 62.3 & 57.9 & 62.5 & 55.0 & 89.0 & 86.1 & 71.4 & 81.7\\
+\botrule
+
+\end{tabular}}{}
+\end{table*}
+
+\begin{sidewaystable}
+\caption{VALUES IN THIS TABLE NEED TO BE UPDATED!!! Accuracy results of BRAKER1 (applied to softmasked genomes) and MAKER2 (with automatic repeat masking) in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry.\label{softmasked}}
+\begin{tabular}{lp{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}}\hline
+ & \multicolumn{2}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{2}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{2}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{2}{c}{\textit{Schizosaccharomyces pombe}}\\
+ & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} &  \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{BRAKER1-GeneMarkET} &\tiny{BRAKER1-AUGUSTUS}\\
+ \hline
+Gene sensitivity & 47.8 & 61.6 & 30.4 & 50.6 & 58.2 & 68.9 & 37.2 & 76.9 \\
+Gene specificity & 51.5 & 53.4 & 34.0 & 53.7 & 51.2 & 60.1 & 42.0 & 82.5 \\
+Transcript sensitivity & 40.4 & 52.9 & 23.4 & 39.6 & 42.0 & 51.0 & 37.1 & 76.9 \\
+Transcript specificity & 51.5 & 52.0 & 34.0 & 51.3 & 51.2 & 58.8 & 42.0 & 78.4 \\
+Exon sensitivity &  79.1 & 83.1 & 72.1 & 80.9 & 68.3 & 75.0 & 55.9 & 85.5 \\
+Exon specificity & 81.3 & 78.5 & 75.9 & 83.3 & 59.2 & 65.8 & 47.3 & 82.6\\
+\hline
+\end{tabular}
+\end{sidewaystable}
+
 \chapter{Supplementary Methods}
 
 \section{RNA-Seq Alignment}
@@ -365,32 +410,7 @@ CodingQuarry -f genome.fasta -t transcripts.gff3 -d -p 8
 
 Accuracy was measured using the Eval package \cite{Eval}.
 
-\chapter{Supplementary Results}
 
-High quality repeat libraries are available for the four model organisms used in this study. BRAKER1 supports the usage of softmasked genomes. In contrast to MAKER2, BRAKER1 does not automatically call repeats, genomes must be masked prior calling BRAKER1. The command for running BRAKER1 on softmasked genomes is:\\
-
-\begin{verbatim}
-braker.pl --genome=genome_softmasked.fa --species=speciesname \
-  --bam=accepted_hits.bam --softmasking
-\end{verbatim}
-
-Results of BRAKER1 on softmasked genomes (according to repeat annotation from the respective organism database) are shown in table \ref{softmasked}.
-
-% \begin{table*}[!b]
-% \processtable{Accuracy results of BRAKER1 (applied to softmasked genomes) and MAKER2 (with automatic repeat masking) in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Results for BRAKER1 with repeat masking can be found in Supplementary Materials.\label{softmasked}}
-% {\begin{tabular}{lrrrr}\toprule
-%  & \textit{Arabidopsis thaliana} & \textit{Caenorhabditis elegans}&  \textit{Drosophila melanogaster}& \textit{Schizosaccharomyces pombe}\\
-%  \midrule
-% Gene sensitivity & q
-% Gene specificity &
-% Transcript sensitivity & 
-% Transcript specificity & 
-% Exon sensitivity &
-% Exon specificity & 
-% \botrule
-% 
-% \end{tabular}}{}
-% \end{table*}
 
 \begin{thebibliography}{}
 \bibitem[Kim {\it et~al}., 2013]{TopHat2} Kim, D. and Pertea, G. and Trapnell, C. and Pimentel, H. and Kelley, R. and Salzberg, S.L. (2013) TopHat2: accurate alignment of transcriptomes in the presence of insertions, deletions and gene fusions, {\it Genome Biology} \textbf{14}:R36.
