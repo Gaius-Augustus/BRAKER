@@ -8,7 +8,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: April 07th 2015                                                                    #
+# Release date: Mai 01st 2015                                                                      #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -91,10 +91,10 @@ if(@ARGV==0){
   exit(0);
 }
 
-GetOptions( 'genome=s'    => \$genome,
+GetOptions( 'dir=s'       => \$dir, 
+            'genome=s'    => \$genome,
             'GMET=s'      => \$GMET,
             'introns=s'   => \$introns,
-            'dir=s'       => \$dir,
             'log=s'       => \$log,
             'out_fasta=s' => \$out_fasta,
             'out_hints=s' => \$out_hints, 
@@ -145,7 +145,7 @@ if(defined($GMET)){
     print STDOUT "WARNING: GeneMark-ET file $GMET does not exist. Please check.\nProgramme will split fasta file without checking the number of genes.\n";
   }else{
     $GMET = rel2abs($GMET);
-    print LOG "\# ".localtime.": Get GeneMark-ET genes from $GMET\n";
+    print LOG "\# ".(localtime).": Get GeneMark-ET genes from $GMET\n";
     GMET();
   }
 }
@@ -160,15 +160,15 @@ if(defined($genome)){
   $genome = rel2abs($genome);
 
   if($GMET_genes > $min_genes || !defined($GMET)){
-    print LOG "\# ".localtime.": Get fasta sequences from $genome\n";
+    print LOG "\# ".(localtime).": Get fasta sequences from $genome\n";
     get_fasta();
-    print LOG "\# ".localtime.": Get fasta sequence parts\n";
+    print LOG "\# ".(localtime).": Get fasta sequence parts\n";
     open (HINTS, ">".$out_hints) or die "Cannot open file: $out_hints\n";
     while(($nr_of_genes <= $min_genes && defined($GMET)) || (scalar(@new_seq) < $min_seqs && !defined($GMET))){
       get_random_seq();
     }
     close(HINTS) or die("Could not close file $out_hints!\n");
-    print LOG "\# ".localtime.": Print fasta sequence parts to $out_fasta\n";
+    print LOG "\# ".(localtime).": Print fasta sequence parts to $out_fasta\n";
     open (OUT, ">".$out_fasta) or die "Cannot open file: $out_fasta\n";
     for(my $i=0; $i<scalar(@new_seq); $i++){
       my $name = "Sequence".($i + 1);
@@ -182,7 +182,7 @@ if(defined($genome)){
     close(OUT) or die("Could not close file $out_fasta!\n");
   }else{
     print STDOUT "WARNING: Number of genes in $GMET is less ($GMET_genes) than $min_genes. Programme will use the whole fasta file $genome\n";
-    print LOG "\# ".localtime.": copy fasta file\n";
+    print LOG "\# ".(localtime).": copy fasta file\n";
     print LOG "cp $genome $out_fasta\n\n";
     my $cmdString = "cp $genome $out_fasta";
     system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -200,7 +200,7 @@ if(defined($genome)){
 sub GMET{
   my $prev_ID = "no_ID";
   open (GMET, $GMET) or die "Cannot open file: $GMET\n";
-  print LOG "\# ".localtime.": read in genes from $GMET\n";
+  print LOG "\# ".(localtime).": read in genes from $GMET\n";
   while(<GMET>){
     chomp;
     my @line = split(/\t/, $_);
@@ -234,7 +234,7 @@ sub GMET{
 
 sub get_fasta{
   open (FASTA, $genome) or die "Cannot open file: $genome\n";
-  print LOG "\# ".localtime.": read in DNA sequence from $genome\n";
+  print LOG "\# ".(localtime).": read in DNA sequence from $genome\n";
   $/ = ">";
   while(<FASTA>){
     s/>$//;                           # see getAnnoFasta.pl
@@ -364,7 +364,7 @@ sub get_random_seq{
 # read in introns
 sub introns{
   open (INTRONS, $introns) or die "Cannot open file: $introns\n";
-  print LOG "\# ".localtime.": read in introns from $introns\n";
+  print LOG "\# ".(localtime).": read in introns from $introns\n";
   while(<INTRONS>){
     chomp;
     my @line = split(/\t/, $_);
