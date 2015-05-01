@@ -13,10 +13,17 @@
    height="208.25305"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.4 r9939"
+   inkscape:version="0.47 r22583"
    sodipodi:docname="Figure1.svg">
   <defs
      id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 104.12653 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="340.55716 : 104.12653 : 1"
+       inkscape:persp3d-origin="170.27858 : 69.417684 : 1"
+       id="perspective84" />
     <marker
        inkscape:stockid="Arrow2Mend"
        orient="auto"
@@ -223,15 +230,15 @@
      inkscape:pageshadow="2"
      inkscape:zoom="3.2739478"
      inkscape:cx="251.52335"
-     inkscape:cy="100.35927"
+     inkscape:cy="63.706273"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:snap-global="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1172"
-     inkscape:window-x="1200"
-     inkscape:window-y="520"
+     inkscape:window-width="1280"
+     inkscape:window-height="725"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
      inkscape:window-maximized="1"
      fit-margin-top="0.2"
      fit-margin-bottom="0.2"
@@ -245,7 +252,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -389,7 +396,7 @@
            height="50.09243"
            x="510.69843"
            y="140.92432" /></flowRegion><flowPara
-         id="flowPara4547"></flowPara></flowRoot>    <path
+         id="flowPara4547" /></flowRoot>    <path
        sodipodi:type="arc"
        style="fill:#ffeeaa;fill-opacity:1"
        id="path2990-1-94"
@@ -514,12 +521,6 @@
        id="path5430-2-1"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-mid:none;marker-end:url(#Arrow1Mend-9)"
-       d="m 445.20298,129.37412 c 4.55505,5.17114 42.62528,40.71177 47.30904,46.1276"
-       id="path5430-2-2"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -539,7 +540,7 @@
        sodipodi:cy="61.818707"
        sodipodi:rx="50.323307"
        sodipodi:ry="7.7752748"
-       d="m 257.44799,61.818707 a 50.323307,7.7752748 0 1 1 -100.64662,0 50.323307,7.7752748 0 1 1 100.64662,0 z"
+       d="m 257.44799,61.818707 c 0,4.294165 -22.53052,7.775274 -50.32331,7.775274 -27.7928,0 -50.32331,-3.481109 -50.32331,-7.775274 0,-4.294166 22.53051,-7.775275 50.32331,-7.775275 27.79279,0 50.32331,3.481109 50.32331,7.775275 z"
        transform="matrix(0.96566556,0,0.02682405,-1.8611111,196.66956,240.48135)" />
     <text
        xml:space="preserve"

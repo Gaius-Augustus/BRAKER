@@ -18,45 +18,38 @@
 
 \chapter{Supplementary Results}
 
-High quality repeat libraries are available for the four model organisms used in this study. BRAKER1 supports the usage of softmasked genomes. In contrast to MAKER2, BRAKER1 does not automatically call repeats, genomes must be masked prior calling BRAKER1. The command for running BRAKER1 on softmasked genomes is:\\
-
-\begin{verbatim}
-braker.pl --genome=genome_softmasked.fa --species=speciesname \
-  --bam=accepted_hits.bam --softmasking
-\end{verbatim}
-
-Results of BRAKER1 on softmasked genomes (according to repeat annotation from the respective organism database) are shown in table \ref{softmasked}.
+Accuracy results of BRAKER1 in unmasked genomes are shown in Table \ref{unmasked}.
 
 
-\begin{table*}[!b]
-\processtable{Accuracy results of BRAKER1 (on softmasked genomes) and MAKER2 (with fully automatic repeat masking) in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Results for BRAKER1 with repeat masking can be found in Supplementary Materials.\label{Tab:01}}
-{\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\toprule
- & \multicolumn{3}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{3}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{3}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{4}{c}{\textit{Schizosaccharomyces pombe}}\\
- & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} & \tiny{BRAKER1-GeneMarkET} &\tiny{BRAKER1-AUGUSTUS} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
- \midrule
-Gene sensitivity        & 53.9 & 63.4 & 51.3 & 43.0 & 50.2 & 41.0 & 58.5 & 66.4 & 58.0 & 80.0 & 81.5 & 42.7 & 79.7\\
-Gene specificity        & 46.1 & 51.0 & 52.5 & 41.7 & 52.7 & 30.8 & 49.9 & 55.9 & 46.9 & 84.9 & 85.3 & 68.6 & 72.6\\
-Transcript sensitivity  & 45.4 & 53.3 & 43.5 & 32.9 & 39.5 & 31.3 & 42.3 & 49.3 & 42.3 & 80.0 & 81.5 & 42.7 & 79.7\\
-Transcript specificity  & 46.1 & 49.7 & 52.5 & 41.7 & 50.6 & 30.8 & 49.9 & 54.7 & 47.9 & 84.9 & 81.1 & 68.6 & 72.6\\
-Exon sensitivity        & 81.1 & 83.0 & 76.1 & 79.9 & 79.9 & 69.4 & 68.5 & 74.2 & 64.9 & 85.2 & 88.1 & 50.1 & 79.6\\
-Exon specificity        & 72.4 & 77.1 & 76.1 & 78.2 & 83.5 & 62.3 & 57.9 & 62.5 & 55.0 & 89.0 & 86.1 & 71.4 & 81.7\\
-\botrule
+\begin{table}[htb!]
+\caption{Accuracy results of BRAKER1 in unmasked genomes of four model organisms. \label{unmasked}}
+\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
+ & \multicolumn{1}{c}{\textit{A.~thaliana}} &  \multicolumn{1}{c}{\textit{C.~elegans}} &  \multicolumn{1}{c}{\textit{D.~melanogaster}} &  \multicolumn{1}{c}{\textit{S.~pombe}}\\
+ \hline
+Gene sensitivity        & 63.9 & 55.0 & 68.4 & 77.0\\
+Gene specificity        & 51.6 & 55.2 & 60.6 & 80.1\\
+Transcript sensitivity  & 54.6 & 43.2 & 50.6 & 77.0\\
+Transcript specificity  & 50.4 & 53.3 & 59.3 & 76.1\\
+Exon sensitivity        & 82.5 & 79.8 & 73.7 & 83.0\\
+Exon specificity        & 78.8 & 85.4 & 67.1 & 82.9\\
+\hline
+\end{tabular}
+\end{table}
 
-\end{tabular}}{}
-\end{table*}
+Table \ref{compare} shows  gene prediction accuracy of GeneMark-ET (\textit{ab initio}, first step in BRAKER1) and of AUGUSTUS (trained on GeneMark-ET predictions, using RNA-Seq read alignment information as extrinsic evidence).
 
 \begin{sidewaystable}
-\caption{VALUES IN THIS TABLE NEED TO BE UPDATED!!! Accuracy results of BRAKER1 (applied to softmasked genomes) and MAKER2 (with automatic repeat masking) in genomes of four model organisms. For BRAKER1, accuracy is shown for the GeneMark-ET \textit{ab initio} predictions as well as for the AUGUSTUS predictions with hints from RNA-Seq. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry.\label{softmasked}}
-\begin{tabular}{lp{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}}\hline
- & \multicolumn{2}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{2}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{2}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{2}{c}{\textit{Schizosaccharomyces pombe}}\\
- & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} &  \tiny{BRAKER1-GeneMarkET} & \tiny{BRAKER1-AUGUSTUS} & \tiny{BRAKER1-GeneMarkET} &\tiny{BRAKER1-AUGUSTUS}\\
+\caption{Accuracy results of GeneMark-ET (\textit{ab initio} predictions) and AUGUSTUS (predictions with RNA-Seq read mapping information) in BRAKER1 in genomes of four model organisms (softmasked genomes).\label{compare}}
+\begin{tabular}{lp{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}}\hline
+ & \multicolumn{2}{c}{\textit{A.~thaliana}} &  \multicolumn{2}{c}{\textit{C.~elegans}} &  \multicolumn{2}{c}{\textit{D.~melanogaster}} &  \multicolumn{2}{c}{\textit{S.~pombe}}\\
+ & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} &  \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} &\tiny{AUGUSTUS}\\
  \hline
-Gene sensitivity & 47.8 & 61.6 & 30.4 & 50.6 & 58.2 & 68.9 & 37.2 & 76.9 \\
-Gene specificity & 51.5 & 53.4 & 34.0 & 53.7 & 51.2 & 60.1 & 42.0 & 82.5 \\
-Transcript sensitivity & 40.4 & 52.9 & 23.4 & 39.6 & 42.0 & 51.0 & 37.1 & 76.9 \\
-Transcript specificity & 51.5 & 52.0 & 34.0 & 51.3 & 51.2 & 58.8 & 42.0 & 78.4 \\
-Exon sensitivity &  79.1 & 83.1 & 72.1 & 80.9 & 68.3 & 75.0 & 55.9 & 85.5 \\
-Exon specificity & 81.3 & 78.5 & 75.9 & 83.3 & 59.2 & 65.8 & 47.3 & 82.6\\
+Gene sensitivity        & 51.4 & 63.9 & 42.8 & 55.2 & 54.6 & 67.0 & 81.8 & 76.7\\
+Gene specificity        & 50.5 & 51.9 & 42.2 & 55.6 & 55.0 & 61.0 & 84.2 & 79.9\\
+Transcript sensitivity  & 43.4 & 54.6 & 32.8 & 43.4 & 39.8 & 49.8 & 81.8 & 76.7\\
+Transcript specificity  & 50.5 & 50.7 & 42.2 & 53.7 & 55.0 & 59.8 & 84.2 & 75.8\\
+Exon sensitivity        & 78.6 & 82.6 & 79.8 & 80.2 & 66.6 & 73.1 & 88.0 & 82.7\\
+Exon specificity        & 77.4 & 79.0 & 78.6 & 85.5 & 62.0 & 67.0 & 88.4 & 82.4\\
 \hline
 \end{tabular}
 \end{sidewaystable}
@@ -91,31 +84,41 @@ SRR097898, SRR097899, SRR097900, SRR097902, SRR097903, SRR097905, SRR097906, SRR
 
 MAKER2 \cite{MAKER2} and CodingQuarry \cite{CodingQuarry} require an RNA-Seq assembly. We used Cufflinks version 2.2.0 with standard parameters to assemble the libraries that had previously been aligned to the genome with TopHat2. 
 
+\section{Repeat Masking}
+
+Genomes were softmasked for repeats using RepeatModeler 1.0.8 \cite{RepeatModeler}.
+
 \section{Running BRAKER1}
 
-The command for running BRAKER1 was\\
+The command for running BRAKER1 version 1.5 with GeneMark-ET version 4.28 and AUGUSTUS version 3.1.0 on softmasked genomes was\\
 
-\noindent \texttt{braker.pl --genome=genome.fa --species=speciesname --bam=accepted\_hits.bam}\\
+\noindent \texttt{braker.pl --genome=genome.fa --species=speciesname --bam=accepted\_hits.bam --softmasked}\\
 
 \noindent where \texttt{accepted\_hits.bam} is the TopHat2 alignment file.
+
+\noindent For unmasked genomes, the command flag \texttt{--softmasked} was removed.
+
+\noindent For \textit{S.~pombe}, BRAKER1 was run with the flag \texttt{--fungus} which enable usage of the fungi-specific branchpoint model of GeneMark-ET.
 
 \section{Running MAKER2}
 
 For running MAKER2, we followed the tutorial at \url{http://weatherby.genetics.utah.edu/MAKER/wiki/index.php/MAKER_Tutorial_for_GMOD_Online_Training_2014}, mostly.
 
-MAKER2 was run with the gene finders SNAP \cite{SNAP}, AUGUSTUS \cite{AUGUSTUS}, and GeneMark-ES \cite{GeneMark-ES}. Running MAKER on a novel species consists of three steps: 
+MAKER2 was run with the gene finders SNAP \cite{SNAP}, AUGUSTUS \cite{AUGUSTUS}, and GeneMark-ES \cite{GeneMark-ES}. MAKER2 was developed to run with protein database to support gene discovery. We did not enable database support because BRAKER1 has no such feature. Thus, MAKER2 - in the way that we used it - is a method that calls and masks repeats, generates training gene structures on the basis of RNA-Seq data, and predicts genes with extrinsic evidence from RNA-Seq data. Running MAKER2 on a novel species consists of three steps: 
 
 \begin{enumerate}
  \item Generating training gene structures for SNAP and AUGUSTUS with MAKER2,
- \item training SNAP and AUGUSTUS (outside of MAKER2), and
+ \item training SNAP, AUGUSTUS and GeneMark-ES (outside of MAKER2), and
  \item predicing genes with MAKER2 using GeneMark-ES, SNAP and AUGUSTUS.
 \end{enumerate}
 
-Training gene structures can be improved an iterative fashion. We computed two iterations.
+\noindent Training gene structures can be improved an iterative fashion. We computed two iterations.
 
-Training of the gene prediction tool GeneMark-ES depends on the genome sequence, only, and is therefore independent from MAKER2 generated training gene structures. GeneMark-ES was trained using the command\\
+Training of the gene prediction tool GeneMark-ES depends on the genome sequence, only, and is therefore independent of MAKER2. GeneMark-ES was trained using the command\\
 
 \noindent \texttt{gm\_es.pl genome.fa}
+
+\noindent For \textit{S.~pombe}, GeneMark-ES was trained using the flag \texttt{--fungus} to enable the fungi-specific branch point model in GeneMark-ES.
 
 \subsection{Generating training gene structures for SNAP and AUGUSTUS (first iteration)} \label{training_genes_it1}
 
@@ -182,7 +185,7 @@ cat all.gtf | perl -ne '
 # the resulting number was divided by two
 \end{verbatim}
 
-\noindent This resulted in the following flanking region lengths:\\
+\noindent This resulted in the following flanking region lengths that were used for excising training genes from the genome for training AUGUSTUS for MAKER2 (first iteration):\\
 
 \begin{center}
 \begin{tabular}{l r}
@@ -197,7 +200,7 @@ Species & Flanking region length (nt)\\
 \end{tabular}
 \end{center}
 
-\noindent The \texttt{gtf} file was converted to a \texttt{gb} file with above flanking region:\\
+\noindent The \texttt{gtf} file was converted to a \texttt{gb} file with above flanking region length:\\
 
 \begin{verbatim}
 # gff2gbSmallDNA.pl belongs to AUGUSTUS
@@ -209,7 +212,7 @@ gff2gbSmallDNA.pl all.gtf genome.fasta $flanking_region_length first.gb
 \begin{center}
 \begin{tabular}{l r}
 \hline
-Species & Flanking region length (nt)\\
+Species & Number of training genes\\
 \hline
 \textit{Arabidopsis thaliana} & 13547\\
 \textit{Caenorhabditis elegans} & 7660\\
@@ -233,7 +236,7 @@ hmm-assembler.pl ${species} . > ${species}.hmm
 
 \subsubsection{Training AUGUSTUS} \label{train_augustus_it1}
 
-A new species for AUGUSTUS parameters was created:\\
+A new species for AUGUSTUS parameters was created:
 
 \begin{verbatim}
 # new_species.pl is part of AUGUSTUS
@@ -244,7 +247,7 @@ new_species.pl --species=${species}
 \noindent The original training gene structure contained errors, such as occasionally missing start- or stop-codons. Such error containing genes were filtered out:\\
 
 \begin{verbatim}
-# etraining and filgerGenesOut_mRNAname.pl are part of AUGUSTUS \
+# etraining and filgerGenesOut_mRNAname.pl are part of AUGUSTUS
 etraining --species=maker2_spomb1 first.gb 1> etrain-test.out 
    2> etrain-test.err
    
@@ -262,7 +265,7 @@ etraining --species=maker2_spomb1 second.gb
  \item a large gene set for \texttt{etraining}, that was further split into:
  \begin{enumerate}
  \item a large gene set for for the option \texttt{--onlytrain} of \\\texttt{optimize\_augustus.pl},
- \item a small gene set for \texttt{optimize\_augustus.pl}, the size was 1000 for all species except for \texttt{S.~pombe}, where genes were not split for \\ \texttt{optimize\_augustus.pl}
+ \item a small gene set for \texttt{optimize\_augustus.pl}, the size was 1000 for all species except for \texttt{S.~pombe}, where genes were not further split due to their small number.
  \end{enumerate}
 \end{enumerate}
 
@@ -277,7 +280,7 @@ randomSplit.pl second.gb.train 1000
 # 2b) second.gb.train.test -> optimize_augustus.pl
 \end{verbatim}
 
-\noindent Major AUGUSTUS parameters were trained with \texttt{etraining}:\\
+\noindent Major AUGUSTUS parameters were ajusted with \texttt{etraining}:\\
 
 \noindent \texttt{etraining --species=\$\{species\} second.gb.train}\\
 
@@ -339,7 +342,7 @@ augustus_species=${species}
 \begin{center}
 \begin{tabular}{l r}
 \hline
-Species & Flanking region length (nt)\\
+Species & Number of training genes\\
 \hline
 \textit{Arabidopsis thaliana} & 11887\\
 \textit{Caenorhabditis elegans} & 5711\\
@@ -363,9 +366,10 @@ Training AUGUSTUS was performed as described in section \ref{train_augustus_it1}
 
 \subsubsection{Preparing \texttt{rnaseq.gff3}}
 
-Junctions generated by TopHat2 were converted to \texttt{gff3} format, as well as Cufflinks transcripts (\texttt{gtf} to \texttt{gff3}):
+Junctions generated by TopHat2 and Cufflinks transcripts were converted to \texttt{gff3} format:
 
 \begin{verbatim}
+# tophat2gff3 and cufflinks2gff3 are part of MAKER2
 tophat2gff3 junctions.bed > tophat.gff3
 cufflinks2gff3 transcripts.gtf > cufflinks.gff3
 cat tophat.gff3 cufflinks.gff3 > rnaseq.gff3
@@ -397,7 +401,7 @@ keep_preds=1
 
 \section{Running CodingQuarry}
 
-As a tool specific for fungi, we ran CodingQuarry on \textit{S.~pombe}, only. First, Cufflinks assemblies were converted from \texttt{gtf} to \texttt{gff3}, then CodingQuarry was executed:\\
+As a tool specific for fungi, we ran CodingQuarry on \textit{S.~pombe}, only. First, Cufflinks assemblies were converted from \texttt{gtf} to \texttt{gff3}, then CodingQuarry was executed:
 
 \begin{verbatim}
 CufflinksGTF_to_CodingQuarryGFF3.py transcripts.gtf > transcripts.gff3
@@ -432,21 +436,7 @@ Stanke, M. and Diekhans, M. and Baertsch, R. and Haussler, D. (2008) Using nativ
 
 \bibitem[Keibler and Brent, (2003)]{Eval} Keibler, E. and Brent, M.R. (2003) Eval: a software package for analysis of genome annotations, \textit{BMC Bioinformatics} \textbf{4}:50.
 
-%\bibitem[Steijger {\it et~al}., 2013]{RGASP} Steijger,T. and Abril,J.F. and Engstr\"{o}m,P.G. and Kokocinski,F. and The RGASP Consortium, Hubard,T.J. and Guigo,R. and Harrow, J. and Bertone, P. (2013) Assessment of transcript reconstruction methods for
-% RNA-seq, {\it Nature Methods}, doi:10.1038/nmeth.271.
-
-%\bibitem[Lomsadze {\it et~al}., 2014]{GeneMark-ET} Lomsadze, A. and Burns, P.D. and Borodovsky, M. (2014) Integration of mapped RNA-Seq reads into automatic training of eukaryotic gene finding algorithm, {\it Nucleic Acids Research}, doi:10.1093/nar/gku557.
-
-%\bibitem[Stanke \textit{et~al}., 2008]{AUGUSTUS}
-%Stanke, M. and Diekhans, M. and Baertsch, R. and Haussler, D. (2008) Using native and syntenically mapped cDNA alignments to improve de novo gene finding, \textit{Bioinformatics}, \textbf{24}(5), 637.
-
-%\bibitem[Holt and Yandell, 2011]{MAKER2} Holt, C. and Yandell, M. (2011) MAKER2: an annotation pipeline and genome-database management tool for second-generation genome projects, \textit{BMC Bioinformatics}, \textbf{12}:491.
-
-%\bibitem[Testa \textit{et~al}., 2015]{CodingQuarry} Testa, A.C. and Hane, J.K. and Ellwood, S.R. and Oliver R.P. (2015) CodingQuarry: highly accurate hidden Markov model gene prediction in fungal genomes using RNA-seq transcripts, \textit{BMC Genomics} \textbf{16}:170.
-
-%\bibitem[Haas \textit{et~al}., 2008] Haas, B. and Salzberg, S. and Zhu, W. and Pertea, M. and Allen, J. and Orvis, J. and White, O. and Buell, C.R. and Wortman, J. (2008) Automated eukaryotic gene structure annotation using EvidenceModeler and the program to assemble spliced reads, {\it Genome Biology}, \textbf{9}(1):R7.
-
-%\bibitem[Keller \textit{et~al}., 2008] Keller, O. and Odronitz, F. and Stanke, M. and Kollmar, M. and Waack, S. (2008) Scipio: Using protein sequences to determine the precise exon/intron structures of genes and their orthologs in closely related species, {\it BMC Bioinformatics}, \textbf{9}(1):278.
+\bibitem[Smit and Hubley, 2015]{RepeatModeler} Smit, A.F.A. and Hubley, R. (2008-2015) RepeatModeler Open-1.0 \textit{\url{http://www.repeatmasker.org}}.
 
 \end{thebibliography}
 
