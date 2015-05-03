@@ -39,7 +39,8 @@ Exon specificity        & 78.8 & 85.4 & 67.1 & 82.9\\
 Table \ref{compare} shows  gene prediction accuracy of GeneMark-ET (\textit{ab initio}, first step in BRAKER1) and of AUGUSTUS (trained on GeneMark-ET predictions, using RNA-Seq read alignment information as extrinsic evidence).
 
 \begin{sidewaystable}
-\caption{Accuracy results of GeneMark-ET (\textit{ab initio} predictions) and AUGUSTUS (predictions with RNA-Seq read mapping information) in BRAKER1 in genomes of four model organisms (softmasked genomes).\label{compare}}
+\caption{Accuracy results of GeneMark-ET (\textit{ab initio} predictions) and AUGUSTUS (using RNA-Seq) in BRAKER1 on softmasked genomes.
+The AUGUSTUS results are the ones reported for BRAKER1 in Table 1 of the main article.\label{compare}}
 \begin{tabular}{lp{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}}\hline
  & \multicolumn{2}{c}{\textit{A.~thaliana}} &  \multicolumn{2}{c}{\textit{C.~elegans}} &  \multicolumn{2}{c}{\textit{D.~melanogaster}} &  \multicolumn{2}{c}{\textit{S.~pombe}}\\
  & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} &  \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} &\tiny{AUGUSTUS}\\
@@ -94,7 +95,7 @@ The command for running BRAKER1 version 1.5 with GeneMark-ET version 4.28 and AU
 
 \noindent \texttt{braker.pl --genome=genome.fa --species=speciesname --bam=accepted\_hits.bam --softmasked}\\
 
-\noindent where \texttt{accepted\_hits.bam} is the TopHat2 alignment file.
+\noindent where \texttt{accepted\_hits.bam} is the TopHat2 alignment file and \texttt{speciesname} is a name for storing output parameters.
 
 \noindent For unmasked genomes, the command flag \texttt{--softmasked} was removed.
 
