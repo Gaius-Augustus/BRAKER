@@ -85,7 +85,9 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
                                 POSIX
                                 Scalar::Util::Numeric
                                 YAML 
-   (on Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]")
+   On Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]", e.g. issue
+   cpanm --sudo  File::Spec::Functions Hash::Merge List::Util Logger::Simple Module::Load::Conditional \
+      Parallel::ForkManager POSIX Scalar::Util::Numeric YAML
 
    BRAKER1 also uses the PERL module helpMod.pm that is not available on CPAN. This module is 
    part of the BRAKER1 relase and does not require separate installation.
