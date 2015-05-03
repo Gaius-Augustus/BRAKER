@@ -40,7 +40,7 @@ Table \ref{compare} shows  gene prediction accuracy of GeneMark-ET (\textit{ab i
 
 \begin{sidewaystable}
 \caption{Accuracy results of GeneMark-ET (\textit{ab initio} predictions) and AUGUSTUS (using RNA-Seq) in BRAKER1 on softmasked genomes.
-The AUGUSTUS results are the ones reported for BRAKER1 in Table 1 of the main article.\label{compare}}
+The AUGUSTUS results are the ones reported for BRAKER1 in Table 1 of the main article. On the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accommodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure \textit{ab initio} predictions made by GeneMark-ET. \label{compare}}
 \begin{tabular}{lp{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}}\hline
  & \multicolumn{2}{c}{\textit{A.~thaliana}} &  \multicolumn{2}{c}{\textit{C.~elegans}} &  \multicolumn{2}{c}{\textit{D.~melanogaster}} &  \multicolumn{2}{c}{\textit{S.~pombe}}\\
  & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} &  \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} &\tiny{AUGUSTUS}\\
@@ -56,6 +56,11 @@ Exon specificity        & 77.4 & 79.0 & 78.6 & 85.5 & 62.0 & 67.0 & 88.4 & 82.4\
 \end{sidewaystable}
 
 \chapter{Supplementary Methods}
+
+\section{Test Data}
+
+In order to demonstrate prediction accuracy, nuclear genomes, reference annotations and RNA-Seq libraries were retrieved for four model organisms from the respective databases: for \textit{Arabidopsis thaliana}, TAIR 10 from \url{http://arabidopsis.org}; for \textit{Caenorhabditis elegans}, WS240 from \url{http://www.wormbase.org}; for \textit{Drosophila melanogaster}, R5 from \url{http://flybase.org}; for \textit{Schizosaccharomyces pombe}, ASM294v2.23 from \url{http://www.pombase.org}. The following RNA-Seq libraries were retrieved from the short read archive at NCBI: SRR934391 (for \textit{A.~thaliana}); SRR065719 (for \textit{C.~elegans}); SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 (for \textit{D.~melanogaster}); SRR097898-SRR097900, SRR097902, SRR097903,
+SRR097905-SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR097925, SRR402833 (for \textit{S.~pombe}).
 
 \section{RNA-Seq Alignment}
 
