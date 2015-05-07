@@ -18,6 +18,26 @@
 
 \chapter{Supplementary Results}
 
+\begin{sidewaystable}[!h]
+\caption{Accuracy results of BRAKER1 (on softmasked genomes) and MAKER2 (with fully automatic repeat masking, RNA-Seq only source of extrinsic evidence) in genomes of four model organisms. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Accuracy results for BRAKER1 on unmasked genomes can be found in Supplementary Table 1.2.\label{Tab:01}}
+\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
+ & \multicolumn{2}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{2}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{2}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{3}{c}{\textit{Schizosaccharomyces pombe}}\\
+ & \tiny{BRAKER1} & \tiny{MAKER2} &  \tiny{BRAKER1} & \tiny{MAKER2}  & \tiny{BRAKER1} & \tiny{MAKER2} &\tiny{BRAKER1} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
+ \hline
+Gene sensitivity        & \textbf{63.9} & 51.3          & \textbf{55.2} & 41.0 & \textbf{67.0} & 58.0 & 76.7 & 42.8 & \textbf{79.7}\\
+Gene specificity        & 51.9          & \textbf{52.5} & \textbf{55.6} & 30.8 & \textbf{61.0} & 46.9 & \textbf{79.9} & 68.7 & 72.6\\
+Transcript sensitivity  & \textbf{54.6} & 43.5          & \textbf{43.4} & 31.3 & \textbf{49.8} & 42.3 & 76.7 & 42.8 & \textbf{79.7}\\
+Transcript specificity  & 50.7          & \textbf{52.5} & \textbf{53.7} & 30.8 & \textbf{59.8} & 47.9 & \textbf{75.8} & 68.7 & 72.6\\
+Exon sensitivity        & \textbf{82.6} & 76.1          & \textbf{80.2} & 69.4 & \textbf{73.1} & 64.9 & \textbf{82.7} & 50.1 & 79.6\\
+Exon specificity        & \textbf{79.0} & 76.1          & \textbf{85.5} & 62.3 & \textbf{67.0} & 55.0 & \textbf{82.4} & 71.4 & 81.7\\
+\hline
+
+\end{tabular}
+\end{sidewaystable}
+
+
+
+
 Accuracy results of BRAKER1 in unmasked genomes are shown in Table \ref{unmasked}.
 
 
@@ -56,6 +76,11 @@ Exon specificity        & 77.4 & 79.0 & 78.6 & 85.5 & 62.0 & 67.0 & 88.4 & 82.4\
 \end{sidewaystable}
 
 \chapter{Supplementary Methods}
+
+\begin{figure}[!tpb]%figure1
+\centerline{\includegraphics[width=0.7\linewidth]{figs/Figure1.pdf}}
+\caption{Schematic view of the BRAKER1 pipeline.}\label{pipeline}
+\end{figure}
 
 \section{Test Data}
 

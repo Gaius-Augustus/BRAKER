@@ -9,12 +9,12 @@
 \firstpage{1}
 
 \title[BRAKER1]{BRAKER1: Unsupervised RNA-Seq-Based Genome Annotation with GeneMark-ET and AUGUSTUS}
-\author[Hoff \textit{et~al}]{Katharina J. Hoff\,$^{1}$\footnote{to whom correspondence should be addressed}, Simone Lange\,$^{1}$, Alexandre Lomsadze\,$^{5}$, Mark Borodovsky\,$^{2,3,4,5,*}$ and Mario Stanke\,$^1$}
+\author[Hoff \textit{et~al}]{Katharina J. Hoff\,$^{1}$\footnote{to whom correspondence should be addressed}, Simone Lange\,$^{1}$, Alexandre Lomsadze\,$^{3}$, Mark Borodovsky\,$^{2,3*}$ and Mario Stanke\,$^1$}
 \address{$^{1}$Ernst Moritz Arndt Universit\"{a}t Greifswald, Institute for Mathematics and Computer Science, Walther-Rathenau-Stra\ss{}e 47, 17487 Greifswald, Germany\\
 $^{2}$School of Computational Science and Engineering\\
-$^{3}$Center for Bioinformatics and Computational Genomics, Georgia Institute of Technology, Atlanta, GA 30332, USA\\
-$^{4}$Department of Biological and Medical Physics, Moscow Institute of Physics and Technology, Dolgoprudny, Moscow Region, Russia\\
-$^{5}$Joint Georgia Tech and Emory University Wallace H Coulter Department of Biomedical Engineering, Atlanta, GA 30332, USA}
+%$^{3}$Center for Bioinformatics and Computational Genomics, Georgia Institute of Technology, Atlanta, GA 30332, USA\\
+%$^{4}$Department of Biological and Medical Physics, Moscow Institute of Physics and Technology, Dolgoprudny, Moscow Region, Russia\\
+$^{3}$Joint Georgia Tech and Emory University Wallace H Coulter Department of Biomedical Engineering, Atlanta, GA 30332, USA}
 
 \history{Received on XXXXX; revised on XXXXX; accepted on XXXXX}
 
@@ -39,48 +39,50 @@ BRAKER1 is available for download at \url{http://bioinf.uni-greifswald.de/bioinf
 
 \section{Introduction}
 
-\begin{figure}[!tpb]%figure1
-\centerline{\includegraphics[width=0.7\linewidth]{Figure1.pdf}}
-\caption{Schematic view of the BRAKER1 pipeline.}\label{pipeline}
-\end{figure}
-
-\begin{table*}[!b]
-\processtable{Accuracy results of BRAKER1 (on softmasked genomes) and MAKER2 (with fully automatic repeat masking, RNA-Seq only source of extrinsic evidence) in genomes of four model organisms. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Accuracy results for BRAKER1 on unmasked genomes can be found in Supplementary Table 2.\label{Tab:01}}
-{\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\toprule
- & \multicolumn{2}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{2}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{2}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{3}{c}{\textit{Schizosaccharomyces pombe}}\\
- & \tiny{BRAKER1} & \tiny{MAKER2} &  \tiny{BRAKER1} & \tiny{MAKER2}  & \tiny{BRAKER1} & \tiny{MAKER2} &\tiny{BRAKER1} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
- \midrule
-Gene sensitivity        & \textbf{63.9} & 51.3          & \textbf{55.2} & 41.0 & \textbf{67.0} & 58.0 & 76.7 & 42.8 & \textbf{79.7}\\
-Gene specificity        & 51.9          & \textbf{52.5} & \textbf{55.6} & 30.8 & \textbf{61.0} & 46.9 & \textbf{79.9} & 68.7 & 72.6\\
-Transcript sensitivity  & \textbf{54.6} & 43.5          & \textbf{43.4} & 31.3 & \textbf{49.8} & 42.3 & 76.7 & 42.8 & \textbf{79.7}\\
-Transcript specificity  & 50.7          & \textbf{52.5} & \textbf{53.7} & 30.8 & \textbf{59.8} & 47.9 & \textbf{75.8} & 68.7 & 72.6\\
-Exon sensitivity        & \textbf{82.6} & 76.1          & \textbf{80.2} & 69.4 & \textbf{73.1} & 64.9 & \textbf{82.7} & 50.1 & 79.6\\
-Exon specificity        & \textbf{79.0} & 76.1          & \textbf{85.5} & 62.3 & \textbf{67.0} & 55.0 & \textbf{82.4} & 71.4 & 81.7\\
-\botrule
-
-\end{tabular}}{}
-\end{table*}
+% \begin{figure}[!tpb]%figure1
+% \centerline{\includegraphics[width=0.7\linewidth]{Figure1.pdf}}
+% \caption{Schematic view of the BRAKER1 pipeline.}\label{pipeline}
+% \end{figure}
+% 
+% \begin{table*}[!b]
+% \processtable{Accuracy results of BRAKER1 (on softmasked genomes) and MAKER2 (with fully automatic repeat masking, RNA-Seq only source of extrinsic evidence) in genomes of four model organisms. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Accuracy results for BRAKER1 on unmasked genomes can be found in Supplementary Table 2.\label{Tab:01}}
+% {\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\toprule
+%  & \multicolumn{2}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{2}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{2}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{3}{c}{\textit{Schizosaccharomyces pombe}}\\
+%  & \tiny{BRAKER1} & \tiny{MAKER2} &  \tiny{BRAKER1} & \tiny{MAKER2}  & \tiny{BRAKER1} & \tiny{MAKER2} &\tiny{BRAKER1} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
+%  \midrule
+% Gene sensitivity        & \textbf{63.9} & 51.3          & \textbf{55.2} & 41.0 & \textbf{67.0} & 58.0 & 76.7 & 42.8 & \textbf{79.7}\\
+% Gene specificity        & 51.9          & \textbf{52.5} & \textbf{55.6} & 30.8 & \textbf{61.0} & 46.9 & \textbf{79.9} & 68.7 & 72.6\\
+% Transcript sensitivity  & \textbf{54.6} & 43.5          & \textbf{43.4} & 31.3 & \textbf{49.8} & 42.3 & 76.7 & 42.8 & \textbf{79.7}\\
+% Transcript specificity  & 50.7          & \textbf{52.5} & \textbf{53.7} & 30.8 & \textbf{59.8} & 47.9 & \textbf{75.8} & 68.7 & 72.6\\
+% Exon sensitivity        & \textbf{82.6} & 76.1          & \textbf{80.2} & 69.4 & \textbf{73.1} & 64.9 & \textbf{82.7} & 50.1 & 79.6\\
+% Exon specificity        & \textbf{79.0} & 76.1          & \textbf{85.5} & 62.3 & \textbf{67.0} & 55.0 & \textbf{82.4} & 71.4 & 81.7\\
+% \botrule
+% 
+% \end{tabular}}{}
+% \end{table*}
 
 Transcriptome sequencing data, RNA-Seq reads, aligned to a genome sequence have great potential to improve the accuracy of structural genome annotation: spliced alignments may indicate intron positions, and coverage increase and decrease along genomic sequence may indicate locations of exon-noncoding region borders. Nevertheless, RNA-Seq coverage alone is no reliable indicator of protein coding regions \citep{InsectOpinion2015}. 
 
-The prediction of protein coding regions in genomes is often accomplished by tools that use statistical models to discriminate genes from other genomic regions. Some of these gene prediction tools can additionally use RNA-Seq read alignments to improve prediction accuracy.
+The prediction of protein coding regions in genomes is often accomplished by tools that use statistical models to discriminate genes from other genomic regions. Some gene prediction tools can additionally use RNA-Seq 
+%read alignments
+ to improve prediction accuracy.
 
 Statistical models used in gene prediction tools usually require a training  step to identify species specific parameters. For many tools, including AUGUSTUS, the training step has to be performed on a set of example genes generated by a special procedure. In the past, training gene sets have often been produced with help of expressed sequence tags (ESTs) or protein data, and sometimes have been subject to validation by experts. With the rapidly growing number of novel sequenced genomes, this approach becomes infeasible. Fast and fully automated methods for training of gene prediction tools, ideally using the nowadays often available RNA-Seq data, are urgently needed.
 
-In principle, RNA-Seq reads can be assembled into longer contigs, and such contigs can be used similarly to EST data both in training of gene finders and in the prediction step. One of the tools (pipelines) that follow this idea is the MAKER2 pipeline \citep{MAKER2}. However, the RNA-Seq Genome Annotation Assessment Project (RGASP) \citep{RGASP} has shown that transcriptome assembly is prone to errors. To avoid transferring assembly errors into gene prediction, it is therefore advantageous to use the transcript information contained in unassembled mapped reads.
+In principle, RNA-Seq reads can be assembled into longer contigs, and such contigs can be used similarly to EST data both in training of gene finders and in the prediction step. One of the tools that follow this idea is the MAKER2 pipeline \citep{MAKER2}. However, the RNA-Seq Genome Annotation Assessment Project (RGASP) \citep{RGASP} has shown that transcriptome assembly is prone to errors. To avoid transferring assembly errors into gene prediction, it is advantageous to use the transcript information contained in unassembled mapped reads.
 
 We have developed BRAKER1, a pipeline that combines the advantages of two gene prediction tools: GeneMark-ET \citep{GeneMark-ET} incorporates unassembled RNA-Seq reads into unsupervised training and subsequently generates \textit{ab initio} gene predictions. A subset of genes predicted by GeneMark-ET are used to train AUGUSTUS \citep{AUGUSTUS}. AUGUSTUS lacks an unsupervised training procedure and has an exceptional feature - discriminative training module - that requires a good training set. However, AUGUSTUS incorporates information derived from mapped unassembled RNA-Seq reads into the prediction step; in RGASP, AUGUSTUS was one of the most accurate tools for predicting protein coding genes with RNA-Seq support. We report accuracy results for BRAKER1 on four model organisms and compare to the accuracy of MAKER2. Recently, Testa et al.~published CodingQuarry, a pipeline for RNA-Seq assembly supported training and gene prediction, but recommend its application only to fungi \citep{CodingQuarry}. Therefore, we 
 include CodingQuarry into the comparison on \textit{Schizosaccharomyces pombe}.
 
 
 \begin{methods}
-\section{Pipeline Description}
+\section{Methods}
 
-BRAKER1 is implemented in Perl and requires two input files: an RNA-Seq alignment file in \texttt{bam}-format, and a corresponding genome file in \texttt{fasta}-format. Spliced alignment information is extracted from the RNA-Seq file and stored in \texttt{GFF}-format. GeneMark-ET uses the genome file and  the spliced alignment \texttt{GFF}-file for RNA-Seq supported unsupervised training. After training, GeneMark-ET creates an \textit{ab initio} gene set. Those gene structures that have support by RNA-Seq alignments in all introns are selected for automated training of AUGUSTUS. After training, AUGUSTUS predicts genes in the input genome file using spliced alignment information from RNA-Seq as extrinsic evidence. The pipeline is illustrated in Figure \ref{pipeline}.
+BRAKER1 is implemented in Perl and requires two input files: an RNA-Seq alignment file in \texttt{bam}-format, and a corresponding genome file in \texttt{fasta}-format. Spliced alignment information is extracted from the RNA-Seq file and stored in \texttt{GFF}-format. GeneMark-ET uses the genome file and  the spliced alignment \texttt{GFF}-file for RNA-Seq supported unsupervised training. After training, GeneMark-ET creates an \textit{ab initio} gene set. Those gene structures that have support by RNA-Seq alignments in all introns are selected for automated training of AUGUSTUS. After training, AUGUSTUS predicts genes in the input genome file using spliced alignment information from RNA-Seq as extrinsic evidence. The pipeline is illustrated in Supplementary Figure 2.1.
 
 
 
-\section{Test Data}
+%\section{Test Data}
 
 In order to demonstrate prediction accuracy, nuclear genomes, reference annotations and RNA-Seq libraries were retrieved for four model organisms \textit{Arabidopsis thaliana}, \textit{Caenorhabditis elegans}, \textit{Drosophila melanogaster}, and \textit{Schizosaccharomyces pombe} were retrieved from databases specified in Supplementary.
 
@@ -91,26 +93,24 @@ Presence of repetitive sequences and mobile elements (transposable elements, TEs
 
 \section{Results and Discussion}
 
-When comparing BRAKER1 to MAKER2 (details on the MAKER2 run are described in Supplementary), BRAKER1 gains on average $~$15 percent points in accuracy on gene level\footnote{A \textit{gene} may have several \textit{transcripts} in the reference and in a predicted gene set. When computing \textit{transcript} level accuracy, each transcript variant is counted as a TP/FP/FN on its own. When computing \textit{gene} level accuracy, a predicted gene is counted as TP if at least one of its transcripts matches correctly a reference transcript. For details, see documentation of the EVAL package \citep{Eval}} when compared to MAKER2 (see Table \ref{Tab:01}).
-
+When comparing BRAKER1 to MAKER2 (details on the MAKER2 run are described in Supplementary), BRAKER1 gains on average $~$15 percent points in accuracy on gene level\footnote{A \textit{gene} may have several \textit{transcripts} in the reference and in a predicted gene set. When computing \textit{transcript} level accuracy, each transcript variant is counted as a TP/FP/FN on its own. When computing \textit{gene} level accuracy, a predicted gene is counted as TP if at least one of its transcripts matches correctly a reference transcript. For details, see documentation of the EVAL package \citep{Eval}} when compared to MAKER2 (see Supplementary Table 1.1).
 %One could ask - which factors are behind better performance of BRAKER1 in comparison with MAKER2. BRAKER1 is using RNA-Seq assisted GeneMark-ET \citep{GeneMark-ET}  instead of purely ab initio self-training GeneMark-ES \citep{GeneMark-ES}. GeneMark-ET performance improves with respect to GeneMark-ES on larger genomes having longer introns and intergenic regions. On shorter genomes, such as fungal ones, the difference is marginal. 
+We should remind that the comparison of accuracy does not consider the capability of MAKER2 to use a protein database. BRAKER1 currently does not use a protein database. 
+%In addition, benchmarking a homology based annotation method for a realistic annotation project is difficult because the information gain from using a protein database strongly depends on the phylogenetic distance of the target species to species in the database and their annotation quality. 
+The RNA-Seq approach used here is independent of a database.
 
-We should remind that the comparison of accuracy does not consider the capability of MAKER2 to use a protein database. BRAKER1 currently does not use a protein database. In addition, benchmarking a homology based annotation method for a realistic annotation project is difficult because the information gain from using a protein database strongly depends on the phylogenetic distance of the target species to species in the database and their annotation quality. The RNA-Seq approach used here is independent of a database.
+Notably, \citet{SnowyOwl} developed a pipeline, SnowyOwl, with GeneMark-ES \cite{GeneMark-ES} and AUGUSTUS to predict genes in fungal genomes. SnowyOwl attempts to improve prediction accuracy by selecting a gene variant with the highest homology score from a set of predicted gene variants in the same locus. This pipeline requires protein database information as additional external resource.  We did not include SnowyOwl into comparisons since it cannot work without protein information.% which we do not admit for usage in this study. 
 
-Notably, \citet{SnowyOwl} developed a pipeline, SnowyOwl, with GeneMark-ES \cite{GeneMark-ES} and AUGUSTUS to predict genes in fungal genomes. SnowyOwl attempts to improve prediction accuracy by selecting a gene variant with the highest homology score from a set of predicted gene variants in the same locus. This pipeline requires protein database information as additional external resource.  We did not include SnowyOwl into comparisons since it cannot work without protein information which we do not admit for usage in this study. 
-
-Since BRAKER1 uses AUGUSTUS being trained on GeneMark-ET, and since AUGUSTUS incorporates RNA-Seq into the prediction step, we expect to see an increase in accuracy when comparing AUGUSTUS to GeneMark-ET. This is the case for \textit{A.~thaliana}, \textit{C.~elegans} and \textit{D.~melanogaster}; on the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1 (see Supplementary Table 1.2). 
+Since BRAKER1 uses AUGUSTUS being trained on GeneMark-ET, and since AUGUSTUS incorporates RNA-Seq into the prediction step, we expect to see an increase in accuracy when comparing AUGUSTUS to GeneMark-ET. This is the case for \textit{A.~thaliana}, \textit{C.~elegans} and \textit{D.~melanogaster}; on the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1 (see Supplementary Table 1.3). 
 %AUGUSTUS parameters can be adapted to improve prediction accuracy in such species, but we here report results with the BRAKER1 default settings. 
 
 Supplementary Table 1.1 shows that genome repeat masking is an optional pre-processing step for running BRAKER1 that does not affect prediction accuracy much. 
 
-We observed that on \textit{S.~pombe}, BRAKER1 is on average $\sim$4\% more accurate on gene level than CodingQuarry. Notably, GeneMark-ET alone is even more accurate on this species.
+We observed that on \textit{S.~pombe}, BRAKER1 is on average $\sim$4\% more accurate on gene level than CodingQuarry. %Notably, GeneMark-ET alone is even more accurate on this species.
 
 BRAKER1 required $\sim$17.5 hours on a single CPU for training and prediction on \textit{D.~melanogaster} but can be run in parallel.
 
-\section{Conclusion}
-
-BRAKER1 is a fully automatic eukaryotic gene prediction pipeline with GeneMark-ET and AUGUSTUS working with genomic and RNA-Seq read information. In contrast to MAKER2, BRAKER1 is a ``one step process'', meaning that after starting it once, it will execute training and prediction without the need for manual command execution. BRAKER1 predicts genes more accurately than MAKER2 and CodingQuarry.
+In conclusion, BRAKER1 is a fully automatic eukaryotic gene prediction pipeline with GeneMark-ET and AUGUSTUS working with genomic and RNA-Seq read information. In contrast to MAKER2, BRAKER1 is a ``one step process'', meaning that after starting it once, it will execute training and prediction without the need for manual command execution. BRAKER1 predicts genes more accurately than MAKER2 and CodingQuarry.
 
 \section*{Acknowledgement}
 
