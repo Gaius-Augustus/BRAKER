@@ -216,8 +216,8 @@ my $workDir;                          # in the working directory results and tem
 @forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while"); 
 
 # lists for extrinsic files
-@bonus = ("1e1", "12.5", "1e2", "1e3", "1e4", "1e5");
-@malus = ("0.1", "0.2", "0.4", "0.6", "0.8", "1.0");  
+@bonus = ("1e-1","1e1","1e2", "1e3", "1e4", "1e5");
+@malus = ("0.1", "0.2", "0.4", "0.8", "1.0");  
 
 if(@ARGV==0){
   print "$usage\n"; 
@@ -516,8 +516,12 @@ if(! -f "$genome"){
 #  if(!defined($extrinsicCfgFile) && !$skipExtrinsic){ # for blast (still in progress)
 #    extrinsic_tests();
 #  }
-  extrinsic();
-#  extrinsic_tests_com();
+#  if(!defined($extrinsicCfgFile) && !$skipExtrinsic){
+#    extrinsic_tests_com();
+#  }elsif(!defined($extrinsicCfgFile) && $skipExtrinsic){
+  if(!defined($extrinsicCfgFile)){
+    extrinsic();
+  }
   augustus();
   if(-e "$otherfilesDir/augustus.gff"){
     getAnnoFasta("$otherfilesDir/augustus.gff");
@@ -633,7 +637,8 @@ sub GeneMark_ET{
         $perlCmdString .= " --fungus";
       }
       if($soft_mask){
-        $perlCmdString .= " --soft_mask";
+      #  $perlCmdString .= " --soft_mask";
+        $perlCmdString .= " --soft 1000"; # version 4.29
       }
       $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
       print LOG "\# ".(localtime).": execute GeneMark-ET\n";
@@ -721,19 +726,7 @@ sub extrinsic{
           print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          if(!$skipExtrinsic){
-            open (BONUS, "<$best_bonus") or die "Cannot open file: $best_bonus\n";
-            $bonus_idx = <BONUS>;
-            close(BONUS) or die("Could not close file $best_bonus!\n");
-
-            open (MALUS, "<$best_malus") or die "Cannot open file: $best_malus\n";
-            $malus_idx = <MALUS>;
-            close(MALUS) or die("Could not close file $best_malus!\n");
-
-          print OUT "     intron        1      $malus[$malus_idx]  M    1  1e+100  RM  1  1.15    E 1   $bonus[$bonus_idx]    W 1    1\n";
-          }else{
-            print OUT "     intron        1       .2  M    1  1e+100  RM  1  1.15    E 1  12.5    W 1    1\n";
-          }
+          print OUT "     intron        1       .2  M    1  1e+100  RM  1  1.15    E 1  12.5   W 1    1\n";
           print OUT "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -753,11 +746,7 @@ sub extrinsic{
           print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          if(!$skipExtrinsic){
-            print LOG "     intron        1      $malus[$malus_idx]  M    1  1e+100  RM  1  1.15    E 1   $bonus[$bonus_idx]    W 1    1\n";
-          }else{
-            print LOG "     intron        1       .2  M    1  1e+100  RM  1  1.15    E 1  12.5    W 1    1\n";
-          }
+          print LOG "     intron        1       .2  M    1  1e+100  RM  1  1.15    E 1  12.5   W 1    1\n";
           print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -904,7 +893,7 @@ sub extrinsic_tests{
     $string = find("blastEx.pl");
     $best_malus = "$extrinsicfilesDir/best_malus.out";
     print STDOUT "NEXT STEP: blast AUGUSTUS predictions (malus)\n";
-    $perlCmdString = "perl $string --files=$augustus_files --out=$best_malus --dir=$otherfilesDir --log=$logfile --introns=$hints_part ";
+    $perlCmdString = "perl $string --files=$augustus_files --out=$best_malus --CPU=$CPU --dir=$otherfilesDir --log=$logfile --introns=$hints_part ";
     if(defined($blast_path)){
       $perlCmdString .= "--DB=$blast_path ";
     }
@@ -1013,7 +1002,7 @@ sub extrinsic_tests{
     $string = find("blastEx.pl");
     $best_bonus = "$extrinsicfilesDir/best_bonus.out";
     print STDOUT "NEXT STEP: blast AUGUSTUS predictions (bonus)\n";
-    $perlCmdString = "perl $string --files=$augustus_files --out=$best_bonus --dir=$otherfilesDir --log=$logfile --introns=$hints_part ";
+    $perlCmdString = "perl $string --files=$augustus_files --out=$best_bonus --CPU=$CPU --dir=$otherfilesDir --log=$logfile --introns=$hints_part ";
     if(defined($blast_path)){
       $perlCmdString .= "--DB=$blast_path ";
     }
@@ -1490,8 +1479,8 @@ sub check_upfront{ # see autoAug.pl
   find("splitMfasta.pl");
   find("join_aug_pred.pl");
   find("getAnnoFasta.pl");
-  find("blastEx.pl");
-  find("randomSeq.pl");
+#  find("blastEx.pl");
+#  find("randomSeq.pl");
   find("gtf2gff.pl");
 
 }
@@ -1868,7 +1857,7 @@ sub extrinsic_tests_com{
     }
   }
   
-  if(!uptodate(["$extrinsicfilesDir/extrinsic.m.$malus[0].b.$bonus[0].cfg", "$extrinsicfilesDir/extrinsic.m.$malus[-1].b.$bonus[-1].cfg"],["$extrinsicfilesDir/augustus.m.$malus[0].b.$bonus[0].gff", "$extrinsicfilesDir/augustusm.$malus[-1].b.$bonus[-1].gff", "$extrinsicfilesDir/best_extrinsic.out"]) || $overwrite){
+  if(!uptodate([$genome_part, $hints_part, "$extrinsicfilesDir/extrinsic.m.$malus[0].b.$bonus[0].cfg", "$extrinsicfilesDir/extrinsic.m.$malus[-1].b.$bonus[-1].cfg"],["$extrinsicfilesDir/augustus.m.$malus[0].b.$bonus[0].gff", "$extrinsicfilesDir/augustusm.$malus[-1].b.$bonus[-1].gff", "$extrinsicfilesDir/best_extrinsic.out"]) || $overwrite){
     my $pm = new Parallel::ForkManager($CPU);
     print STDOUT "NEXT STEP: run AUGUSTUS extrinsic tests for ...\n";
     my $augustus_files = "";
@@ -1902,7 +1891,7 @@ sub extrinsic_tests_com{
     $best_malus = "$extrinsicfilesDir/best_malus.ex.out";
     $best_extrinsic = "$extrinsicfilesDir/best_extrinsic.out";
     print STDOUT "NEXT STEP: blast AUGUSTUS predictions\n";
-    $perlCmdString = "perl $string --files=$augustus_files --out=$best_malus --best=$best_extrinsic --dir=$otherfilesDir --log=$logfile --introns=$hints_part ";
+    $perlCmdString = "perl $string --files=$augustus_files --out=$best_malus --CPU=$CPU --best=$best_extrinsic --dir=$otherfilesDir --log=$logfile --introns=$hints_part ";
     if(defined($blast_path)){
       $perlCmdString .= "--DB=$blast_path ";
     }
