@@ -19,7 +19,7 @@
 \chapter{Supplementary Results}
 
 \begin{sidewaystable}[!h]
-\caption{Accuracy results of BRAKER1 (on softmasked genomes) and MAKER2 (with fully automatic repeat masking, RNA-Seq only source of extrinsic evidence) in genomes of four model organisms. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Accuracy results for BRAKER1 on unmasked genomes can be found in Supplementary Table 1.2.\label{Tab:01}}
+\caption{Accuracy results of BRAKER1 (on softmasked genomes) and MAKER2 (with fully automatic repeat masking, RNA-Seq only source of extrinsic evidence) in genomes of four model organisms. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Accuracy results for BRAKER1 on unmasked genomes can be found in Supplementary Table 1.3.\label{Tab:01}}
 \begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
  & \multicolumn{2}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{2}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{2}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{3}{c}{\textit{Schizosaccharomyces pombe}}\\
  & \tiny{BRAKER1} & \tiny{MAKER2} &  \tiny{BRAKER1} & \tiny{MAKER2}  & \tiny{BRAKER1} & \tiny{MAKER2} &\tiny{BRAKER1} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
@@ -35,30 +35,9 @@ Exon specificity        & \textbf{79.0} & 76.1          & \textbf{85.5} & 62.3 &
 \end{tabular}
 \end{sidewaystable}
 
-
-
-
-Accuracy results of BRAKER1 in unmasked genomes are shown in Table \ref{unmasked}.
-
-
-\begin{table}[htb!]
-\caption{Accuracy results of BRAKER1 in unmasked genomes of four model organisms. \label{unmasked}}
-\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
- & \multicolumn{1}{c}{\textit{A.~thaliana}} &  \multicolumn{1}{c}{\textit{C.~elegans}} &  \multicolumn{1}{c}{\textit{D.~melanogaster}} &  \multicolumn{1}{c}{\textit{S.~pombe}}\\
- \hline
-Gene sensitivity        & 63.9 & 55.0 & 68.4 & 77.0\\
-Gene specificity        & 51.6 & 55.2 & 60.6 & 80.1\\
-Transcript sensitivity  & 54.6 & 43.2 & 50.6 & 77.0\\
-Transcript specificity  & 50.4 & 53.3 & 59.3 & 76.1\\
-Exon sensitivity        & 82.5 & 79.8 & 73.7 & 83.0\\
-Exon specificity        & 78.8 & 85.4 & 67.1 & 82.9\\
-\hline
-\end{tabular}
-\end{table}
-
 Table \ref{compare} shows  gene prediction accuracy of GeneMark-ET (\textit{ab initio}, first step in BRAKER1) and of AUGUSTUS (trained on GeneMark-ET predictions, using RNA-Seq read alignment information as extrinsic evidence).
 
-\begin{sidewaystable}
+\begin{sidewaystable}[h!]
 \caption{Accuracy results of GeneMark-ET (\textit{ab initio} predictions) and AUGUSTUS (using RNA-Seq) in BRAKER1 on softmasked genomes.
 The AUGUSTUS results are the ones reported for BRAKER1 in Table 1 of the main article. On the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accommodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure \textit{ab initio} predictions made by GeneMark-ET. \label{compare}}
 \begin{tabular}{lp{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}}\hline
@@ -74,6 +53,27 @@ Exon specificity        & 77.4 & 79.0 & 78.6 & 85.5 & 62.0 & 67.0 & 88.4 & 82.4\
 \hline
 \end{tabular}
 \end{sidewaystable}
+
+
+Accuracy results of BRAKER1 in unmasked genomes are shown in Table \ref{unmasked}.
+
+
+\begin{table}[h!]
+\caption{Accuracy results of BRAKER1 in unmasked genomes of four model organisms. \label{unmasked}}
+\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
+ & \multicolumn{1}{c}{\textit{A.~thaliana}} &  \multicolumn{1}{c}{\textit{C.~elegans}} &  \multicolumn{1}{c}{\textit{D.~melanogaster}} &  \multicolumn{1}{c}{\textit{S.~pombe}}\\
+ \hline
+Gene sensitivity        & 63.9 & 55.0 & 68.4 & 77.0\\
+Gene specificity        & 51.6 & 55.2 & 60.6 & 80.1\\
+Transcript sensitivity  & 54.6 & 43.2 & 50.6 & 77.0\\
+Transcript specificity  & 50.4 & 53.3 & 59.3 & 76.1\\
+Exon sensitivity        & 82.5 & 79.8 & 73.7 & 83.0\\
+Exon specificity        & 78.8 & 85.4 & 67.1 & 82.9\\
+\hline
+\end{tabular}
+\end{table}
+
+
 
 \chapter{Supplementary Methods}
 
