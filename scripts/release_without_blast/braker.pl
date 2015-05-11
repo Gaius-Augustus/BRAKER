@@ -398,16 +398,16 @@ if(! -f "$genome"){
   }
   open (LOG, ">>".$logfile) or die "Cannot open file: $logfile\n";
   if($bool_rootDir eq "true"){
-    print LOG "\# ".localtime.": create working directory $rootDir\n";
+    print LOG "\# ".localtime().": create working directory $rootDir\n";
     print LOG "mkdir $rootDir\n\n";
   }
   if($bool_otherDir eq "true"){
-    print LOG "\# ".localtime.": create working directory $bool_otherDir\n";
+    print LOG "\# ".localtime().": create working directory $bool_otherDir\n";
     print LOG "mkdir $otherfilesDir\n\n";
   }
   if(! -d $genemarkDir){
     make_path($genemarkDir);
-    print LOG "\# ".localtime.": create working directory $genemarkDir\n";
+    print LOG "\# ".localtime().": create working directory $genemarkDir\n";
     print LOG "mkdir $genemarkDir\n\n";
   }
   # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
@@ -421,18 +421,18 @@ if(! -f "$genome"){
 
   if(! -d $parameterDir){
     make_path($parameterDir);
-    print LOG "\# ".localtime.": create working directory $parameterDir\n";
+    print LOG "\# ".localtime().": create working directory $parameterDir\n";
     print LOG "mkdir mkdir $parameterDir\n\n";
   }
   if(! -d $errorfilesDir){
     make_path($errorfilesDir);
-    print LOG "\# ".localtime.": create working directory $errorfilesDir\n";
+    print LOG "\# ".localtime().": create working directory $errorfilesDir\n";
     print LOG "mkdir $errorfilesDir\n\n";
   }
 
   $genome = rel2abs($genome);
   $cmdString = "cd $rootDir;";
-  print LOG "\# ".localtime.": change to working directory $rootDir\n";
+  print LOG "\# ".localtime().": change to working directory $rootDir\n";
   print LOG "$cmdString\n\n";
   chdir $rootDir or die ("Could not change to directory $rootDir.\n");
 
@@ -467,11 +467,11 @@ sub make_hints{
         print STDOUT "NEXT STEP: make hints from BAM file $bam[$i]\n";
         $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
         $cmdString = "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
-        print LOG "\# ".localtime.": make hints from BAM file $bam[$i]\n";
+        print LOG "\# ".localtime().": make hints from BAM file $bam[$i]\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         $cmdString = "cat $bam_temp >>$hintsfile_temp";
-        print LOG "\# ".localtime.": add hints from BAM file $bam[$i] to hints file\n";
+        print LOG "\# ".localtime().": add hints from BAM file $bam[$i] to hints file\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "hints from BAM file $bam[$i] added.\n";
@@ -485,7 +485,7 @@ sub make_hints{
       if(!uptodate([$hints[$i]],[$hintsfile]) || $overwrite){
         print STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
         $cmdString = "cat $hints[$i] >> $hintsfile_temp";
-        print LOG "\# ".localtime.": add hints from file $hints[$i]\n";
+        print LOG "\# ".localtime().": add hints from file $hints[$i]\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
       }
@@ -496,7 +496,7 @@ sub make_hints{
       my $hintsfile_temp_sort = "$otherfilesDir/hints.temp.sort.gff";
       print STDOUT "NEXT STEP: sort hints\n";
       $cmdString = "cat $hintsfile_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
-      print LOG "\# ".localtime.": sort hints\n";
+      print LOG "\# ".localtime().": sort hints\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "hints sorted.\n";
@@ -505,7 +505,7 @@ sub make_hints{
       $string = find("join_mult_hints.pl");
       $errorfile = "$errorfilesDir/join_mult_hints.stderr";
       $perlCmdString = "perl $string <$hintsfile_temp_sort >$hintsfile_temp 2>$errorfile";
-      print LOG "\# ".localtime.": join multiple hints\n";
+      print LOG "\# ".localtime().": join multiple hints\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "hints joined.\n";
@@ -517,7 +517,7 @@ sub make_hints{
       $string = find("filterIntronsFindStrand.pl");
       $errorfile = "$errorfilesDir/filterIntronsFindStrand.stderr";
       $perlCmdString = "perl $string $genome $hintsfile_temp --score 1>$hintsfile 2>$errorfile";
-      print LOG "\# ".localtime.": filter introns, find strand and change score to \'mult\' entry\n";
+      print LOG "\# ".localtime().": filter introns, find strand and change score to \'mult\' entry\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "strands found and score changed.\n";
@@ -539,7 +539,7 @@ sub GeneMark_ET{
   if(!$skipGeneMarkET){
     if(!uptodate([$genome,$hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
       $cmdString = "cd $genemarkDir";
-      print LOG "\# ".localtime.": change to GeneMark-ET directory $genemarkDir\n";
+      print LOG "\# ".localtime().": change to GeneMark-ET directory $genemarkDir\n";
       print LOG "$cmdString\n\n";
       chdir $genemarkDir or die ("Could not change to directory $genemarkDir.\n");
 
@@ -555,12 +555,12 @@ sub GeneMark_ET{
         $perlCmdString .= " --soft 1000";
       }
       $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
-      print LOG "\# ".localtime.": execute GeneMark-ET\n";
+      print LOG "\# ".localtime().": execute GeneMark-ET\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $perlCmdString\n");
       print STDOUT "GeneMark-ET finished.\n";
       $cmdString = "cd $rootDir";
-      print LOG "\# ".localtime.": change to working directory $rootDir\n";
+      print LOG "\# ".localtime().": change to working directory $rootDir\n";
       print LOG "$cmdString\n\n";
       chdir $rootDir or die ("Could not change to directory $rootDir.\n");
     }
@@ -573,7 +573,7 @@ sub GeneMark_ET{
     $errorfile = "$errorfilesDir/filterGenemark.stderr";
     $stdoutfile = "$otherfilesDir/filterGenemark.stdout";
     $perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
-    print LOG "\# ".localtime.": convert GeneMark-ET output to real gtf format\n";
+    print LOG "\# ".localtime().": convert GeneMark-ET output to real gtf format\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "GeneMark-ET conversion.\n";
@@ -591,7 +591,7 @@ sub new_species{
     $string=find("new_species.pl");
     $errorfile = "$errorfilesDir/new_species.stderr";
     $perlCmdString="perl $string --species=$species 2>$errorfile";
-    print LOG "\# ".localtime.": create new species $species\n";
+    print LOG "\# ".localtime().": create new species $species\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
   }
@@ -605,7 +605,7 @@ sub new_species{
     }
     if(! -e $extrinsic_cp){
       print STDOUT "NEXT STEP: create extrinsic file: $extrinsic_cp\n";
-      print LOG "\# ".localtime.": create extrinsic file\n";
+      print LOG "\# ".localtime().": create extrinsic file\n";
       print LOG "cp $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg $AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg\n\n"; 
       print STDOUT "species $species created.\n";
 #      open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
@@ -645,7 +645,7 @@ sub new_species{
           print OUT "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
 
-          print LOG "\# ".localtime.": edit extrinsic file and add\n$_\n";
+          print LOG "\# ".localtime().": edit extrinsic file and add\n$_\n";
           print LOG "\n";
           print LOG "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -721,7 +721,7 @@ sub training{
       exit(1);
     }
     $perlCmdString = "perl $string $genemarkDir/genemark.c.gtf $genome $flanking_DNA $genbank 2>$errorfile";
-    print LOG "\# ".localtime.": create genbank file\n";
+    print LOG "\# ".localtime().": create genbank file\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "genbank file created.\n";  
@@ -737,7 +737,7 @@ sub training{
       exit(1);
     }
     $perlCmdString = "perl $string $genemarkDir/genemark.f.good.gtf $genbank 1>$otherfilesDir/genbank.good.gb 2>$errorfile";
-    print LOG "\# ".localtime.": filter genbank file\n";
+    print LOG "\# ".localtime().": filter genbank file\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "genbank file filtered.\n";
@@ -759,7 +759,7 @@ sub training{
     if($gb_good_size > 1000){
       $testsize = 1000;
       $perlCmdString = "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
-      print LOG "\# ".localtime.": split genbank file into train and test file\n";
+      print LOG "\# ".localtime().": split genbank file into train and test file\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "genbank file splitted.\n";
@@ -771,7 +771,7 @@ sub training{
     if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firstetraining.stdout"])){
       # set "stopCodonExcludedFromCDS" to true
       print STDOUT "NEXT STEP: Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n"; # see autoAugTrain.pl
-      print LOG "\# ".localtime.": Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
+      print LOG "\# ".localtime().": Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
       setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "true"); # see autoAugTrain.pl
 
       # first try with etraining
@@ -785,7 +785,7 @@ sub training{
       }else{
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       }
-      print LOG "\# ".localtime.": first etraining\n";
+      print LOG "\# ".localtime().": first etraining\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "first training complete.\n";
@@ -795,13 +795,13 @@ sub training{
       my $err_stopCodonExcludedFromCDS = `grep -c "exon doesn't end in stop codon" $errorfile`; # see autoAugTrain.pl
       my $err_rate =  $err_stopCodonExcludedFromCDS / $t_b_t;  # see autoAugTrain.pl
       print STDOUT "Error rate of missing stop codon is $err_rate\n";  # see autoAugTrain.pl
-      print LOG "\# ".localtime."Error rate of missing stop codon is $err_rate\n"; # see autoAugTrain.pl
+      print LOG "\# ".localtime()."Error rate of missing stop codon is $err_rate\n"; # see autoAugTrain.pl
       if($err_rate >= 0.5){ # see autoAugTrain.pl
         print STDOUT "The appropriate value for \"stopCodonExcludedFromCDS\" seems to be \"false\".\n"; # see autoAugTrain.pl
         print STDOUT "next step: Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"false\"\n"; # see autoAugTrain.pl
         setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "false");  # see autoAugTrain.pl
         print STDOUT "NEXT STEP: Trying etraining again\n";
-        print LOG "\# ".localtime.": Trying etraining again\n";
+        print LOG "\# ".localtime().": Trying etraining again\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "trying etraining again complete.\n";
@@ -809,7 +809,7 @@ sub training{
 
 
       # adjust the stop-codon frequency in species_parameters.cfg according to train.out
-      print LOG "\# ".localtime.": adjust the stop-codon frequency in species_parameters.cfg according to $stdoutfile\n";
+      print LOG "\# ".localtime().": adjust the stop-codon frequency in species_parameters.cfg according to $stdoutfile\n";
       my $freqOfTag;            # see autoAugTrain.pl
       my $freqOfTaa;            # see autoAugTrain.pl
       my $freqOfTga;            # see autoAugTrain.pl
@@ -824,7 +824,7 @@ sub training{
         }
       }
       close(TRAIN) or die("Could not close gff file $stdoutfile!\n");
-      print LOG "\# ".localtime."Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
+      print LOG "\# ".localtime()."Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
       print STDOUT "NEXT STEP: Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
       setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "/Constant/amberprob", $freqOfTag);  # see autoAugTrain.pl
       setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "/Constant/ochreprob", $freqOfTaa);  # see autoAugTrain.pl
@@ -844,7 +844,7 @@ sub training{
       }else{
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
       }
-      print LOG "\# ".localtime.": first test\n";
+      print LOG "\# ".localtime().": first test\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "first test finished.\n";
@@ -863,7 +863,7 @@ sub training{
         }else{
           $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
         }
-        print LOG "\# ".localtime.": optimize AUGUSTUS parameter\n";
+        print LOG "\# ".localtime().": optimize AUGUSTUS parameter\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "parameter optimized.\n";
@@ -882,7 +882,7 @@ sub training{
       }else{
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       }
-      print LOG "\# ".localtime.": second etraining\n";
+      print LOG "\# ".localtime().": second etraining\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "second etraining complete\n";
@@ -899,7 +899,7 @@ sub training{
       }else{
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
       }
-      print LOG "\# ".localtime.": second test\n";
+      print LOG "\# ".localtime().": second test\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "second test finished.\n";  
@@ -910,7 +910,7 @@ sub training{
   if(! -d "$parameterDir/$species"){
     print STDOUT "NEXT STEP: copy optimized parameters to working directory\n";
     $cmdString = "cp -r $AUGUSTUS_CONFIG_PATH/species/$species $parameterDir";
-    print LOG "\# ".localtime.": copy optimized parameters to working directory\n";
+    print LOG "\# ".localtime().": copy optimized parameters to working directory\n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "parameter files copied.\n";
@@ -945,7 +945,7 @@ sub augustus{
       $perlCmdString = "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
       @genome_files = `find $otherfilesDir -name "genome.split.*"`;
-      print LOG "\# ".localtime.": split genome file in ".scalar(@genome_files)." parts\n";
+      print LOG "\# ".localtime().": split genome file in ".scalar(@genome_files)." parts\n";
       print LOG "$perlCmdString\n\n";
       print STDOUT "split genome file in ".scalar(@genome_files)." parts complete.\n";
     }else{
@@ -967,7 +967,7 @@ sub augustus{
         $cmdString .= " --softmasking=on";
       }
       $cmdString .= " $genome_files[$i] 1>$stdoutfile 2>$errorfile";
-      print LOG "\# ".localtime.": run AUGUSTUS for file $genome_files[$i]\n";
+      print LOG "\# ".localtime().": run AUGUSTUS for file $genome_files[$i]\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       $pm->finish;
@@ -984,7 +984,7 @@ sub augustus{
         $cat_string .= "$otherfilesDir/augustus.$idx.gff "
       }
       $cmdString = "cat $cat_string | $string >$otherfilesDir/augustus.gff";
-      print LOG "\# ".localtime.": concatenate and join AUGUSTUS output files\n";
+      print LOG "\# ".localtime().": concatenate and join AUGUSTUS output files\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "join AUGUSTUS predictions complete.\n";
@@ -993,7 +993,7 @@ sub augustus{
       }
     }else{
       $cmdString = "mv $otherfilesDir/augustus.1.gff $otherfilesDir/augustus.gff";
-      print LOG "\# ".localtime.": rename AUGUSTUS file\n";
+      print LOG "\# ".localtime().": rename AUGUSTUS file\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
     }
@@ -1008,7 +1008,7 @@ sub augustus{
 sub clean_up{
   print STDOUT "NEXT STEP: delete empty files\n";
   @files = `find $otherfilesDir -empty`;
-  print LOG "\# ".localtime.": delete empty files\n";
+  print LOG "\# ".localtime().": delete empty files\n";
   for(my $i=0; $i <= $#files; $i++){
     chomp($files[$i]); # to prevent error: Unsuccessful stat on filename containing newline
     if(-f $files[$i]){
@@ -1274,7 +1274,7 @@ sub check_bam_headers{
     # extract header information 
     print STDOUT "NEXT STEP: create SAM header file $samHeaderFile.\n";
     $cmdString = "$BAMTOOLS_BIN_PATH/bamtools header -in $bamFile > $samHeaderFile";
-    print LOG "\# ".localtime.": create header file $samHeaderFile\n";
+    print LOG "\# ".localtime().": create header file $samHeaderFile\n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "SAM file $samHeaderFile complete.\n";
@@ -1348,7 +1348,7 @@ sub check_bam_headers{
         my $samFile = "$otherfilesDir/".$_[0].".sam";
         my $samFile_new = "$otherfilesDir/".$_[0]."_new.sam";
         $cmdString = "$SAMTOOLS_PATH view $bamFile > $samFile";
-        print LOG "\# ".localtime.": convert BAM to SAM file $samFile\n";
+        print LOG "\# ".localtime().": convert BAM to SAM file $samFile\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "SAM file $samFile created.\n";
@@ -1368,7 +1368,7 @@ sub check_bam_headers{
         close(OUTPUT) or die("Could not close output SAM file $samFile_new!\n");
         print STDOUT "NEXT STEP: concatenate new header and SAM file.\n";
         $cmdString = "cat $samHeaderFile_new $samFile_new > $samFile";
-        print LOG "\# ".localtime.": concatenate new header and SAM file\n";
+        print LOG "\# ".localtime().": concatenate new header and SAM file\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "new SAM file created.\n";
@@ -1376,7 +1376,7 @@ sub check_bam_headers{
 
         print STDOUT "NEXT STEP: convert new SAM file to BAM format.\n";
         $cmdString = "$SAMTOOLS_PATH view -bSh $samFile > $otherfilesDir/".$_[0].".bam";
-        print LOG "\# ".localtime.": convert new SAM file to BAM format\n";
+        print LOG "\# ".localtime().": convert new SAM file to BAM format\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "new BAM file created.\n";
