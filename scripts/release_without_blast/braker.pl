@@ -1153,7 +1153,7 @@ sub check_options{
   }
 
   if(!isint($CPU)){
-    print STDERR "ERROR: \"$CPU\" is not a valid option for --CPU. Please use an integer.\n";
+    print STDERR "ERROR: \"$CPU\" is not a valid option for --cores. Please use an integer.\n";
     exit(1);
   }else{
     my $cpus_available = `nproc`;
