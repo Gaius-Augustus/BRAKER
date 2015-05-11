@@ -196,8 +196,8 @@ Selected parameters:
   Path to AUGUSTUS config directory (if not specified as environment variable). Has higher priority than the
   environment variable.
 
---CPU=n
-  Specifies the maximum number of CPUs that can be used during computation
+--cores=n
+  Specifies the maximum number of cores that can be used during computation
 
 --fungus
   GeneMark-ET option: to run algorithm with branch point model (most useful for fungal genomes)

@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: March 17th 2015                                                                    #
+# Release date: May 11th 2015                                                                      #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -18,37 +18,6 @@
 # braker.pl [OPTIONS] --genome=genome.fa --bam=rnaseq.bam                                          #
 #                                                                                                  #
 ####################################################################################################
-
-# ----------------------------------------------------------------------
-# | fixed gene length problem      | braker.pl (Hoff)     | 17.03.2015 |
-# | sub check_upfront              | autoAug.pl           | 07.01.2015 |
-# | sub check_fasta_headers        | autoAug.pl           | 07.01.2015 |
-# | helpMod qw(find chec...)       | helpMod.pm           |            |
-# | first outline for braker       | Simone Lange         | 05.09.2014 |
-# | uptodate integrated            |                      | 10.09.2014 |
-# | print stdout,LOG output        |                      | 10.09.2014 |
-# | .pm check for GeneMark         |                      | 10.09.2014 |
-# | add parts from                 |                      | 30.09.2014 |
-# | simplifyFastaHeaders.pl        | Katharina Hoff       | 03.12.2012 |
-# | alteration on parts from       | Simone Lange         | 30.09.2014 |
-# | simplifyFastaHeaders.pl &      |                      |            |
-# | sub check_fasta_headers        |                      |            |
-# | add filterIntronsFindStrand.pl |                      | 07.10.2014 |
-# | add check whether augustus and | optimize_augustus.pl | 05.11.2014 |
-# | etraining are executable       | (Mario Stanke)       | 23.04.2007 | 
-# | add --optCfgfile, --fungus     | Simone Lange         | 10.11.2014 |
-# | option, PATH also as variable  |                      |            |
-# | fork AUGUSTUS prediction       |                      |            |
-# | add parts from autoAugTrain.pl |                      | 12.12.2014 |
-# | parts from sub train           | autoAugTrain.pl      | 07.01.2015 |
-# | made BRAKER1 compatible with   | Simone Lange         | 12.01.2015 |
-# | GeneMark-ET version 4.21       |                      |            |
-# | add softmasking option         |                      | 22.01.2015 |
-# | add BAM header check and       |                      | 23.01.2015 |
-# | optionally create corrected    |                      | 24.01.2015 |
-# | BAM file with samtools         |                      |            |
-# | TODO: add more options         |                      |            |
-# ----------------------------------------------------------------------
 
 use Getopt::Long;
 use File::Compare;
@@ -100,7 +69,7 @@ OPTIONS
       to/augustus/                       Has higher priority than environment variable.
     --BAMTOOLS_PATH=/path/to/            Set path to bamtools (if not specified as environment 
       bamtools/                          variable). Has higher priority than the environment variable.
-    --CPU                                Specifies the maximum number of CPUs that can be used during 
+    --cores                              Specifies the maximum number of cores that can be used during 
                                          computation
     --extrinsicCfgFile                   Optional. This file contains the list of used sources for the 
                                          hints and their boni and mali. If not specified the file "extrinsic.cfg" 
@@ -144,7 +113,7 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 1.5;                    # braker.pl version number
+my $version = 1.6;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
@@ -214,7 +183,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'AUGUSTUS_CONFIG_PATH=s'        => \$augustus_cfg_path,
             'bam=s'                         => \@bam,
             'BAMTOOLS_PATH=s'               => \$bamtools_path,
-            'CPU=i'                         => \$CPU,
+            'cores=i'                       => \$CPU,
             'fungus!'                       => \$fungus,
             'extrinsicCfgFile=s'            => \$extrinsicCfgFile,
             'GENEMARK_PATH=s'               => \$GMET_path,
