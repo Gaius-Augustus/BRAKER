@@ -88,7 +88,7 @@ my $bool_intron = "false";  # true, if currently between exons, false otherwise
 my @CDS;                    # contains coding region lines
 my $file_name;              # file name
 my $gene_start;             # for length determination
-my $good_mults = 0;         # all suppoted intron 'mult' entries summed up
+my $good_mults = 0;         # all supported intron 'mult' entries summed up
 my $ID_new;                 # new ID with doublequotes for each gene
 my @ID_old;                 # old ID without quotes
 my %introns;                # Hash of arrays of hashes. Contains information from intron file input. 
@@ -97,10 +97,10 @@ my $intron_mults = 0;       # all intron 'mult' entries summed up
 my $length = 0;             # for length determination
 my @line;                   # each input file line
 my $mults = 0;              # current 'mult' entries
-my $nr_of_bad = 0;          # number of good genes
+my $nr_of_bad = 0;          # number of bad genes
 my $nr_of_complete = 0;     # number of complete genes, i.e. genes with start and stop codon
 my $nr_of_genes = 0;        # number of all genes
-my $nr_of_good = 0;         # number of bad genes
+my $nr_of_good = 0;         # number of good genes
 my $one_exon_gene_count = 0;# counts the number of genes which only consist of one exon
 my $start_codon = "";       # contains current start codon for "+" strand (stop codon for "-" strand)
 my $start_ID = "";          # ID of current start codon (only important for files without 'stop_codon' entries)
@@ -138,11 +138,11 @@ if(!defined($introns)){
 
 # check whether the genemark file exists
 if(!defined($genemark)){
-  print "No genemark file specified. Please set a file with --genemark=genemark-ET.gtf.\n";
+  print STDERR "No genemark file specified. Please set a file with --genemark=genemark-ET.gtf.\n";
   exit(1),
 }else{
   if(! -f "$genemark"){
-    print "Genemark file $genemark does not exist. Please check.\n";
+    print STDERR "Genemark file $genemark does not exist. Please check.\n";
     exit(1);
   }
 }
@@ -158,7 +158,7 @@ if(!defined($output_file)){
 if(defined($introns)){
   # check whether the intron file exists
   if(! -f "$introns"){
-    print "Intron file $introns does not exist. Please check.\n";
+    print STDERR "Intron file $introns does not exist. Please check.\n";
     exit(1);
   }else{
     introns();
@@ -205,7 +205,7 @@ if($nr_of_genes > 0){
 if(!defined($suppress)){
   open (GENELENGTH, ">$file_name.average_gene_length.out") or die "Cannot open file: $file_name.average_gene_length.out\n";
   print GENELENGTH "$average_gene_length\t$average_nr_introns\n";
-  close GENELENGTH;
+  close (GENELENGTH) or die("Could not close file $file_name.average_gene_length.out!\n");
 }
 
 
@@ -222,7 +222,7 @@ sub introns{
       $intron_mults += $line[5];
     }
   }  
-  close INTRONS;
+  close (INTRONS) or die("Could not close file $introns!\n");
 }
 
 
@@ -234,13 +234,15 @@ sub convert_and_filter{
   my $intron_start;
   my $intron_end;
   my $prev_ID = "no_ID";
+  my $output_file_good;
+  my $output_file_bad;
   if(!defined($output_file)){
     $output_file = "$file_name.c.gtf";
   }
   
   if(defined($introns) && !defined($suppress)){
-    my $output_file_good = "$file_name.f.good.gtf";
-    my $output_file_bad  = "$file_name.f.bad.gtf";
+    $output_file_good = "$file_name.f.good.gtf";
+    $output_file_bad  = "$file_name.f.bad.gtf";
 
     open (GOOD, ">".$output_file_good) or die "Cannot open file: $output_file_good\n";
     open (BAD, ">".$output_file_bad) or die "Cannot open file: $output_file_bad\n";
@@ -281,22 +283,21 @@ sub convert_and_filter{
           $bool_complete = "true";
         }
         $stop_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
-        
       # exons, CDS usw., i.e. no start or stop codon
       }elsif($line[2] ne "start_codon" && $line[2] ne "stop_codon" && defined($introns)){
         if($line[2] eq "CDS"){
           if($bool_intron eq "false"){
-            $intron_start = $line[4]+1;
+            $intron_start = $line[4] + 1;
             $bool_intron = "true";
           }else{
-            $intron_end = $line[3]-1;
+            $intron_end = $line[3] - 1;
           
             # check if exons are defined in intron hash made of intron input
             if(defined($introns{$line[0]}{$line[6]}{$intron_start}{$intron_end})){
               $true_count++;
               $mults += $introns{$line[0]}{$line[6]}{$intron_start}{$intron_end};
             }
-            $intron_start = $line[4]+1;
+            $intron_start = $line[4] + 1;
           }
           $exon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new";
           push(@CDS, $exon);
@@ -314,14 +315,14 @@ sub convert_and_filter{
     $nr_of_genes++;
     print_gene(); # print last gene, since print_gene() was only executed after the ID changed
     if(!defined($suppress)){
-      close BAD;
-      close GOOD;
+      close (BAD) or die("Could not close file $output_file_bad!\n");
+      close (GOOD) or die("Could not close file $output_file_good!\n");
     }
   }
 
-  close GENEMARK;
+  close (GENEMARK) or die("Could not close file $genemark!\n");
   if(!defined($suppress)){
-    close OUTPUT;
+    close (OUTPUT) or die("Could not close file $output_file!\n");
   }
 }
 
