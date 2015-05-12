@@ -234,13 +234,15 @@ sub convert_and_filter{
   my $intron_start;
   my $intron_end;
   my $prev_ID = "no_ID";
+  my $output_file_good;
+  my $output_file_bad;
   if(!defined($output_file)){
     $output_file = "$file_name.c.gtf";
   }
   
   if(defined($introns) && !defined($suppress)){
-    my $output_file_good = "$file_name.f.good.gtf";
-    my $output_file_bad  = "$file_name.f.bad.gtf";
+    $output_file_good = "$file_name.f.good.gtf";
+    $output_file_bad  = "$file_name.f.bad.gtf";
 
     open (GOOD, ">".$output_file_good) or die "Cannot open file: $output_file_good\n";
     open (BAD, ">".$output_file_bad) or die "Cannot open file: $output_file_bad\n";
