@@ -8,7 +8,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: Mai 01st 2015                                                                      #
+# Release date: July 10th 2015                                                                     #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -26,9 +26,9 @@
  
 use Getopt::Long;
 use Cwd;
-use POSIX qw(log10);
+use POSIX qw(log10 ceil);
 use File::Spec::Functions qw(rel2abs);
-use Bio::Tools::Run::RemoteBlast;
+use Statistics::Basic qw(:all);
 use Bio::Tools::Run::StandAloneBlastPlus;
 use Bio::SeqIO;
 use Parallel::ForkManager;
@@ -46,14 +46,15 @@ use warnings;
 
 my $usage = <<'ENDUSAGE';
 
-blastEx.pl     ...
+blastEx.pl     blast AUGUSTUS protein sequences based on different extrinsic files and calculate
+               a score for each prediction file to find optimal extrinsic parameter
 
 SYNOPSIS
 
 blastEx.pl [OPTIONS] --files=augustus1.gff,augustus2.gff
 
   --files                     list of AUGUSTUS prediction files in gff format with protein sequence  
-  
+  --best=output.out           contains file name of highest scoring extrinsic file
     
     
 OPTIONS
@@ -61,11 +62,12 @@ OPTIONS
     --help                          Print this help message
     --CPU                           Specifies the maximum number of CPUs that can be used during 
                                     computation
-    --DB=path/to/blast/DB           path to local blast database
-    --dir=path/to/dir               working directory
-    --log=lastEx.log                log file
-    --out=output.out                contains file index of highest scoring file
+    --DB=path/to/blast/DB           Path to local blast database
+    --dir=path/to/dir               Set path to working directory. In the working directory results
+                                    and temporary files are stored
     --introns=hintsfile.gff         gff files with intron hints
+    --log=lastEx.log                Log file
+    --overwrite                     Overwrite existing files (except for species parameter files)
 
     
 
@@ -83,50 +85,45 @@ ENDUSAGE
 
 
 
-my ($introns, $dir, @pred_files, $log, $DB, $out, $best_extrinsic, $help); # necessary input files and other options
 my $alpha = 1;              # factor for score (RNA-seq supported introns)
-my $average_gene_length =0; # for length determination
-my $average_nr_introns = 0; # average number of introns (only complete genes)
-my $beta;                   # factor for score (bases with protein support)
-my $blastfactory;
-my $bool_complete = "false";# true if gene is complete, i.e. genes with start and stop codon
+my $best_extrinsic;         # output file, contains name of best extrinsic file
+my $beta = 1;               # factor for score (bases with protein support)
+my $blastfactory;           # factory for BLAST
 my $bool_good = "true";     # if true gene is good, if false, gene is bad
-my $bool_intron = "false";  # true, if currently between exons, false otherwise
-my $count_intron = 0;          # count the number of CDS per gene
+my $count_intron = 0;       # count the number of CDS per gene
 my $CPU = 1;                # number of CPUs that can be used
-my $false_pred = 0;         # number of falsely predicted intros (with no hint)
-my $gene_start;             # for gene length determination
+my $DB;                     # path to local BLAST database
+my $dir;                    # working superdirectory where programme is called from
+my $false_pred = 0;         # number of falsely predicted introns (with no hint)
+my @false_preds;            # array of all numbers of falsely predicted introns (for median)
 my $good_mults = 0;         # all supported intron 'mult' entries summed up (all introns supported in gene)
-my @gtf_files;              # gtf files from gff input files   
-my $hintsfile;              # hints from bam2hints
+my @gtf_files;              # gtf files from gff input files
+my $help;                   # print usage   
 my $highest_index;          # file index of the highest score
 my $highest_score = '-inf'; # highest score 
 my @ID;                     # gene ID
 my $intron_mults = 0;       # all intron 'mult' entries summed up
 my %introns;                # Contains information from intron file input. 
                             # Format $intron{seqname}{strand}[index]->{start} and ->{end}
-my $length = 0;             # for gene length determination
-my $limit = 1000;
+my $introns;                # introns file name
+my $log;                    # log file name
 my $mults = 0;              # current 'mult' entries
+my @no_blast;               # length of all sequences not blasted for each geneset (for median)
 my $nr_of_bad = 0;          # number of bad genes
-my $nr_of_complete = 0;     # number of complete genes, i.e. genes with start and stop codon
 my $nr_of_genes = 0;        # number of all genes
 my $nr_of_good = 0;         # number of good genes
 my $nr_of_introns = 0;      # number of all introns in hints file
-my $one_exon_gene_count = 0;# counts the number of genes which only consist of one exon
+my $nr_of_introns_supp = 0; # number of all supported introns in prediction file
 my $overwrite = 0;          # overwrite existing files (except for species parameter files)
-my @parameters = (-program    => "blastp",
-                  -db_name    => "nr",
-                  -expect     => '1e-5',
-                  -remote     => '1',
-                  -readmethod => "SearchIO"); # parameters for blast
+my @parameters;             # parameters for blast
+my @pred_files;             # list of input files in gff format
+my $prog_dir;               # path to BLAST executable
 my @prot_files;             # protein sequence files '.aa'
 my %prot_seqs;              # hash of protein sequences
 my $RNAseq_sup_introns = 0; # introns supported by RNA-seq data (sum of 'mult' entries)
 my %scores;                 # score parts for each input file
 my $score_bool = "true";    # true, if all scores are equal
-my $seq_length = 0;         # length of all query sequences ($prot_seqs{$hsp -> query_string}{"sobj"} -> length)
-my $start_ID = "";          # ID of current start codon
+my $standard = 0;           # index to standard value, if all scores are equal (currently extrinsic.m.0.1.b.1e1.cfg)
 my $sup_mults = 0;          # sum of all supported 'mult' entries (all introns, but not necessarily all introns in gene are supported)
 my $true_count = 0;         # counts the number of supported CDS per gene
 
@@ -143,9 +140,9 @@ GetOptions( 'best=s'      => \$best_extrinsic,
             'files=s'     => \@pred_files,
             'introns=s'   => \$introns,
             'log=s'       => \$log,
-            'out=s'       => \$out,
             'overwrite!'  => \$overwrite,
             'param=f'     => \$alpha,
+            'prog-dir=s'  => \$prog_dir,
             'help!'       => \$help);
 
 if($help){
@@ -153,14 +150,11 @@ if($help){
   exit(0);
 }
 
+# if no working directory is set, use current directory
 if(!defined($dir)){
  $dir = cwd(); 
 }
 
-
-if(!defined($out)){
- $out = "$dir/highest.index.out"; 
-}
 
 my $last_char = substr($dir, -1);
 if($last_char eq "\/"){
@@ -171,7 +165,14 @@ if(!defined($log)){
   $log = "$dir/blastEx.log"; 
 }
 open (LOG, ">>".$log) or die "Cannot open file: $log\n";
-  
+
+# parameters for blast without local database
+@parameters = (-program    => "blastp",
+               -db_name    => "nr",
+               -prog_dir   => "$prog_dir",
+               -expect     => '1e-5',
+               -remote     => '1',
+               -readmethod => "SearchIO");
 if(defined($DB)){
   if(! -d $DB){
     print STDOUT "WARNING: Path to local BLAST database $DB does not exist. Programme will try to connect to server.\n";
@@ -180,10 +181,10 @@ if(defined($DB)){
     @parameters = (-program    => "blastp",
                    -db_name    => "nr",
                    -db_dir     => "$DB",
-                   -prog_dir   => "/home/simone/ncbi-blast-2.2.30+", 
+                   -prog_dir   => "$prog_dir",
                    -expect     => '1e-5',
-                   -readmethod => "SearchIO"); # parameters for blast
-    $blastfactory = Bio::Tools::Run::StandAloneBlastPlus->new(@parameters);#Bio::Tools::Run::StandAloneBlast->new(@parameters);
+                   -readmethod => "SearchIO");
+    $blastfactory = Bio::Tools::Run::StandAloneBlastPlus->new(@parameters);
   }
 }else{  
   $blastfactory = Bio::Tools::Run::StandAloneBlastPlus->new(@parameters);
@@ -208,13 +209,9 @@ if(@pred_files){
       print STDERR "ERROR: Prediction file $pred_files[$i] does not exist. Please check.\n";
       exit(1);
     }
-    $pred_files[$i] = rel2abs($pred_files[$i]);
-    # make '*.aa' files
-    getAnnoFasta($pred_files[$i]);
-    if(defined($introns)){
-      # make '*.gtf' files
-      make_gtf($pred_files[$i]);
-    }
+
+    getAnnoFasta($pred_files[$i]);  # get protein sequence files if necessary  
+    make_gtf($pred_files[$i]);      # maake gtf files if necessary
   }
 }else{
   print STDERR "ERROR: No prediction file assigned. Please check.\n";
@@ -223,65 +220,76 @@ if(@pred_files){
 
 # get protein sequences from files and store in hash
 get_prots();
+
 # compare introns from '*.gtf' files to introns in hints file 
 for(my $i=0; $i<scalar(@gtf_files); $i++){
   compare_introns($gtf_files[$i]);
-  $scores{$i}{"sup_introns"} = $sup_mults; # introns supported by RNA-seq (log_10(mult))
-  $scores{$i}{"false_pred"} = $false_pred; # falsely predicted introns in geneset i (no hint support)
-  $scores{$i}{"pos"} = 0;        # number of conserved (positives in stats section) in geneset i 
-  $scores{$i}{"length"} = 0;     # length of sequences blasted and in geneset i 
-  $scores{$i}{"not_length"} = 0; # length of sequences blasted, but not in geneset i
-  $scores{$i}{"not_blast"} = 0;  # length of sequences in geneset i, but not blasted
+  $scores{$i}{"sup_introns"} = $sup_mults;  # introns supported by RNA-seq (log_10(mult))
+  $scores{$i}{"good_genes"}  = $nr_of_good; # number of genes with full support (currently not part of the score)
+  $scores{$i}{"bad_genes"}   = $nr_of_bad;  # number of genes without full support (currently not part of the score)
+  $scores{$i}{"false_pred"}  = $false_pred; # falsely predicted introns in geneset i (no hint support)
+  $scores{$i}{"false_neg"}   = $nr_of_introns - $nr_of_introns_supp; # false negative introns in geneset i (currently not part of the score)
+  $scores{$i}{"pos"}         = 0;           # number of conserved (positives in stats section) in geneset i 
+  $scores{$i}{"length"}      = 0;           # length of sequences blasted and in geneset i 
+  $scores{$i}{"not_length"}  = 0;           # length of sequences blasted, but not in geneset i
+  $scores{$i}{"not_blast"}   = 0;           # length of sequences in geneset i, but not blasted (with no blast hits)
+  $scores{$i}{"not_pos"}     = 0;           # number of conserved (positives in stats section) not in geneset i  
+  $scores{$i}{"nr_inhsp"}    = 0;           # number of high-scoring segment pairs in geneset i 
+  $scores{$i}{"nr_outhsp"}   = 0;           # number of high-scoring segment pairs not in geneset i
 }
 
-blast();     
-print STDERR Dumper(\%scores);
+# blast protein sequences
+blast(); 
+# print score hash to blastEx.stdout for manual checking     
+print STDOUT Dumper(\%scores); 
 
 my @score;
-if($seq_length == 0){
-  $seq_length++;
+# calculation of median for falsely predicted introns and length of protein sequence without BLAST hit
+foreach my $key (keys %scores){
+  push(@false_preds, $scores{$key}{"false_pred"});
+  push(@no_blast, $scores{$key}{"not_blast"});
 }
-$beta = 1; #$intron_mults / $seq_length;
+my $median_fp = median(\@false_preds);
+my $median_nb = median(\@no_blast);
+
+# calculate score
 for(my $i=0; $i<scalar(@gtf_files); $i++){
-print LOG "\# ".(localtime).": supported introns ".$scores{$i}{"sup_introns"}." all intron mults $intron_mults positives ".$scores{$i}{"pos"}." length ".$scores{$i}{"length"}." whole length $seq_length length not in geneset ".$scores{$i}{"not_length"}." scores not blast ".$scores{$i}{"not_blast"}."\n";
-print STDERR "\# ".(localtime).": supported introns ".$scores{$i}{"sup_introns"}." all intron mults $intron_mults positives ".$scores{$i}{"pos"}." length ".$scores{$i}{"length"}." whole length $seq_length length not in geneset ".$scores{$i}{"not_length"}." scores not blast ".$scores{$i}{"not_blast"}." false pred ".$scores{$i}{"false_pred"}."\n";
-  #   score =  alpha * SnI + SpI + alpha * L / L' + SpProt
-  # SnI = True Pos / Act Pos; SpI = True Pos / Pred Pos; 
-  # L = Length of Prot in Geneset; L' = Length of Prot not in Geneset; 
-  # SpProt = length of num_conserved / (length of num_conserved + length of Prot not blasted)
+print LOG "\# ".(localtime).": supported introns ".$scores{$i}{"sup_introns"}." all intron mults $intron_mults positives ".$scores{$i}{"pos"}." length ".$scores{$i}{"length"}." length not in geneset ".$scores{$i}{"not_length"}." scores not blast ".$scores{$i}{"not_blast"}." good genes ".$scores{$i}{"good_genes"}." false neg ".$scores{$i}{"false_neg"}."\n";
+
   if($scores{$i}{"not_length"} == 0){
-    $scores{$i}{"not_length"} = 1; # length of sequences blasted, but not in geneset i
+    $scores{$i}{"not_length"} = 1; 
   }
-  if($scores{$i}{"not_blast"} == 0 && $scores{$i}{"pos"} == 0){
-    $scores{$i}{"not_blast"} = 1;  # length of sequences in geneset i, but no hits 
+  if($scores{$i}{"length"} == 0){
+    $scores{$i}{"length"} = 1;
   }
-  my $score = $alpha * ($scores{$i}{"sup_introns"} / $intron_mults) + ($scores{$i}{"sup_introns"} / ($scores{$i}{"sup_introns"} + $false_pred)) + $alpha * ($scores{$i}{"length"} / $scores{$i}{"not_length"}) + $beta * ($scores{$i}{"pos"} / ($scores{$i}{"pos"} + $scores{$i}{"not_blast"}));
+  my $score = $alpha * (($scores{$i}{"sup_introns"} - $scores{$i}{"false_pred"}) / $intron_mults) + ($scores{$i}{"sup_introns"} / ($scores{$i}{"sup_introns"} + $scores{$i}{"false_pred"})) + $alpha * ($scores{$i}{"length"} / ($scores{$i}{"not_length"} + $scores{$i}{"not_blast"})) + $beta *((($scores{$i}{"pos"} - $scores{$i}{"length"}) * $scores{$i}{"nr_outhsp"} / $scores{$i}{"length"}) - (($scores{$i}{"pos"} - $scores{$i}{"length"}) / ($scores{$i}{"not_pos"} - $scores{$i}{"not_length"})) - (($scores{$i}{"not_pos"} - $scores{$i}{"not_length"}) * $scores{$i}{"nr_inhsp"} / $scores{$i}{"not_length"})); 
   
-  if($score >= $highest_score){
+  if($score >= $highest_score && $scores{$i}{"false_pred"} <= $median_fp && $scores{$i}{"not_blast"} <= $median_nb){
     $highest_score = $score;
     $highest_index = $i;
   }
+  
   if($scores{$i}{"pos"} == 0 && $scores{$i}{"length"} == 0){
-    print STDERR "Number of positives and length is 0 for file $gtf_files[$i]. This is probably due to a BLAST connecting error. Please try again or use a local BLAST installation.\n";
+    print STDOUT "Number of positives and length is 0 for file $gtf_files[$i]. This is probably due to a BLAST connecting error. Please try again or use a local BLAST installation.\n";
   }
   push(@score, $score);
   print LOG "\# ".(localtime).": score $score, file $gtf_files[$i] and index $i\n";
-  print STDERR "\# ".(localtime).": score $score, file $gtf_files[$i] and index $i\n";
+  print STDOUT "\# ".(localtime).": score $score, file $gtf_files[$i] and index $i\n";
 }
+# check if all scores are equal
 for(my $i=0; $i<scalar(@score)-1; $i++){
   if($score[$i] ne $score[$i+1]){
     $score_bool = "false";
   }
 }
+# if all scores are equal use standard parameters
 if($score_bool eq "true"){
-  $highest_index = 1; # standard value, if all scores are equal
+  $highest_index = $standard; # standard value, if all scores are equal
 }
 
-open (HIGHEST, ">$out") or die "Cannot open file: $out\n";
-print HIGHEST "$highest_index";
-close (HIGHEST) or die("Could not close file $out!\n");
 close(LOG) or die("Could not close file $log!\n");
 
+# print best extrinsic file name to output
 if(defined($best_extrinsic)){
   my @f = split(/\//, $gtf_files[$highest_index]);
   $f[-1] = "extrinsic".substr($f[-1],8,-3)."cfg"; #extrinsic.m.$malus[$i].b.$bonus[$j].cfg
@@ -322,9 +330,10 @@ sub blast{
   my $pm = new Parallel::ForkManager($CPU);
   foreach my $seq (keys %prot_seqs){
     my @file_index = split(/,/, $prot_seqs{$seq}{"indices"});
-    $pm -> run_on_finish( #$pm.run_on_finish{
+    $pm -> run_on_finish(
       sub{
         my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $scores_child) = @_;
+        # update global hash
         foreach my $i (keys %scores){
           if(defined($scores_child->{$i}->{"pos"})){
             $scores{$i}{"pos"} += $scores_child->{$i}->{"pos"};
@@ -338,6 +347,15 @@ sub blast{
           if(defined($scores_child->{$i}->{"not_blast"})){
             $scores{$i}{"not_blast"} += $scores_child->{$i}->{"not_blast"};
           }
+          if(defined($scores_child->{$i}->{"not_pos"})){
+            $scores{$i}{"not_pos"} += $scores_child->{$i}->{"not_pos"};
+          }
+          if(defined($scores_child->{$i}->{"nr_inhsp"})){
+            $scores{$i}{"nr_inhsp"} += $scores_child->{$i}->{"nr_inhsp"};
+          }
+          if(defined($scores_child->{$i}->{"nr_outhsp"})){
+            $scores{$i}{"nr_outhsp"} += $scores_child->{$i}->{"nr_outhsp"};
+          }
         }
       }
     );
@@ -346,35 +364,37 @@ sub blast{
     if(scalar(@file_index) != scalar(@prot_files) || scalar(@prot_files) == 1){
       $idx++;
       my $pid = $pm -> start($idx) and next;
-      print LOG "\# ".(localtime).": blast ".$prot_seqs{$seq}{"sobj"} -> id."\n";
+      print STDOUT "\# ".(localtime).": blast ".$prot_seqs{$seq}{"sobj"} -> id."\n";
       my $result = $blastfactory -> run(-method => "blastp", -query => $prot_seqs{$seq}{"sobj"});
-      print LOG "\# ".(localtime).": blast finished ".$prot_seqs{$seq}{"sobj"} -> id."\n";
-      my %scores_c;
-      if(keys(%{$result}) != 0){
-        print LOG "\# ".(localtime).": get results for ".$result -> query_name()."\n";
+      print STDOUT "\# ".(localtime).": blast finished ".$prot_seqs{$seq}{"sobj"} -> id."\n";
+      my %scores_c; my $size = keys(%{$result});
+      # fill local hash
+      if(%{$result}){
+        print STDOUT "\# ".(localtime).": $idx get results for ".$result -> query_name()." number of hits ".$result -> num_hits."\nseq\n$seq\n";
         if($result -> num_hits != 0){
           my $hit = $result -> next_hit;
           if(defined($hit)){ 
-            print LOG "\# ".(localtime).": hit for ".$result -> query_name()."\n";
-            my $query_seq;
+            print STDOUT "\# ".(localtime).": hit for ".$result -> query_name()."\n";
             while(my $hsp = $hit -> next_hsp){ 
-              print LOG "\# ".(localtime).": hsp for ".$result -> query_name()."\n";
-              if(defined($prot_seqs{$hsp -> query_string})){
-                $query_seq = $hsp -> query_string;
-                my %hash;
-                my @file_index = split(/,/, $prot_seqs{$hsp -> query_string}{"indices"}); 
+              print STDOUT "\# ".(localtime).": hsp for ".$result -> query_name()."\n";
+              if(defined($prot_seqs{$seq})){
+                my %hash; 
                 foreach my $index (@file_index){
                   $hash{$index} = "";
                 }
                 for(my $i = 0; $i<scalar(@pred_files); $i++){
+                  # current sequence is part of gene set $i
                   if(defined($hash{$i})){
+                    print STDOUT "\# ".(localtime).": $i: num_conserved ".$hsp -> num_conserved." num_identical ".$hsp -> num_identical." length ".$prot_seqs{$seq}{"sobj"} -> length."\n";
                     $scores_c{$i}{"pos"} += $hsp -> num_conserved; 
-                    $scores_c{$i}{"length"} += $prot_seqs{$hsp -> query_string}{"sobj"} -> length;
-                    if($i == 0){
-                      $seq_length += $prot_seqs{$hsp -> query_string}{"sobj"} -> length;
-                    }
+                    $scores_c{$i}{"length"} += $prot_seqs{$seq}{"sobj"} -> length;
+                    $scores_c{$i}{"nr_outhsp"}++;
+                  # current sequence is not part of gene set $i
                   }else{
-                    $scores_c{$i}{"not_length"} += $prot_seqs{$hsp -> query_string}{"sobj"} -> length;
+                    print STDOUT "\# ".(localtime).": $i: not length ".$prot_seqs{$seq}{"sobj"} -> length."\n";
+                    $scores_c{$i}{"not_length"} += $prot_seqs{$seq}{"sobj"} -> length;
+                    $scores_c{$i}{"not_pos"} += $hsp -> num_conserved;
+                    $scores_c{$i}{"nr_inhsp"}++;
                   }
                 }
               }
@@ -383,23 +403,24 @@ sub blast{
         }else{
           for(my $j = 0; $j<scalar(@file_index); $j++){
             $scores_c{$file_index[$j]}{"not_blast"} += $prot_seqs{$seq}{"sobj"} -> length;
+            $scores_c{$file_index[$j]}{"nr_outhsp"}++;
           }
-          print LOG "\# ".(localtime).": no hits ".$prot_seqs{$seq}{"sobj"} -> id."\n";
+          print STDOUT "\# ".(localtime).": no hits ".$prot_seqs{$seq}{"sobj"} -> id."\n";
         }
       }else{
         for(my $j = 0; $j<scalar(@file_index); $j++){
           $scores_c{$file_index[$j]}{"not_blast"} += $prot_seqs{$seq}{"sobj"} -> length;
+          $scores_c{$file_index[$j]}{"nr_outhsp"}++;
         }
-        print LOG "\# ".(localtime).": no result ".$prot_seqs{$seq}{"sobj"} -> id."\n";
+        print STDOUT "\# ".(localtime).": no result ".$prot_seqs{$seq}{"sobj"} -> id."\n";
       }
       $pm -> finish(0, \%scores_c);
     }else{
-      print LOG "\# ".(localtime).": not blast ".$prot_seqs{$seq}{"sobj"} -> id."\n";
+      print STDOUT "\# ".(localtime).": not blast ".$prot_seqs{$seq}{"sobj"} -> id."\n";
     }
   }
   $pm -> wait_all_children;
 }
-
 
 # read in introns
 sub introns{
@@ -440,7 +461,7 @@ sub make_gtf{
   @_ = split(/\//, $AUG_pred);
   my $name_base = substr($_[-1],0,-4);
   my $gtf_file = substr($AUG_pred,0,-4).".gtf";
-    if(!uptodate([$AUG_pred],[$gtf_file])  || $overwrite){
+  if(!uptodate([$AUG_pred],[$gtf_file])  || $overwrite){
     my $errorfile = "$dir/errors/gtf2gff.$name_base.stderr";
     my $perlstring = find("gtf2gff.pl");
     my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
@@ -455,19 +476,16 @@ sub make_gtf{
 # compare input files to introns from hints file
 sub compare_introns{
   my $gtf_file = shift;
-  my $exon;                   # current exon
-  my $intron_start;
-  my $intron_end;
   my $prev_ID = "no_ID";
 
   $sup_mults = 0;
   $good_mults = 0;
   $false_pred = 0;
-  $average_nr_introns = 0;
   $nr_of_genes = 0;
-  $nr_of_complete = 0;
-  $length = 0;
   $count_intron = 0;
+  $nr_of_good = 0;
+  $nr_of_introns_supp = 0;
+  $nr_of_bad = 0;
 
   open (GTF, "<".$gtf_file) or die "Cannot open file: $gtf_file\n";
   while(<GTF>){
@@ -485,20 +503,11 @@ sub compare_introns{
             reset_param();
           }
         }
-        if( ($line[2] eq "start_codon" && $line[6] eq "+") || ($line[2] eq "stop_codon" && $line[6] eq "-") ){
-          $gene_start = $line[3];
-        # gene ends
-        }elsif(($line[2] eq "stop_codon" && $line[6] eq "+") || ($line[2] eq "start_codon" && $line[6] eq "-") ){
-          if($start_ID eq $ID[1]){
-            $length += $line[4] - $gene_start;
-            $nr_of_complete++;
-            $bool_complete = "true";
-          }
-        # intron
-        }elsif($line[2] eq "intron"){
+        if($line[2] eq "intron"){
           # check if intron is in hash made of intron input
           if(defined($introns{$line[0]}{$line[6]}{$line[3]}{$line[4]})){
             $true_count++;
+            $nr_of_introns_supp++;
             $mults += $introns{$line[0]}{$line[6]}{$line[3]}{$line[4]};
           }else{
             $false_pred++;
@@ -514,7 +523,6 @@ sub compare_introns{
   reset_param(); 
 
   close (GTF) or die("Could not close file $gtf_file!\n");
-  $average_nr_introns = $average_nr_introns / $nr_of_genes;
 }
 
 # reset parameters
@@ -522,13 +530,7 @@ sub reset_param{
   if($true_count != $count_intron && $count_intron != 0){
     $bool_good = "false";
   }
-  if($count_intron == 0){
-    $one_exon_gene_count++;
-  }
 
-  if($bool_complete eq "true"){
-    $average_nr_introns += $count_intron;
-  }
   # all exons in intron file
   if($bool_good eq "true"){
     $nr_of_good++;
@@ -540,8 +542,6 @@ sub reset_param{
   $sup_mults += $mults;
   $count_intron = 0;
   $true_count = 0;
-  $bool_intron = "false";
   $bool_good = "true";
-  $bool_complete = "false";
   $mults = 0;
 }

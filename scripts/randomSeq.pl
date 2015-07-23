@@ -8,7 +8,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: Mai 01st 2015                                                                      #
+# Release date: July 10th 2015                                                                     #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -35,7 +35,8 @@ use warnings;
 
 my $usage = <<'ENDUSAGE';
 
-blastEx.pl     ...
+randomSeq.pl     choose random parts from genome file until a corresponding GeneMark-ET prediction probably 
+                 contains a specific number of genes
 
 SYNOPSIS
 
@@ -50,11 +51,13 @@ OPTIONS
 
     --help                          Print this help message
     --GMET=genemark.gtf             GeneMark-ET prediction
-    --dir=path/to/dir               working directory
-    --log=lastEx.log                log file
-    --out_fasta=newGenome.fa        new genome file in fasta format
-    --out_hints=newhints.gff        new intron hints in gff format
-
+    --dir=path/to/dir               Set path to working directory. In the working directory results
+                                    and temporary files are stored
+    --log=lastEx.log                Log file
+    --out_fasta=newGenome.fa        New genome file in fasta format
+    --out_hints=newhints.gff        New intron hints in gff format
+    --threshold                     Threshold of genes that the chosen sequence parts should at least contain
+                                    (calculation based on GeneMark-Et input) 
 
                           
 
@@ -68,19 +71,26 @@ ENDUSAGE
 
 
 
-my ($dir, $GMET, $genome, $log, $introns, $out_fasta, $out_hints, $help); # necessary input files and other options
+my $dir;                    # working superdirectory where programme is called from
 my $gene_start;             # for storing GeneMark-ET genes
+my $genome;                 # genome file name
+my $GMET;                   # GeneMark-ET prediction file 
 my @GMET_bounds;            # start and end position of genes
 my $GMET_genes = 0;         # number of genes in GeneMark-ET prediction
+my $help;                   # print usage   
 my @ID;                     # gene ID
 my %introns;                # Hash of arrays. Contains information from intron file input. 
                             # Format $intron{seqname}[]
+my $introns;                # introns file name
+my $log;                    # log file name
 my $max_length = 0;         # maximal sequence length
 my $min_size = 100000;      # minimal sequence part length
 my $min_genes = 200;        # minimal number of genes in sequence parts
-my $min_seqs = 9;           # minimal number of sequence parts (only necessary if no GeneMark-ET file is assigned)
+my $min_seqs = 10;          # minimal number of sequence parts (only necessary if no GeneMark-ET file is assigned)
 my @new_seq;                # new fasta sequences
 my $nr_of_genes = 0;        # number of genes in sequence part
+my $out_fasta;              # output file name of genome parts
+my $out_hints;              # output file name of corresponding intron hints
 my %seqs;                   # sequence information
 my @seqInfo;                # sequence length and name
 my $start_ID = "";          # ID of current start codon
@@ -97,7 +107,8 @@ GetOptions( 'dir=s'       => \$dir,
             'introns=s'   => \$introns,
             'log=s'       => \$log,
             'out_fasta=s' => \$out_fasta,
-            'out_hints=s' => \$out_hints, 
+            'out_hints=s' => \$out_hints,
+            'threshold=i' => \$min_genes,
             'help!'       => \$help);
 
 if($help){
@@ -105,6 +116,7 @@ if($help){
   exit(0);
 }
 
+# if no working directory is set, use current directory
 if(!defined($dir)){
  $dir = cwd(); 
 }
@@ -158,12 +170,14 @@ if(defined($genome)){
     exit(1);
   }
   $genome = rel2abs($genome);
-
+  
   if($GMET_genes > $min_genes || !defined($GMET)){
     print LOG "\# ".(localtime).": Get fasta sequences from $genome\n";
     get_fasta();
     print LOG "\# ".(localtime).": Get fasta sequence parts\n";
     open (HINTS, ">".$out_hints) or die "Cannot open file: $out_hints\n";
+    # get sequence parts as long as the number of genes that GeneMark-ET predicts there are below $min_genes or 
+    # as long as the number of sequence parts are below $min_seqs; also adjust hints for those parts
     while(($nr_of_genes <= $min_genes && defined($GMET)) || (scalar(@new_seq) < $min_seqs && !defined($GMET))){
       get_random_seq();
     }
@@ -215,6 +229,7 @@ sub GMET{
           $start_ID = $ID[1];
         # gene ends
         }elsif(($line[2] eq "stop_codon" && $line[6] eq "+") || ($line[2] eq "start_codon" && $line[6] eq "-") ){
+          # only use complete genes      
           if($start_ID eq $ID[1]){
             $GMET_genes++;
             push(@{$seqs{$line[0]}}, $gene_start, $line[4]);
@@ -232,6 +247,7 @@ sub GMET{
 }
 
 
+# read in fasta sequences
 sub get_fasta{
   open (FASTA, $genome) or die "Cannot open file: $genome\n";
   print LOG "\# ".(localtime).": read in DNA sequence from $genome\n";
@@ -257,11 +273,13 @@ sub get_fasta{
 }
 
 
+# choose a part of the sequence randomly
 sub get_random_seq{
   my $rand = rand();
   my $low_boundary = 0;
   my $up_boundary = length($seqInfo[0] -> {"seq"}) / $whole_length;
   my $index = 0;
+  # at first choose the sequence based on its relative share of the whole fasta file
   for(my $i=0; $i<scalar(@seqInfo)-1; $i++){
     if($low_boundary <= $rand && $rand < $up_boundary){
       $index = $i;
@@ -272,35 +290,38 @@ sub get_random_seq{
     }
   }
   
+  # then choose the position where to cut out the sequence part within the chosen sequence
   my $subseq = "";
   my $part_seq;
   my $part_start;
   my $start = 0;
+  # sequence length is greater than the specified sequence part size
   if(length($seqInfo[$index] -> {"seq"}) >= $min_size){
-    if(length($seqInfo[$index] -> {"seq"}) >= $min_size){
-      $rand = floor(rand(length($seqInfo[$index] -> {"seq"}) - $min_size + 1));
-      $start = $rand;
-      if($rand > length($seqInfo[$index] -> {"seq"}) - $min_size){
-        $subseq = substr($seqInfo[$index] -> {"seq"}, - $min_size);
-        $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, $min_size);
+    $rand = floor(rand(length($seqInfo[$index] -> {"seq"}) - $min_size + 1));
+    $start = $rand;
+    # the random number is bigger than length(seq) - $min_size -> take the last $min_size base pairs
+    if($rand > length($seqInfo[$index] -> {"seq"}) - $min_size){
+      $subseq = substr($seqInfo[$index] -> {"seq"}, - $min_size);
+      $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, $min_size);
+    # random number lies in between -> split sequence in three parts 
+    }else{
+      $subseq = substr($seqInfo[$index] -> {"seq"}, $rand, $min_size); # part that is cut out
+      $part_seq = substr($seqInfo[$index] -> {"seq"}, $rand + $min_size + 1); # end of sequence becomes new entry
+      $part_start = $rand + $min_size + 1;
+      if($rand != 0){
+        $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, 0, $rand - 1); # adjust beginning 
       }else{
-        $subseq = substr($seqInfo[$index] -> {"seq"}, $rand, $min_size);
-        $part_seq = substr($seqInfo[$index] -> {"seq"}, $rand + $min_size + 1);
-        $part_start = $rand + $min_size + 1;
-        if($rand != 0){
-          $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, 0, $rand - 1);
-        }else{
-          $seqInfo[$index] -> {"seq"} = "";
-        }
-        my %hash = ("name"   => $seqInfo[$index] -> {"name"},
-                    "seq"    => $part_seq,
-                    "start"  => $part_start);
-        push(@seqInfo, \%hash);     
+        $seqInfo[$index] -> {"seq"} = "";
       }
+      my %hash = ("name"   => $seqInfo[$index] -> {"name"}, # add end as 'new' sequence
+                  "seq"    => $part_seq,
+                  "start"  => $part_start);
+      push(@seqInfo, \%hash);     
     }
   }
   $whole_length -= length($subseq);
   
+  # count the number of predicted genes (by GeneMark-ET prediction) on chosen sequence part
   if(length($subseq) > 0 && defined($GMET)){
     push(@new_seq, $subseq);
     # end of subseq < end of first gene -> no gene in region
@@ -340,6 +361,7 @@ sub get_random_seq{
         $nr_of_genes += ($j - $i) / 2;
       }
     }
+    # adjust hints for chosen sequence part (new coordinates, new name)
     if(defined($introns)){
       my $hints_line;
       for(my $k=0; $k<scalar(@{$introns{$seqInfo[$index] -> {"name"}}}); $k++){

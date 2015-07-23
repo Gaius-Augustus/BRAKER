@@ -26,6 +26,9 @@
 # | add BAM header check and       |                      | 23.01.2015 |
 # | optionally create corrected    |                      | 24.01.2015 |
 # | BAM file with samtools         |                      |            |
-# | add sub extrinsic_tests        | Simone Lange         | 06.04.2015 |
-# | TODO: add more options         |                      |            |
+# | BRAKER1 version 1.6            |                      | 06.04.2015 |
+# | add sub extrinsic_tests        |                      |            |
+# | made BRAKER1 compatible with   |                      | 08.05.2015 |
+# | GeneMark-ET version 4.29       |                      |            |
 # ----------------------------------------------------------------------
+

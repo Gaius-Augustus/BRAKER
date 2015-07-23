@@ -11,7 +11,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: January 7th 2015                                                                   #
+# Release date: July 10th 2015                                                                     #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -34,6 +34,8 @@
 # | (only standard output)          |                |           |
 # | more if-conditions (no division |                |           |
 # | by zero errors)                 |                |           |
+# | made BRAKER1 compatible with    |                |08.05.2015 |
+# | GeneMark-ET version 4.29        |                |           |
 # ----------------------------------------------------------------
  
 use strict;
@@ -79,7 +81,6 @@ DESCRIPTION
 ENDUSAGE
 
 
-my ($genemark, $introns, $output_file, $help);
 my $average_gene_length =0; # for length determination
 my $average_nr_introns = 0; # average number of introns (only complete genes)
 my $bool_complete = "false";# true if gene is complete, i.e. genes with start and stop codon
@@ -87,10 +88,13 @@ my $bool_good = "true";     # if true gene is good, if false, gene is bad
 my $bool_intron = "false";  # true, if currently between exons, false otherwise
 my @CDS;                    # contains coding region lines
 my $file_name;              # file name
+my $genemark;               # GeneMark-ET input file
 my $gene_start;             # for length determination
 my $good_mults = 0;         # all supported intron 'mult' entries summed up
+my $help;                   # print usage 
 my $ID_new;                 # new ID with doublequotes for each gene
 my @ID_old;                 # old ID without quotes
+my $introns;                # introns file name
 my %introns;                # Hash of arrays of hashes. Contains information from intron file input. 
                             # Format $intron{seqname}{strand}[index]->{start} and ->{end}
 my $intron_mults = 0;       # all intron 'mult' entries summed up
@@ -102,6 +106,7 @@ my $nr_of_complete = 0;     # number of complete genes, i.e. genes with start an
 my $nr_of_genes = 0;        # number of all genes
 my $nr_of_good = 0;         # number of good genes
 my $one_exon_gene_count = 0;# counts the number of genes which only consist of one exon
+my $output_file;            # output file name and name base for good and bad genes output file
 my $start_codon = "";       # contains current start codon for "+" strand (stop codon for "-" strand)
 my $start_ID = "";          # ID of current start codon (only important for files without 'stop_codon' entries)
 my $stop_codon = "";        # contains current stop codon for "+" strand (start codon for "-" strand)

@@ -6,7 +6,7 @@
 %                                                                                                %
 %           Contact: katharina.hoff@uni-greifswald.de                                            %
 %                                                                                                %
-%           Date: May 11th, 2015                                                               %
+%           Date: July 10th, 2015                                                               %
 %                                                                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -29,6 +29,7 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
    * GeneMark-ET 4.29
    * BAMTOOLS 2.3.0
    * SAMTOOLS 1.2 (using htslib 1.2.1)
+   * BLAST 2.2.30+
 
 1. Download GeneMark-ET from http://exon.gatech.edu/GeneMark/license_download.cgi
 
@@ -72,19 +73,19 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
       git clone https://github.com/samtools/htslib.git, follow the htslib documentation for 
       installation).
 
-      Download and install SAMTOOLS (e.g. git clone git://github.com/samtools/samtools.git), 
+      Download and install SAMTOOLS (e.g. git clone git://github.com/samtools/samtools.git, 
       subsequently follow SAMTOOLS documentation for installation). 
 
 8. Install the required PERL modules available on CPAN:
-   			     	File::Spec::Functions
-				Hash::Merge
-				List::Util
-				Logger::Simple
-				Module::Load::Conditional
-				Parallel::ForkManager
-				POSIX
-				Scalar::Util::Numeric
-				YAML 
+                                File::Spec::Functions
+                                Hash::Merge
+                                List::Util
+                                Logger::Simple
+                                Module::Load::Conditional
+                                Parallel::ForkManager
+                                POSIX
+                                Scalar::Util::Numeric
+                                YAML 
    (on Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]")
 
    BRAKER1 also uses the PERL module helpMod.pm that is not available on CPAN. This module is 
@@ -102,7 +103,7 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
    by BRAKER1 if you set the environment variables in step 10.
 
 10. Optional: set environment variables $AUGUSTUS_CONFIG_PATH, $GENEMARK_PATH and $BAMTOOLS_PATH 
-              (and $SAMTOOLS_PATH)
+              (and $SAMTOOLS_PATH and $BLAST_PATH)
     The $AUGUSTUS_CONFIG_PATH determines which directory is used for reading and writing species 
     configuration files. During training, AUGUSTUS writes species-specific parameter files to this 
     directory. Therefore, you need write permissions for the directory that is $AUGUSTUS_CONFIG_PATH. 
@@ -113,7 +114,7 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
     export AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/
 
     $AUGUSTUS_CONFIG_PATH - if exported - is also used by BRAKER1 to determine the relative 
-    			    path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints. 
+                            path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints. 
 
     If the environment variable $GENEMARK_PATH is set, BRAKER1 will look there for the gmes_petap.pl 
     script. Export the variable e.g. for your current bash session:
@@ -130,6 +131,11 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
 
     export SAMTOOLS_PATH=/my_path_to_samtools/
 
+    If the environment variable $BLAST_PATH is set, BRAKER1 will look there for the blast executables. Export 
+    the variable e.g. for your current bash session:
+
+    export BLAST_PATH=/my_path_to_blast/bin/
+
     You may want to add these lines to a startup script (like ~/.bashrc). Pay attention, that you 
     do not specify the actual executable when exporting paths, but only the path to where the 
     executable resides.
@@ -140,6 +146,14 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
     --GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
     --BAMTOOLS_PATH=/my_path_to_bamtools/bin/
     --SAMTOOLS_PATH=/my/path_to_samtools/
+    --BLAST_PATH=/my_path_to_blast/bin/
+
+11. Optional: 
+      BLAST is not required for running BRAKER1 if you do not want to try to optimise the
+      extrinsic parameters used by AUGUSTUS. Otherwise it uses the default parameters.
+
+      Download and install BLAST (e.g. from here: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/, 
+      subsequently follow BLAST documentation for installation). 
 
               3. RUNNING BRAKER1
               ------------------
@@ -159,7 +173,7 @@ The bam file contains unassembled RNA-Seq read alignments.
 
 Alternatively to the bam file, spliced alignment information may be passed as "intron hints" in gff format using the argument --hints=gff-hintsfilename, the file may look like this:
 
-contig_name	TopHat2	intron	2740	2888	25	+	.	.
+contig_name     TopHat2 intron  2740    2888    25      +       .       .
 
 Required values in the gff format file for GeneMark-ET (for more details, see http://www.sanger.ac.uk/resources/software/gff/spec.html):
 
@@ -213,6 +227,17 @@ Selected parameters:
 --SAMTOOLS_PATH=/path/to/samtools/
   Optional: set path to samtools (if not specified as environment variable). In some cases, users of BRAKER1 reported that they "shortend" the headers of FASTA files after their first attempt to run BRAKER1, but they forgot to fix the same sequence names in the BAM file. SAMTOOLS is used by BRAKER1 to automatically fix such issues. The command line flag has higher priority than environment variable.
 
+--BLAST_DB=/path/to/blast/database
+  Optional: Set path to local blast database. Has higher priority than blast via internet server.
+                      
+--BLAST_PATH=/path/to/blast/executable
+  Set path to local blast executable (if not specified as environment variable). Has higher priority than the
+  environment variable.
+                         
+--BLAST-threshold
+  Threshold of genes that the chosen sequence parts for optimisation with
+  BLAST should at least contain (calculation based on GeneMark-Et input)
+
 --hints=hints.gff            
   Additional hints files for gene predictions with AUGUSTUS in gff format (should only be used in combination
   with --optCfgFile)
@@ -231,6 +256,7 @@ Selected parameters:
   Skip optimize parameter step (not recommended!)
 
 --softmasking
+  Softmasking option for soft masked genome files. Set to 'on' or '1'
 
 --useexisting
   Use the present config and parameter files if they exist for 'speciesname'

@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: January 7th 2015                                                                   #
+# Release date: July 10th 2015                                                                     #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -47,8 +47,8 @@ OPTIONS
     --help                          Print this help message
     --allowed=gtag,gcaag,atac       Allowed acceptor and donor splice site types
     --score                         Set score to 'mult' entry or '1', if the last column does not contain a 'mult' entry
-    --genome=genome.fa              see above
-    --introns=introns.gff           see above
+    --genome=genome.fa              See above
+    --introns=introns.gff           See above
                                     
 
                           
@@ -62,20 +62,24 @@ DESCRIPTION
 ENDUSAGE
 
 
-my ($genome, $introns, @allowed, $mult_score, $help);
-my %annos; # keys: sequences, elements: annotations
-my $seqname;
-my $seq;
+my @allowed;    # allowed acceptor and donor splice site types
+my %annos;      # keys: sequences, elements: annotations
+my $genome;     # genome file name
+my $help;       # print usage 
+my $introns;    # introns file name
+my $mult_score; # set score column to multiplicity entry
+my $seqname;    # sequence name
+my $seq;        # sequence
 
 if(@ARGV==0){
   print "$usage\n"; 
   exit(0);
 }
 
-GetOptions( 'introns=s' => \$introns,
+GetOptions( 'allowed=s' => \@allowed,
             'genome=s'  => \$genome,
+            'introns=s' => \$introns,
             'score!'    => \$mult_score,
-            'allowed=s' => \@allowed,
             'help!'     => \$help);
 
 if($help){
