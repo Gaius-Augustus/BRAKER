@@ -537,10 +537,10 @@ if(! -f "$genome"){
   training();                   # train species-specific parameters with optimize_augustus.pl and etraining
 
   # no extrinsic file is defined, extrinsic step is not skipped and no softmasking option is used
-  if(!defined($extrinsicCfgFile) && !$skipExtrinsic && !$soft_mask){
+  if(!defined($extrinsicCfgFile) && defined($blast_path) && !$soft_mask){
     extrinsic_tests_com(); # test with BLAST
   # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
-  }elsif((!defined($extrinsicCfgFile) && $skipExtrinsic) || (!defined($extrinsicCfgFile) && $soft_mask)){
+  }elsif((!defined($extrinsicCfgFile) && !defined($blast_path)) || (!defined($extrinsicCfgFile) && $soft_mask)){
     extrinsic(); # use default extrinsic file
   }
   # copy extrinsic file to species parameters directory
@@ -1353,7 +1353,7 @@ sub check_upfront{ # see autoAug.pl
     "Statistics::Basic",
   );
 
-  if(!$skipExtrinsic){
+  if(defined($blast_path)){
     push(@module_list, "Bio::Tools::Run::StandAloneBlastPlus");
     push(@module_list, "Bio::SeqIO");
   }
@@ -1381,7 +1381,7 @@ sub check_upfront{ # see autoAug.pl
     exit(1);
   }
 
-  if(!$ENV{'BLAST_PATH'} && !defined($blast_path) && !$skipExtrinsic){ 
+  if(!$ENV{'BLAST_PATH'} && !defined($blast_path)){ 
     print STDERR "WARNING: The environment variable BLAST_PATH is not defined. Please export an environment variable for BLAST or use --BLAST_PATH=path/to/blast.\n";
     print STDERR "Extrinsic file optimisation with BLAST will be skipped and the programme will use default settings for extrinsic file!\n";
     $skipExtrinsic = 0;
