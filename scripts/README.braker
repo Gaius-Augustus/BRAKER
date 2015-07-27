@@ -18,7 +18,7 @@
 
               1. INTRODUCTION
               ---------------
-BRAKER1 is a pipeline for unsupervised RNA-Seq-based genome annotation that combines the advantages of GeneMark-ET and AUGUSTUS. BRAKER1 requires an RNA-Seq read alignment file (in the bam format) and a genome file as input. First,  GeneMark-ET performs iterative training and generates initial gene structures using support from RNA-Seq. Second, AUGUSTUS uses predicted genes for training and then integrates RNA-Seq read information as extrinsic evidence into final gene predictions. For more information on AUGUSTUS or GeneMark-ET see their respective README files.
+BRAKER1 is a pipeline for unsupervised RNA-Seq-based genome annotation that combines the advantages of GeneMark-ET and AUGUSTUS. BRAKER1 requires an RNA-Seq read alignment file (in the bam format) and a genome file as input. First, GeneMark-ET performs iterative training and generates initial gene structures using support from RNA-Seq. Second, AUGUSTUS uses predicted genes for training and then integrates RNA-Seq read information as extrinsic evidence into final gene predictions. For more information on AUGUSTUS or GeneMark-ET see their respective README files.
 
               2. INSTALLATION
               ---------------
@@ -149,7 +149,7 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
     --BLAST_PATH=/my_path_to_blast/bin/
 
 11. Optional: 
-      BLAST is not required for running BRAKER1 if you do not want to try to optimise the
+      BLAST is not required for running BRAKER1 if you do not want to try to optimize the
       extrinsic parameters used by AUGUSTUS. Otherwise it uses the default parameters.
 
       Download and install BLAST (e.g. from here: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/, 

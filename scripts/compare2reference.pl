@@ -39,7 +39,7 @@ compare2reference.pl     compare prediction file to reference and get statistics
 
 SYNOPSIS
 
-compare2reference.pl [OPTIONS] genemark.gtf introns.gff
+compare2reference.pl [OPTIONS] --in=prediction.gff3 --ref=reference.gff3
 
   prediction.gff3         prediction file in gff, gtf or gff3 format (needs 'gene' line entries)
   reference.gff3          reference file in gff, gtf or gff3 format (needs 'gene' line entries)

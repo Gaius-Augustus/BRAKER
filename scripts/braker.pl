@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: July 1oth 2015                                                                     #
+# Release date: July 10th 2015                                                                     #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -108,7 +108,7 @@ OPTIONS
       blast/database                     blast via internet server.
     --BLAST_PATH=/path/to/               Set path to local blast executable.
       blast/executable                   
-    --BLAST-threshold                    Threshold of genes that the chosen sequence parts for optimisation with
+    --BLAST-threshold                    Threshold of genes that the chosen sequence parts for optimization with
                                          BLAST should at least contain (calculation based on GeneMark-Et input)
     --cores                              Specifies the maximum number of cores that can be used during 
                                          computation
@@ -132,7 +132,7 @@ OPTIONS
     --SAMTOOLS_PATH=/path/to/            Optionally set path to samtools (if not specified as environment 
       samtools/                          variable) to fix BAM files automatically, if necessary. Has higher     
                                          priority than environment variable.
-    --skipExtrinsic                      Skip extrinsic file test for optimisation with Blast
+    --skipExtrinsic                      Skip extrinsic file test for optimization with Blast
     --skipGeneMark-ET                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
                                          different source) 
     --skipOptimize                       Skip optimize parameter step (not recommended).
@@ -203,7 +203,7 @@ my $printVersion = 0;                 # print version number, if set
 my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'}; # samtools environment variable
 my $SAMTOOLS_PATH_OP;                 # path to samtools executable, higher priority than $SAMTOOLS_PATH on system
 my $scriptPath=dirname($0);           # path of directory where this script is located
-my $skipExtrinsic = 0;                # skip extrinsic file optimisation tests
+my $skipExtrinsic = 0;                # skip extrinsic file optimization tests
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source) 
 my $skipoptimize = 0;                 # skip optimize parameter step
 my $species;                          # species name
@@ -394,7 +394,7 @@ if(defined($species)){
   }
 
   foreach my $word (@forbidden_words){
-    if($species =~m/\A$word}\Z/){
+    if($species eq $word){
       print STDOUT "WARNING: $species is not allowed as a species name. ";
       $bool_species = "false";
     }
@@ -1027,7 +1027,7 @@ sub training{
     print STDOUT "genbank file filtered.\n";
   }
 
-  # split into training und test set
+  # split into training and test set
   if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb.train"])  || $overwrite){
     print STDOUT "NEXT STEP: split genbank file into train and test file\n";
     $string = find("randomSplit.pl");
@@ -1383,14 +1383,14 @@ sub check_upfront{ # see autoAug.pl
 
   if(!$ENV{'BLAST_PATH'} && !defined($blast_path)){ 
     print STDERR "WARNING: The environment variable BLAST_PATH is not defined. Please export an environment variable for BLAST or use --BLAST_PATH=path/to/blast.\n";
-    print STDERR "Extrinsic file optimisation with BLAST will be skipped and the programme will use default settings for extrinsic file!\n";
+    print STDERR "Extrinsic file optimization with BLAST will be skipped and the programme will use default settings for extrinsic file!\n";
     $skipExtrinsic = 0;
   }elsif(defined($blast_path) && ! -d $blast_path){
     if($ENV{'BLAST_PATH'}){
       print STDERR "WARNING: path to blast executable $blast_path does not exist. The programme will try to use the path which is defined as environmental variable 'BLAST_PATH'\n";
     }else{
       print STDERR "WARNING: path to blast executable $blast_path does not exist.\n";
-      print STDERR "Extrinsic file optimisation with BLAST will be skipped and the programme will use default settings for extrinsic file!\n";
+      print STDERR "Extrinsic file optimization with BLAST will be skipped and the programme will use default settings for extrinsic file!\n";
       $skipExtrinsic = 0;
     }
   }
