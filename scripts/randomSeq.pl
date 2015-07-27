@@ -281,7 +281,7 @@ sub get_random_seq{
   my $index = 0;
   # at first choose the sequence based on its relative share of the whole fasta file
   for(my $i=0; $i<scalar(@seqInfo)-1; $i++){
-    if($low_boundary <= $rand && $rand < $up_boundary){
+    if($low_boundary <= $rand && $rand < $up_boundary){ # Mario: low_boundary variable unnecessay: second condition here implies first
       $index = $i;
       last;
     }else{      
