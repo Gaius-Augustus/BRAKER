@@ -3,6 +3,7 @@
 \usepackage{hyperref}
 \usepackage{rotating}
 \usepackage{amssymb}
+\usepackage{color}
 
 
 %opening
@@ -18,22 +19,7 @@
 
 \chapter{Supplementary Results}
 
-\begin{sidewaystable}[!h]
-\caption{Accuracy results of BRAKER1 (on softmasked genomes) and MAKER2 (with fully automatic repeat masking, RNA-Seq only source of extrinsic evidence) in genomes of four model organisms. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Accuracy results for BRAKER1 on unmasked genomes can be found in Supplementary Table 1.3.\label{Tab:01}}
-\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
- & \multicolumn{2}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{2}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{2}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{3}{c}{\textit{Schizosaccharomyces pombe}}\\
- & \tiny{BRAKER1} & \tiny{MAKER2} &  \tiny{BRAKER1} & \tiny{MAKER2}  & \tiny{BRAKER1} & \tiny{MAKER2} &\tiny{BRAKER1} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
- \hline
-Gene sensitivity        & \textbf{64.4} & 51.3          & \textbf{55.0} & 41.0 & \textbf{67.6} & 58.0 & 77.2 & 42.8 & \textbf{79.7}\\
-Gene specificity        & 52.0          & \textbf{52.5} & \textbf{55.2} & 30.8 & \textbf{61.1} & 46.9 & \textbf{80.7} & 68.7 & 72.6\\
-Transcript sensitivity  & \textbf{55.0} & 43.5          & \textbf{43.0} & 31.3 & \textbf{50.2} & 42.3 & 77.2 & 42.8 & \textbf{79.7}\\
-Transcript specificity  & 50.9          & \textbf{52.5} & \textbf{53.2} & 30.8 & \textbf{59.9} & 47.9 & \textbf{76.6} & 68.7 & 72.6\\
-Exon sensitivity        & \textbf{82.9} & 76.1          & \textbf{80.2} & 69.4 & \textbf{73.3} & 64.9 & \textbf{82.7} & 50.1 & 79.6\\
-Exon specificity        & \textbf{79.0} & 76.1          & \textbf{85.3} & 62.3 & \textbf{67.3} & 55.0 & \textbf{83.3} & 71.4 & 81.7\\
-\hline
 
-\end{tabular}
-\end{sidewaystable}
 
 Table \ref{compare} shows  gene prediction accuracy of GeneMark-ET (\textit{ab initio}, first step in BRAKER1) and of AUGUSTUS (trained on GeneMark-ET predictions, using RNA-Seq read alignment information as extrinsic evidence).
 
@@ -72,6 +58,23 @@ Exon specificity        & 78.8 & 85.4 & 67.1 & 82.9\\
 \hline
 \end{tabular}
 \end{table}
+
+MAKER2 is an annotation pipeline that automatically repeat masks genomes, executes several gene finders (in our case SNAP, AUGUSTUS and GeneMark-ES), integrates extrinsic evidence when specifies and creates a ``combined gene set'' from all information input sources. We trained SNAP and AUGUSTUS on intermediate MAKER2 results that were generated with Cufflinks assembled RNA-Seq data. GeneMark-ES is a self-training algorithm that requires a genome sequence, only. Table \ref{single_preds_maker} shows \textit{ab initio} prediction results of SNAP, AUGUSTUS and GeneMark-ES applied to unmasked genomes with the parameters that were used for running MAKER2. In comparison to the final MAKER2 results (see Table 1 in the main manuscript), MAKER2 improves gene prediction accuracy by adding RNA-Seq evidence, repeat masking and combining results.
+
+\begin{sidewaystable}[h!]
+\caption{\textit{Ab initio} prediction accuracy of SNAP, AUGUSTUS and GeneMark-ET (as trained for running MAKER2) on unmasked genomes. (Transcript specificity is not shown since it is in this case identical to Gene specificity; none of the methods is able to predict alternative transcripts in \textit{ab initio} mode.) \label{single_preds_maker}}
+\begin{tabular}{lp{1.5cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}}\hline
+ & \multicolumn{3}{c}{\textit{A.~thaliana}} &  \multicolumn{3}{c}{\textit{C.~elegans}} &  \multicolumn{3}{c}{\textit{D.~melanogaster}} &  \multicolumn{3}{c}{\textit{S.~pombe}}\\
+ & \tiny{SNAP} & \tiny{AUGUSTUS} & \tiny{GeneMark-ES} & \tiny{SNAP} & \tiny{AUGUSTUS} &  \tiny{GeneMark-ES} & \tiny{SNAP} & \tiny{AUGUSTUS} &\tiny{GeneMark-ES} & \tiny{SNAP} & \tiny{AUGUSTUS} & \tiny{GeneMark-ES}\\
+ \hline
+Gene sensitivity        & 14.5 & 37.5 & 32.6 & 21.0 & 23.9 & 21.5 & 40.8 & 41.3 & 33.4 & 50.3 & 61.8 & 63.4\\
+Gene specificity        & 11.2 & 32.1 & 28.5 & 15.3 & 25.7 & 20.9 & 30.6 & 37.6 & 31.9 & 49.4 & 67.4 & 66.0\\
+Transcript sensitivity  & 11.9 & 31.6 & 27.3 & 16.4 & 18.3 & 16.4 & 30.4 & 29.6 & 23.8 & 50.3 & 61.8 & 63.4\\
+Exon sensitivity        & 58.7 & 71.5 & 69.9 & 67.9 & 69.1 & 69.7 & 57.4 & 56.3 & 53.3 & 66.4 & 64.8 & 67.5\\
+Exon specificity        & 44.3 & 66.5 & 59.9 & 53.1 & 72.1 & 67.3 & 43.5 & 53.2 & 45.9 & 56.4 & 69.7 & 68.3\\
+\hline
+\end{tabular}
+\end{sidewaystable}
 
 
 
@@ -439,6 +442,23 @@ CufflinksGTF_to_CodingQuarryGFF3.py transcripts.gtf > transcripts.gff3
 
 CodingQuarry -f genome.fasta -t transcripts.gff3 -d -p 8
 \end{verbatim}
+
+
+\section{\textit{Ab initio} Gene Predictions}
+
+In order to show that using RNA-Seq data is beneficial to gene prediction accuracy as compared to \textit{ab initio} prediction, genes were predicted \textit{ab initio} with parameters that were used for running MAKER2 and BRAKER1, respectively.
+
+\subsection{For comparison with MAKER2}
+
+SNAP, AUGUSTUS and GeneMark-ET were used for running MAKER2. \textit{Ab initio} predictions were produced with the following commands:
+
+\begin{verbatim}
+snap species_specific_maker2_snap_model unmasked_genome.fa > snap.zff
+augustus species=species_specific_maker2_augustus_model unmasked_genome.fa > augustus.out
+gmes_petap.pl  --ES  --sequence unmasked_genome.fa --pbs --v
+\end{verbatim}
+
+\subsection{For comparison with BRAKER1}
 
 
 \section{Measuring Accuracy}

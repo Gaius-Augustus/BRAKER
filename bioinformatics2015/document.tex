@@ -1,5 +1,6 @@
 \documentclass{bioinfo}
 \usepackage{hyperref}
+\usepackage{color}
 %%%%%%%%%%%%%%%%%%%%%% comment boxes
 
 \copyrightyear{2015}
@@ -93,7 +94,23 @@ Presence of repetitive sequences and mobile elements (transposable elements, TEs
 
 \section{Results and Discussion}
 
-When comparing BRAKER1 to MAKER2 (details on the MAKER2 run are described in Supplementary), BRAKER1 gains on average $~$15 percent points in accuracy on gene level\footnote{A \textit{gene} may have several \textit{transcripts} in the reference and in a predicted gene set. When computing \textit{transcript} level accuracy, each transcript variant is counted as a TP/FP/FN on its own. When computing \textit{gene} level accuracy, a predicted gene is counted as TP if at least one of its transcripts matches correctly a reference transcript. For details, see documentation of the EVAL package \citep{Eval}} when compared to MAKER2 (see Supplementary Table 1.1).
+\begin{table*}[!t]
+\processtable{\textcolor{red}{Accuracy results of the final gene prediction step of BRAKER1 with AUGUSTUS (on softmasked genomes) and MAKER2 (with fully automatic repeat masking, RNA-Seq only source of extrinsic evidence) in genomes of four model organisms. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Accuracy results for BRAKER1 on unmasked genomes can be found in Supplementary Table 1.2.}\label{Tab:01}}
+{\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
+ & \multicolumn{2}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{2}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{2}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{3}{c}{\textit{Schizosaccharomyces pombe}}\\
+ & \tiny{BRAKER1} & \tiny{MAKER2} &  \tiny{BRAKER1} & \tiny{MAKER2}  & \tiny{BRAKER1} & \tiny{MAKER2} &\tiny{BRAKER1} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
+ \hline
+Gene sensitivity        & \textbf{64.4} & 51.3          & \textbf{55.0} & 41.0 & \textbf{67.6} & 58.0 & 77.2 & 42.8 & \textbf{79.7}\\
+Gene specificity        & 52.0          & \textbf{52.5} & \textbf{55.2} & 30.8 & \textbf{61.1} & 47.9 & \textbf{80.7} & 68.7 & 72.6\\
+Transcript sensitivity  & \textbf{55.0} & 43.5          & \textbf{43.0} & 31.3 & \textbf{50.2} & 42.3 & 77.2 & 42.8 & \textbf{79.7}\\
+Transcript specificity  & 50.9          & \textbf{52.5} & \textbf{53.2} & 30.8 & \textbf{59.9} & 47.9 & \textbf{76.6} & 68.7 & 72.6\\
+Exon sensitivity        & \textbf{82.9} & 76.1          & \textbf{80.2} & 69.4 & \textbf{73.3} & 64.9 & \textbf{82.7} & 50.1 & 79.6\\
+Exon specificity        & \textbf{79.0} & 76.1          & \textbf{85.3} & 62.3 & \textbf{67.3} & 55.0 & \textbf{83.3} & 71.4 & 81.7\\
+\hline
+\end{tabular}}{}
+\end{table*}
+
+When comparing BRAKER1 to MAKER2 (details on the MAKER2 run are described in Supplementary), BRAKER1 gains on average $~$15 percent points in accuracy on gene level\footnote{A \textit{gene} may have several \textit{transcripts} in the reference and in a predicted gene set. When computing \textit{transcript} level accuracy, each transcript variant is counted as a TP/FP/FN on its own. When computing \textit{gene} level accuracy, a predicted gene is counted as TP if at least one of its transcripts matches correctly a reference transcript. For details, see documentation of the EVAL package \citep{Eval}} when compared to MAKER2 (see \textcolor{red}{table \ref{Tab:01}}).
 %One could ask - which factors are behind better performance of BRAKER1 in comparison with MAKER2. BRAKER1 is using RNA-Seq assisted GeneMark-ET \citep{GeneMark-ET}  instead of purely ab initio self-training GeneMark-ES \citep{GeneMark-ES}. GeneMark-ET performance improves with respect to GeneMark-ES on larger genomes having longer introns and intergenic regions. On shorter genomes, such as fungal ones, the difference is marginal. 
 We should remind that the comparison of accuracy does not consider the capability of MAKER2 to use a protein database. BRAKER1 currently does not use a protein database. 
 %In addition, benchmarking a homology based annotation method for a realistic annotation project is difficult because the information gain from using a protein database strongly depends on the phylogenetic distance of the target species to species in the database and their annotation quality. 
@@ -101,13 +118,15 @@ The RNA-Seq approach used here is independent of a database.
 
 Notably, \citet{SnowyOwl} developed a pipeline, SnowyOwl, with GeneMark-ES \cite{GeneMark-ES} and AUGUSTUS to predict genes in fungal genomes. SnowyOwl attempts to improve prediction accuracy by selecting a gene variant with the highest homology score from a set of predicted gene variants in the same locus. This pipeline requires protein database information as additional external resource.  We did not include SnowyOwl into comparisons since it cannot work without protein information.% which we do not admit for usage in this study. 
 
-Since BRAKER1 uses AUGUSTUS being trained on GeneMark-ET, and since AUGUSTUS incorporates RNA-Seq into the prediction step, we expect to see an increase in accuracy when comparing AUGUSTUS to GeneMark-ET. This is the case for \textit{A.~thaliana}, \textit{C.~elegans} and \textit{D.~melanogaster}; on the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1 (see Supplementary Table 1.2). 
+Since BRAKER1 uses AUGUSTUS being trained on GeneMark-ET, and since AUGUSTUS incorporates RNA-Seq into the prediction step, we expect to see an increase in accuracy when comparing AUGUSTUS to GeneMark-ET. This is the case for \textit{A.~thaliana}, \textit{C.~elegans} and \textit{D.~melanogaster}; on the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1 (see Supplementary Table \textcolor{red}{1.1}). 
 %AUGUSTUS parameters can be adapted to improve prediction accuracy in such species, but we here report results with the BRAKER1 default settings. 
 
-Supplementary Table 1.3 shows that genome repeat masking is an optional pre-processing step for running BRAKER1 that does not affect prediction accuracy much. We observed that on \textit{S.~pombe}, BRAKER1 is on average $\sim$4\% more accurate on gene level than CodingQuarry. %Notably, GeneMark-ET alone is even more accurate on this species. 
+Supplementary Table 1.2 shows that genome repeat masking is an optional pre-processing step for running BRAKER1 that does not affect prediction accuracy much. We observed that on \textit{S.~pombe}, BRAKER1 is on average $\sim$4\% more accurate on gene level than CodingQuarry. %Notably, GeneMark-ET alone is even more accurate on this species. 
 BRAKER1 required $\sim$17.5 hours on a single CPU for training and prediction on \textit{D.~melanogaster} but can be run in parallel.
 
 In conclusion, BRAKER1 is a fully automatic eukaryotic gene prediction pipeline with GeneMark-ET and AUGUSTUS working with genomic and RNA-Seq read information. In contrast to MAKER2, BRAKER1 is a ``one step process'', meaning that after starting it once, it will execute training and prediction without the need for manual command execution. BRAKER1 predicts genes more accurately than MAKER2 and CodingQuarry.
+
+
 
 \section*{Acknowledgement}
 
