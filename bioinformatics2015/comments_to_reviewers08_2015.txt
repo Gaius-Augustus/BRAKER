@@ -16,37 +16,27 @@ We modified the caption of (now table 1 of the main manuscript, previously Suppl
 
 "The work fails to clearly demonstrate the value of RNA-Seq for improving gene prediction accuracy. Ideally, the authors would provide the accuracy statistics for each of the following (note each of these tools is run by the authors as part of their current work, but results are not in all cases reported as part of this study): 1. SNAP, 2. Augustus without rna-seq hints, 3. GenMark-ET without rna-seq hints, 4. Augustus with rna-seq hints, 5. GeneMark-ET with rna-seq hints, 6. Maker, and 7. Braker1. Such a progression should demonstrate the clear added value of RNA-Seq data to providing hints and improving accuracy as compared to ab initio gene prediction without such hints (as previously published). Also, Maker and Braker, if both providing added value in their respective implementations, should be providing improved accuracy statistics as compared to the individual tools providing the input. Otherwise, one would be better off more simply running one of the input predictors alone with or without rna-seq data."
 
-We would like to clarify that MAKER2 and BRAKER1 are two completely different approaches towards genome annotation. MAKER2 is a rather "complete system", covering everything from de novo repeat masking to combining different sets of gene predictions (of independently run gene predictors) into a presumably higher quality gene set. MAKER2 can be run with RNA-Seq data (but should usually be run with a protein database for additional extrinsic evidence, but we did not use the protein database since we wanted to compare to a tool that uses RNA-Seq as extrinsic evidence, only). MAKER2 does not train gene predictors for novel genomes, automatically. Training gene predictors with MAKER2 requires "manual working steps". 
+We have added a Supplementary Table 1.3 that shows ab intio gene prediction results of SNAP, AUGUSTUS and GeneMark-ES in context with MAKER2. This means, SNAP and AUGUSTUS were trained using intermediate MAKER2 results. In context with Table 1 (main manuscript), these results demonstrate a clear gain in accuracy when predictions from all three gene finders are combined and RNA-Seq and repeat masking are added by MAKER2.
 
-BRAKER1, on the other hand, is a gene prediction pipeline that uses a self-training gene finder, GeneMark-ET to generate initial gene predictions (using RNA-Seq during the training step), and then trains the gene finder AUGUSTUS fully automatically based on these initial predictions. Afterwards, BRAKER1 runs AUGUSTUS with the new parameters and RNA-Seq as hints to generate final predictions. BRAKER1 does not run repeat masking, it does not combine gene sets of several gene finders.
+We have added a Supplementary Table 1.4 that shows ab initio gene prediction results of AUGUSTUS trained by experts (parameters are distributed via the AUGUSTUS release) and ab initio prediction results of AUGUSTUS trained fully automatically by BRAKER1. In context with Table 1 (main manuscript), these results demonstrate a clear gain in accuracy when RNA-Seq information is added by BRAKER1.
 
-We agree that a couple of more accuracy values may be helpful for readers to understand the benefit of using RNA-Seq data. Concerning your suggestions:
-
-1. SNAP: We don't think there is any particular benefit of presenting SNAP gene prediction results. The MAKER2 publication (Holt and Yandell, 2011) contains a table 1 which shows prediction accuracy of MAKER2 when run with AUGSTUS, GeneMark and SNAP, respectively. BRAKER1 does not use SNAP at all. This would rise the question on what basis SNAP should be trained for presenting results in our manuscript. We have a parameter set for running SNAP within MAKER2, but we have no parameter set for running SNAP on the basis of BRAKER1 (because SNAP is not part of BRAKER1). Also, it would raise the question on how the RNA-Seq hints should be integrated into SNAP (it is probably possible, but out of scope for our manuscript). We therefore will not report additional results for SNAP.
-
-2. AUGUSTUS without RNA-Seq hints: We agree that this will be helpful. However, it again raises the question on which training basis results shall be shown. We have expert trained parameters, BRAKER1 parameters and MAKER2 parameters. Since our 
-
-
+We would like to clarify that there is not "GeneMark-ET with rna-seq hints". GeneMark-ET always performs ab initio predictions. RNA-Seq information is used during training, only. However, in a way, GeneMark-ES may compare to what you wish to see. GeneMark-ES does not use RNA-Seq information during training.
 
 
 Reviewer: 2
 
 Comments to the Author
-The manuscript describes a pipeline combining two genome annotation tools for a fully automated
-RNA-Seq based genome annotation. This is a very important task since till now genome annotation
-is often still performed by few expert groups in the field in a semi-automated manner, and thus
+"The manuscript describes a pipeline combining two genome annotation tools for a fully automated RNA-Seq based genome annotation. This is a very important task since till now genome annotation is often still performed by few expert groups in the field in a semi-automated manner, and thus
 poses a major bottleneck for the analysis of newly sequenced genomes.
 
-The proposed pipeline may not be the be all and end all of RNA-Seq based genome annotation. It
-would be more desirable to integrate the two concepts in a single statistical framework. However,
-to make such an integration work robustly and reliably in practice across a range of species is
-an substantial effort or which other people may benefit.
-Moreover, the total runtime of 17 CPU hours seems favourable.
+The proposed pipeline may not be the be all and end all of RNA-Seq based genome annotation. It would be more desirable to integrate the two concepts in a single statistical framework. However, to make such an integration work robustly and reliably in practice across a range of species is an substantial effort or which other people may benefit. Moreover, the total runtime of 17 CPU hours seems favourable."
 
 Minor:
-Some hints on which parameters of
-the genome/RNA-Seq data mainly dominate the runtime would be interesting.
 
-It would have been interesting to understand why GeneMark-ET outperformed Augustus for the yeast
-dataset. Some comments in the supplement would be sufficient in my opinion, since the overall
-usefulness of the pipeline is sufficiently supported.
+"Some hints on which parameters of the genome/RNA-Seq data mainly dominate the runtime would be interesting."
+
+MARIO, PLEASE RESOND TO THIS!
+
+"It would have been interesting to understand why GeneMark-ET outperformed Augustus for the yeast dataset. Some comments in the supplement would be sufficient in my opinion, since the overall usefulness of the pipeline is sufficiently supported."
+
+There is a comment on this in Supplementary Materials (in the caption of Supplementary Table 1.1): "On the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accommodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure ab initio predictions made by GeneMark-ET."
