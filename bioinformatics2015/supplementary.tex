@@ -76,7 +76,22 @@ Exon specificity        & 44.3 & 66.5 & 59.9 & 53.1 & 72.1 & 67.3 & 43.5 & 53.2 
 \end{tabular}
 \end{sidewaystable}
 
+In order to demonstrate that parameter training for AUGUSTUS with BRAKER1 works well, we show \textit{ab initio} gene prediction accuracy of AUGUSTUS trained by experts (as distributed via the AUGUSTUS release) and trained by BRAKER1 fully automatically in table \ref{single_preds_braker}.
 
+\begin{sidewaystable}[h!]
+\caption{\textit{Ab initio} prediction accuracy of AUGUSTUS trained by experts and fully automatically trained by BRAKER1 on softmasked genomes. (Transcript specificity is not shown since it is in this case identical to Gene specificity; AUGUSTUS is not able to predict alternative transcripts in \textit{ab initio} mode.) \label{single_preds_braker}}
+\begin{tabular}{lp{1.5cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}}\hline
+ & \multicolumn{2}{c}{\textit{A.~thaliana}} &  \multicolumn{2}{c}{\textit{C.~elegans}} &  \multicolumn{2}{c}{\textit{D.~melanogaster}} &  \multicolumn{2}{c}{\textit{S.~pombe}}\\
+ & \tiny{Expert} & \tiny{BRAKER1} & \tiny{Expert} & \tiny{BRAKER1} &  \tiny{Expert} & \tiny{BRAKER1} & \tiny{Expert} &\tiny{BRAKER1}\\
+ \hline
+Gene sensitivity        & 51.8 & 49.2 & 45.2 & 42.3 & 53.2 & 56.1 &  & 70.5 \\
+Gene specificity        & 56.6 & 48.2 & 43.2 & 46.2 & 63.4 & 53.7 &  & 76.0  \\
+Transcript sensitivity  & 44.2 & 41.6 & 35.2 & 32.7 & 39.0 & 41.1 &  & 70.4  \\
+Exon sensitivity        & 79.8 & 76.4 & 76.1 & 74.9 & 67.7 & 65.0 &  & 73.2  \\
+Exon specificity        & 81.7 & 79.8 & 81.5 & 83.4 & 67.4 & 63.3 &  & 83.1  \\
+\hline
+\end{tabular}
+\end{sidewaystable}
 
 \chapter{Supplementary Methods}
 
