@@ -153,6 +153,8 @@ The command for running BRAKER1 version 1.5 with GeneMark-ET version 4.28 and AU
 
 For running MAKER2, we followed the tutorial at \url{http://weatherby.genetics.utah.edu/MAKER/wiki/index.php/MAKER_Tutorial_for_GMOD_Online_Training_2014}, mostly.
 
+A database of transposable elements and a RepBase repeat library were used for repeat masking with MAKER2.
+
 MAKER2 was run with the gene finders SNAP \cite{SNAP}, AUGUSTUS \cite{AUGUSTUS}, and GeneMark-ES \cite{GeneMark-ES}. MAKER2 was developed to run with protein database to support gene discovery. We did not enable database support because BRAKER1 has no such feature. Thus, MAKER2 - in the way that we used it - is a method that calls and masks repeats, generates training gene structures on the basis of RNA-Seq data, and predicts genes with extrinsic evidence from RNA-Seq data. Running MAKER2 on a novel species consists of three steps: 
 
 \begin{enumerate}
