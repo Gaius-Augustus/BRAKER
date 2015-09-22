@@ -4,6 +4,8 @@
 \usepackage{rotating}
 \usepackage{amssymb}
 \usepackage{color}
+\usepackage[left=0.8in, right=0.8in, top=0.8in, bottom=0.8in]{geometry}
+\usepackage{layout}
 
 
 %opening
@@ -23,63 +25,165 @@
 
 Table \ref{compare} shows  gene prediction accuracy of GeneMark-ET (\textit{ab initio}, first step in BRAKER1) and of AUGUSTUS (trained on GeneMark-ET predictions, using RNA-Seq read alignment information as extrinsic evidence).
 
-\begin{sidewaystable}[h!]
-\caption{Accuracy results of GeneMark-ET (\textit{ab initio} predictions) and AUGUSTUS (using RNA-Seq) in BRAKER1 on softmasked genomes.
-The AUGUSTUS results are the ones reported for BRAKER1 in Table 1 of the main article. On the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accommodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure \textit{ab initio} predictions made by GeneMark-ET. \label{compare}}
-\begin{tabular}{lp{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}}\hline
- & \multicolumn{2}{c}{\textit{A.~thaliana}} &  \multicolumn{2}{c}{\textit{C.~elegans}} &  \multicolumn{2}{c}{\textit{D.~melanogaster}} &  \multicolumn{2}{c}{\textit{S.~pombe}}\\
- & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} &  \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} &\tiny{AUGUSTUS}\\
+\begin{table}
+\begin{center}
+ \begin{scriptsize}
+ \begin{tabular}{|l|ccc|ccc|}
  \hline
-Gene sensitivity        & 52.6 & \textbf{64.4} & 42.8 & \textbf{55.0} & 54.6 & \textbf{67.6} & \textbf{81.6} & 77.4\\
-Gene specificity        & 51.0 & \textbf{52.0} & 42.4 & \textbf{55.2} & 55.1 & \textbf{61.1} & \textbf{84.2} & 80.5\\
-Transcript sensitivity  & 44.5 & \textbf{55.0} & 32.7 & \textbf{43.0} & 39.8 & \textbf{50.2} & \textbf{81.6} & 77.4\\
-Transcript specificity  & \textbf{51.0} & 50.9 & 42.4 & \textbf{53.2} & 55.1 & \textbf{59.9} & \textbf{84.2} & 76.5\\
-Exon sensitivity        & 80.5 & \textbf{82.9} & 79.7 & \textbf{80.2} & 66.6 & \textbf{73.3} & \textbf{87.6} & 83.2\\
-Exon specificity        & 77.9 & \textbf{79.0} & 78.7 & \textbf{85.3} & 62.1 & \textbf{67.3} & \textbf{88.4} & 83.2\\
+& \multicolumn{3}{|c|}{\textit{A.~thaliana}} & \multicolumn{3}{|c|}{\textit{C.~elegans}}\\
+& GeneMark-ET & AUGUSTUS & BRAKER1 & GeneMark-ET & AUGUSTUS & BRAKER1\\
 \hline
-\end{tabular}
-\end{sidewaystable}
+Gene sensitivity        & 52.6 & 49.2 & \textbf{64.4} & 42.8 & 42.3 & \textbf{55.0}\\
+Gene specificity        & 51.0 & 48.2 & \textbf{52.0} & 42.4 & 46.2 & \textbf{55.2}\\
+Transcript sensitivity  & 44.5 & 41.6 & \textbf{55.0} & 32.7 & 32.7 & \textbf{43.0}\\
+Transcript specificity  & 51.0 & 48.2 & \textbf{50.9} & 42.4 & 46.2 & \textbf{53.2}\\
+Exon sensitivity        & 80.5 & 76.4 & \textbf{82.9} & 79.7 & 74.9 & \textbf{80.2}\\
+Exon specificity        & 77.9 & \textbf{79.8} & 79.0 & 78.7 & 83.4 & \textbf{85.3}\\
+\hline
+& \multicolumn{3}{|c|}{\textit{D.~melanogaster}} & \multicolumn{3}{|c|}{\textit{S.~pombe}}\\
+& GeneMark-ET & AUGUSTUS & BRAKER1 & GeneMark-ET & AUGUSTUS & BRAKER1\\
+\hline
+Gene sensitivity       & 54.6 & 56.1 & \textbf{67.6} & \textbf{81.3} & 70.5 & 77.4\\
+Gene specificity       & 55.1 & 53.7 & \textbf{61.1} & \textbf{83.9} & 76.0 & 80.5\\
+Transcript sensitivity & 39.8 & 41.1 & \textbf{50.2} & \textbf{81.3} & 70.4 & 77.4\\
+Transcript specificity & 55.1 & 53.7 &\textbf{ 59.9} & \textbf{83.9} & 76.0 & 76.5\\
+Exon sensitivity       & 66.6 & 65.0 & \textbf{73.3} & \textbf{87.4} & 73.2 & 83.2\\
+Exon specificity       & 62.1 & 63.3 & \textbf{67.3} & \textbf{88.2} & 83.1 & 83.2\\
+\hline
+ \end{tabular}
+\end{scriptsize}
+\end{center}
+\caption{Accuracy results of GeneMark-ET (\textit{ab initio}), AUGUSTUS (\textit{ab initio}) and BRAKER1 (AUGUSTUS trained on filtered GeneMark-ET predictions with RNA-Seq hints) on softmasked genomes.
+On the fungus \textit{S.~pombe}, GeneMark-ET is superior to the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accommodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure \textit{ab initio} predictions made by GeneMark-ET. \label{compare}}
+\end{table}
+
+% \begin{table}[h!]
+% \caption{Accuracy results of GeneMark-ET (\textit{ab initio} predictions) and AUGUSTUS (using RNA-Seq) in BRAKER1 on softmasked genomes.
+% The AUGUSTUS results are the ones reported for BRAKER1 in Table 1 of the main article. On the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accommodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure \textit{ab initio} predictions made by GeneMark-ET. \label{compare}}
+% \begin{center}
+% \begin{tabular}{lp{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}p{1.5cm}p{1.2cm}}\hline
+%  & \multicolumn{2}{c}{\textit{A.~thaliana}} &  \multicolumn{2}{c}{\textit{C.~elegans}} &  \multicolumn{2}{c}{\textit{D.~melanogaster}} &  \multicolumn{2}{c}{\textit{S.~pombe}}\\
+%  & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} & \tiny{AUGUSTUS} &  \tiny{GeneMark-ET} & \tiny{AUGUSTUS} & \tiny{GeneMark-ET} &\tiny{AUGUSTUS}\\
+%  \hline
+% Gene sensitivity        & 52.6 & \textbf{64.4} & 42.8 & \textbf{55.0} & 54.6 & \textbf{67.6} & \textbf{81.6} & 77.4\\
+% Gene specificity        & 51.0 & \textbf{52.0} & 42.4 & \textbf{55.2} & 55.1 & \textbf{61.1} & \textbf{84.2} & 80.5\\
+% Transcript sensitivity  & 44.5 & \textbf{55.0} & 32.7 & \textbf{43.0} & 39.8 & \textbf{50.2} & \textbf{81.6} & 77.4\\
+% Transcript specificity  & \textbf{51.0} & 50.9 & 42.4 & \textbf{53.2} & 55.1 & \textbf{59.9} & \textbf{84.2} & 76.5\\
+% Exon sensitivity        & 80.5 & \textbf{82.9} & 79.7 & \textbf{80.2} & 66.6 & \textbf{73.3} & \textbf{87.6} & 83.2\\
+% Exon specificity        & 77.9 & \textbf{79.0} & 78.7 & \textbf{85.3} & 62.1 & \textbf{67.3} & \textbf{88.4} & 83.2\\
+% \hline
+% \end{tabular}
+% \end{center}
+% \end{table}
+
+
 
 
 Accuracy results of BRAKER1 in unmasked genomes are shown in Table \ref{unmasked}.
 
-
-\begin{table}[h!]
-\caption{Accuracy results of BRAKER1 in unmasked genomes of four model organisms. \label{unmasked}}
-\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
- & \multicolumn{1}{c}{\textit{A.~thaliana}} &  \multicolumn{1}{c}{\textit{C.~elegans}} &  \multicolumn{1}{c}{\textit{D.~melanogaster}} &  \multicolumn{1}{c}{\textit{S.~pombe}}\\
+\begin{table}
+\begin{center}
+ \begin{scriptsize}
+ \begin{tabular}{|l|ccc|ccc|}
  \hline
-Gene sensitivity        & 63.9 & 55.0 & 68.4 & 77.0\\
-Gene specificity        & 51.6 & 55.2 & 60.6 & 80.1\\
-Transcript sensitivity  & 54.6 & 43.2 & 50.6 & 77.0\\
-Transcript specificity  & 50.4 & 53.3 & 59.3 & 76.1\\
-Exon sensitivity        & 82.5 & 79.8 & 73.7 & 83.0\\
-Exon specificity        & 78.8 & 85.4 & 67.1 & 82.9\\
+& \multicolumn{3}{|c|}{\textit{A.~thaliana}} & \multicolumn{3}{|c|}{\textit{C.~elegans}}\\
+& GeneMark-ET & AUGUSTUS & BRAKER1 & GeneMark-ET & AUGUSTUS & BRAKER1\\
 \hline
-\end{tabular}
+Gene sensitivity        & 53.7 & & 63.9 & 42.9 & & 55.0\\
+Gene specificity        & 46.1 & & 51.6 & 41.3 & & 55.2\\
+Transcript sensitivity  & 45.3 & & 56.4 & 32.8 & & 43.2\\
+Transcript specificity  & 46.1 & & 50.4 & 41.3 & & 53.3\\
+Exon sensitivity        & 81.1 & & 82.5 & 79.9 & & 79.8\\
+Exon specificity        & 72.3 & & 78.8 & 77.7 & & 85.4\\
+\hline
+& \multicolumn{3}{|c|}{\textit{D.~melanogaster}} & \multicolumn{3}{|c|}{\textit{S.~pombe}}\\
+& GeneMark-ET & AUGUSTUS & BRAKER1 & GeneMark-ET & AUGUSTUS & BRAKER1\\
+\hline
+Gene sensitivity       & 56.1 & & 68.4 & 82.1 & & 77.0\\
+Gene specificity       & 53.8 & & 60.6 & 84.0 & & 80.1\\
+Transcript sensitivity & 40.7 & & 50.6 & 82.1 & & 77.0\\
+Transcript specificity & 53.8 & & 59.3 & 84.9 & & 76.1\\
+Exon sensitivity       & 67.3 & & 73.7 & 88.4 & & 83.0\\
+Exon specificity       & 60.6 & & 67.1 & 88.2 & & 82.9\\
+\hline
+ \end{tabular}
+\end{scriptsize}
+\end{center}
+\caption{Accuracy results of GeneMark-ET (\textit{ab initio}), AUGUSTUS (\textit{ab initio}) and BRAKER1 (AUGUSTUS trained on filtered GeneMark-ET predictions with RNA-Seq hints) on softmasked genomes.
+On the fungus \textit{S.~pombe}, GeneMark-ET is superior to the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accommodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure \textit{ab initio} predictions made by GeneMark-ET. \label{unmasked}}
 \end{table}
+
+% \begin{table}[h!]
+% \caption{Accuracy results of BRAKER1 in unmasked genomes of four model organisms. \label{unmasked}}
+% \begin{center}
+% \begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
+%  & \multicolumn{1}{c}{\textit{A.~thaliana}} &  \multicolumn{1}{c}{\textit{C.~elegans}} &  \multicolumn{1}{c}{\textit{D.~melanogaster}} &  \multicolumn{1}{c}{\textit{S.~pombe}}\\
+%  \hline
+% Gene sensitivity        & 63.9 & 55.0 & 68.4 & 77.0\\
+% Gene specificity        & 51.6 & 55.2 & 60.6 & 80.1\\
+% Transcript sensitivity  & 54.6 & 43.2 & 50.6 & 77.0\\
+% Transcript specificity  & 50.4 & 53.3 & 59.3 & 76.1\\
+% Exon sensitivity        & 82.5 & 79.8 & 73.7 & 83.0\\
+% Exon specificity        & 78.8 & 85.4 & 67.1 & 82.9\\
+% \hline
+% \end{tabular}
+% \end{center}
+% \end{table}
 
 MAKER2 is an annotation pipeline that automatically repeat masks genomes, executes several gene finders (in our case SNAP, AUGUSTUS and GeneMark-ES), integrates extrinsic evidence when specifies and creates a ``combined gene set'' from all information input sources. We trained SNAP and AUGUSTUS on intermediate MAKER2 results that were generated with Cufflinks assembled RNA-Seq data. GeneMark-ES is a self-training algorithm that requires a genome sequence, only. Table \ref{single_preds_maker} shows \textit{ab initio} prediction results of SNAP, AUGUSTUS and GeneMark-ES applied to unmasked genomes with the parameters that were used for running MAKER2. In comparison to the final MAKER2 results (see Table 1 in the main manuscript), MAKER2 improves gene prediction accuracy by adding RNA-Seq evidence, repeat masking and combining results.
 
-\begin{sidewaystable}[h!]
-\caption{\textit{Ab initio} prediction accuracy of SNAP, AUGUSTUS and GeneMark-ES (as trained for running MAKER2) on unmasked genomes. (Transcript specificity is not shown since it is in this case identical to Gene specificity; none of the methods predicted alternative transcripts in \textit{ab initio} mode.) \label{single_preds_maker}}
-\begin{tabular}{|l|p{1.5cm}p{1.2cm}p{1.2cm}|p{1.2cm}p{1.2cm}p{1.2cm}|p{1.2cm}p{1.2cm}p{1.2cm}|p{1.2cm}p{1.2cm}p{1.2cm}|}\hline
- & \multicolumn{3}{c}{\textit{A.~thaliana}} &  \multicolumn{3}{|c|}{\textit{C.~elegans}} &  \multicolumn{3}{|c|}{\textit{D.~melanogaster}} &  \multicolumn{3}{|c|}{\textit{S.~pombe}}\\
- & \tiny{SNAP} & \tiny{AUGUSTUS} & \tiny{GeneMark-ES} & \tiny{SNAP} & \tiny{AUGUSTUS} &  \tiny{GeneMark-ES} & \tiny{SNAP} & \tiny{AUGUSTUS} &\tiny{GeneMark-ES} & \tiny{SNAP} & \tiny{AUGUSTUS} & \tiny{GeneMark-ES}\\
+\begin{table}
+\begin{center}
+ \begin{scriptsize}
+ \begin{tabular}{|l|cccc|cccc|}
  \hline
-Gene sensitivity        & 14.5 & 37.5 & \textbf{50.7} & 21.0 & 23.9 & \textbf{42.4} & 40.8 & 41.3 & \textbf{52.6} & 50.3 & 61.8 & \textbf{80.8}\\
-Gene specificity        & 11.2 & 32.1 & \textbf{44.3} & 15.3 & 25.7 & \textbf{41.1} & 30.6 & 37.6 & \textbf{50.3} & 49.4 & 67.4 & \textbf{84.2}\\
-Transcript sensitivity  & 11.9 & 31.6 & \textbf{42.7} & 16.4 & 18.3 & \textbf{32.3} & 30.4 & 29.6 & \textbf{38.4} & 50.3 & 61.8 & \textbf{80.8}\\
-Exon sensitivity        & 58.7 & 71.5 & \textbf{80.3} & 67.9 & 69.1 & \textbf{80.0} & 57.4 & 56.3 & \textbf{66.1} & 66.4 & 64.8 & \textbf{87.6}\\
-Exon specificity        & 44.3 & 66.5 & \textbf{68.8} & 53.1 & 72.1 & \textbf{77.2} & 43.5 & 53.2 & \textbf{56.9} & 56.4 & 69.7 & \textbf{88.4}\\
+& \multicolumn{4}{|c|}{\textit{A.~thaliana}} & \multicolumn{4}{|c|}{\textit{C.~elegans}}\\
+& SNAP & AUGUSTUS & GeneMark-ES & MAKER2 & SNAP & AUGUSTUS & GeneMark-ES & MAKER2\\
 \hline
-\end{tabular}
-\end{sidewaystable}
+Gene sensitivity        & 14.5 & 37.5 & 50.7 & \textbf{51.3} & 21.0 & 23.9 & \textbf{42.4} & 41.0\\
+Gene specificity        & 11.2 & 32.1 & 44.3 & \textbf{52.5} & 15.3 & 25.7 & \textbf{41.1} & 30.8\\
+Transcript sensitivity  & 11.9 & 31.6 & 42.7 & \textbf{43.5} & 16.4 & 18.3 & \textbf{32.3} & 31.3\\
+%Transcript specificity  & 11.2 & 32.1 & 44.3 & \textbf{52.5} & 15.3 & 25.7 & \textbf{41.1} & 30.8\\
+Exon sensitivity        & 58.7 & 71.5 & \textbf{80.3} & 76.1 & 67.9 & 69.1 & \textbf{80.0} & 69.4\\
+Exon specificity        & 44.3 & 66.5 & 68.8 & \textbf{76.1} & 53.1 & 72.1 & \textbf{77.2} & 62.3\\
+\hline
+& \multicolumn{4}{|c|}{\textit{D.~melanogaster}} & \multicolumn{4}{|c|}{\textit{S.~pombe}}\\
+& SNAP & AUGUSTUS & GeneMark-ES & MAKER2 & SNAP & AUGUSTUS & GeneMark-ES & MAKER2\\
+\hline
+Gene sensitivity       & 40.8 & 41.3 & 52.6 & \textbf{58.0} & 50.3 & 61.8 & \textbf{80.8} & 42.8\\
+Gene specificity       & 30.6 & 37.6 & \textbf{50.3} & 47.9 & 49.4 & 67.4 & \textbf{84.2} & 68.7\\
+Transcript sensitivity & 30.4 & 29.6 & 38.4 & \textbf{42.3} & 50.3 & 61.8 & \textbf{80.8} & 42.8\\
+%Transcript specificity & 30.6 & 37.6 & \textbf{50.3} & 47.9 & 49.4 & 67.4 & \textbf{84.2} & 68.7\\
+Exon sensitivity       & 57.4 & 56.3 & \textbf{66.1} & 64.9 & 66.4 & 64.8 & \textbf{87.4} & 50.1\\
+Exon specificity       & 43.5 & 53.2 & \textbf{56.9} & 55.0 & 56.4 & 69.7 & \textbf{88.4} & 71.4\\
+\hline
+ \end{tabular}
+\end{scriptsize}
+\end{center}
+\caption{\textit{Ab initio} prediction accuracy of SNAP, AUGUSTUS and GeneMark-ES (as trained for running MAKER2) on unmasked genomes. MAKER2 masked repeats and ran all three gene finders (SNAP and AUGUSTUS with hints where possible). (Transcript specificity is not shown since it is in this case identical to Gene specificity; none of the methods predicted alternative transcripts.) \label{single_preds_maker}}
+\end{table}
+
+% 
+% \begin{sidewaystable}[h!]
+% \caption{\textit{Ab initio} prediction accuracy of SNAP, AUGUSTUS and GeneMark-ES (as trained for running MAKER2) on unmasked genomes. (Transcript specificity is not shown since it is in this case identical to Gene specificity; none of the methods predicted alternative transcripts in \textit{ab initio} mode.) \label{single_preds_maker}}
+% \begin{tabular}{|l|p{1.5cm}p{1.2cm}p{1.2cm}|p{1.2cm}p{1.2cm}p{1.2cm}|p{1.2cm}p{1.2cm}p{1.2cm}|p{1.2cm}p{1.2cm}p{1.2cm}|}\hline
+%  & \multicolumn{3}{c}{\textit{A.~thaliana}} &  \multicolumn{3}{|c|}{\textit{C.~elegans}} &  \multicolumn{3}{|c|}{\textit{D.~melanogaster}} &  \multicolumn{3}{|c|}{\textit{S.~pombe}}\\
+%  & \tiny{SNAP} & \tiny{AUGUSTUS} & \tiny{GeneMark-ES} & \tiny{SNAP} & \tiny{AUGUSTUS} &  \tiny{GeneMark-ES} & \tiny{SNAP} & \tiny{AUGUSTUS} &\tiny{GeneMark-ES} & \tiny{SNAP} & \tiny{AUGUSTUS} & \tiny{GeneMark-ES}\\
+%  \hline
+% Gene sensitivity        & 14.5 & 37.5 & \textbf{50.7} & 21.0 & 23.9 & \textbf{42.4} & 40.8 & 41.3 & \textbf{52.6} & 50.3 & 61.8 & \textbf{80.8}\\
+% Gene specificity        & 11.2 & 32.1 & \textbf{44.3} & 15.3 & 25.7 & \textbf{41.1} & 30.6 & 37.6 & \textbf{50.3} & 49.4 & 67.4 & \textbf{84.2}\\
+% Transcript sensitivity  & 11.9 & 31.6 & \textbf{42.7} & 16.4 & 18.3 & \textbf{32.3} & 30.4 & 29.6 & \textbf{38.4} & 50.3 & 61.8 & \textbf{80.8}\\
+% Exon sensitivity        & 58.7 & 71.5 & \textbf{80.3} & 67.9 & 69.1 & \textbf{80.0} & 57.4 & 56.3 & \textbf{66.1} & 66.4 & 64.8 & \textbf{87.6}\\
+% Exon specificity        & 44.3 & 66.5 & \textbf{68.8} & 53.1 & 72.1 & \textbf{77.2} & 43.5 & 53.2 & \textbf{56.9} & 56.4 & 69.7 & \textbf{88.4}\\
+% \hline
+% \end{tabular}
+% \end{sidewaystable}
 
 In order to demonstrate that parameter training for AUGUSTUS with BRAKER1 works well, we show \textit{ab initio} gene prediction accuracy of AUGUSTUS trained by experts (as distributed via the AUGUSTUS release) and trained by BRAKER1 fully automatically in table \ref{single_preds_braker}.
 
-\begin{sidewaystable}[h!]
+\begin{table}[h!]
 \caption{\textit{Ab initio} prediction accuracy of AUGUSTUS trained by experts and fully automatically trained by BRAKER1 on softmasked genomes. (Transcript specificity is not shown since it is in this case identical to Gene specificity; AUGUSTUS did not predict alternative transcripts in \textit{ab initio} mode.) \label{single_preds_braker}}
+\begin{center}
 \begin{tabular}{lp{1.5cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}}\hline
  & \multicolumn{2}{c}{\textit{A.~thaliana}} &  \multicolumn{2}{c}{\textit{C.~elegans}} &  \multicolumn{2}{c}{\textit{D.~melanogaster}} &  \multicolumn{2}{c}{\textit{S.~pombe}}\\
  & \tiny{Expert} & \tiny{BRAKER1} & \tiny{Expert} & \tiny{BRAKER1} &  \tiny{Expert} & \tiny{BRAKER1} & \tiny{Expert} &\tiny{BRAKER1}\\
@@ -91,7 +195,11 @@ Exon sensitivity        & \textbf{79.8} & 76.4 & \textbf{76.1} & 74.9 & \textbf{
 Exon specificity        & \textbf{81.7} & 79.8 & 81.5 & \textbf{83.4} & \textbf{67.4} & 63.3 & \textbf{89.4} & 83.1  \\
 \hline
 \end{tabular}
-\end{sidewaystable}
+\end{center}
+\end{table}
+
+
+
 
 \chapter{Supplementary Methods}
 
@@ -102,14 +210,14 @@ Exon specificity        & \textbf{81.7} & 79.8 & 81.5 & \textbf{83.4} & \textbf{
 
 \section{Test Data}
 
-In order to demonstrate prediction accuracy, nuclear genomes, reference annotations and RNA-Seq libraries were retrieved for four model organisms from the respective databases: for \textit{Arabidopsis thaliana}, TAIR 10 from \url{http://arabidopsis.org}; for \textit{Caenorhabditis elegans}, WS240 from \url{http://www.wormbase.org}; for \textit{Drosophila melanogaster}, R5 from \url{http://flybase.org}; for \textit{Schizosaccharomyces pombe}, ASM294v2.23 from \url{http://www.pombase.org}. The following RNA-Seq libraries were retrieved from the short read archive at NCBI: SRR934391 (for \textit{A.~thaliana}); SRR065719 (for \textit{C.~elegans}); SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 (for \textit{D.~melanogaster}); SRR097898-SRR097900, SRR097902, SRR097903,
+In order to demonstrate prediction accuracy, nuclear genomes, reference annotations and RNA-Seq libraries were retrieved for four model organisms from the respective databases: for \textit{Arabidopsis thaliana}, TAIR 10 from \url{http://arabidopsis.org}; for \textit{Caenorhabditis elegans}, WS240 from \url{http://www.wormbase.org}; for \textit{Drosophila melanogaster}, R5.55 from \url{http://flybase.org}; for \textit{Schizosaccharomyces pombe}, ASM294v2.23 from \url{http://www.pombase.org}. The following RNA-Seq libraries were retrieved from the short read archive at NCBI: SRR934391 (for \textit{A.~thaliana}); SRR065719 (for \textit{C.~elegans}); SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 (for \textit{D.~melanogaster}); SRR097898-SRR097900, SRR097902, SRR097903,
 SRR097905-SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR097925, SRR402833 (for \textit{S.~pombe}).
 
 \section{RNA-Seq Alignment}
 
 RNA-Seq libraries were aligned against the respective genomes with TopHat2 version 2.0.11 \cite{TopHat2} using Bowtie2 version 2.2.2\\ \cite{Bowtie2}.
 
-In order to determine library specific characteristics such as insert size, TopHat2 was first run with standard parameters. Initial alignments were processed with Cufflinks \cite{Cufflinks} version 2.2.0. The Cufflinks run was interrupted after the output showed ``Fragment Length Distribution'' parameters. Subsequently, TopHat2 was run with the such determined mean insert size and standard deviation. Table \ref{Tab:01} shows Tophat2 parameters that were used for all sets of RNA-Seq libraries in this publication.
+In order to determine library specific characteristics such as insert size, TopHat2 was first run with standard parameters. Minimum and maximum Intron length parameters were adjusted based on the results from Tophat2 run with default parameters. Initial alignments were processed with Cufflinks \cite{Cufflinks} version 2.2.0. The Cufflinks run was interrupted after the output showed ``Fragment Length Distribution'' parameters. Subsequently, TopHat2 was run with the such determined mean insert size and standard deviation.  Table \ref{Tab:01} shows Tophat2 parameters that were used for all sets of RNA-Seq libraries in this publication.
 
 \begin{sidewaystable}
 \begin{center}
@@ -118,10 +226,10 @@ In order to determine library specific characteristics such as insert size, TopH
  \hline
 Library & \texttt{--mate-inner-dist} & \texttt{--mate-std-dev} & \texttt{--min-intron-length} & \texttt{--min-coverage-intron} & \texttt{--min-segment-intron} & \texttt{--microexon-search} & \texttt{--max-intron-length} \\
 \hline
-SRR934391 & 20 & 46 & -- &  -- & -- & \checkmark & 100000\\
-SRR065719 & 14 & 25 &20&20&20& \checkmark & 100000\\
-SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 & 38 & 26 & 30 & 30 & 30 & \checkmark & --\\
-SRR097898, SRR097899, SRR097900, SRR097902, SRR097903, SRR097905, SRR097906, SRR097907, SRR097908, SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR097925, SRR402833  & -- & -- & 20 & 20 & 20 & \checkmark & 100000\\
+\textit{A.~thaliana}: SRR934391 & 20 & 46 & 50 &  50 & 50 & \checkmark & 100000\\
+\textit{C.~elegans}: SRR065719 & 14 & 25 &20&20&20& \checkmark & 100000\\
+\textit{D.~melanogaster}: SRR023505, SRR023546, SRR023608, SRR026433, SRR027108 & 38 & 26 & 30 & 30 & 30 & \checkmark & 50000\\
+\textit{S.~pombe}: SRR097898, SRR097899, SRR097900, SRR097902, SRR097903, SRR097905, SRR097906, SRR097907, SRR097908, SRR097909, SRR097912, SRR097915, SRR097917, SRR097921, SRR097922, SRR097925, SRR402833  & 50 & 20 & 20 & 20 & 20 & \checkmark & 100000\\
 \hline
  \end{tabular}
  \end{tiny}
@@ -139,7 +247,7 @@ Genomes were softmasked for repeats using RepeatModeler 1.0.8 \cite{RepeatModele
 
 \section{Running BRAKER1}
 
-The command for running BRAKER1 version 1.5 with GeneMark-ET version 4.28 and AUGUSTUS version 3.1.0 on softmasked genomes was\\
+The command for running BRAKER1 version 1.6 with GeneMark-ET version 4.29 and AUGUSTUS version 3.1.0 on softmasked genomes was\\
 
 \noindent \texttt{braker.pl --genome=genome.fa --species=speciesname --bam=accepted\_hits.bam --softmasked}\\
 
@@ -151,11 +259,11 @@ The command for running BRAKER1 version 1.5 with GeneMark-ET version 4.28 and AU
 
 \section{Running MAKER2}
 
-For running MAKER2, we followed the tutorial at \url{http://weatherby.genetics.utah.edu/MAKER/wiki/index.php/MAKER_Tutorial_for_GMOD_Online_Training_2014}, mostly.
+For running MAKER2 (version 2.31.6), we followed the tutorial at \url{http://weatherby.genetics.utah.edu/MAKER/wiki/index.php/MAKER_Tutorial_for_GMOD_Online_Training_2014}, mostly.
 
 A database of transposable elements and a RepBase repeat library were used for repeat masking with MAKER2.
 
-MAKER2 was run with the gene finders SNAP \cite{SNAP}, AUGUSTUS \cite{AUGUSTUS}, and GeneMark-ES \cite{GeneMark-ES}. MAKER2 was developed to run with protein database to support gene discovery. We did not enable database support because BRAKER1 has no such feature. Thus, MAKER2 - in the way that we used it - is a method that calls and masks repeats, generates training gene structures on the basis of RNA-Seq data, and predicts genes with extrinsic evidence from RNA-Seq data. Running MAKER2 on a novel species consists of three steps: 
+MAKER2 was run with the gene finders SNAP (version 2006-07-28) \cite{SNAP}, AUGUSTUS (version 3.1.0) \cite{AUGUSTUS}, and GeneMark-ES \cite{GeneMark-ES} (version 4.29). MAKER2 was developed to run with protein database to support gene discovery. We did not enable protein database support because we were interested in gene finding performance using only RNA-seq data as an input. Thus, MAKER2 - in the way that we used it - is a method that calls and masks repeats, generates training gene structures on the basis of RNA-Seq data, and predicts genes with extrinsic evidence from RNA-Seq data. Running MAKER2 on a novel species consists of three steps: 
 
 \begin{enumerate}
  \item Generating training gene structures for SNAP and AUGUSTUS with MAKER2,
@@ -167,7 +275,7 @@ MAKER2 was run with the gene finders SNAP \cite{SNAP}, AUGUSTUS \cite{AUGUSTUS},
 
 Training of the gene prediction tool GeneMark-ES depends on the genome sequence, only, and is therefore independent of MAKER2. GeneMark-ES was trained using the command\\
 
-\noindent \texttt{gm\_es.pl genome.fa}
+\noindent \texttt{gm\_es.pl --ES genome.fa}
 
 \noindent For \textit{S.~pombe}, GeneMark-ES was trained using the flag \texttt{--fungus} to enable the fungi-specific branch point model in GeneMark-ES.
 
