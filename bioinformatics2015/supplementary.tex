@@ -89,28 +89,27 @@ Accuracy results of BRAKER1 in unmasked genomes are shown in Table \ref{unmasked
 & \multicolumn{3}{|c|}{\textit{A.~thaliana}} & \multicolumn{3}{|c|}{\textit{C.~elegans}}\\
 & GeneMark-ET & AUGUSTUS & BRAKER1 & GeneMark-ET & AUGUSTUS & BRAKER1\\
 \hline
-Gene sensitivity        & 53.7 & & 63.9 & 42.9 & & 55.0\\
-Gene specificity        & 46.1 & & 51.6 & 41.3 & & 55.2\\
-Transcript sensitivity  & 45.3 & & 56.4 & 32.8 & & 43.2\\
-Transcript specificity  & 46.1 & & 50.4 & 41.3 & & 53.3\\
-Exon sensitivity        & 81.1 & & 82.5 & 79.9 & & 79.8\\
-Exon specificity        & 72.3 & & 78.8 & 77.7 & & 85.4\\
+Gene sensitivity        & 53.7 & 52.1 & \textbf{63.9} & 42.9 & 43.1 & \textbf{55.0}\\
+Gene specificity        & 46.1 & 42.9 & \textbf{51.6} & 41.3 & 44.7 & \textbf{55.2}\\
+Transcript sensitivity  & 45.3 & 43.8 & \textbf{56.4} & 32.8 & 33.3 & \textbf{43.2}\\
+Transcript specificity  & 46.1 & 42.9 & \textbf{50.4} & 41.3 & 44.7 & \textbf{53.3}\\
+Exon sensitivity        & 81.1 & 77.8 & \textbf{82.5} & \textbf{79.9} & 75.5 & 79.8\\
+Exon specificity        & 72.3 & 73.8 & \textbf{78.8} & 77.7 & 82.3 & \textbf{85.4}\\
 \hline
 & \multicolumn{3}{|c|}{\textit{D.~melanogaster}} & \multicolumn{3}{|c|}{\textit{S.~pombe}}\\
 & GeneMark-ET & AUGUSTUS & BRAKER1 & GeneMark-ET & AUGUSTUS & BRAKER1\\
 \hline
-Gene sensitivity       & 56.1 & & 68.4 & 82.1 & & 77.0\\
-Gene specificity       & 53.8 & & 60.6 & 84.0 & & 80.1\\
-Transcript sensitivity & 40.7 & & 50.6 & 82.1 & & 77.0\\
-Transcript specificity & 53.8 & & 59.3 & 84.9 & & 76.1\\
-Exon sensitivity       & 67.3 & & 73.7 & 88.4 & & 83.0\\
-Exon specificity       & 60.6 & & 67.1 & 88.2 & & 82.9\\
+Gene sensitivity       & 56.1 & 57.6 & \textbf{68.4} & \textbf{82.1} & 71.5 & 77.0\\
+Gene specificity       & 53.8 & 50.8 & \textbf{60.6} & \textbf{84.0} & 76.1 & 80.1\\
+Transcript sensitivity & 40.7 & 42.0 & \textbf{50.6} & \textbf{82.1} & 71.5 & 77.0\\
+Transcript specificity & 53.8 & 50.8 & \textbf{59.3} & \textbf{84.9} & 76.1 & 76.1\\
+Exon sensitivity       & 67.3 & 66.0 & \textbf{73.7} & \textbf{88.4} & 75.4 & 83.0\\
+Exon specificity       & 60.6 & 61.5 & \textbf{67.1} & \textbf{88.2} & 83.1 & 82.9\\
 \hline
  \end{tabular}
 \end{scriptsize}
 \end{center}
-\caption{Accuracy results of GeneMark-ET (\textit{ab initio}), AUGUSTUS (\textit{ab initio}) and BRAKER1 (AUGUSTUS trained on filtered GeneMark-ET predictions with RNA-Seq hints) on softmasked genomes.
-On the fungus \textit{S.~pombe}, GeneMark-ET is superior to the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accommodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure \textit{ab initio} predictions made by GeneMark-ET. \label{unmasked}}
+\caption{Accuracy results of GeneMark-ET (\textit{ab initio}), AUGUSTUS (\textit{ab initio}) and BRAKER1 (AUGUSTUS trained on filtered GeneMark-ET predictions with RNA-Seq hints) on unmasked genomes.\label{unmasked}}
 \end{table}
 
 % \begin{table}[h!]
@@ -203,7 +202,7 @@ Exon specificity        & \textbf{81.7} & 79.8 & 81.5 & \textbf{83.4} & \textbf{
 
 \chapter{Supplementary Methods}
 
-\begin{figure}[!tpb]%figure1
+\begin{figure}[!h]%figure1
 \centerline{\includegraphics[width=0.7\linewidth]{figs/Figure1.pdf}}
 \caption{Schematic view of the BRAKER1 pipeline.}\label{pipeline}
 \end{figure}
