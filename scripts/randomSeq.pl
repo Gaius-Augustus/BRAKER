@@ -84,6 +84,7 @@ my %introns;                # Hash of arrays. Contains information from intron f
 my $introns;                # introns file name
 my $log;                    # log file name
 my $max_length = 0;         # maximal sequence length
+my $min_length = 0;         # minimal sequence length
 my $min_size = 100000;      # minimal sequence part length
 my $min_genes = 200;        # minimal number of genes in sequence parts
 my $min_seqs = 10;          # minimal number of sequence parts (only necessary if no GeneMark-ET file is assigned)
@@ -174,6 +175,11 @@ if(defined($genome)){
   if($GMET_genes > $min_genes || !defined($GMET)){
     print LOG "\# ".(localtime).": Get fasta sequences from $genome\n";
     get_fasta();
+    if($max_length < $min_size){
+      print LOG "\# ".(localtime).": maximal sequence length is shorter than $min_size. Get whole sequences instead.\n";
+      print STDOUT "\# ".(localtime).": maximal sequence length is shorter than $min_size. Get whole sequences instead.\n";
+      $max_length = 0;
+    }
     print LOG "\# ".(localtime).": Get fasta sequence parts\n";
     open (HINTS, ">".$out_hints) or die "Cannot open file: $out_hints\n";
     # get sequence parts as long as the number of genes that GeneMark-ET predicts there are below $min_genes or 
@@ -265,6 +271,12 @@ sub get_fasta{
                 "start"  => 0);
     push(@seqInfo, \%hash);
     $whole_length += length($sequencepart);
+    if($max_length < length($sequencepart)){
+      $max_length = length($sequencepart);
+    }
+#    if($min_length > length($sequencepart)){
+#      $min_length > length($sequencepart);
+#    }
   }
   $/ = "\n";
   close(FASTA) or die("Could not close file $genome!\n");
@@ -276,54 +288,55 @@ sub get_fasta{
 # choose a part of the sequence randomly
 sub get_random_seq{
   my $rand = rand();
-  my $low_boundary = 0;
   my $up_boundary = length($seqInfo[0] -> {"seq"}) / $whole_length;
   my $index = 0;
   # at first choose the sequence based on its relative share of the whole fasta file
   for(my $i=0; $i<scalar(@seqInfo)-1; $i++){
-    if($low_boundary <= $rand && $rand < $up_boundary){ # Mario: low_boundary variable unnecessay: second condition here implies first
+    if($rand < $up_boundary){
       $index = $i;
       last;
     }else{      
-      $low_boundary = $up_boundary;
       $up_boundary = $up_boundary + length($seqInfo[$i+1] -> {"seq"}) / $whole_length;
     }
   }
-  
-  # then choose the position where to cut out the sequence part within the chosen sequence
-  my $subseq = "";
-  my $part_seq;
-  my $part_start;
-  my $start = 0;
-  # sequence length is greater than the specified sequence part size
-  if(length($seqInfo[$index] -> {"seq"}) >= $min_size){
-    $rand = floor(rand(length($seqInfo[$index] -> {"seq"}) - $min_size + 1));
-    $start = $rand;
-    # the random number is bigger than length(seq) - $min_size -> take the last $min_size base pairs
-    if($rand > length($seqInfo[$index] -> {"seq"}) - $min_size){
-      $subseq = substr($seqInfo[$index] -> {"seq"}, - $min_size);
-      $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, $min_size);
-    # random number lies in between -> split sequence in three parts 
-    }else{
-      $subseq = substr($seqInfo[$index] -> {"seq"}, $rand, $min_size); # part that is cut out
-      $part_seq = substr($seqInfo[$index] -> {"seq"}, $rand + $min_size + 1); # end of sequence becomes new entry
-      $part_start = $rand + $min_size + 1;
-      if($rand != 0){
-        $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, 0, $rand - 1); # adjust beginning 
+ 
+  if($max_length != 0){
+    # then choose the position where to cut out the sequence part within the chosen sequence
+    my $subseq = "";
+    my $part_seq;
+    my $part_start;
+    my $start = 0;
+    # sequence length is greater than the specified sequence part size
+    if(length($seqInfo[$index] -> {"seq"}) >= $min_size){
+      $rand = floor(rand(length($seqInfo[$index] -> {"seq"}) - $min_size + 1));
+      $start = $rand;
+      # the random number is bigger than length(seq) - $min_size -> take the last $min_size base pairs
+      if($rand > length($seqInfo[$index] -> {"seq"}) - $min_size){
+        $subseq = substr($seqInfo[$index] -> {"seq"}, - $min_size);
+        $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, $min_size);
+      # random number lies in between -> split sequence in three parts 
       }else{
-        $seqInfo[$index] -> {"seq"} = "";
+        $subseq = substr($seqInfo[$index] -> {"seq"}, $rand, $min_size); # part that is cut out
+        $part_seq = substr($seqInfo[$index] -> {"seq"}, $rand + $min_size + 1); # end of sequence becomes new entry
+        $part_start = $rand + $min_size + 1;
+        if($rand != 0){
+          $seqInfo[$index] -> {"seq"} = substr($seqInfo[$index] -> {"seq"}, 0, $rand - 1); # adjust beginning 
+        }else{
+          $seqInfo[$index] -> {"seq"} = "";
+        }
+        my %hash = ("name"   => $seqInfo[$index] -> {"name"}, # add end as 'new' sequence
+                    "seq"    => $part_seq,
+                    "start"  => $part_start);
+        push(@seqInfo, \%hash);     
       }
-      my %hash = ("name"   => $seqInfo[$index] -> {"name"}, # add end as 'new' sequence
-                  "seq"    => $part_seq,
-                  "start"  => $part_start);
-      push(@seqInfo, \%hash);     
     }
+  }else{
+    $subseq = $seqInfo[$index] -> {"seq"};
   }
   $whole_length -= length($subseq);
-  
+  push(@new_seq, $subseq);
   # count the number of predicted genes (by GeneMark-ET prediction) on chosen sequence part
   if(length($subseq) > 0 && defined($GMET)){
-    push(@new_seq, $subseq);
     # end of subseq < end of first gene -> no gene in region
     if($seqInfo[$index] -> {"start"} + $start + $min_size < $seqs{$seqInfo[$index] -> {"name"}}[1]){  first gene
       $nr_of_genes += 0;
