@@ -181,11 +181,11 @@ Exon specificity       & 43.5 & 53.2 & \textbf{56.9} & 55.0 & 56.4 & 69.7 & \tex
 In order to demonstrate that parameter training for AUGUSTUS with BRAKER1 works well, we show \textit{ab initio} gene prediction accuracy of AUGUSTUS trained by experts (as distributed via the AUGUSTUS release) and trained by BRAKER1 fully automatically in table \ref{single_preds_braker}.
 
 \begin{table}[h!]
-\caption{\textit{Ab initio} prediction accuracy of AUGUSTUS trained by experts and fully automatically trained by BRAKER1 on softmasked genomes. (Transcript specificity is not shown since it is in this case identical to Gene specificity; AUGUSTUS did not predict alternative transcripts in \textit{ab initio} mode.) \label{single_preds_braker}}
+\caption{\textit{Ab initio} prediction accuracy of AUGUSTUS. Mode 1: training on expert generated sets of genes; Mode 2: training on BRAKER1 generated set of genes. (Transcript specificity is not shown since it is in this case identical to Gene specificity; AUGUSTUS did not predict alternative transcripts.) \label{single_preds_braker}}
 \begin{center}
 \begin{tabular}{lp{1.5cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}}\hline
  & \multicolumn{2}{c}{\textit{A.~thaliana}} &  \multicolumn{2}{c}{\textit{C.~elegans}} &  \multicolumn{2}{c}{\textit{D.~melanogaster}} &  \multicolumn{2}{c}{\textit{S.~pombe}}\\
- & \tiny{Expert} & \tiny{BRAKER1} & \tiny{Expert} & \tiny{BRAKER1} &  \tiny{Expert} & \tiny{BRAKER1} & \tiny{Expert} &\tiny{BRAKER1}\\
+ & \tiny{Mode 1} & \tiny{Mode 2} & \tiny{Mode 1} & \tiny{Mode 2} &  \tiny{Mode 1} & \tiny{Mode 2} & \tiny{Mode 1} &\tiny{Mode 2}\\
  \hline
 Gene sensitivity        & \textbf{51.8} & 49.2 & \textbf{45.2} & 42.3 & 53.2 & \textbf{56.1} & \textbf{78.4} & 70.5 \\
 Gene specificity        & \textbf{56.6} & 48.2 & 43.2 & \textbf{46.2} & \textbf{63.4} & 53.7 & \textbf{84.8} & 76.0  \\
