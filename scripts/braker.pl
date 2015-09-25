@@ -52,6 +52,7 @@
 # | add sub extrinsic_tests        |                      |            |
 # | made BRAKER1 compatible with   |                      | 08.05.2015 |
 # | GeneMark-ET version 4.29       |                      |            |
+# | add --gff3 option              |                      | 25.09.2015 |
 # ----------------------------------------------------------------------
 
 use Getopt::Long;
@@ -119,6 +120,7 @@ OPTIONS
                                          useful for fungal genomes)
     --GENEMARK_PATH=/path/to/            Set path to GeneMark-ET (if not specified as environment 
       gmes_petap.pl/                     variable). Has higher priority than environment variable.
+    --gff3                               Output in GFF3 format.
     --hints=hints.gff                    Alternatively to calling braker.pl with a bam file, it is 
                                          possible to call it with a file that contains introns extracted 
                                          from RNA-Seq data in gff format. This flag also allows the usage
@@ -187,6 +189,7 @@ my $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script on s
 my $GMET_path;                        # GeneMark-ET path, higher priority than $GENEMARK_PATH
 my $genome;                           # name of sequence file
 my $genome_length = 0;                # length of genome file
+my $gff3 = 0;                         # create output file in GFF3 format
 my $help;                             # print usage
 my @hints;                            # input hints file names
 my $hintsfile;                        # hints file later used by AUGUSTUS
@@ -246,6 +249,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'extrinsicCfgFile=s'            => \$extrinsicCfgFile,
             'GENEMARK_PATH=s'               => \$GMET_path,
             'genome=s'                      => \$genome,
+            'gff3'                          => \$gff3,
             'hints=s'                       => \@hints,
             'optCfgFile=s'                  => \$optCfgFile,
             'overwrite!'                    => \$overwrite,
@@ -564,7 +568,7 @@ if(! -f "$genome"){
     getAnnoFasta("$otherfilesDir/augustus.gff"); # create protein sequence file
   }
   if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.gtf"])  || $overwrite){
-    make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf format
+    make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf and gff3 (if desired) format
   }
   clean_up(); # delete all empty files
   close(LOG) or die("Could not close log file $logfile!\n");
@@ -895,7 +899,7 @@ sub extrinsic_tests_com{
             print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
             print LOG "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
             print LOG "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-            print LOG "nonexonpart        1        1  M    1  1e+100  RM  1  1.15    E 1    1    W 1    1\n";
+            print LOG "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
             print LOG "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           }
         }
@@ -1307,13 +1311,24 @@ sub make_gtf{
   @_ = split(/\//, $AUG_pred);
   my $name_base = substr($_[-1],0,-4);
   my $gtf_file = substr($AUG_pred,0,-4).".gtf";
-  my $errorfile = "$errorfilesDir/gtf2gff.$name_base.stderr";
+  my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gtf.stderr";
   my $perlstring = find("gtf2gff.pl");
   my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
   print "$cmdString\n\n";
   print LOG "\# ".(localtime).": make a gtf file from $AUG_pred\n";
   print LOG "$cmdString\n\n";
   system("$cmdString")==0 or die("failed to execute: $!\n");
+  if($gff3){
+    my $name_base = substr($_[-1],0,-4);
+    my $gff3_file = substr($AUG_pred,0,-4).".gff3";
+    my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
+    my $perlstring = find("gtf2gff.pl");
+    my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
+    print "$cmdString\n\n";
+    print LOG "\# ".(localtime).": make a gff3 file from $AUG_pred\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString")==0 or die("failed to execute: $!\n");
+  }
 }   
   
 
