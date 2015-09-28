@@ -1309,9 +1309,8 @@ sub getAnnoFasta{
 sub make_gtf{
   my $AUG_pred = shift;
   @_ = split(/\//, $AUG_pred);
-  my $name_base = substr($_[-1],0,-4);
   my $gtf_file = substr($AUG_pred,0,-4).".gtf";
-  my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gtf.stderr";
+  my $errorfile = "$errorfilesDir/gtf2gff.$gtf_file.stderr";
   my $perlstring = find("gtf2gff.pl");
   my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
   print "$cmdString\n\n";
@@ -1319,9 +1318,8 @@ sub make_gtf{
   print LOG "$cmdString\n\n";
   system("$cmdString")==0 or die("failed to execute: $!\n");
   if($gff3){
-    my $name_base = substr($_[-1],0,-4);
     my $gff3_file = substr($AUG_pred,0,-4).".gff3";
-    my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
+    my $errorfile = "$errorfilesDir/gtf2gff.$gff3_file.stderr";
     my $perlstring = find("gtf2gff.pl");
     my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
     print "$cmdString\n\n";
