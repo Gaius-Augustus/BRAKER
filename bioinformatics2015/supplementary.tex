@@ -196,7 +196,11 @@ Exon specificity        & \textbf{81.7} & 79.8 & 81.5 & \textbf{83.4} & \textbf{
 \end{center}
 \end{table}
 
+\section{Remark on Runtime}
 
+The main factor that dominates runtime is the genome size; the pipeline runtime scales linearly with the genome size. Main modules of BRAKER1 could be run in parallel. The time-consuming alignment of RNA-Seq reads against the genome was not counted to the runtime of BRAKER1; the alignment is an input to BRAKER1. 
+It is highly likely that users would have already aligned the RNA-Seq data to genome by means of their favorite short read aligner. 
+The runtime increases when more alternative splicing is represented within the RNA-Seq alignments by a factor that is roughly the number of predicted alternative transcripts per gene.
 
 
 \chapter{Supplementary Methods}

@@ -10,12 +10,13 @@
 \firstpage{1}
 
 \title[BRAKER1]{BRAKER1: Unsupervised RNA-Seq-Based Genome Annotation with GeneMark-ET and AUGUSTUS}
-\author[Hoff \textit{et~al}]{Katharina J. Hoff\,$^{1}$\footnote{to whom correspondence should be addressed}, Simone Lange\,$^{1}$, Alexandre Lomsadze\,$^{3}$, Mark Borodovsky\,$^{2,3*}$ and Mario Stanke\,$^1$}
+\author[Hoff \textit{et~al}]{Katharina J. Hoff\,$^{1}$\footnote{to whom correspondence should be addressed}, Simone Lange\,$^{1}$, Alexandre Lomsadze\,$^{3}$, Mark Borodovsky\,$^{2,3,4*}$ and Mario Stanke\,$^1$}
 \address{$^{1}$Ernst Moritz Arndt Universit\"{a}t Greifswald, Institute for Mathematics and Computer Science, Walther-Rathenau-Stra\ss{}e 47, 17487 Greifswald, Germany\\
 $^{2}$School of Computational Science and Engineering\\
 %$^{3}$Center for Bioinformatics and Computational Genomics, Georgia Institute of Technology, Atlanta, GA 30332, USA\\
 %$^{4}$Department of Biological and Medical Physics, Moscow Institute of Physics and Technology, Dolgoprudny, Moscow Region, Russia\\
-$^{3}$Joint Georgia Tech and Emory University Wallace H Coulter Department of Biomedical Engineering, Atlanta, GA 30332, USA}
+$^{3}$Joint Georgia Tech and Emory University Wallace H Coulter Department of Biomedical Engineering, Atlanta, GA 30332, USA\\
+$^{4}$Moscow Institute of Physics and Technology, Dolgoprudny, Moscow Region, Russia}
 
 \history{Received on XXXXX; revised on XXXXX; accepted on XXXXX}
 
@@ -95,7 +96,7 @@ Presence of repetitive sequences and mobile elements (transposable elements, TEs
 \section{Results and Discussion}
 
 \begin{table*}[!t]
-\processtable{\textcolor{red}{Accuracy results of the final gene prediction step of BRAKER1 with AUGUSTUS (on softmasked genomes) and MAKER2 (with fully automatic repeat masking, RNA-Seq only source of extrinsic evidence) in genomes of four model organisms. For the fungus \textit{S.~pombe}, we also report accuracy results of CodingQuarry. Accuracy results for BRAKER1 on unmasked genomes can be found in Suppl.~Table 1.2.}\label{Tab:01}}
+\processtable{\textcolor{red}{Gene prediction accuracy of of BRAKER1 and MAKER2 (both pipelines used repeat masking) as assessed by comparison with annotation of the genomes of four model organisms. In all cases, RNA-Seq was the only source of extrinsic evidence. For the fungus \textit{S.~pombe}, we also assessed the accuracy of gene predictions made by CodingQuarry.}\label{Tab:01}}
 {\begin{tabular}{lp{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}p{.9cm}}\hline
  & \multicolumn{2}{c}{\textit{Arabidopsis thaliana}} &  \multicolumn{2}{c}{\textit{Caenorhabditis elegans}} &  \multicolumn{2}{c}{\textit{Drosophila melanogaster}} &  \multicolumn{3}{c}{\textit{Schizosaccharomyces pombe}}\\
  & \tiny{BRAKER1} & \tiny{MAKER2} &  \tiny{BRAKER1} & \tiny{MAKER2}  & \tiny{BRAKER1} & \tiny{MAKER2} &\tiny{BRAKER1} & \tiny{MAKER2} &\tiny{CodingQuarry}\\
@@ -140,7 +141,7 @@ Notably, \citet{SnowyOwl} developed a pipeline, SnowyOwl, with GeneMark-ES \cite
 
 We would like to thank Mark Yandell and Carson Holt for valuable advice on running MAKER2.
 
-\paragraph{Funding\textcolon} This work is supported by the US National Institutes of Health grant HG000783.
+\paragraph{Funding\textcolon} This work is supported \textcolor{red}{in part} by the US National Institutes of Health grant HG000783 \textcolor{red}{to MB}.
 
 %\bibliographystyle{natbib}
 %\bibliographystyle{achemnat}
