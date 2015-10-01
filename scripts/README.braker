@@ -363,9 +363,9 @@ Selected parameters:
 
 BRAKER1 produces three important output files in the working directory:
 
-introns.gff   - The introns extraced from RNAseq.bam. These introns are used for training GeneMark-ET and
-                for predicting genes with AUGUSTUS. The file is in gff format (see section 3, input argument 
-                --hints).
+hintsfile.gff - The introns extraced from RNAseq.bam. These introns are used for training GeneMark-ET and
+                for predicting genes with AUGUSTUS. The file is in gff format (see section 3, input 
+                argument --hints).
 genemark.gtf  - Genes predicted by GeneMark-ET in gtf format
 augustus.gff  - Genes predicted by AUGUSTUS in gtf format
 
