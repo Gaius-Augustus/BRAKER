@@ -25,7 +25,7 @@ Supplementary Tables 1.1 and 1.2 show for repeat masked an unmasked genomes resp
 
 On the fungus \textit{S.~pombe}, GeneMark-ET is superior to the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accomodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in the prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure \textit{ab initio} predictions made by GeneMark-ET.
 
-\begin{table}
+\begin{table}[h!]
 \begin{center}
  \begin{scriptsize}
  \begin{tabular}{|l|ccc|ccc|}
@@ -57,6 +57,8 @@ Exon specificity       & 62.1 & 63.3 & \textbf{67.3} & \textbf{88.2} & 83.1 & 83
  \label{compare}}
 \end{table}
 
+\vspace{0.2cm}
+
 % \begin{table}[h!]
 % \caption{Accuracy results of GeneMark-ET (\textit{ab initio} predictions) and AUGUSTUS (using RNA-Seq) in BRAKER1 on softmasked genomes.
 % The AUGUSTUS results are the ones reported for BRAKER1 in Table 1 of the main article. On the fungus \textit{S.~pombe}, GeneMark-ET is superior to AUGUSTUS in the current version of BRAKER1. This is likely to be related to special features in intron splicing mechanism in fungal genomes where the branch point site plays a larger role in splicing than in other species. On the other hand, the acceptor site in fungi plays a smaller role in intron recognition mechanism and carries less signal information. GeneMark-ET has special models to accommodate fungal gene organization, therefore, it delivers accuracy that is difficult to exceed even with use of RNA-Seq information in prediction step. However, in future versions of BRAKER1 with AUGUSTUS adapting such a model we expect to see the same pattern of improving accuracy with respect to pure \textit{ab initio} predictions made by GeneMark-ET. \label{compare}}
@@ -77,7 +79,7 @@ Exon specificity       & 62.1 & 63.3 & \textbf{67.3} & \textbf{88.2} & 83.1 & 83
 % \end{table}
 
 
-\begin{table}
+\begin{table}[h!]
 \begin{center}
  \begin{scriptsize}
  \begin{tabular}{|l|ccc|ccc|}
@@ -108,6 +110,8 @@ Exon specificity       & 60.6 & 61.5 & \textbf{67.1} & \textbf{88.2} & 83.1 & 82
 \caption{The same as in Table 1.1 for unmasked genomes.\label{unmasked}}
 \end{table}
 
+\vspace{0.2cm}
+
 % \begin{table}[h!]
 % \caption{Accuracy results of BRAKER1 in unmasked genomes of four model organisms. \label{unmasked}}
 % \begin{center}
@@ -130,7 +134,8 @@ The MAKER2 annotation pipeline automatically repeat masks genomes, runs several 
 We determined (trained) parameters of SNAP and AUGUSTUS on MAKER2 derived training sets generated from the Cufflinks assembled RNA-Seq mapped to unmasked genomes. GeneMark-ES self-training requires only a genome sequence.
 
 Suppl.~Table \ref{single_preds_maker} shows \textit{ab initio} prediction accuracy of SNAP, AUGUSTUS and GeneMark-ES on the four unmasked genomes with the above mentioned parameter sets (derived by MAKER2). We observed that for \textit{A.~thaliana} and \textit{D.~melanogaster}, MAKER2 was able to improve several measures of gene prediction accuracy in comparison with the stand alone tools. However, for \textit{C.~elegans} and \textit{S.~pombe} no improvement was observed. 
-\begin{table}
+
+\begin{table}[h!]
 \begin{center}
  \begin{scriptsize}
  \begin{tabular}{|l|cccc|cccc|}
@@ -161,6 +166,8 @@ Exon specificity       & 43.5 & 53.2 & \textbf{56.9} & 55.0 & 56.4 & 69.7 & \tex
 \caption{The first three columns in each table show the \textit{ab initio} prediction accuracy of SNAP, AUGUSTUS and GeneMark-ES (trained in accordance to the MAKER2 manual) on unmasked genomes. The fourth column in each cell shows accuracy of MAKER2 on the genome with masked repeats and SNAP and AUGUSTUS utilizing RNA-Seq hints. (Transcript specificity is not shown since it is in this case identical to Gene specificity; none of the methods predicted alternative transcripts.) \label{single_preds_maker}}
 \end{table}
 
+\vspace{0.2cm}
+
 % 
 % \begin{sidewaystable}[h!]
 % \caption{\textit{Ab initio} prediction accuracy of SNAP, AUGUSTUS and GeneMark-ES (as trained for running MAKER2) on unmasked genomes. (Transcript specificity is not shown since it is in this case identical to Gene specificity; none of the methods predicted alternative transcripts in \textit{ab initio} mode.) \label{single_preds_maker}}
@@ -180,7 +187,6 @@ Exon specificity       & 43.5 & 53.2 & \textbf{56.9} & 55.0 & 56.4 & 69.7 & \tex
 \textit{Ab initio} gene prediction accuracy of AUGUSTUS depends on the parameters determined in training. We compare two cases: the parameter training for AUGUSTUS with BRAKER1 and the supervised parameter training on expert generated set of genes - Suppl.~Table \ref{single_preds_braker}.
 
 \begin{table}[h!]
-\caption{\textit{Ab initio} gene prediction accuracy of AUGUSTUS trained in two different modes. Mode 1: training on expert generated sets of genes; Mode 2: training on BRAKER1 generated set of genes. (``Transcript specificity'' for \textit{ab initio} gene prediction (when no alternative transcripts are predicted) is identical to ``Gene specificity'' and therefore is not shown in Table 1.4.) \label{single_preds_braker}}
 \begin{center}
 \begin{tabular}{lp{1.5cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}p{1.2cm}}\hline
  & \multicolumn{2}{c}{\textit{A.~thaliana}} &  \multicolumn{2}{c}{\textit{C.~elegans}} &  \multicolumn{2}{c}{\textit{D.~melanogaster}} &  \multicolumn{2}{c}{\textit{S.~pombe}}\\
@@ -194,6 +200,7 @@ Exon specificity        & \textbf{81.7} & 79.8 & 81.5 & \textbf{83.4} & \textbf{
 \hline
 \end{tabular}
 \end{center}
+\caption{\textit{Ab initio} gene prediction accuracy of AUGUSTUS trained in two different modes. Mode 1: training on expert generated sets of genes; Mode 2: training on BRAKER1 generated set of genes. (``Transcript specificity'' for \textit{ab initio} gene prediction (when no alternative transcripts are predicted) is identical to ``Gene specificity'' and therefore is not shown in Table 1.4.) \label{single_preds_braker}}
 \end{table}
 
 \section{Remark on Runtime}
