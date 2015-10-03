@@ -229,7 +229,7 @@ my $workDir;                          # in the working directory results and tem
 @forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while"); 
 
 # lists for extrinsic files
-@bonus = ("1e1","1e2", "1e3", "1e4", "1e5");
+@bonus = ("1e0","1e1","1e2", "1e3", "1e4", "1e5");
 @malus = ("0.1", "0.2", "0.4", "1.0");  
 
 if(@ARGV==0){
@@ -893,7 +893,7 @@ sub extrinsic_tests_com{
             print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
             print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
             print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-            print LOG "     intron        1      $malus[$i]  M    1  1e+100  RM  1  1       E 1  $bonus[$j]    W 1    1\n";
+            print LOG "     intron        1      $malus[$i]  M    1  1e+100  RM  1  1.15    E 1  $bonus[$j]    W 1    1\n";
             print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
             print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
             print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -1309,8 +1309,9 @@ sub getAnnoFasta{
 sub make_gtf{
   my $AUG_pred = shift;
   @_ = split(/\//, $AUG_pred);
+  my $name_base = substr($_[-1],0,-4);
   my $gtf_file = substr($AUG_pred,0,-4).".gtf";
-  my $errorfile = "$errorfilesDir/gtf2gff.$gtf_file.stderr";
+  my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gtf.stderr";
   my $perlstring = find("gtf2gff.pl");
   my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
   print "$cmdString\n\n";
@@ -1319,7 +1320,7 @@ sub make_gtf{
   system("$cmdString")==0 or die("failed to execute: $!\n");
   if($gff3){
     my $gff3_file = substr($AUG_pred,0,-4).".gff3";
-    my $errorfile = "$errorfilesDir/gtf2gff.$gff3_file.stderr";
+    my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
     my $perlstring = find("gtf2gff.pl");
     my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
     print "$cmdString\n\n";
