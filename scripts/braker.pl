@@ -513,7 +513,7 @@ if(! -f "$genome"){
   if(! -d $parameterDir){
     make_path($parameterDir);
     print LOG "\# ".(localtime).": create working directory $parameterDir\n";
-    print LOG "mkdir mkdir $parameterDir\n\n";
+    print LOG "mkdir $parameterDir\n\n";
   }
 
   if(! -d $extrinsicfilesDir){
