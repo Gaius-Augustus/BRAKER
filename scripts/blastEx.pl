@@ -112,6 +112,7 @@ my @no_blast;               # length of all sequences not blasted for each genes
 my $nr_of_bad = 0;          # number of bad genes
 my $nr_of_genes = 0;        # number of all genes
 my $nr_of_good = 0;         # number of good genes
+my $nr_of_oneexon = 0;      # number of one exon genes
 my $nr_of_introns = 0;      # number of all introns in hints file
 my $nr_of_introns_supp = 0; # number of all supported introns in prediction file
 my $overwrite = 0;          # overwrite existing files (except for species parameter files)
@@ -227,6 +228,7 @@ for(my $i=0; $i<scalar(@gtf_files); $i++){
   $scores{$i}{"sup_introns"} = $sup_mults;  # introns supported by RNA-seq (log_10(mult))
   $scores{$i}{"good_genes"}  = $nr_of_good; # number of genes with full support (currently not part of the score)
   $scores{$i}{"bad_genes"}   = $nr_of_bad;  # number of genes without full support (currently not part of the score)
+  $scores{$i}{"oneex_genes"} $nr_of_oneexon;# number of genes without introns 
   $scores{$i}{"false_pred"}  = $false_pred; # falsely predicted introns in geneset i (no hint support)
   $scores{$i}{"false_neg"}   = $nr_of_introns - $nr_of_introns_supp; # false negative introns in geneset i (currently not part of the score)
   $scores{$i}{"pos"}         = 0;           # number of conserved (positives in stats section) in geneset i 
@@ -236,6 +238,13 @@ for(my $i=0; $i<scalar(@gtf_files); $i++){
   $scores{$i}{"not_pos"}     = 0;           # number of conserved (positives in stats section) not in geneset i  
   $scores{$i}{"nr_inhsp"}    = 0;           # number of high-scoring segment pairs in geneset i 
   $scores{$i}{"nr_outhsp"}   = 0;           # number of high-scoring segment pairs not in geneset i
+  $scores{$i}{"gaps"}        = 0;           # 
+  $scores{$i}{"nr_ident"}    = 0;           # number of high-scoring segment pairs not in geneset i
+  $scores{$i}{"frac_cons"}   = 0;           # number of high-scoring segment pairs not in geneset i
+  $scores{$i}{"not_gaps"}        = 0;           # 
+  $scores{$i}{"not_nr_ident"}    = 0;           # number of high-scoring segment pairs not in geneset i
+  $scores{$i}{"not_frac_cons"}   = 0;           # number of high-scoring segment pairs not in geneset i
+
 }
 
 # blast protein sequences
@@ -245,16 +254,19 @@ print STDOUT Dumper(\%scores);
 
 my @score;
 # calculation of median for falsely predicted introns and length of protein sequence without BLAST hit
-foreach my $key (keys %scores){
-  push(@false_preds, $scores{$key}{"false_pred"});
-  push(@no_blast, $scores{$key}{"not_blast"});
-}
-my $median_fp = median(\@false_preds);
-my $median_nb = median(\@no_blast);
+#foreach my $key (keys %scores){
+#  push(@false_preds, $scores{$key}{"false_pred"});
+#  push(@no_blast, $scores{$key}{"not_blast"});
+#}
+#my $median_fp = median(\@false_preds);
+#my $median_nb = median(\@no_blast);
 
 # calculate score
 for(my $i=0; $i<scalar(@gtf_files); $i++){
 print LOG "\# ".(localtime).": supported introns ".$scores{$i}{"sup_introns"}." all intron mults $intron_mults positives ".$scores{$i}{"pos"}." length ".$scores{$i}{"length"}." length not in geneset ".$scores{$i}{"not_length"}." scores not blast ".$scores{$i}{"not_blast"}." good genes ".$scores{$i}{"good_genes"}." false neg ".$scores{$i}{"false_neg"}."\n";
+
+print STDERR $scores{$i}{"sup_introns"}.";".$intron_mults.";".$scores{$i}{"pos"}.";".$scores{$i}{"length"}.";".$scores{$i}{"not_pos"}.";".$scores{$i}{"not_length"}.";".$scores{$i}{"not_blast"}.";".$scores{$i}{"good_genes"}.";".$scores{$i}{"bad_genes"}.";".$scores{$i}{"false_neg"}.";".$scores{$i}{"false_pred"}.";".$scores{$i}{"nr_inhsp"}.";".$scores{$i}{"nr_outhsp"}.";".$scores{$i}{"gaps"}.";".$scores{$i}{"nr_ident"}.";".$scores{$i}{"frac_cons"}.";".$scores{$i}{"not_gaps"}.";".$scores{$i}{"not_nr_ident"}.";".$scores{$i}{"not_frac_cons"}.";".$scores{$i}{"oneex_genes"}."\n";
+print STDOUT $scores{$i}{"sup_introns"}.";".$intron_mults.";".$scores{$i}{"pos"}.";".$scores{$i}{"length"}.";".$scores{$i}{"not_pos"}.";".$scores{$i}{"not_length"}.";".$scores{$i}{"not_blast"}.";".$scores{$i}{"good_genes"}.";".$scores{$i}{"bad_genes"}.";".$scores{$i}{"false_neg"}.";".$scores{$i}{"false_pred"}.";".$scores{$i}{"nr_inhsp"}.";".$scores{$i}{"nr_outhsp"}.";".$scores{$i}{"gaps"}.";".$scores{$i}{"nr_ident"}.";".$scores{$i}{"frac_cons"}.";".$scores{$i}{"not_gaps"}.";".$scores{$i}{"not_nr_ident"}.";".$scores{$i}{"not_frac_cons"}.";".$scores{$i}{"oneex_genes"}."\n";
 
   if($scores{$i}{"not_length"} == 0){
     $scores{$i}{"not_length"} = 1; 
@@ -262,12 +274,12 @@ print LOG "\# ".(localtime).": supported introns ".$scores{$i}{"sup_introns"}." 
   if($scores{$i}{"length"} == 0){
     $scores{$i}{"length"} = 1;
   }
-  my $score = $alpha * (($scores{$i}{"sup_introns"} - $scores{$i}{"false_pred"}) / $intron_mults) + ($scores{$i}{"sup_introns"} / ($scores{$i}{"sup_introns"} + $scores{$i}{"false_pred"})) + $alpha * ($scores{$i}{"length"} / ($scores{$i}{"not_length"} + $scores{$i}{"not_blast"})) + $beta *((($scores{$i}{"pos"} - $scores{$i}{"length"}) * $scores{$i}{"nr_outhsp"} / $scores{$i}{"length"}) - (($scores{$i}{"pos"} - $scores{$i}{"length"}) / ($scores{$i}{"not_pos"} - $scores{$i}{"not_length"})) - (($scores{$i}{"not_pos"} - $scores{$i}{"not_length"}) * $scores{$i}{"nr_inhsp"} / $scores{$i}{"not_length"})); 
+  my $score = $alpha * ((-$scores{$i}{"sup_introns"} - $scores{$i}{"false_pred"} + $scores{$i}{"false_neg"}) / $intron_mults)  + $beta * ($scores{$i}{"pos"} / $scores{$i}{"length"}) + $scores{$i}{"good_genes"} / ($scores{$i}{"good_genes"} + $scores{$i}{"bad_genes"}); 
   
-  if($score >= $highest_score && $scores{$i}{"false_pred"} <= $median_fp && $scores{$i}{"not_blast"} <= $median_nb){
-    $highest_score = $score;
-    $highest_index = $i;
-  }
+ # if($score >= $highest_score && $scores{$i}{"false_pred"} <= $median_fp && $scores{$i}{"not_blast"} <= $median_nb){
+ #   $highest_score = $score;
+ #   $highest_index = $i;
+ # }
   
   if($scores{$i}{"pos"} == 0 && $scores{$i}{"length"} == 0){
     print STDOUT "Number of positives and length is 0 for file $gtf_files[$i]. This is probably due to a BLAST connecting error. Please try again or use a local BLAST installation.\n";
@@ -356,6 +368,24 @@ sub blast{
           if(defined($scores_child->{$i}->{"nr_outhsp"})){
             $scores{$i}{"nr_outhsp"} += $scores_child->{$i}->{"nr_outhsp"};
           }
+          if(defined($scores_child->{$i}->{"gaps"})){
+            $scores{$i}{"gaps"} += $scores_child->{$i}->{"gaps"};
+          }
+          if(defined($scores_child->{$i}->{"nr_ident"})){
+            $scores{$i}{"nr_ident"} += $scores_child->{$i}->{"nr_ident"};
+          }
+          if(defined($scores_child->{$i}->{"frac_cons"})){
+            $scores{$i}{"frac_cons"} += $scores_child->{$i}->{"frac_cons"};
+          }
+          if(defined($scores_child->{$i}->{"not_gaps"})){
+            $scores{$i}{"not_gaps"} += $scores_child->{$i}->{"not_gaps"};
+          }
+          if(defined($scores_child->{$i}->{"not_nr_ident"})){
+            $scores{$i}{"not_nr_ident"} += $scores_child->{$i}->{"not_nr_ident"};
+          }
+          if(defined($scores_child->{$i}->{"not_frac_cons"})){
+            $scores{$i}{"not_frac_cons"} += $scores_child->{$i}->{"not_frac_cons"};
+          }
         }
       }
     );
@@ -389,12 +419,18 @@ sub blast{
                     $scores_c{$i}{"pos"} += $hsp -> num_conserved; 
                     $scores_c{$i}{"length"} += $prot_seqs{$seq}{"sobj"} -> length;
                     $scores_c{$i}{"nr_outhsp"}++;
+                    $scores_c{$i}{"gaps"} +=  $hsp -> gaps(); 
+                    $scores_c{$i}{"nr_ident"} += $hsp -> num_identical;
+                    $scores_c{$i}{"frac_cons"}  +=   $hsp -> frac_conserved;
                   # current sequence is not part of gene set $i
                   }else{
                     print STDOUT "\# ".(localtime).": $i: not length ".$prot_seqs{$seq}{"sobj"} -> length."\n";
                     $scores_c{$i}{"not_length"} += $prot_seqs{$seq}{"sobj"} -> length;
                     $scores_c{$i}{"not_pos"} += $hsp -> num_conserved;
                     $scores_c{$i}{"nr_inhsp"}++;
+                    $scores_c{$i}{"not_gaps"} +=  $hsp -> gaps(); 
+                    $scores_c{$i}{"not_nr_ident"} += $hsp -> num_identical;
+                    $scores_c{$i}{"not_frac_cons"}  +=   $hsp -> frac_conserved;
                   }
                 }
               }
@@ -501,7 +537,11 @@ sub compare_introns{
           if($count_intron != 0){
             $nr_of_genes++;
             reset_param();
-          }
+          }else{
+          # gene without introns
+            $nr_of_oneexon++;
+          }  
+          
         }
         if($line[2] eq "intron"){
           # check if intron is in hash made of intron input
