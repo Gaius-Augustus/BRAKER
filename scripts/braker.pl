@@ -229,7 +229,7 @@ my $workDir;                          # in the working directory results and tem
 @forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while"); 
 
 # lists for extrinsic files
-@bonus = ("1e0","1e1","1e2", "1e3", "1e4", "1e5");
+@bonus = ("1e1", "1e0", "1e2", "1e3", "1e4", "1e5");
 @malus = ("0.1", "0.2", "0.4", "1.0");  
 
 if(@ARGV==0){
