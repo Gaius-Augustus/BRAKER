@@ -1271,11 +1271,12 @@ sub augustus{
     if($CPU > 1){
       print STDOUT "NEXT STEP: concatenate and join AUGUSTUS output files\n";
       $string = find("join_aug_pred.pl");
-      my $cat_string = "";
+      my $cat_file = "$otherfilesDir/augustus.tmp.gff";
       for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
-        $cat_string .= "$otherfilesDir/augustus.$idx.gff "
+        $cmdString = "cat $otherfilesDir/augustus.$idx.gff >> $cat_file";
+        system("$cmdString")==0 or die("failed to execute: $!\n");
       }
-      $cmdString = "cat $cat_string | $string >$otherfilesDir/augustus.gff";
+      $cmdString = "perl $string <$cat_file >$otherfilesDir/augustus.gff";
       print LOG "\# ".(localtime).": concatenate and join AUGUSTUS output files\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -1283,6 +1284,7 @@ sub augustus{
       for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
         unlink("$otherfilesDir/augustus.$idx.gff");
       }
+      unlink("$otherfilesDir/augustus.tmp.gff");
     }else{
       $cmdString = "mv $otherfilesDir/augustus.1.gff $otherfilesDir/augustus.gff";
       print LOG "\# ".(localtime).": rename AUGUSTUS file\n";
