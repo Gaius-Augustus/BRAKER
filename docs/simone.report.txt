@@ -1,0 +1,595 @@
+Nov 17 2015, Simone reports about protein spliced alignment programs.
+
+Lieber Mario,
+
+hier noch einmal weitere Daten. Die besten Ergebnisse mit AUGUSTUS habe ich bis jetzt mit gth und diesen extrinsic sowie gth Optionen gefunden:
+
+        intron         1       0.1  M    1  1e+100  RM  1  1.15    E 2 0.95 1e3 1e5  W 1    1
+    CDSpart        1   1 0.985 M    1  1e+100  RM  1     1    E 1  1e3                W 1    1       
+gth: -paralogs -prseedlength 20 -prhdist 2 -gcmincoverage 80 -prminmatchlen 20 -prdist 2
+
+
+
+
+                  Regionsausschnitt             ganzes Chromosom 2L
+                  + offset = 10000
+exonerate         real    268m21.322s           /
+                  user    266m35.971s
+                  sys     1m50.599s                               
+
+
+
+spaln             real    72m39.869s            real    206m21.421s
+                  user    69m54.974s            user    205m52.831s
+                  sys     2m42.835s             sys     0m32.926s
+
+
+gth               real    37m2.873s             real    57m57.507s
+                  user    36m9.321s             user    57m55.874s
+                  sys     0m47.442s             sys     0m3.290s
+
+
+
+**Summary Stats** AUGUSTUS + exonerate
+Annotation:     ../../annot2L.gtf
+Predictions:                          Regionen 
+                           (erster Versuch)   (zweiter Versuch)     
+Gene Sensitivity                63.68%          63.19%    
+Gene Specificity                69.76%          69.45%    
+Transcript Sensitivity          49.63%          49.21%    
+Transcript Specificity          63.90%          63.45%    
+Exon Sensitivity                75.03%          74.91%    
+Exon Specificity                84.41%          84.28%    
+Nucleotide Sensitivity          93.82%          93.83%    
+Nucleotide Specificity          93.64%          93.67%    
+
+**General Stats**
+Predictions:
+                                             annot2L.gtf   
+Gene
+        All                      
+                Count                           2649.00         2417.00         2409.00   
+                Total Transcripts               5670.00         2726.00         2725.00   
+                Transcripts Per                 2.14            1.13            1.13
+
+**Summary Stats** AUGUSTUS spaln
+Annotation:     ../../annot2L.gtf
+Predictions:          ganze Sequenz 2L   Regionen ausgeschnitten  Regionen ausgeschnitten
+                  (mit +80bp Anpassung)  (ohne +80bp Anpassung)   (mit +80bp Anpassung)
+Gene Sensitivity                64.78%          46.36%          48.55%    
+Gene Specificity                66.11%          48.62%          51.28%    
+Transcript Sensitivity          49.79%          34.90%          36.23%    
+Transcript Specificity          55.90%          47.84%          40.02%    
+Exon Sensitivity                77.67%          61.85%          69.15%    
+Exon Specificity                63.44%          61.87%          48.53%    
+Nucleotide Sensitivity          94.62%          90.03%          92.32%    
+Nucleotide Specificity          88.93%          87.19%          83.73%   
+
+**General Stats**
+Predictions:
+                                        annot2L.gtf    ganze Sequenz 2L         Regionen ausgeschnitten
+Gene                                                                 (ohne +80bp Anpassung)   (mit +80bp Anpassung)
+        All                      
+                Count                           2649.00         2585.00         2528.00         2506.00   
+                Total Transcripts               5670.00         3143.00         2569.00         3248.00   
+                Transcripts Per                 2.14            1.22            1.02            1.30 
+
+
+**Summary Stats** AUGUSTUS GenomeThreader
+Annotation:     ../../annot2L.gtf
+Predictions:               ganze Sequenz 2L    Regionen ausgeschnitten
+
+Gene Sensitivity                67.50%          64.18%    
+Gene Specificity                74.28%          70.45%    
+Transcript Sensitivity          52.38%          49.63%    
+Transcript Specificity          69.47%          67.13%    
+Exon Sensitivity                78.04%          75.88%    
+Exon Specificity                87.56%          86.44%    
+Nucleotide Sensitivity          94.81%          94.24%    
+Nucleotide Specificity          94.27%          93.87%    
+
+**General Stats**
+Predictions:
+                                   ../../annot2L.gtf       ganze Sequenz 2L    Regionen ausgeschnitten
+Gene
+        All                      
+                Count                           2649.00         2407.00         2413.00   
+                Total Transcripts               5670.00         2643.00         2589.00   
+                Transcripts Per                 2.14            1.10            1.07 
+
+
+
+für gth selbe Optionen (Aufruf: gth -genomic $genomic -protein $protein -gff3out -skipalignmentout -paralogs -prseedlength 20 -prhdist 2 -gcmincoverage 70)
+
+auf dem ganzen Chromosom hatte ich je nach Option und Wert sehr unterschiedliche Laufzeiten:
+# ohne Paralog (Standardwerte für -prseedlength ist 10 ; für prhdist ist 4; -gcmincoverage ist 50;
+time gth -genomic genome2L.fa  -protein prot2L.fa -gff3out -skipalignmentout -o gth2L.3gff 2>gth2L.err
+real    137m47.808s
+user    137m38.834s
+sys     0m10.681s
+
+# mit Paralog Option
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -paralogs -o gth2LAApara.3gff 2>gth2LAApara.err
+real    120m18.354s
+user    118m59.337s
+sys     0m7.671s
+
+
+# unterschiedliche prseedlength
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -prseedlength 5 -o gth2LAAprseed5.gff3
+real    173m58.068s
+user    173m55.037s
+sys     0m7.952s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -prseedlength 20 -o gth2LAAprseed20.gff3
+real    83m22.830s
+user    83m9.888s
+sys     0m6.951s  
+
+# unterschiedliche prhdist
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -prhdist 1 -o gth2LAAprdist1.gff3
+
+real    78m36.665s
+user    78m18.763s
+sys     0m4.536s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -prhdist 2 -o gth2LAAprdist2.gff3
+real    97m23.117s
+user    97m21.161s
+sys     0m4.730s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -prhdist 6 -o gth2LAAprdist6.gff3
+
+real    172m12.396s
+user    171m45.482s
+sys     0m13.823s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -prhdist 8 -o gth2LAAprdist8.gff3
+Speicherzugriffsfehler (Speicherabzug geschrieben)
+
+real    146m17.236s
+user    146m12.618s
+sys     0m8.652s
+
+
+# unterschiedliche gcmincoverage
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -gcmincoverage 40 -o gth2LAAminco.3gff 2>gth2LAAminco.err
+real    147m47.894s
+user    146m33.988s
+sys     0m9.087s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -gcmincoverage 60 -o gth2LAAminco60.3gff
+real    125m15.147s
+user    125m11.245s
+sys     0m7.452s
+
+time /home/simone/augustus-3.1/bin/augustus --species=fly --hintsfile=hintsfile.gthdist2seed20minco70.gff --alternatives-from-evidence=true --extrinsicCfgFile=../extrinsic.m.0.1.b.1e1.gth.cfg ../genome2L.fa >gth.dist2seed20minco70.gff
+real    81m3.472s
+user    81m4.707s
+sys     0m0.712s
+
+# unterschiedliche prminmatchlen (default ist 24)
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -prminmatchlen 12 -o gth2LAAprmin12.gff3
+Speicherzugriffsfehler (Speicherabzug geschrieben)
+
+real    371m25.708s
+user    368m15.396s
+sys     0m29.028s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -prminmatchlen 48 -o gth2LAAprmin48.gff3S
+real    72m54.424s
+user    72m49.831s
+sys     0m4.522s
+
+# kombinierte Parameter (gth: error: -prminmatchlen 24 must be >= -prseedlength 40)
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -prseedlength 20 -prhdist 2 -gcmincoverage 70 -o gth2LAAdist2seed20minco70.gff3
+
+real    57m57.507s
+user    57m55.874s
+sys     0m3.290s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -paralogs -prseedlength 20 -prhdist 2 -gcmincoverage 70 -o gth2LAAdist2seed20minco70.gff3
+real    56m36.194s
+user    56m22.064s
+sys     0m3.576s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -paralogs -prseedlength 20 -prhdist 1 -gcmincoverage 90 prminmatchlen 20 -o gth2LAAparadist1seed20minco90minlen20.gff3
+real    35m3.498s
+user    34m53.682s
+sys     0m2.093s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -paralogs -prseedlength 20 -prhdist 1 -gcmincoverage 95 prminmatchlen 20 -o gth2LAAparadist1seed20minco95minlen20.gff3
+real    29m50.251s
+user    29m47.666s
+sys     0m1.944s
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -paralogs -prseedlength 20 -prhdist 3 -gcmincoverage 80 -prminmatchlen 20 -o gth2LAAparadist3seed20minco80minl20.gff3
+
+real    50m20.938s
+user    50m17.443s
+sys     0m2.997s
+
+
+time gth -genomic ../genome2L.fa  -protein protAA2L.fa -gff3out -skipalignmentout -paralogs -prseedlength 20 -prhdist 6 -gcmincoverage 80 -prminmatchlen 20 -o gth2LAAparadist6seed20minco80minl20.gff3
+
+real    54m38.194s
+user    54m36.631s
+sys     0m3.094s
+
+
+time /home/simone/augustus-3.1/bin/augustus --species=fly --hintsfile=hints.paradist1seed20minco90minl20.gth --alternatives-from-evidence=true --extrinsicCfgFile=extrinsic.m.01i0985c.b.1e3.2.1e3.1e5.cfg ../genome2L.fa >aln.gth.paradist1seed20minco90minl20.01i0985c.b.1e3.2.1e3.1e5.gff
+
+
+
+# eval werte dazu:
+# paralog
+Annotation:     ../annot2L.gtf
+Predictions:                   ohne paralog     mit paralog      
+                                   sonst default Werte
+Gene Sensitivity                47.38%          47.53% 
+Gene Specificity                76.95%          77.13%  
+Transcript Sensitivity          38.40%          38.52%        
+Transcript Specificity          35.69%          36.11%    
+Exon Sensitivity                64.04%          64.05%        
+Exon Specificity                61.14%          61.88%           
+Nucleotide Sensitivity          72.65%          72.68%    
+Nucleotide Specificity          98.00%          98.06%     
+
+**General Stats**
+Predictions:
+                                              annot2L.gtf   ohne paralog     mit paralog
+Gene
+        All                      
+                Count                           2649.00         1601.00         1605.00  
+                Total Transcripts               5670.00         3783.00         3752.00
+                Transcripts Per                 2.14            2.36            2.34   
+
+
+Annotation:     ../annot2L.gtf
+Predictions:                ohne paralog     mit paralog
+      Optionen:        -prseedlength 20 -prhdist 2 -gcmincoverage 70
+Gene Sensitivity                51.38%          51.38%    
+Gene Specificity                84.43%          84.33%    
+Transcript Sensitivity          41.60%          41.60%    
+Transcript Specificity          65.73%          66.28%    
+Exon Sensitivity                63.05%          63.05%    
+Exon Specificity                86.77%          87.11%    
+Nucleotide Sensitivity          71.05%          71.06%    
+Nucleotide Specificity          99.14%          99.15%    
+
+**General Stats**
+Predictions:
+                                             ../annot2L.gtf   ohne paralog     mit paralog
+Gene
+        All                      
+                Count                           2649.00         1593.00         1595.00   
+                Total Transcripts               5670.00         2177.00         2159.00   
+                Transcripts Per                 2.14            1.37            1.35 
+
+
+
+# prseedlength
+**Summary Stats**
+Annotation:     ../../2L/annot.2L.gtf
+Predictions:            prseedlength 10    prseedlength 5   prseedlen 20  prseedlen 18   prseedlen 24    prseedlen 21
+
+Gene Sensitivity             47.38%          46.70%          50.32%          49.94%          50.21%        50.28%    
+Gene Specificity             76.95%          75.67%          82.24%          81.46%          82.06%        82.12%    
+Transcript Sensitivity       38.40%          37.72%          40.41%          40.28%          40.21%        40.41%    
+Transcript Specificity       35.69%          33.11%          47.37%          44.93%          50.88%        48.19%    
+Exon Sensitivity             64.04%          64.09%          63.65%          63.88%          63.01%        63.58%    
+Exon Specificity             61.14%          58.41%          72.98%          70.34%          76.43%        73.85%    
+Nucleotide Sensitivity       72.65%          72.77%          71.67%          72.03%          71.48%        71.66%    
+Nucleotide Specificity       98.00%          97.80%          98.48%          98.39%          98.63%        98.54%     
+
+**General Stats**
+Predictions:
+                          annot.2L.gtf  prseedlength 10  prseedlength 5  prseedlength 20  prseedlength 18 prseedlength 24
+Gene
+        All                      
+           Count              2649.00         1601.00         1603.00         1599.00         1602.00         1600.00   
+           Total Transcripts  5670.00         3783.00         4026.00         2985.00         3136.00         2740.00   
+           ranscripts Per       2.14            2.36            2.51            1.87            1.96            1.71  
+
+
+Annotation:     ../annot2L.gtf
+Predictions:              prseedlength 10     prseedlength 19  prseedlen 20   prseedlen 18    prseedlen 21
+
+Gene Sensitivity                47.38%          50.09%          50.32%          49.94%          50.28%    
+Gene Specificity                76.95%          81.76%          82.24%          81.46%          82.12%    
+Transcript Sensitivity          38.40%          40.32%          40.41%          40.28%          40.41%    
+Transcript Specificity          35.69%          46.10%          47.37%          44.93%          48.19%    
+Exon Sensitivity                64.04%          63.77%          63.65%          63.88%          63.58%    
+Exon Specificity                61.14%          71.64%          72.98%          70.34%          73.85%    
+Nucleotide Sensitivity          72.65%          71.97%          71.67%          72.03%          71.66%    
+Nucleotide Specificity          98.00%          98.43%          98.48%          98.39%          98.54%    
+
+**General Stats**
+Predictions:
+                           annot2L.gtf  prseedlen 10 prseedlength 19  prseedlen 20  prseedlen 18 prseedlen 21
+Gene
+     All                      
+           Count              2649.00      1601.00       1601.00       1599.00       1602.00      1600.00
+           Total Transcripts  5670.00      3783.00       3061.00       2985.00       3136.00      2926.00
+           Transcripts Per       2.14         2.36          1.91          1.87          1.96         1.83
+
+
+# prdist 
+Annotation:     ../../2L/annot.2L.gtf
+Predictions:                   prdist 4         prdist 1        prdist 2        prdist 6
+
+Gene Sensitivity                47.38%          49.79%          48.51%          46.77%    
+Gene Specificity                76.95%          81.31%          79.22%          75.95%    
+Transcript Sensitivity          38.40%          40.11%          39.28%          38.06%    
+Transcript Specificity          35.69%          49.31%          42.92%          31.79%    
+Exon Sensitivity                64.04%          63.35%          63.49%          64.17%    
+Exon Specificity                61.14%          74.95%          68.88%          56.62%    
+Nucleotide Sensitivity          72.65%          71.64%          72.01%          72.81%    
+Nucleotide Specificity          98.00%          98.60%          98.29%          97.69%    
+
+**General Stats**
+Predictions:
+                              /2L/annot.2L.gtf        prdist 4         prdist 1        prdist 2        prdist 6
+Gene
+        All                      
+                Count                   2649.00         1601.00         1600.00         1598.00         1597.00   
+                Total Transcripts       5670.00         3783.00         2835.00         3206.00         4196.00   
+                Transcripts Per            2.14            2.36            1.77            2.01            2.63      
+
+
+# gcmincoverage (default 50)
+**Summary Stats**
+Annotation:     ../../2L/annot.2L.gtf
+Predictions:            gcmincoverage 40   gcmincov 60  gcmincov 70     gcmincov 80     gcmincov 90   gcmincoverage 95
+
+Gene Sensitivity           46.32%          48.55%          49.75%          51.19%          51.68%          51.23%    
+Gene Specificity           75.00%          79.17%          81.06%          83.80%          86.13%          87.60%    
+Transcript Sensitivity     37.58%          39.33%          40.32%          41.62%          42.29%          41.57%    
+Transcript Specificity     29.99%          42.20%          51.03%          62.49%          75.65%          81.83%    
+Exon Sensitivity           64.09%          63.79%          63.81%          63.51%          62.81%          61.48%    
+Exon Specificity           54.37%          68.01%          76.26%          84.29%          91.68%          94.65%    
+Nucleotide Sensitivity     72.85%          72.22%          72.01%          71.38%          70.67%          69.91%    
+Nucleotide Specificity     97.57%          98.38%          98.75%          99.09%          99.47%          99.63%     
+
+**General Stats**
+Predictions:
+                      annot.2L.gtf  gcmincoverage 40 gcmincov 60  gcmincov 70   gcmincov 80 gcmincov 90  gcmincoverage 95
+Gene
+     All                      
+        Count              2649.00      1600.00       1599.00       1605.00       1599.00     1572.00      1532.00
+        Total Transcripts  5670.00      4411.00       3270.00       2757.00       2301.00     1893.00      1717.00
+        Transcripts Per       2.14         2.76          2.05          1.72          1.44        1.20         1.12
+  
+
+
+
+# prminmatchlen
+Annotation:     ../../2L/annot.2L.gtf
+Predictions:            prminmatchlen 24   prminma 48     prminmatc 20    minmatchlen 17   minmatchlen 19  minmatchl 21
+
+Gene Sensitivity              47.38%          44.13%          50.32%          47.90%          47.60%          47.57%    
+Gene Specificity              76.95%          72.61%          82.24%          77.78%          77.30%          77.25%    
+Transcript Sensitivity        38.40%          34.83%          40.41%          38.89%          38.62%          38.64%    
+Transcript Specificity        35.69%          45.22%          47.37%          33.79%          33.86%          34.43%    
+Exon Sensitivity              64.04%          59.86%          63.65%          64.64%          64.45%          64.37%    
+Exon Specificity              61.14%          74.57%          72.98%          58.07%          58.59%          59.48%    
+Nucleotide Sensitivity        72.65%          70.96%          71.67%          72.83%          72.82%          72.81%    
+Nucleotide Specificity        98.00%          98.56%          98.48%          97.81%          97.85%          97.91%
+
+**General Stats**
+Predictions:
+                           annot.2L.gtf   minmatch 24   prminma 48  prminmatc 20 minmatch 17   minmatchl 19  minmatchl 21
+Gene
+        All                      
+           Count                2649.00      1601.00      1588.00      1599.00       1598.00      1599.00        1600.00
+           Total Transcripts    5670.00      3783.00      2696.00      2985.00       4055.00      4011.00        3938.00
+           Transcripts Per         2.14         2.36         1.70         1.87          2.54         2.51           2.46
+ 
+
+
+# minaveragessp 
+Annotation:     ../annot2L.gtf
+Predictions:             minaveragessp 0.5  minaveragessp 0.25  minaveragessp 0.75
+
+Gene Sensitivity                47.38%          47.38%          47.38%    
+Gene Specificity                76.95%          76.95%          76.95%    
+Transcript Sensitivity          38.40%          38.40%          38.40%    
+Transcript Specificity          35.69%          35.69%          35.69%    
+Exon Sensitivity                64.04%          64.04%          64.04%    
+Exon Specificity                61.14%          61.14%          61.14%    
+Nucleotide Sensitivity          72.65%          72.65%          72.65%    
+Nucleotide Specificity          98.00%          98.00%          98.00%    
+
+**General Stats**
+Predictions:
+                                           ../annot2L.gtf  minaveragessp 0.5  minaveragessp 0.25  minaveragessp 0.75
+Gene
+        All                      
+                Count                           2649.00         1601.00         1601.00         1601.00   
+                Total Transcripts               5670.00         3783.00         3783.00         3783.00   
+                Transcripts Per                 2.14            2.36            2.36            2.36 
+
+
+# mehrere kombiniert
+Annotation:     ../annot2L.gtf
+Predictions:              dist2 seed20 minco70  paralog dist1 seed20 minco95 minl20
+
+Gene Sensitivity                51.38%          49.91%    
+Gene Specificity                84.43%          87.89%    
+Transcript Sensitivity          41.60%          39.51%    
+Transcript Specificity          65.73%          87.08%    
+Exon Sensitivity                63.05%          58.52%    
+Exon Specificity                86.77%          96.65%    
+Nucleotide Sensitivity          71.05%          68.00%    
+Nucleotide Specificity          99.14%          99.75%    
+
+**General Stats**
+Predictions:
+                                                ../annot2L.gtf  dist2 seed20 minco70  paralog dist1 seed20 minco95 minl20
+Gene
+        All                      
+                Count                           2649.00         1593.00         1486.00   
+                Total Transcripts               5670.00         2177.00         1533.00   
+                Transcripts Per                 2.14            1.37            1.03 
+
+
+Annotation:     ../annot2L.gtf
+Predictions:            dist2 seed20 minco70|paralogs dist2 seed20 minco70|paralogs dist1 seed20 minco90 minlen20 |  paralogs dist1 seed20 minco95 minlen20
+
+Gene Sensitivity                51.38%          51.38%          51.87%          49.91%    
+Gene Specificity                84.43%          84.33%          87.23%          87.89%    
+Transcript Sensitivity          41.60%          41.60%          41.31%          39.51%    
+Transcript Specificity          65.73%          66.28%          84.13%          87.08%    
+Exon Sensitivity                63.05%          63.05%          61.61%          58.52%    
+Exon Specificity                86.77%          87.11%          95.34%          96.65%    
+Nucleotide Sensitivity          71.05%          71.06%          69.58%          68.00%    
+Nucleotide Specificity          99.14%          99.15%          99.67%          99.75%    
+
+**General Stats**
+Predictions:
+                                                ../annot2L.gtf  dist2 seed20 minco70|paralogs dist2 seed20 minco70|paralogs dist1 seed20 minco90 minlen20 |  paralogs dist1 seed20 minco95 minlen20
+Gene
+        All                      
+            Count                        2649.00         1593.00         1595.00         1558.00         1486.00   
+            Total Transcripts            5670.00         2177.00         2159.00         1664.00         1533.00   
+            Transcripts Per                 2.14            1.37            1.35            1.07            1.03 
+
+
+
+# AUGUSTUS
+
+Annotation:     ../../../annot2L.gtf
+Predictions:                  AUGUSTUS GenomeThreader ganzes Chr2L 
+# gth
+     intron        1      0.2  M    1  1e+100  RM  1  1.15    E 2 0.95 1e3 1e5  W 1    1
+    CDSpart        1   1 0.985 M    1  1e+100  RM  1     1    E 1  1e3          W 1    1       
+ -prseedlength 20 -prhdist 2 -gcmincoverage 70 |  -prseedlength 20 -prhdist 2 -gcmincoverage 70 -prminmatchlen 20
+Gene Sensitivity                67.08%          67.38%    
+Gene Specificity                73.88%          74.15%    
+Transcript Sensitivity          51.78%          52.06%    
+Transcript Specificity          69.07%          69.32%    
+Exon Sensitivity                78.40%          78.54%    
+Exon Specificity                86.68%          86.72%    
+Nucleotide Sensitivity          95.00%          95.03%    
+Nucleotide Specificity          93.91%          93.91%    
+
+**General Stats**
+Predictions:
+                                                ../../../annot2L.gtf    ../../aln.gth.07.02i0985c.b.1e3.2.1e3.1e5.f.fixed.gtf
+   aln.gth.07.02i0985c.b.1e3.2.1e3.1e5.f.fixed.gtf
+Gene
+        All                      
+                Count                           2649.00         2404.00         2406.00   
+                Total Transcripts               5670.00         2638.00         2643.00   
+                Transcripts Per                 2.14            1.10            1.10
+
+
+Annotation:     ../annot2L.gtf
+Predictions:                    AUGUSTUS GenomeThreader ganzes Chr2L 
+# gth
+     intron        1      0.1  M    1  1e+100  RM  1  1.15    E 2 0.95 1e3 1e5  W 1    1
+    CDSpart        1   1 0.985 M    1  1e+100  RM  1     1    E 1  1e3          W 1    1       
+ -prseedlength 20 -prhdist 2 -gcmincoverage 70 | -paralogs -prseedlength 20 -prhdist 1 -gcmincoverage 95 -prminmatchlen 20
+Gene Sensitivity                67.50%          66.89%    
+Gene Specificity                74.28%          73.74%    
+Transcript Sensitivity          52.38%          51.08%    
+Transcript Specificity          69.47%          72.89%    
+Exon Sensitivity                78.04%          76.61%    
+Exon Specificity                87.56%          88.81%    
+Nucleotide Sensitivity          94.81%          94.49%    
+Nucleotide Specificity          94.27%          94.44%    
+
+**General Stats**
+Predictions:
+                                                ../annot2L.gtf  aln.gth.07.01i0985c.b.1e3.2.1e3.1e5.f.fixed.gtf aln.gth.paradist1seed20minco95minl20.01i0985c.b.1e3.2.1e3.1e5.f.fixed.gtf
+Gene
+        All                      
+                Count                           2649.00         2407.00         2403.00   
+                Total Transcripts               5670.00         2643.00         2442.00   
+                Transcripts Per                 2.14            1.10            1.02
+
+Annotation:     ../annot2L.gtf
+Predictions:                    AUGUSTUS GenomeThreader ganzes Chr2L 
+# gth
+     intron        1      0.1  M    1  1e+100  RM  1  1.15    E 2 0.95 1e3 1e5  W 1    1
+    CDSpart        1   1 0.985 M    1  1e+100  RM  1     1    E 1  1e3          W 1    1       
+ -prseedlength 20 -prhdist 2 -gcmincoverage 70 | -paralogs -prseedlength 20 -prhdist 2 -gcmincoverage 70 
+
+Gene Sensitivity                67.50%          67.95%    
+Gene Specificity                74.28%          74.53%    
+Transcript Sensitivity          52.38%          52.49%    
+Transcript Specificity          69.47%          69.72%    
+Exon Sensitivity                78.04%          78.18%    
+Exon Specificity                87.56%          87.66%    
+Nucleotide Sensitivity          94.81%          94.88%    
+Nucleotide Specificity          94.27%          94.43%    
+
+**General Stats**
+Predictions:
+                                                ../annot2L.gtf  aln.gth.07.01i0985c.b.1e3.2.1e3.1e5.f.fixed.gtf aln.gth.07.01i0985c.b.1e3.2.1e3.1e5.para.f.fixed.gtf
+Gene
+        All                      
+                Count                           2649.00         2407.00         2415.00   
+                Total Transcripts               5670.00         2643.00         2649.00   
+                Transcripts Per                 2.14            1.10            1.10 
+
+
+Annotation:     ../annot2L.gtf
+Predictions:  -paralogs -prseedlength 20 -prhdist 1 -gcmincoverage 95 -prminmatchlen 20|  -paralogs -prseedlength 20 -prhdist 1 -gcmincoverage 90 -prminmatchlen 20 |  -paralogs -prseedlength 20 -prhdist 2 -gcmincoverage 90 -prminmatchlen 20
+
+Gene Sensitivity                66.89%          67.20%          67.31%    
+Gene Specificity                73.74%          73.95%          73.98%    
+Transcript Sensitivity          51.08%          51.34%          51.66%    
+Transcript Specificity          72.89%          72.52%          72.34%    
+Exon Sensitivity                76.61%          77.23%          77.42%    
+Exon Specificity                88.81%          88.75%          88.68%    
+Nucleotide Sensitivity          94.49%          94.62%          94.66%    
+Nucleotide Specificity          94.44%          94.50%          94.46%    
+
+**General Stats**
+Predictions:
+                                                ../annot2L.gtf  aln.gth.paradist1seed20minco95minl20.01i0985c.b.1e3.2.1e3.1e5.f.fixed.gtf       aln.gth.paradist1seed20minco90minl20.01i0985c.b.1e3.2.1e3.1e5.f.fixed.gtf       aln.gth.07.01i0985c.b.1e3.2.1e3.1e5.paradist2seed20minco90minl20.f.fixed.gtf
+Gene
+        All                      
+                Count                           2649.00         2403.00         2407.00         2410.00   
+                Total Transcripts               5670.00         2442.00         2482.00         2502.00   
+                Transcripts Per                 2.14            1.02            1.03            1.04 
+
+
+Annotation:     ../annot2L.gtf
+Predictions:                  -paralogs -prseedlength 20 -prhdist 2 -gcmincoverage 90 -prminmatchlen 20
+                              prdist 1        prdist 2        prdist 3        prdist 4        prdist 5        prdist 6  
+Gene Sensitivity              67.91%          68.10%          68.06%          68.06%          68.10%          68.14%    
+Gene Specificity              74.55%          74.67%          74.69%          74.63%          74.70%          74.74%    
+Transcript Sensitivity        52.26%          52.65%          52.59%          52.57%          52.54%          52.57%    
+Transcript Specificity        71.85%          71.49%          70.96%          70.78%          70.55%          70.40%    
+Exon Sensitivity              77.92%          78.13%          78.16%          78.16%          78.20%          78.22%    
+Exon Specificity              88.55%          88.45%          88.23%          88.14%          88.01%          87.92%    
+Nucleotide Sensitivity        94.75%          94.80%          94.81%          94.81%          94.85%          94.88%    
+Nucleotide Specificity        94.40%          94.46%          94.42%          94.35%          94.40%          94.40%    
+
+**General Stats**
+Predictions:
+                           annot2L.gtf    prdist 1     prdist 2      prdist 3     prdist 4    prdist 5       prdist 6 
+Gene
+      All                      
+            Count               2649.00       2413.00     2416.00     2414.00     2416.00      2415.00        2415.00
+            Total Transcripts   5670.00       2558.00     2589.00     2610.00     2615.00      2625.00        2632.00
+            Transcripts Per        2.14          1.06        1.07        1.08        1.08      1.09            1.09
+
+
+# Laufzeit startAlign.pl
+# ganze Sequenz 2L
+time perl /home/simone/augustus-3.1/scripts/startAlign.pl  --prot=/home/simone/braker/project/Drosophila_melanogaster_6/prot/inNOG.fasta --genome=../../genome2L.fa --list=/home/simone/braker/project/Drosophila_melanogaster_6/prot/blast.out --pos=../../dna.2L.pos --prg=gth --noreg >startAligngthnoreg.stdout 2>startAligngthnoreg.err
+
+real    58m52.460s
+user    58m44.196s
+sys     0m4.700s
+
+time perl /home/simone/augustus-3.1/scripts/startAlign.pl  --prot=/home/simone/braker/project/Drosophila_melanogaster_6/prot/inNOG.fasta --genome=../../genome2L.fa --list=/home/simone/braker/project/Drosophila_melanogaster_6/prot/blast.out --pos=../../dna.2L.pos --prg=spaln --noreg >startAlignspalnnoreg.stdout 2>startAlignspalnnoreg.err
+
+real    205m47.997s
+user    205m17.048s
+sys     0m26.262s
+
+
