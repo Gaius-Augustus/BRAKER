@@ -45,7 +45,7 @@ filterIntronsFindStrand.pl genome.fa introns.gff [OPTIONS] > introns.s.f.gff
 OPTIONS
 
     --help                          Print this help message
-    --allowed=gtag,gcaag,atac       Allowed acceptor and donor splice site types
+    --allowed=gtag,gcag,atac        Allowed acceptor and donor splice site types
     --score                         Set score to 'mult' entry or '1', if the last column does not contain a 'mult' entry
     --genome=genome.fa              See above
     --introns=introns.gff           See above

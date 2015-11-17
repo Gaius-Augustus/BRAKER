@@ -2,11 +2,11 @@
 
 ####################################################################################################
 #                                                                                                  #
-# startExonerate.pl - run exonerate on partial sequences and correspondig protein file             #
+# startAlign.pl - run exonerate on partial sequences and correspondig protein file                 #
 #                                                                                                  #
 # Author: Simone Lange                                                                             #
 #                                                                                                  #
-# Contact: katharina.hoff@uni-greifswald.de                                                        #
+# Contact: simonelang1988@gmail.com, mario.stanke@uni-greifswald.de                                #
 #                                                                                                  #
 # Release date: October 28th 2015                                                                  #
 #                                                                                                  #
@@ -91,7 +91,7 @@ my $tmpDir;                 # temporary directory for storing protein and genome
 
 my $spalnErrAdj = 80;       # version spaln2.2.0 misses a line while "counting coordinates" (+80 because of how the fasta files are printed here, see line 529-534) 
 # gth options           # and other values that have proven to work well for Drosophila on chromosome 2L
-my $gcmincoverage = 70; # 80 - 95 
+my $gcmincoverage = 80; # 80 - 95 
 my $prhdist  = 1;       # 2
 my $prseedlength = 20;  # 19, 20, 21 (gth: error: -prminmatchlen must be >= -prseedlength)
 my $prminmatchlen = 20;
