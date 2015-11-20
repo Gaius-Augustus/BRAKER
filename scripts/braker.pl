@@ -53,6 +53,7 @@
 # | made BRAKER1 compatible with   |                      | 08.05.2015 |
 # | GeneMark-ET version 4.29       |                      |            |
 # | add --gff3 option              |                      | 25.09.2015 |
+# | add Mac OS X cpu support       | braker.pl (Hoff)     | 20.11.2015 |
 # ----------------------------------------------------------------------
 
 use Getopt::Long;
@@ -1503,7 +1504,13 @@ sub check_options{
     exit(1);
   }
 
-  my $cpus_available = `nproc`;
+  my $operatingSystem = "$^O";
+  if($operatingSystem eq "linux"){
+      my $cpus_available = `nproc`;
+  }else{ // Mac OS X
+      $cpus_available = `sysctl -n hw.ncpu`;
+  }
+
   if($cpus_available < $CPU){
     print STDOUT "WARNING: Your system does not have $CPU cores available, only $cpus_available. Braker will use the $cpus_available available instead of the chosen $CPU.\n";
   }
