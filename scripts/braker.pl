@@ -1181,6 +1181,7 @@ sub training{
 
     # second test
     if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondtest.out"]) || $overwrite){
+      $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
       print STDOUT "NEXT STEP: second test\n";
       $errorfile = "$errorfilesDir/secondtest.stderr";
       $stdoutfile = "$otherfilesDir/secondtest.stdout";
