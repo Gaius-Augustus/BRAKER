@@ -6,7 +6,7 @@
 %                                                                                                %
 %           Contact: katharina.hoff@uni-greifswald.de                                            %
 %                                                                                                %
-%           Date: July 10th, 2015                                                               %
+%           Date: Dec 11th, 2015                                                                 %
 %                                                                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -15,6 +15,7 @@
   3.  RUNNING BRAKER1
   4.  OUTPUT OF BRAKER1
   5.  EXAMPLE DATA
+  6.  HOW TO CITE
 
               1. INTRODUCTION
               ---------------
@@ -388,3 +389,12 @@ After extraction, test BRAKER1 with the following command:
 perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam
 
 The runtime of this example should be around 46 hours on a 2.27 GHz single CPU.
+
+              6. HOW TO CITE
+              --------------
+Please cite the following publication:
+
+K. J. Hoff, S. Lange, A. Lomsadze, M. Borodovsky, M. Stanke
+BRAKER1: Unsupervised RNA-Seq-Based Genome Annotation with GeneMark-ET and AUGUSTUS
+Bioinformatics (2015), doi: 10.1093/bioinformatics/btv661
+http://bioinformatics.oxfordjournals.org/content/early/2015/11/11/bioinformatics.btv661.abstract
