@@ -1506,9 +1506,10 @@ sub check_options{
   }
 
   my $operatingSystem = "$^O";
+  my $cpus_available = 1;
   if($operatingSystem eq "linux"){
-      my $cpus_available = `nproc`;
-  }else{ // Mac OS X
+      $cpus_available = `nproc`;
+  }else{ # Mac OS X
       $cpus_available = `sysctl -n hw.ncpu`;
   }
 
