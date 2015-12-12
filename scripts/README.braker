@@ -1,0 +1,364 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                                                %
+%           BRAKER1                                                                              %
+%                                                                                                %
+%           Authors: Simone Lange and Katharina J. Hoff                                          %
+%                                                                                                %
+%           Contact: katharina.hoff@uni-greifswald.de                                            %
+%                                                                                                %
+%           Date: May 11th, 2015                                                               %
+%                                                                                                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  1.  INTRODUCTION
+  2.  INSTALLATION
+  3.  RUNNING BRAKER1
+  4.  OUTPUT OF BRAKER1
+  5.  EXAMPLE DATA
+
+              1. INTRODUCTION
+              ---------------
+BRAKER1 is a pipeline for unsupervised RNA-Seq-based genome annotation that combines the advantages of GeneMark-ET and AUGUSTUS. BRAKER1 requires an RNA-Seq read alignment file (in the bam format) and a genome file as input. First,  GeneMark-ET performs iterative training and generates initial gene structures using support from RNA-Seq. Second, AUGUSTUS uses predicted genes for training and then integrates RNA-Seq read information as extrinsic evidence into final gene predictions. For more information on AUGUSTUS or GeneMark-ET see their respective README files.
+
+              2. INSTALLATION
+              ---------------
+
+At the time of release, this BRAKER1 version, the pipeline was tested with:
+
+   * AUGUSTUS 3.1.0
+   * GeneMark-ET 4.29
+   * BAMTOOLS 2.3.0
+   * SAMTOOLS 1.2 (using htslib 1.2.1)
+
+1. Download GeneMark-ET from http://exon.gatech.edu/GeneMark/license_download.cgi
+
+2. Download AUGUSTUS from http://bioinf.uni-greifswald.de/augustus/downloads/index.php
+
+3. Download BAMTOOLS (e.g. e.g. git clone https://github.com/pezmaster31/bamtools.git)
+
+4. Install BAMTOOLS by typing the following in your shell:
+
+   cd your-bamtools-directory
+   mkdir build
+   cd build
+   cmake ..
+   make
+
+5. Unpack and install GeneMark-ET as described in GeneMark-ET's README file.
+
+6. Unpack and install AUGUSTUS. AUGUSTUS comes with pre-compiled binaries (located in the 
+   augustus-x.x.x/bin folder). However, you should compile AUGUSTUS on your own system in order
+   to avoid future problems. Compilation instructions are provided in the AUGUSTUS README file.
+   However, bam2hints compilation is not covered by the AUGUSTUS README. Therefore, compile
+   bam2hints as described, here. First, you need to edit the Makefile of bam2hints in order
+   point to the correct location of BAMTOOLS on your system. Therefore open the file with 
+   an editor of your choice, e.g. emacs:
+
+   emacs augustus-x.x.x/auxprogs/bam2hints/Makefile
+   
+   Replace "/home/mario/tools/bamtools" by your individual path to BAMTOOLS.
+
+   cd augustus-x.x.x/auxprogs/bam2hints
+   make
+   mv bam2hints ../../bin
+   
+7. Optional: 
+      SAMTOOLS is not required for running BRAKER1 if all your files are formatted, correctly
+      (i.e. all sequences should have short and unique fasta names). If you are not sure
+      whether all your files are fomatted correctly, it might be helpful to have SAMTOOLS
+      installed (BRAKER1 will then try to use SAMTOOLS to solve certain issues).
+
+      As a prerequisite for SAMTOOLS, download and install htslib (e.g. 
+      git clone https://github.com/samtools/htslib.git, follow the htslib documentation for 
+      installation).
+
+      Download and install SAMTOOLS (e.g. git clone git://github.com/samtools/samtools.git), 
+      subsequently follow SAMTOOLS documentation for installation). 
+
+8. Install the required PERL modules available on CPAN:
+   			     	File::Spec::Functions
+				Hash::Merge
+				List::Util
+				Logger::Simple
+				Module::Load::Conditional
+				Parallel::ForkManager
+				POSIX
+				Scalar::Util::Numeric
+				YAML 
+   (on Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]")
+
+   BRAKER1 also uses the PERL module helpMod.pm that is not available on CPAN. This module is 
+   part of the BRAKER1 relase and does not require separate installation.
+
+9. Add the directories in which braker.pl, AUGUSTUS executables, AUGUSTUS scripts reside to 
+   your $PATH environment variable, e.g. for your current bash session:
+
+   PATH=/my_path_to_braker/:/my_path_to_augustus/bin/:/my_path_to_augustus/scripts/:$PATH
+   export PATH
+
+   You may want to add these lines to a startup script (like ~/.bashrc).
+
+   Exporting the location of AUGUSTUS and AUGUSTUS scripts is not required 
+   by BRAKER1 if you set the environment variables in step 10.
+
+10. Optional: set environment variables $AUGUSTUS_CONFIG_PATH, $GENEMARK_PATH and $BAMTOOLS_PATH 
+              (and $SAMTOOLS_PATH)
+    The $AUGUSTUS_CONFIG_PATH determines which directory is used for reading and writing species 
+    configuration files. During training, AUGUSTUS writes species-specific parameter files to this 
+    directory. Therefore, you need write permissions for the directory that is $AUGUSTUS_CONFIG_PATH. 
+    If the $AUGUSTUS_CONFIG_PATH environment variable is not set, then the programs will look in the 
+    path ../config relative to the directory in which the AUGUSTUS executable is located. If required,
+    export the variable e.g. for your current bash session:
+
+    export AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/
+
+    $AUGUSTUS_CONFIG_PATH - if exported - is also used by BRAKER1 to determine the relative 
+    			    path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints. 
+
+    If the environment variable $GENEMARK_PATH is set, BRAKER1 will look there for the gmes_petap.pl 
+    script. Export the variable e.g. for your current bash session:
+
+    export GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
+
+    If the environment variable $BAMTOOLS_PATH is set, BRAKER1 will look there for the bamtools 
+    executable. Export the variable e.g. for your current bash session:
+
+    export BAMTOOLS_PATH=/my_path_to_bamtools/bin/
+
+    If the environment variable $SAMTOOLS_PATH is set, BRAKER1 will look there for the samtools 
+    executable. Export the variable e.g. for your current bash session:
+
+    export SAMTOOLS_PATH=/my_path_to_samtools/
+
+    You may want to add these lines to a startup script (like ~/.bashrc). Pay attention, that you 
+    do not specify the actual executable when exporting paths, but only the path to where the 
+    executable resides.
+
+    Alternatively, you can specify these directories on the command line when running BRAKER1:
+
+    --AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/ 
+    --GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
+    --BAMTOOLS_PATH=/my_path_to_bamtools/bin/
+    --SAMTOOLS_PATH=/my/path_to_samtools/
+
+              3. RUNNING BRAKER1
+              ------------------
+
+BRAKER1 has two mandatory arguments: a genome file in fasta format and an RNA-Seq alignment file in bam format.
+
+The genome file contains the DNA input sequence and must be in uncompressed (multiple) fasta format, the file may look like this:
+
+>name_of_sequence_1
+agtgctgcatgctagctagct
+>name_of_sequence_2
+gtgctngcatgctagctagctggtgtnntgaaaaatt
+
+Every letter other than a,c,g,t,A,C,G and T is interpreted as an unknown base. Digits and white spaces are ignored. The number of characters per line is not restricted.
+
+The bam file contains unassembled RNA-Seq read alignments. 
+
+Alternatively to the bam file, spliced alignment information may be passed as "intron hints" in gff format using the argument --hints=gff-hintsfilename, the file may look like this:
+
+contig_name	TopHat2	intron	2740	2888	25	+	.	.
+
+Required values in the gff format file for GeneMark-ET (for more details, see http://www.sanger.ac.uk/resources/software/gff/spec.html):
+
+Column <seqname>     value should match the corresponding definition line in the FASTA file with sequence
+Column <source>      in this case TopHat2 (value in this column may be anything)
+Column <feature>     value "intron" (obligatory!)
+Columns <start><end> intron coordinates, <start> points to first nucleotide of intron and <end> to the last one. 
+                     Index starts from "1"
+Column <score>       in case of TopHat2, score is the number of reads spanning this intron (reported by TopHat2)
+                     in case of UnSplicer or TrueSight, score is the probability like estimate of intron quality,
+                     reported by these tools
+Column <strand>     + or -
+Values in other columns (frame and attribute) are not used in this program version.
+
+
+IMPORTANT: the names of contigs in <seqname> column in gff must be found as sequence names in the corresponding FASTA file (in the usage example below: genome.fa)!
+  
+Usage:
+
+perl braker.pl [OPTIONS] --genome=genome.fa --bam=RNAseq.bam
+perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseq.gff
+
+
+'genome.fa' is the filename (including relative path) to the file containing the query sequence(s) in fasta format.
+'RNAseq.bam' is the filename (including relative path) to the file containing the RNA-seq alingment data in bam format.
+'RNAseq.gff' is the filename (including relative path) to the file containing introns extracted from RNA-Seq information in gff format.
+
+Selected parameters:
+
+--alternatives-from-evidence=true/false
+  Report alternative transcripts when they are suggested by hints, default is true.
+
+--AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/ 
+  Path to AUGUSTUS config directory (if not specified as environment variable). Has higher priority than the
+  environment variable.
+
+--cores=n
+  Specifies the maximum number of cores that can be used during computation
+
+--fungus
+  GeneMark-ET option: to run algorithm with branch point model (most useful for fungal genomes)
+
+--GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
+  Path to GeneMark-ET (if not specified as environment variable). Has higher priority than environment
+  variable.
+
+--BAMTOOLS_PATH=/path/to/bamtools/
+  Path to bamtools (if not specified as environment variable). Has higher priority than the
+  environment variable.
+
+--SAMTOOLS_PATH=/path/to/samtools/
+  Optional: set path to samtools (if not specified as environment variable). In some cases, users of BRAKER1 reported that they "shortend" the headers of FASTA files after their first attempt to run BRAKER1, but they forgot to fix the same sequence names in the BAM file. SAMTOOLS is used by BRAKER1 to automatically fix such issues. The command line flag has higher priority than environment variable.
+
+--hints=hints.gff            
+  Additional hints files for gene predictions with AUGUSTUS in gff format (should only be used in combination
+  with --optCfgFile)
+
+--optCfgFile=extrinsic.cfg
+  Optional config file for AUGUSTUS, should be used if --hints is used, and if you desire to use extrinsic 
+  configuration parameters deviating from the BRAKER1 default values.
+
+--overwrite
+  Overwrite existing files
+
+--skipGeneMark-ET
+  Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source)
+ 
+--skipOptimize
+  Skip optimize parameter step (not recommended!)
+
+--softmasking
+
+--useexisting
+  Use the present config and parameter files if they exist for 'speciesname'
+
+--UTR=on/off
+  Predict the untranslated regions in addition to the coding sequence. This currently works only for the species
+  human, galdieria, toxoplasma and caenorhabditis.
+
+--workingdir=/path/to/wd/
+  Path to working directory in which results and temporary files are stored (default: current directory).
+
+--species=speciesname
+  speciesname is a directory in ${AUGUSTUS_CONFIG_PATH}/species, which is used to read AUGUSTUS species
+  parameters from, and write such parameter so. Usually, BRAKER1 is used to train AUGUSTUS for new species, i.e.
+  the speciesname should be a species name that does not already exist in ${AUGUSTUS_CONFIG_PATH}/species.
+  Existing species files will not be overwritten. If the argument --species is not used, BRAKER1 generates
+  speciesnames of the type Sp_1 etc. For example you may type
+
+--version
+  Print version number of braker.pl
+
+  perl braker --species=new_species  --genome=../examples/example.fa  --bam=../examples/example.bam
+
+  to create a new species 'new_species'.
+
+  Alternatively to training AUGUSTUS, it is possible run AUGUSTUS with already existing parameters. In that case,
+  speciesname can be any of the species names contained in ${AUGUSTUS_CONFIG_PATH}/species. In the following,
+  you find a list of species identifiers that may be used as speciesname (for use with --useexisting) and that
+  are part of the current AUGUSTUS release:
+
+   identifier                               | species
+   -----------------------------------------|----------------------
+   human                                    | Homo sapiens
+   fly                                      | Drosophila melanogaster
+   arabidopsis                              | Arabidopsis thaliana
+   brugia                                   | Brugia malayi
+   aedes                                    | Aedes aegypti
+   tribolium                                | Tribolium castaneum
+   schistosoma                              | Schistosoma mansoni
+   tetrahymena                              | Tetrahymena thermophila
+   galdieria                                | Galdieria sulphuraria
+   maize                                    | Zea mays
+   toxoplasma                               | Toxoplasma gondii
+   caenorhabditis                           | Caenorhabditis elegans
+   (elegans)                                | Caenorhabditis elegans 
+   aspergillus_fumigatus                    | Aspergillus fumigatus
+   aspergillus_nidulans                     | Aspergillus nidulans
+   (anidulans)                              | Aspergillus nidulans
+   aspergillus_oryzae                       | Aspergillus oryzae
+   aspergillus_terreus                      | Aspergillus terreus
+   botrytis_cinerea                         | Botrytis cinerea
+   candida_albicans                         | Candida albicans
+   candida_guilliermondii                   | Candida guilliermondii
+   candida_tropicalis                       | Candida tropicalis
+   chaetomium_globosum                      | Chaetomium globosum
+   coccidioides_immitis                     | Coccidioides immitis
+   coprinus                                 | Coprinus cinereus
+   coprinus_cinereus                        | Coprinus cinereus
+   coyote_tobacco                           | Nicotiana attenuata
+   cryptococcus_neoformans_gattii           | Cryptococcus neoformans gattii
+   cryptococcus_neoformans_neoformans_B     | Cryptococcus neoformans neoformans
+   cryptococcus_neoformans_neoformans_JEC21 | Cryptococcus neoformans neoformans
+   (cryptococcus)                           | Cryptococcus neoformans
+   debaryomyces_hansenii                    | Debaryomyces hansenii
+   encephalitozoon_cuniculi_GB              | Encephalitozoon cuniculi
+   eremothecium_gossypii                    | Eremothecium gossypii
+   fusarium_graminearum                     | Fusarium graminearum
+   (fusarium)                               | Fusarium graminearium
+   histoplasma_capsulatum                   | Histoplasma capsulatum
+   (histoplasma)                            | Histoplasma capsulatum
+   kluyveromyces_lactis                     | Kluyveromyces lactis
+   laccaria_bicolor                         | Laccaria bicolor
+   lamprey                                  | Petromyzon marinus
+   leishmania_tarentolae                    | Leishmania tarentolae
+   lodderomyces_elongisporus                | Lodderomyces elongisporus
+   magnaporthe_grisea                       | Magnaporthe grisea
+   neurospora_crassa                        | Neurospora crassa
+   (neurospora)                             | Neurospora crassa
+   phanerochaete_chrysosporium              | Phanerochaete chrysosporium
+   (pchrysosporium)                         | Phanerochaete chrysosporium
+   pichia_stipitis                          | Pichia stipitis
+   rhizopus_oryzae                          | Rhizopus oryzae
+   saccharomyces_cerevisiae_S288C           | Saccharomyces cerevisiae
+   saccharomyces_cerevisiae_rm11-1a_1       | Saccharomyces cerevisiae
+   (saccharomyces)                          | Saccharomyces cerevisiae
+   schizosaccharomyces_pombe                | Schizosaccharomyces pombe
+   thermoanaerobacter_tengcongensis         | Thermoanaerobacter tengcongensis
+   trichinella                              | Trichinella spiralis
+   ustilago_maydis                          | Ustilago maydis
+   (ustilago)                               | Ustilago maydis
+   yarrowia_lipolytica                      | Yarrowia lipolytica
+   nasonia                                  | Nasonia vitripennis
+   tomato                                   | Solanum lycopersicum
+   chlamydomonas                            | Chlamydomonas reinhardtii
+   amphimedon                               | Amphimedon queenslandica
+   pneumocystis                             | Pneumocystis jirovecii
+   wheat                                    | Triticum aestivum
+   chicken                                  | Gallus gallus
+
+   The identifiers in parentheses denote older versions for that species.
+
+              4. OUTPUT OF BRAKER1
+              --------------------
+
+BRAKER1 produces three important output files in the working directory:
+
+introns.gff   - The introns extraced from RNAseq.bam. These introns are used for training GeneMark-ET and
+                for predicting genes with AUGUSTUS. The file is in gff format (see section 3, input argument 
+                --hints).
+genemark.gtf  - Genes predicted by GeneMark-ET in gtf format
+augustus.gff  - Genes predicted by AUGUSTUS in gtf format
+
+For details about gtf format, see http://www.sanger.ac.uk/Software/formats/GFF/. A gtf format file contains one line per predicted exon. Example:
+
+HS04636   AUGUSTUS   initial    966     1017    .       +       0       transcript_id "g1.1"; gene_id "g1";
+HS04636   AUGUSTUS   internal   1818    1934    .       +       2       transcript_id "g1.1"; gene_id "g1";
+
+The columns (fields) contain: 
+seqname   source     feature    start   end   score   strand   frame    transcript ID and gene ID
+
+
+              5. EXAMPLE DATA
+              ---------------
+
+Due to file size, example data for testing BRAKER1 is separately available for download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and http://exon.gatech.edu/ as archive BRAKER1examples.tar.gz.
+
+After extraction, test BRAKER1 with the following command:
+
+perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam
+
+The runtime of this example should be around 46 hours on a 2.27 GHz single CPU.
