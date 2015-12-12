@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: May 11th 2015                                                                      #
+# Release date: Dec 11th 2015                                                                      #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -47,7 +47,7 @@ use warnings;
 
 my $usage = <<'ENDUSAGE';
 
-braker.pl     annotate genomes based on RNAseq using GeneMark-ET and AUGUSTUS
+braker.pl     Pipeline for predicting genes with GeneMark-ET and AUGUSTUS with RNA-Seq
 
 SYNOPSIS
 
@@ -78,6 +78,7 @@ OPTIONS
                                          useful for fungal genomes)
     --GENEMARK_PATH=/path/to/            Set path to GeneMark-ET (if not specified as environment 
       gmes_petap.pl/                     variable). Has higher priority than environment variable.
+    --gff3                               Output in GFF3 format.
     --hints=hints.gff                    Alternatively to calling braker.pl with a bam file, it is 
                                          possible to call it with a file that contains introns extracted 
                                          from RNA-Seq data in gff format. This flag also allows the usage
@@ -94,7 +95,7 @@ OPTIONS
     --skipGeneMark-ET                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
                                          different source) 
     --skipOptimize                       Skip optimize parameter step (not recommended).
-    --softmasking
+    --softmasking                        Softmasking option for soft masked genome files. Set to 'on' or '1'
     --species=sname                      Species name. Existing species will not be overwritten. 
                                          Uses Sp_1 etc., if no species is assigned                          
     --useexisting                        Use the present config and parameter files if they exist for 
@@ -113,14 +114,15 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 1.6;                    # braker.pl version number
+my $version = 1.7;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
-my $augpath;
+my $augpath;                          # path to augustus
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
 my $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
 my @bam;                              # bam file names
 my $bamtools_path;                    # path to bamtools executable, higher priority than $BAMTOOLS_BIN_PATH on system
-my $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'};
+my $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'}; # bamtools environment variable
+my @bonus;                            # array of bonus values for extrinsic file
 my $bool_species = "true";            # false, if $species contains forbidden words (e.g. chmod)
 my $cmdString;                        # to store shell commands
 my $CPU = 1;                          # number of CPUs that can be used
@@ -128,6 +130,7 @@ my $currentDir = cwd();               # working superdirectory where programme i
 my $errorfile;                        # stores current error file name
 my $errorfilesDir;                    # directory for error files
 my $extrinsicCfgFile;                 # assigned extrinsic file
+my $extrinsicfilesDir;                # directory for test extrinsic files
 my @files;                            # contains all files in $rootDir
 my $flanking_DNA;                     # length of flanking DNA, default value is min{ave. gene length/2, 10000}
 my @forbidden_words;                  # words/commands that are not allowed in species name (e.g. unlink)
@@ -135,28 +138,31 @@ my $fungus = 0;                       # option for GeneMark-ET
 my $gb_good_size;                     # number of LOCUS entries in 'genbank.good.gb'                         
 my $genbank;                          # genbank file name
 my $genemarkDir;                      # directory for GeneMark-ET output
-my $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script on system
+my $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script on system, environment variable
 my $GMET_path;                        # GeneMark-ET path, higher priority than $GENEMARK_PATH
 my $genome;                           # name of sequence file
 my $genome_length = 0;                # length of genome file
+my $gff3 = 0;                         # create output file in GFF3 format
 my $help;                             # print usage
 my @hints;                            # input hints file names
 my $hintsfile;                        # hints file later used by AUGUSTUS
 my $limit = 10000000;                 # maximum for generic species Sp_$limit
 my $logfile;                          # contains used shell commands
+my @malus;                            # array of malus values for extrinsic file
 my $optCfgFile;                       # optinonal extrinsic config file for AUGUSTUS
 my $otherfilesDir;                    # directory for other files besides GeneMark-ET output and parameter files
 my $overwrite = 0;                    # overwrite existing files (except for species parameter files)
 my $parameterDir;                     # directory of parameter files for species
 my $perlCmdString;                    # stores perl commands
 my $printVersion = 0;                 # print version number, if set
-my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'};
+my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'}; # samtools environment variable
 my $SAMTOOLS_PATH_OP;                 # path to samtools executable, higher priority than $SAMTOOLS_PATH on system
 my $scriptPath=dirname($0);           # path of directory where this script is located
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source) 
 my $skipoptimize = 0;                 # skip optimize parameter step
 my $species;                          # species name
 my $soft_mask = 0;                    # soft-masked flag
+my $standard = 0;                     # index for standard malus/ bonus value (currently 0.1 and 1e1)optimize_augustus.pl
 my $stdoutfile;                       # stores current standard output
 my $string;                           # string for storing script path
 my $testsize;                         # AUGUSTUS training parameter: number of genes in a file that is
@@ -166,13 +172,16 @@ my $testsize;                         # AUGUSTUS training parameter: number of g
                                       # parameter speeds up braker.pl but decreases prediction accuracy.
                                       # At least 300 genes are required for training AUGUSTUS.
 my $useexisting = 0;                  # use existing species config and parameter files, no changes on those files
-my $UTR = "off";
+my $UTR = "off";                      # UTR prediction on/off. currently not available für new species 
 my $workDir;                          # in the working directory results and temporary files are stored
 
 
 # list of forbidden words for species name
-@forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while"); 
+@forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while");  
 
+# lists for extrinsic files
+@bonus = ("1e1", "1e0", "1e2", "1e3", "1e4", "1e5");
+@malus = ("0.1", "0.2", "0.4", "1.0"); 
 
 if(@ARGV==0){
   print "$usage\n"; 
@@ -188,6 +197,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'extrinsicCfgFile=s'            => \$extrinsicCfgFile,
             'GENEMARK_PATH=s'               => \$GMET_path,
             'genome=s'                      => \$genome,
+            'gff3'                          => \$gff3,
             'hints=s'                       => \@hints,
             'optCfgFile=s'                  => \$optCfgFile,
             'overwrite!'                    => \$overwrite,
@@ -264,6 +274,10 @@ if(defined($bamtools_path)){
 
 # set path to samtools (optional)
 if(defined($SAMTOOLS_PATH_OP)){
+  my $last_char = substr($SAMTOOLS_PATH_OP, -1);
+  if($last_char eq "\/"){
+    chop($SAMTOOLS_PATH_OP);
+  }
   $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
 }
 
@@ -280,7 +294,7 @@ if(!@bam && !@hints){
 }
 
 
-# check whether bam files exists
+# check whether bam files exist
 if(@bam){
   @bam = split(/[\s,]/, join(',',@bam));
   for(my $i=0; $i<scalar(@bam); $i++){
@@ -315,12 +329,13 @@ if(defined($species)){
   }
 
   foreach my $word (@forbidden_words){
-    if($species =~m/\A$word}\Z/){
+    if($species eq $word){
       print STDOUT "WARNING: $species is not allowed as a species name. ";
       $bool_species = "false";
     }
   }
 }
+# use standard name when no name is assigned or when it contains invalid parts
 if(!defined($species) || $bool_species eq "false"){
   my $no = 1;
   $species = "Sp_$no";
@@ -331,6 +346,10 @@ if(!defined($species) || $bool_species eq "false"){
     }else{
       $no++;
     }
+  }
+  if($no > $limit){
+    print STDERR "ERROR: There are already $limit species folders under $AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move some of those folders or assign a valid species identifier with --species=name.\n";
+    exit(1);
   }
   if($bool_species eq "false"){
     print STDOUT "Programme will use $species instead.\n";
@@ -348,6 +367,7 @@ if(-d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting){
 
 if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
   print STDOUT "WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not exist. Braker will create the necessary files for species $species.\n";
+  $useexisting = 0;
 }
 
 # check whether $rootDir already exists
@@ -362,6 +382,7 @@ if(defined($extrinsicCfgFile)){
 }
 if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile){
   print STDOUT "WARNING: Assigned extrinsic file $extrinsicCfgFile does not exist. Programme will create extrinsic file instead.\n";
+  $extrinsicCfgFile = undef;
 }
 
 # check whether genome file is set
@@ -387,6 +408,7 @@ if(! -f "$genome"){
   $parameterDir = "$rootDir/$species/species";
   $otherfilesDir = "$rootDir/$species";
   $errorfilesDir = "$rootDir/$species/errors";
+  $extrinsicfilesDir = "$rootDir/$species/species/extrinsic";
 
   $logfile = "$otherfilesDir/braker.log";
   # create other directories if necessary
@@ -398,16 +420,16 @@ if(! -f "$genome"){
   }
   open (LOG, ">>".$logfile) or die "Cannot open file: $logfile\n";
   if($bool_rootDir eq "true"){
-    print LOG "\# ".localtime().": create working directory $rootDir\n";
+    print LOG "\# ".(localtime).": create working directory $rootDir\n";
     print LOG "mkdir $rootDir\n\n";
   }
   if($bool_otherDir eq "true"){
-    print LOG "\# ".localtime().": create working directory $bool_otherDir\n";
+    print LOG "\# ".(localtime).": create working directory $otherfilesDir\n";
     print LOG "mkdir $otherfilesDir\n\n";
   }
   if(! -d $genemarkDir){
     make_path($genemarkDir);
-    print LOG "\# ".localtime().": create working directory $genemarkDir\n";
+    print LOG "\# ".(localtime).": create working directory $genemarkDir\n";
     print LOG "mkdir $genemarkDir\n\n";
   }
   # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
@@ -421,28 +443,62 @@ if(! -f "$genome"){
 
   if(! -d $parameterDir){
     make_path($parameterDir);
-    print LOG "\# ".localtime().": create working directory $parameterDir\n";
-    print LOG "mkdir mkdir $parameterDir\n\n";
+    print LOG "\# ".(localtime).": create working directory $parameterDir\n";
+    print LOG "mkdir $parameterDir\n\n";
   }
+
+  if(! -d $extrinsicfilesDir){
+    make_path($extrinsicfilesDir);
+    print LOG "\# ".(localtime).": create working directory $extrinsicfilesDir\n";
+    print LOG "mkdir $extrinsicfilesDir\n\n";
+  }
+
   if(! -d $errorfilesDir){
     make_path($errorfilesDir);
-    print LOG "\# ".localtime().": create working directory $errorfilesDir\n";
+    print LOG "\# ".(localtime).": create working directory $errorfilesDir\n";
     print LOG "mkdir $errorfilesDir\n\n";
   }
 
   $genome = rel2abs($genome);
   $cmdString = "cd $rootDir;";
-  print LOG "\# ".localtime().": change to working directory $rootDir\n";
+  print LOG "\# ".(localtime).": change to working directory $rootDir\n";
   print LOG "$cmdString\n\n";
   chdir $rootDir or die ("Could not change to directory $rootDir.\n");
 
-  check_fasta_headers($genome);
-  make_hints();
-  GeneMark_ET(); 
-  new_species(); 
-  training(); 
-  augustus();
-  clean_up();
+  check_fasta_headers($genome); # check fasta headers
+  make_hints();                 # make hints from RNA-Seq or gtf input
+  GeneMark_ET();                # run GeneMark-ET
+  new_species();                # create new species parameter files
+  training();                   # train species-specific parameters with optimize_augustus.pl and etraining
+
+    # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
+  if(!defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && $soft_mask)){
+    extrinsic(); # use default extrinsic file
+  }
+  # copy extrinsic file to species parameters directory
+  if(defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg")){
+    if(!defined($extrinsicCfgFile)){
+      $extrinsicCfgFile = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
+    }
+    @_ = split(/\//, $extrinsicCfgFile);
+    if(!uptodate([$extrinsicCfgFile],["$parameterDir/$species/".$_[-1]])  || $overwrite){
+      print STDOUT "NEXT STEP: copy extrinsic file to working directory\n";
+      $cmdString = "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
+      print LOG "\# ".(localtime).": copy extrinsic file to working directory\n";
+      print LOG "$cmdString\n\n";
+      system("$cmdString")==0 or die("failed to execute: $!\n");
+      print STDOUT "extrinsic file copied.\n";
+    }
+  }
+
+  augustus(); # run augustus
+  if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.aa"])  || $overwrite){
+    getAnnoFasta("$otherfilesDir/augustus.gff"); # create protein sequence file
+  }
+  if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.gtf"])  || $overwrite){
+    make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf and gff3 (if desired) format
+  }
+  clean_up(); # delete all empty files
   close(LOG) or die("Could not close log file $logfile!\n");
 }
 
@@ -457,7 +513,7 @@ sub make_hints{
   my $bam_hints;
   my $hintsfile_temp = "$otherfilesDir/hintsfile.temp.gff";
   $hintsfile = "$otherfilesDir/hintsfile.gff";
-
+  # from RNA-Seq data in bam format
   if(@bam){
     my $bam_temp = "$otherfilesDir/bam2hints.temp.gff";
     for(my $i=0; $i<scalar(@bam); $i++){
@@ -467,11 +523,11 @@ sub make_hints{
         print STDOUT "NEXT STEP: make hints from BAM file $bam[$i]\n";
         $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
         $cmdString = "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
-        print LOG "\# ".localtime().": make hints from BAM file $bam[$i]\n";
+        print LOG "\# ".(localtime).": make hints from BAM file $bam[$i]\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         $cmdString = "cat $bam_temp >>$hintsfile_temp";
-        print LOG "\# ".localtime().": add hints from BAM file $bam[$i] to hints file\n";
+        print LOG "\# ".(localtime).": add hints from BAM file $bam[$i] to hints file\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "hints from BAM file $bam[$i] added.\n";
@@ -479,13 +535,13 @@ sub make_hints{
     }
     unlink($bam_temp);
   }
-
+  # from gtf input files
   if(@hints){
     for(my $i=0; $i<scalar(@hints); $i++){
       if(!uptodate([$hints[$i]],[$hintsfile]) || $overwrite){
         print STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
         $cmdString = "cat $hints[$i] >> $hintsfile_temp";
-        print LOG "\# ".localtime().": add hints from file $hints[$i]\n";
+        print LOG "\# ".(localtime).": add hints from file $hints[$i]\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
       }
@@ -496,7 +552,7 @@ sub make_hints{
       my $hintsfile_temp_sort = "$otherfilesDir/hints.temp.sort.gff";
       print STDOUT "NEXT STEP: sort hints\n";
       $cmdString = "cat $hintsfile_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
-      print LOG "\# ".localtime().": sort hints\n";
+      print LOG "\# ".(localtime).": sort hints\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "hints sorted.\n";
@@ -505,7 +561,7 @@ sub make_hints{
       $string = find("join_mult_hints.pl");
       $errorfile = "$errorfilesDir/join_mult_hints.stderr";
       $perlCmdString = "perl $string <$hintsfile_temp_sort >$hintsfile_temp 2>$errorfile";
-      print LOG "\# ".localtime().": join multiple hints\n";
+      print LOG "\# ".(localtime).": join multiple hints\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "hints joined.\n";
@@ -517,7 +573,7 @@ sub make_hints{
       $string = find("filterIntronsFindStrand.pl");
       $errorfile = "$errorfilesDir/filterIntronsFindStrand.stderr";
       $perlCmdString = "perl $string $genome $hintsfile_temp --score 1>$hintsfile 2>$errorfile";
-      print LOG "\# ".localtime().": filter introns, find strand and change score to \'mult\' entry\n";
+      print LOG "\# ".(localtime).": filter introns, find strand and change score to \'mult\' entry\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "strands found and score changed.\n";
@@ -539,7 +595,7 @@ sub GeneMark_ET{
   if(!$skipGeneMarkET){
     if(!uptodate([$genome,$hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
       $cmdString = "cd $genemarkDir";
-      print LOG "\# ".localtime().": change to GeneMark-ET directory $genemarkDir\n";
+      print LOG "\# ".(localtime).": change to GeneMark-ET directory $genemarkDir\n";
       print LOG "$cmdString\n\n";
       chdir $genemarkDir or die ("Could not change to directory $genemarkDir.\n");
 
@@ -552,28 +608,29 @@ sub GeneMark_ET{
         $perlCmdString .= " --fungus";
       }
       if($soft_mask){
-        $perlCmdString .= " --soft 1000";
+      #  $perlCmdString .= " --soft_mask"; # version prior to 4.29
+        $perlCmdString .= " --soft 1000"; # version 4.29
       }
       $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
-      print LOG "\# ".localtime().": execute GeneMark-ET\n";
+      print LOG "\# ".(localtime).": execute GeneMark-ET\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $perlCmdString\n");
       print STDOUT "GeneMark-ET finished.\n";
       $cmdString = "cd $rootDir";
-      print LOG "\# ".localtime().": change to working directory $rootDir\n";
+      print LOG "\# ".(localtime).": change to working directory $rootDir\n";
       print LOG "$cmdString\n\n";
       chdir $rootDir or die ("Could not change to directory $rootDir.\n");
     }
   }
 
-  # convert GeneMark-ET output to gtf format with doublequotes
+  # convert GeneMark-ET output to gtf format with doublequotes (for older GeneMark-ET versions) and filter genes for training
   if(!uptodate(["$genemarkDir/genemark.gtf", $hintsfile],["$genemarkDir/genemark.c.gtf","$genemarkDir/genemark.f.good.gtf", "$genemarkDir/genemark.average_gene_length.out"])  || $overwrite){
     print STDOUT "NEXT STEP: convert GeneMark-ET to real gtf format\n"; 
     $string=find("filterGenemark.pl");
     $errorfile = "$errorfilesDir/filterGenemark.stderr";
     $stdoutfile = "$otherfilesDir/filterGenemark.stdout";
     $perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
-    print LOG "\# ".localtime().": convert GeneMark-ET output to real gtf format\n";
+    print LOG "\# ".(localtime).": convert GeneMark-ET output to real gtf format\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "GeneMark-ET conversion.\n";
@@ -591,12 +648,15 @@ sub new_species{
     $string=find("new_species.pl");
     $errorfile = "$errorfilesDir/new_species.stderr";
     $perlCmdString="perl $string --species=$species 2>$errorfile";
-    print LOG "\# ".localtime().": create new species $species\n";
+    print LOG "\# ".(localtime).": create new species $species\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
   }
+}
 
-  # create extrinsic file
+
+# create default extrinsic file (without BLAST)
+sub extrinsic{  
   my $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
   my $extrinsic_cp = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
   if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -e $extrinsicCfgFile) ){
@@ -605,17 +665,15 @@ sub new_species{
     }
     if(! -e $extrinsic_cp){
       print STDOUT "NEXT STEP: create extrinsic file: $extrinsic_cp\n";
-      print LOG "\# ".localtime().": create extrinsic file\n";
+      print LOG "\# ".(localtime).": create extrinsic file\n";
       print LOG "cp $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg $AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg\n\n"; 
       print STDOUT "species $species created.\n";
-#      open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
-#      @_ = split(/\t/,<GENELENGTH>);
-#      my $average_nr_introns = $_[1];
-#      close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
 
       open (EXTRINSIC, $extrinsic) or die "Cannot open file: $extrinsic\n";
       open (OUT, ">".$extrinsic_cp) or die "Cannot open file: $extrinsic_cp\n";
       my $GENERAL = "false";
+      my $bonus_idx = $standard; # 0 => 1e1  (currently standard)
+      my $malus_idx = $standard; # 0 => 0.1  (currently standard)
       while(<EXTRINSIC>){
         chomp;
         next if($GENERAL eq "true" && $_ !~ m /^\#/);
@@ -636,7 +694,7 @@ sub new_species{
           print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "     intron      .25       .2  M    1  1e+100  RM  1  1.15    E 1   50    W 1    1\n";
+          print OUT "     intron        1      $malus[$malus_idx]  M    1  1e+100  RM  1  1.15    E 1  $bonus[$bonus_idx]    W 1    1\n";
           print OUT "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -645,7 +703,7 @@ sub new_species{
           print OUT "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print OUT "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
 
-          print LOG "\# ".localtime().": edit extrinsic file and add\n$_\n";
+          print LOG "\# ".(localtime).": edit extrinsic file and add\n$_\n";
           print LOG "\n";
           print LOG "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -656,7 +714,7 @@ sub new_species{
           print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "     intron      .25       .2  M    1  1e+100  RM  1  1.15    E 1   50    W 1    1\n";
+          print LOG "     intron        1      $malus[$malus_idx]  M    1  1e+100  RM  1  1.15    E 1  $bonus[$bonus_idx]    W 1    1\n";
           print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
           print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
@@ -669,13 +727,14 @@ sub new_species{
       close(OUT) or die("Could not close extrinsic file $extrinsic_cp!\n");
       close(EXTRINSIC) or die("Could not close extrinsic file $extrinsic!\n");
       print STDOUT "extrinsic file created.\n";
+      $extrinsicCfgFile = $extrinsic_cp;
+    }else{
+      $extrinsicCfgFile = $extrinsic_cp;
     }
   }else{
     print STDOUT "No extrinsic file was created. Programme uses assigned extrinsic file: $extrinsicCfgFile\n";
   }
 }
-
-
 
          ####################### train AUGUSTUS #########################
 # create genbank file and train AUGUSTUS parameters for given species
@@ -706,12 +765,12 @@ sub training{
       die("Average gene length of genes predicted by GeneMark-ET is negative. This indicates GeneMark-ET did not finish, properly. Please delete the GeneMark-ET folder and restart BRAKER1!\n");
   }
   $flanking_DNA = min((floor($average_length/2), 10000));
-  if($flanking_DNA < 0){
-      print STDOUT "\$flanking_DNA has the value $flanking_DNA , which is smaller than 0. Something must have gone wrong, there. Replacing by value 500. It is completely unclear whether 500 is a good or a bad choice.\n";
-      $flanking_DNA = 500;
+  if($flanking_DNA < 0){ # added by Katharina Hoff
+      print STDOUT "\$flanking_DNA has the value $flanking_DNA , which is smaller than 0. Something must have gone wrong, there. Replacing by value 500. It is completely unclear whether 500 is a good or a bad choice.\n"; # added by Katharina Hoff
+      $flanking_DNA = 500; # added by Katharina Hoff
   }
   # create genbank file from fasta input and GeneMark-ET output
-  $string=find("gff2gbSmallDNA.pl");
+  $string = find("gff2gbSmallDNA.pl");
   $genbank = "$otherfilesDir/genbank.gb";
   if(!uptodate([$genome,"$genemarkDir/genemark.c.gtf"],[$genbank])  || $overwrite){
     print STDOUT "NEXT STEP: create genbank file\n";
@@ -721,7 +780,7 @@ sub training{
       exit(1);
     }
     $perlCmdString = "perl $string $genemarkDir/genemark.c.gtf $genome $flanking_DNA $genbank 2>$errorfile";
-    print LOG "\# ".localtime().": create genbank file\n";
+    print LOG "\# ".(localtime).": create genbank file\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "genbank file created.\n";  
@@ -737,13 +796,13 @@ sub training{
       exit(1);
     }
     $perlCmdString = "perl $string $genemarkDir/genemark.f.good.gtf $genbank 1>$otherfilesDir/genbank.good.gb 2>$errorfile";
-    print LOG "\# ".localtime().": filter genbank file\n";
+    print LOG "\# ".(localtime).": filter genbank file\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "genbank file filtered.\n";
   }
 
-  # split into training und test set
+  # split into training and test set
   if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb.train"])  || $overwrite){
     print STDOUT "NEXT STEP: split genbank file into train and test file\n";
     $string = find("randomSplit.pl");
@@ -759,7 +818,7 @@ sub training{
     if($gb_good_size > 1000){
       $testsize = 1000;
       $perlCmdString = "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
-      print LOG "\# ".localtime().": split genbank file into train and test file\n";
+      print LOG "\# ".(localtime).": split genbank file into train and test file\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "genbank file splitted.\n";
@@ -770,8 +829,8 @@ sub training{
     # train AUGUSTUS for the first time
     if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firstetraining.stdout"])){
       # set "stopCodonExcludedFromCDS" to true
-      print STDOUT "NEXT STEP: Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n"; # see autoAugTrain.pl
-      print LOG "\# ".localtime().": Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
+      print STDOUT "NEXT STEP: Setting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n"; # see autoAugTrain.pl
+      print LOG "\# ".(localtime).": Setting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
       setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "true"); # see autoAugTrain.pl
 
       # first try with etraining
@@ -782,10 +841,12 @@ sub training{
       $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
       if($gb_good_size <= 1000){
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+        $testsize = $gb_good_size - 1;
       }else{
+        $testsize = 1000;
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       }
-      print LOG "\# ".localtime().": first etraining\n";
+      print LOG "\# ".(localtime).": first etraining\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "first training complete.\n";
@@ -795,13 +856,13 @@ sub training{
       my $err_stopCodonExcludedFromCDS = `grep -c "exon doesn't end in stop codon" $errorfile`; # see autoAugTrain.pl
       my $err_rate =  $err_stopCodonExcludedFromCDS / $t_b_t;  # see autoAugTrain.pl
       print STDOUT "Error rate of missing stop codon is $err_rate\n";  # see autoAugTrain.pl
-      print LOG "\# ".localtime()."Error rate of missing stop codon is $err_rate\n"; # see autoAugTrain.pl
+      print LOG "\# ".(localtime).": Error rate of missing stop codon is $err_rate\n"; # see autoAugTrain.pl
       if($err_rate >= 0.5){ # see autoAugTrain.pl
         print STDOUT "The appropriate value for \"stopCodonExcludedFromCDS\" seems to be \"false\".\n"; # see autoAugTrain.pl
-        print STDOUT "next step: Seting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"false\"\n"; # see autoAugTrain.pl
+        print STDOUT "next step: Setting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"false\"\n"; # see autoAugTrain.pl
         setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "false");  # see autoAugTrain.pl
         print STDOUT "NEXT STEP: Trying etraining again\n";
-        print LOG "\# ".localtime().": Trying etraining again\n";
+        print LOG "\# ".(localtime).": Trying etraining again\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "trying etraining again complete.\n";
@@ -809,7 +870,7 @@ sub training{
 
 
       # adjust the stop-codon frequency in species_parameters.cfg according to train.out
-      print LOG "\# ".localtime().": adjust the stop-codon frequency in species_parameters.cfg according to $stdoutfile\n";
+      print LOG "\# ".(localtime).": adjust the stop-codon frequency in species_parameters.cfg according to $stdoutfile\n";
       my $freqOfTag;            # see autoAugTrain.pl
       my $freqOfTaa;            # see autoAugTrain.pl
       my $freqOfTga;            # see autoAugTrain.pl
@@ -824,7 +885,7 @@ sub training{
         }
       }
       close(TRAIN) or die("Could not close gff file $stdoutfile!\n");
-      print LOG "\# ".localtime()."Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
+      print LOG "\# ".(localtime).": Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
       print STDOUT "NEXT STEP: Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
       setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "/Constant/amberprob", $freqOfTag);  # see autoAugTrain.pl
       setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "/Constant/ochreprob", $freqOfTaa);  # see autoAugTrain.pl
@@ -844,7 +905,7 @@ sub training{
       }else{
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
       }
-      print LOG "\# ".localtime().": first test\n";
+      print LOG "\# ".(localtime).": first test\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "first test finished.\n";
@@ -861,9 +922,9 @@ sub training{
         if($gb_good_size <= 1000){
           $perlCmdString = "perl $string --species=$species --cpus=$CPU $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
         }else{
-          $perlCmdString = "perl $string --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+          $perlCmdString = "perl $string  --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
         }
-        print LOG "\# ".localtime().": optimize AUGUSTUS parameter\n";
+        print LOG "\# ".(localtime).": optimize AUGUSTUS parameter\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "parameter optimized.\n";
@@ -882,7 +943,7 @@ sub training{
       }else{
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       }
-      print LOG "\# ".localtime().": second etraining\n";
+      print LOG "\# ".(localtime).": second etraining\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "second etraining complete\n";
@@ -890,6 +951,7 @@ sub training{
 
     # second test
     if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondtest.out"]) || $overwrite){
+      $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
       print STDOUT "NEXT STEP: second test\n";
       $errorfile = "$errorfilesDir/secondtest.stderr";
       $stdoutfile = "$otherfilesDir/secondtest.stdout";
@@ -899,7 +961,7 @@ sub training{
       }else{
         $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
       }
-      print LOG "\# ".localtime().": second test\n";
+      print LOG "\# ".(localtime).": second test\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "second test finished.\n";  
@@ -910,7 +972,7 @@ sub training{
   if(! -d "$parameterDir/$species"){
     print STDOUT "NEXT STEP: copy optimized parameters to working directory\n";
     $cmdString = "cp -r $AUGUSTUS_CONFIG_PATH/species/$species $parameterDir";
-    print LOG "\# ".localtime().": copy optimized parameters to working directory\n";
+    print LOG "\# ".(localtime).": copy optimized parameters to working directory\n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "parameter files copied.\n";
@@ -935,8 +997,9 @@ sub augustus{
   }else{
     $extrinsic = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
   }
-
+ 
   if(!uptodate([$extrinsic,$hintsfile, $genome],["$otherfilesDir/augustus.gff"])  || $overwrite){
+    # split genome file in smaller parts and use multiple parallel runs of augustus for prediction
     if($CPU > 1){
       print STDOUT "NEXT STEP: split genome file in smaller parts\n";
       $string = find("splitMfasta.pl");    
@@ -945,12 +1008,13 @@ sub augustus{
       $perlCmdString = "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
       @genome_files = `find $otherfilesDir -name "genome.split.*"`;
-      print LOG "\# ".localtime().": split genome file in ".scalar(@genome_files)." parts\n";
+      print LOG "\# ".(localtime).": split genome file in ".scalar(@genome_files)." parts\n";
       print LOG "$perlCmdString\n\n";
       print STDOUT "split genome file in ".scalar(@genome_files)." parts complete.\n";
     }else{
       push(@genome_files, $genome);
     }
+    @genome_files = sort {lc($a) cmp lc($b)} @genome_files;
     $pm = new Parallel::ForkManager($CPU);
     print STDOUT "NEXT STEP: run AUGUSTUS\n";
     for(my $i = 0; $i < scalar(@genome_files); $i++){
@@ -964,10 +1028,10 @@ sub augustus{
         $cmdString .= " --optCfgFile=$optCfgFile"; 
       }
       if($soft_mask){
-        $cmdString .= " --softmasking=on";
+        $cmdString .= " --softmasking=1";
       }
       $cmdString .= " $genome_files[$i] 1>$stdoutfile 2>$errorfile";
-      print LOG "\# ".localtime().": run AUGUSTUS for file $genome_files[$i]\n";
+      print LOG "\# ".(localtime).": run AUGUSTUS for file $genome_files[$idx-1]\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       $pm->finish;
@@ -975,32 +1039,70 @@ sub augustus{
     }
     $pm->wait_all_children;
     print STDOUT "AUGUSTUS complete.\n";
-
+    # join prediction files to one file
     if($CPU > 1){
       print STDOUT "NEXT STEP: concatenate and join AUGUSTUS output files\n";
       $string = find("join_aug_pred.pl");
-      my $cat_string = "";
+      my $cat_file = "$otherfilesDir/augustus.tmp.gff";
       for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
-        $cat_string .= "$otherfilesDir/augustus.$idx.gff "
+        $cmdString = "cat $otherfilesDir/augustus.$idx.gff >> $cat_file";
+        system("$cmdString")==0 or die("failed to execute: $!\n");
       }
-      $cmdString = "cat $cat_string | $string >$otherfilesDir/augustus.gff";
-      print LOG "\# ".localtime().": concatenate and join AUGUSTUS output files\n";
+      $cmdString = "perl $string <$cat_file >$otherfilesDir/augustus.gff";
+      print LOG "\# ".(localtime).": concatenate and join AUGUSTUS output files\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "join AUGUSTUS predictions complete.\n";
       for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
         unlink("$otherfilesDir/augustus.$idx.gff");
       }
+      unlink("$otherfilesDir/augustus.tmp.gff");
     }else{
       $cmdString = "mv $otherfilesDir/augustus.1.gff $otherfilesDir/augustus.gff";
-      print LOG "\# ".localtime().": rename AUGUSTUS file\n";
+      print LOG "\# ".(localtime).": rename AUGUSTUS file\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
     }
   }
 }
 
-   
+# call getAnnoFasta.pl
+sub getAnnoFasta{
+  my $AUG_pred = shift;
+  @_ = split(/\//, $AUG_pred);
+  my $name_base = substr($_[-1],0,-4);
+  my $string = find("getAnnoFasta.pl");
+  my $errorfile = "$errorfilesDir/getAnnoFasta.$name_base.stderr";
+  my $perlCmdString = "perl $string $AUG_pred 2>$errorfile";
+  print LOG "\# ".(localtime).": make a fasta file with protein sequences for $AUG_pred\n";
+  print LOG "$perlCmdString\n\n";
+  system("$perlCmdString")==0 or die("failed to execute: $!\n");
+}
+
+# make gtf file
+sub make_gtf{
+  my $AUG_pred = shift;
+  @_ = split(/\//, $AUG_pred);
+  my $name_base = substr($_[-1],0,-4);
+  my $gtf_file = substr($AUG_pred,0,-4).".gtf";
+  my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gtf.stderr";
+  my $perlstring = find("gtf2gff.pl");
+  my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
+  print "$cmdString\n\n";
+  print LOG "\# ".(localtime).": make a gtf file from $AUG_pred\n";
+  print LOG "$cmdString\n\n";
+  system("$cmdString")==0 or die("failed to execute: $!\n");
+  if($gff3){
+    my $gff3_file = substr($AUG_pred,0,-4).".gff3";
+    my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
+    my $perlstring = find("gtf2gff.pl");
+    my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
+    print "$cmdString\n\n";
+    print LOG "\# ".(localtime).": make a gff3 file from $AUG_pred\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString")==0 or die("failed to execute: $!\n");
+  }
+}   
   
 
          ####################### delete all zero sized files #########################
@@ -1008,7 +1110,7 @@ sub augustus{
 sub clean_up{
   print STDOUT "NEXT STEP: delete empty files\n";
   @files = `find $otherfilesDir -empty`;
-  print LOG "\# ".localtime().": delete empty files\n";
+  print LOG "\# ".(localtime).": delete empty files\n";
   for(my $i=0; $i <= $#files; $i++){
     chomp($files[$i]); # to prevent error: Unsuccessful stat on filename containing newline
     if(-f $files[$i]){
@@ -1023,12 +1125,29 @@ sub clean_up{
 
          ########################### some checks beforehand ############################
 # check upfront whether any common problems will occur later
-# find out if some programmes are not installed.
-# TODO: put more checks in here: blat, samtools, gmap, tophat 
+# find out if some programmes are not installed. 
 # checks for GeneMark-ET: perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager
 # checks for braker: perl modules: Scalar::Util::Numeric
 sub check_upfront{ # see autoAug.pl
+
+  # check whether required perl modules are installed
   my $pmodule;
+  my @module_list = (
+    "YAML",
+    "Hash::Merge",
+    "Logger::Simple",
+    "Parallel::ForkManager",
+    "Scalar::Util::Numeric"
+  );
+
+  foreach my $module (@module_list){  
+    $pmodule = check_install(module => $module);
+    if(!$pmodule){
+      print STDOUT "WARNING: Perl module '$module' is required but not installed yet.\n";
+    }
+  }
+
+  # check whether environmental variables are set or other path variables are defined
   if(!$ENV{'AUGUSTUS_CONFIG_PATH'} && !defined($augustus_cfg_path)){ # see autoAug.pl
     print STDERR "ERROR: The environment variable AUGUSTUS_CONFIG_PATH is not defined. Please export an environment variable for AUGUSTUS or use --AUGUSTUS_CONFIG_PATH=path/to/augustus.\n"; # see autoAug.pl
     exit(1);
@@ -1044,6 +1163,7 @@ sub check_upfront{ # see autoAug.pl
     exit(1);
   }
 
+  # check for augutus executable
   $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
   if(system("$augpath > /dev/null 2> /dev/null") != 0){                   # see autoAug.pl
     if(! -f $augpath){                                                    # see autoAug.pl
@@ -1054,11 +1174,13 @@ sub check_upfront{ # see autoAug.pl
     exit(1);
   }
   
+  # check whether bamtools is installed
   if(system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0){
     print STDERR "Error: bamtools not installed. Please install it first.\n";
     exit (1);
   }
 
+  # check for etraining executable
   my $etrainpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
   if(system("$etrainpath > /dev/null 2> /dev/null") != 0){                   
     if(! -f $etrainpath){                                                    
@@ -1068,7 +1190,8 @@ sub check_upfront{ # see autoAug.pl
     }
     exit(1);
   }
-
+  
+  # check whether the necessary perl scripts exist and cand be found
   find("gff2gbSmallDNA.pl");
   find("filterGenemark.pl");
   find("filterIntronsFindStrand.pl");
@@ -1079,39 +1202,9 @@ sub check_upfront{ # see autoAug.pl
   find("optimize_augustus.pl");
   find("splitMfasta.pl");
   find("join_aug_pred.pl");
+  find("getAnnoFasta.pl");
+  find("gtf2gff.pl");
 
-  # check whether required perl modules are installed (perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager)
-  my $module_list = {
-    "YAML",
-    "Hash::Merge",
-    "Logger::Simple",
-    "Parallel::ForkManager",
-  };
-
-  $pmodule = check_install(module => "YAML");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'YAML' is required but not installed yet.\n";
-  }
-
-  $pmodule = check_install(module => "Hash::Merge");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'Hash::Merge' is required but not installed yet.\n";
-  }
-
-  $pmodule = check_install(module => "Logger::Simple");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'Logger::Simple' is required but not installed yet.\n";
-  }
-
-  $pmodule = check_install(module => "Parallel::ForkManager");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'Parallel::ForkManager' is required but not installed yet.\n";
-  }
-
-  $pmodule = check_install(module => "Scalar::Util::Numeric");
-  if(!$pmodule){
-    print STDOUT "WARNING: Perl module 'Scalar::Util::Numeric' is required but not installed yet.\n";
-  }
 }
 
 
@@ -1143,23 +1236,25 @@ sub check_gff{
 sub check_options{
   print STDOUT "NEXT STEP: check options\n";
   if($alternatives_from_evidence ne "true" && $alternatives_from_evidence ne "false"){
-    print STDERR "ERROR: \"$alternatives_from_evidence\" is not a valid option for --alternatives-from-evidence. Please use either true or false.\n";
+    print STDERR "ERROR: \"$alternatives_from_evidence\" is not a valid option for --alternatives-from-evidence. Please use either 'true' or 'false'.\n";
     exit(1);
   } 
 
   if($UTR ne "on" && $UTR ne "off"){
-    print STDERR "ERROR: \"$UTR\" is not a valid option for --UTR. Please use either on or off.\n";
+    print STDERR "ERROR: \"$UTR\" is not a valid option for --UTR. Please use either 'on' or 'off'.\n";
     exit(1);
   }
 
-  if(!isint($CPU)){
-    print STDERR "ERROR: \"$CPU\" is not a valid option for --cores. Please use an integer.\n";
-    exit(1);
-  }else{
-    my $cpus_available = `nproc`;
-    if($cpus_available < $CPU){
-      print STDOUT "WARNING: Your system does not have $CPU cores available, only $cpus_available. Braker will use the $cpus_available available instead of the chosen $CPU.\n";
-    }
+  my $operatingSystem = "$^O";
+  my $cpus_available = 1;
+  if($operatingSystem eq "linux"){
+      $cpus_available = `nproc`;
+  }else{ # Mac OS X
+      $cpus_available = `sysctl -n hw.ncpu`;
+  }
+
+  if($cpus_available < $CPU){
+    print STDOUT "WARNING: Your system does not have $CPU cores available, only $cpus_available. Braker will use the $cpus_available available instead of the chosen $CPU.\n";
   }
   print STDOUT "... options check complete.\n";
 }
@@ -1274,7 +1369,7 @@ sub check_bam_headers{
     # extract header information 
     print STDOUT "NEXT STEP: create SAM header file $samHeaderFile.\n";
     $cmdString = "$BAMTOOLS_BIN_PATH/bamtools header -in $bamFile > $samHeaderFile";
-    print LOG "\# ".localtime().": create header file $samHeaderFile\n";
+    print LOG "\# ".(localtime).": create header file $samHeaderFile\n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $!\n");
     print STDOUT "SAM file $samHeaderFile complete.\n";
@@ -1348,7 +1443,7 @@ sub check_bam_headers{
         my $samFile = "$otherfilesDir/".$_[0].".sam";
         my $samFile_new = "$otherfilesDir/".$_[0]."_new.sam";
         $cmdString = "$SAMTOOLS_PATH view $bamFile > $samFile";
-        print LOG "\# ".localtime().": convert BAM to SAM file $samFile\n";
+        print LOG "\# ".(localtime).": convert BAM to SAM file $samFile\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "SAM file $samFile created.\n";
@@ -1368,7 +1463,7 @@ sub check_bam_headers{
         close(OUTPUT) or die("Could not close output SAM file $samFile_new!\n");
         print STDOUT "NEXT STEP: concatenate new header and SAM file.\n";
         $cmdString = "cat $samHeaderFile_new $samFile_new > $samFile";
-        print LOG "\# ".localtime().": concatenate new header and SAM file\n";
+        print LOG "\# ".(localtime).": concatenate new header and SAM file\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "new SAM file created.\n";
@@ -1376,7 +1471,7 @@ sub check_bam_headers{
 
         print STDOUT "NEXT STEP: convert new SAM file to BAM format.\n";
         $cmdString = "$SAMTOOLS_PATH view -bSh $samFile > $otherfilesDir/".$_[0].".bam";
-        print LOG "\# ".localtime().": convert new SAM file to BAM format\n";
+        print LOG "\# ".(localtime).": convert new SAM file to BAM format\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
         print STDOUT "new BAM file created.\n";
@@ -1388,4 +1483,5 @@ sub check_bam_headers{
   } 
   return $bamFile;
 } 
+
 
