@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: Dec 11th 2015                                                                      #
+# Release date: Dec 13th 2015                                                                      #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -114,7 +114,7 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 1.7;                    # braker.pl version number
+my $version = 1.8;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;                          # path to augustus
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system

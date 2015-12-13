@@ -1,4 +1,6 @@
 # ----------------------------------------------------------------------
+# | removed BLAST param optim.     | braker.pl (Hoff)     | 13.12.2015 |
+# | improved OS X compatibility    | braker.pl (Hoff)     | 08.12.2015 |
 # | adapted softmasking GM-ET 2.29 | braker.pl (Hoff)     | 11.05.2015 |
 # | fixed gene length problem      | braker.pl (Hoff)     | 17.03.2015 |
 # | sub check_upfront              | autoAug.pl           | 07.01.2015 |
