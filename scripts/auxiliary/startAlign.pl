@@ -665,4 +665,8 @@ sub clean_up{
     }
   }
   print STDOUT "empty files deleted.\n";
+  $cmdString = "rm -r $tmpDir";
+  print LOG "\# ".(localtime).": delete temporary files from $tmpDir\n";
+  print LOG "$cmdString\n\n";
+  system("$cmdString")==0 or die("failed to execute: $!\n");
 }
