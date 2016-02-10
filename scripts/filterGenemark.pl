@@ -71,8 +71,9 @@ OPTIONS
                                     in intron file respectively
     --suppress                      Suppress file output
     --filterOutShort                Filters intron containing genes as "bad" that have an RNA-Seq supported intron
-																		within maximal CDS length of the gene with at least 20% of average intron 
-																		multiplicity for that gene
+				    within 2*maximal CDS length of the gene with at least 20% of average intron 
+				    multiplicity for that gene (screens also downstream of stop, which either indicates 
+                                    wrong reading frame, or a downstream UTR)
 
 Format:
   seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB> strand <TAB> frame <TAB> gene_id value <TAB> transcript_id value
@@ -360,58 +361,90 @@ sub convert_and_filter{
 # print genes in corresponding file (good or bad)
 sub print_gene{
   my $size = scalar(@CDS) / 2;
-	if($filterOutShort){
-		$boolShortBad = "false";
-	  # variables compute average CDS size of gene 
-		my $nCds = 0;
-  	my @cdsLine;
-		# variables to determine CDS to be checked upstream
-		my $checkUpstreamOf;
-		my $checkStrand;
-  	foreach(@CDS){
-			if(m/\tCDS\t/){
-				@cdsLine = split(/\t/);
-				$checkStrand = $cdsLine[6];
-				if((not(defined($checkUpstreamOf)) && ($checkStrand eq "+")) or (($checkStrand eq "+") && ($cdsLine[3] < $checkUpstreamOf))){
-					$checkUpstreamOf = $cdsLine[4];
-				}elsif((not(defined($checkUpstreamOf)) && ($checkStrand eq "-")) or (($checkStrand eq "-") && ($cdsLine[4] > $checkUpstreamOf))){
-					$checkUpstreamOf = $cdsLine[3];
-				}
-			}
-			if(not(defined($maxCdsSize{$cdsLine[8]}))){
-				$maxCdsSize{$cdsLine[8]} = $cdsLine[4]-$cdsLine[3]+1;
-			}elsif($maxCdsSize{$cdsLine[8]} < ($cdsLine[4]-$cdsLine[3]+1)){
-				$maxCdsSize{$cdsLine[8]} = $cdsLine[4]-$cdsLine[3]+1;
-			}
-			$nCds++;
-		}
-		if(defined($sumMult{$cdsLine[8]})){ # otherwise gene has not intron support and will be bad, anyway
-			$averageMult{$cdsLine[8]} = $sumMult{$cdsLine[8]}/$nCds;
-			# check whether we need to screen one or two intron blocks
-			my @screenBlocks;
-			if($checkStrand eq "+"){
-				use integer;
-				$screenBlocks[0] = $checkUpstreamOf/$filterOutShortLength;
-				if(not($checkUpstreamOf/$filterOutShortLength == ($checkUpstreamOf-$maxCdsSize{$cdsLine[8]})/$filterOutShortLength)){
-					$screenBlocks[1] = ($checkUpstreamOf-$maxCdsSize{$cdsLine[8]});
-				}
-			}elsif($checkStrand eq "-"){
-				use integer;
-				$screenBlocks[0] = $checkUpstreamOf/$filterOutShortLength;
-				if(not($checkUpstreamOf/$filterOutShortLength == ($checkUpstreamOf+$maxCdsSize{$cdsLine[8]})/$filterOutShortLength)){
-					$screenBlocks[1] = ($checkUpstreamOf+$maxCdsSize{$cdsLine[8]});
-				}
-			}
-			foreach(@screenBlocks){
-				foreach(@{$introns_for_filterOutShort{$cdsLine[0]}{$_}}){ 
-					my @intronLine = split(/\t/);
-					if(($checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[4] < $checkUpstreamOf && $intronLine[4] > ($checkUpstreamOf - 2*$maxCdsSize{$cdsLine[8]}) && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5]) or ($checkStrand eq "-"  && $intronLine[3] > $checkUpstreamOf && $intronLine[3] < ($checkUpstreamOf + 2*$maxCdsSize{$cdsLine[8]}) && $checkStrand eq $intronLine[6] && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5])){
-						$boolShortBad = "true";
-					}
-				}
-			}
-	
-		}
+  if($filterOutShort){
+      $boolShortBad = "false";
+      # variables compute average CDS size of gene 
+      my $nCds = 0;
+      my @cdsLine;
+      # variables to determine CDS to be checked upstream
+      my $checkUpstreamOf;
+      my $checkDownstreamOf; # screen also downstream of stop last CDS/might indicate wrong frame!
+      my $checkStrand;
+      foreach(@CDS){
+	  if(m/\tCDS\t/){
+	      @cdsLine = split(/\t/);
+	      $checkStrand = $cdsLine[6];
+	      if((not(defined($checkUpstreamOf)) && ($checkStrand eq "+")) or (($checkStrand eq "+") && ($cdsLine[3] < $checkUpstreamOf))){
+		  $checkUpstreamOf = $cdsLine[4];
+	      }elsif((not(defined($checkUpstreamOf)) && ($checkStrand eq "-")) or (($checkStrand eq "-") && ($cdsLine[4] > $checkUpstreamOf))){
+		  $checkUpstreamOf = $cdsLine[3];
+	      }
+	      if((not(defined($checkDownstreamOf)) && ($checkStrand eq "+")) or (($checkStrand eq "+") && ($cdsLine[3] > $checkDownstreamOf))){
+		  $checkDownstreamOf = $cdsLine[3];
+	      }elsif((not(defined($checkDownstreamOf)) && ($checkStrand eq "-")) or (($checkStrand eq "-") && ($cdsLine[4] < $checkDownstreamOf))){
+		  $checkDownstreamOf = $cdsLine[4];
+	      }
+	  }
+	  if(not(defined($maxCdsSize{$cdsLine[8]}))){
+	      $maxCdsSize{$cdsLine[8]} = $cdsLine[4]-$cdsLine[3]+1;
+	  }elsif($maxCdsSize{$cdsLine[8]} < ($cdsLine[4]-$cdsLine[3]+1)){
+	      $maxCdsSize{$cdsLine[8]} = $cdsLine[4]-$cdsLine[3]+1;
+	  }
+	  $nCds++;
+      }
+      if(defined($sumMult{$cdsLine[8]})){ # otherwise gene has not intron support and will be bad, anyway
+	  $averageMult{$cdsLine[8]} = $sumMult{$cdsLine[8]}/$nCds;
+	  # check whether we need to screen one or two intron blocks upstream of start codon
+	  my @screenBlocksUp;
+	  if($checkStrand eq "+"){
+	      use integer;
+	      $screenBlocksUp[0] = $checkUpstreamOf/$filterOutShortLength;
+	      if(not($checkUpstreamOf/$filterOutShortLength == ($checkUpstreamOf-2*$maxCdsSize{$cdsLine[8]})/$filterOutShortLength)){
+		  $screenBlocksUp[1] = ($checkUpstreamOf-2*$maxCdsSize{$cdsLine[8]});
+	      }
+	  }elsif($checkStrand eq "-"){
+	      use integer;
+	      $screenBlocksUp[0] = $checkUpstreamOf/$filterOutShortLength;
+	      if(not($checkUpstreamOf/$filterOutShortLength == ($checkUpstreamOf+2*$maxCdsSize{$cdsLine[8]})/$filterOutShortLength)){
+		  $screenBlocksUp[1] = ($checkUpstreamOf+2*$maxCdsSize{$cdsLine[8]});
+	      }
+	  }
+	  # screen upstream of start codon
+	  foreach(@screenBlocksUp){
+	      foreach(@{$introns_for_filterOutShort{$cdsLine[0]}{$_}}){ 
+		  my @intronLine = split(/\t/);
+		  if(($checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[4] < $checkUpstreamOf && $intronLine[4] > ($checkUpstreamOf - 2*$maxCdsSize{$cdsLine[8]}) && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5]) or ($checkStrand eq "-"  && $intronLine[3] > $checkUpstreamOf && $intronLine[3] < ($checkUpstreamOf + 2*$maxCdsSize{$cdsLine[8]}) && $checkStrand eq $intronLine[6] && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5])){
+		      $boolShortBad = "true";
+		  }
+	      }
+	  }
+	  # check whether we need to screen one or two intron blocks downstream of start codon
+	  if($boolShortBad eq "false"){
+	      my @screenBlocksDown;
+	      if($checkStrand eq "+"){
+		  use integer;
+		  $screenBlocksDown[0] = $checkDownstreamOf/$filterOutShortLength;
+		  if(not($checkDownstreamOf/$filterOutShortLength == ($checkDownstreamOf+2*$maxCdsSize{$cdsLine[8]})/$filterOutShortLength)){
+		      $screenBlocksDown[1] = ($checkDownstreamOf + 2*$maxCdsSize{$cdsLine[8]});
+		  }
+	      }elsif($checkStrand eq "-"){
+		  use integer;
+		  $screenBlocksDown[0] = $checkDownstreamOf/$filterOutShortLength;
+		  if(not($checkDownstreamOf/$filterOutShortLength == ($checkDownstreamOf - 2*$maxCdsSize{$cdsLine[8]})/$filterOutShortLength)){
+		      $screenBlocksDown[1] = ($checkDownstreamOf-2*$maxCdsSize{$cdsLine[8]});
+		  }
+	      }
+	      # screen downstream of stop codon
+	      foreach(@screenBlocksDown){
+		  foreach(@{$introns_for_filterOutShort{$cdsLine[0]}{$_}}){
+		      my @intronLine = split(/\t/);
+		      if(($checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[3] > $checkDownstreamOf && $intronLine[3] > ($checkDownstreamOf + 2*$maxCdsSize{$cdsLine[8]}) && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5]) or ($checkStrand eq "-"  && $intronLine[4] < $checkDownstreamOf && $intronLine[4] > ($checkDownstreamOf - 2*$maxCdsSize{$cdsLine[8]}) && $checkStrand eq $intronLine[6] && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5])){
+			  $boolShortBad = "true";
+		      }                  
+		  }
+	      }
+	  }
+      }
   }
   if( ($true_count + 1 ) != $size && $size != 1){
     $bool_good = "false";
