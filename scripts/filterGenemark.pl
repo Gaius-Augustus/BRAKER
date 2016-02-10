@@ -405,7 +405,7 @@ sub print_gene{
 			foreach(@screenBlocks){
 				foreach(@{$introns_for_filterOutShort{$cdsLine[0]}{$_}}){ 
 					my @intronLine = split(/\t/);
-					if(($checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[4] < $checkUpstreamOf && $intronLine[4] > ($checkUpstreamOf - $maxCdsSize{$cdsLine[8]}) && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5]) or ($checkStrand eq "-"  && $intronLine[3] > $checkUpstreamOf && $intronLine[3] < ($checkUpstreamOf + $maxCdsSize{$cdsLine[8]}) && $checkStrand eq $intronLine[6] && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5])){
+					if(($checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[4] < $checkUpstreamOf && $intronLine[4] > ($checkUpstreamOf - 2*$maxCdsSize{$cdsLine[8]}) && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5]) or ($checkStrand eq "-"  && $intronLine[3] > $checkUpstreamOf && $intronLine[3] < ($checkUpstreamOf + 2*$maxCdsSize{$cdsLine[8]}) && $checkStrand eq $intronLine[6] && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5])){
 						$boolShortBad = "true";
 					}
 				}
