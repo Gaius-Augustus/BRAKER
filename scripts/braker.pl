@@ -103,6 +103,12 @@ OPTIONS
     --UTR                                Predict untranslated regions. Default is off.
     --workingdir=/path/to/wd/            Set path to working directory. In the working directory results
                                          and temporary files are stored
+    --filterOutShort			 It may happen that a "good" training gene, i.e. one that has intron
+					 support from RNA-Seq in all introns predicted by GeneMark, is in fact
+					 too short. This flag will discard such genes that have supported introns
+					 and a neighboring RNA-Seq supported intron upstream of the start codon within 
+					 the range of the maximum CDS size of that gene and with a multiplicity that
+					 is at least as high as 20% of the average intron multiplicity of that gene.
     --version                            print version number of braker.pl
                            
 
@@ -174,6 +180,7 @@ my $testsize;                         # AUGUSTUS training parameter: number of g
 my $useexisting = 0;                  # use existing species config and parameter files, no changes on those files
 my $UTR = "off";                      # UTR prediction on/off. currently not available für new species 
 my $workDir;                          # in the working directory results and temporary files are stored
+my $filterOutShort;										# filterOutShort option (see help)
 
 
 # list of forbidden words for species name
@@ -210,6 +217,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'useexisting!'                  => \$useexisting,
             'UTR=s'                         => \$UTR,
             'workingdir=s'                  => \$workDir,
+						'filterOutShort!'								=> \$filterOutShort,
             'help!'                         => \$help,
             'version!'                      => \$printVersion);
 
@@ -629,7 +637,12 @@ sub GeneMark_ET{
     $string=find("filterGenemark.pl");
     $errorfile = "$errorfilesDir/filterGenemark.stderr";
     $stdoutfile = "$otherfilesDir/filterGenemark.stdout";
-    $perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
+    if(!$filterOutShort){
+        $perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
+    }else{
+	print STDOUT "Option activated: Filtering out training genes from GeneMark that are too short (upstream intron)\n";
+	$perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --filterOutShort 1>$stdoutfile 2>$errorfile";
+    }
     print LOG "\# ".(localtime).": convert GeneMark-ET output to real gtf format\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
