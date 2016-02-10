@@ -7,11 +7,12 @@
 #                     filters GeneMark-ET output into good and bad genes, i.e.                     #
 #                     genes included and not included in introns file respectively                 #
 #                                                                                                  #
-# Author: Simone Lange                                                                             #
+# Authors: Simone Lange and Katharina J. Hoff                                                       #
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: January 7th 2015                                                                   #
+# First release date: January 7th 2015                                                             #
+# Last update: February 10th 2016
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -34,6 +35,8 @@
 # | (only standard output)          |                |           |
 # | more if-conditions (no division |                |           |
 # | by zero errors)                 |                |           |
+# | added filter for introns in     | Katharina Hoff |10.02.2016 |
+# | neighborhood (upstream)         |                |           |
 # ----------------------------------------------------------------
  
 use strict;
@@ -64,7 +67,12 @@ OPTIONS
     --genemark=genemark.gtf         File in gtf format
     --output=newfile.gtf            Specifies output file name. Default is 'genemark-input_file_name.c.gtf' 
                                     and 'genemark-input_file_name.f.good.gtf'
-                                    and 'genemark-input_file_name.f.bad.gtf' for filtered genes included and not included in intron file respectively
+                                    and 'genemark-input_file_name.f.bad.gtf' for filtered genes included and not included 
+                                    in intron file respectively
+    --suppress                      Suppress file output
+    --filterOutShort                Filters intron containing genes as "bad" that have an RNA-Seq supported intron
+																		within maximal CDS length of the gene with at least 20% of average intron 
+																		multiplicity for that gene
 
 Format:
   seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB> strand <TAB> frame <TAB> gene_id value <TAB> transcript_id value
@@ -79,7 +87,7 @@ DESCRIPTION
 ENDUSAGE
 
 
-my ($genemark, $introns, $output_file, $help);
+my ($genemark, $introns, $output_file, $filterOutShort, $help);
 my $average_gene_length =0; # for length determination
 my $average_nr_introns = 0; # average number of introns (only complete genes)
 my $bool_complete = "false";# true if gene is complete, i.e. genes with start and stop codon
@@ -107,6 +115,16 @@ my $start_ID = "";          # ID of current start codon (only important for file
 my $stop_codon = "";        # contains current stop codon for "+" strand (start codon for "-" strand)
 my $suppress;               # suppress file output
 my $true_count = 0;         # counts the number of true cases per gene
+my %introns_for_filterOutShort; # hash of hashes of arrays with intron hints for filterOutShort option
+																# introns_for_filterOutShort{contig}{length}[]
+																# partion lengths in $filterOutShortLength steps so that we don't have to loop through ALL
+																# introns of a contig to identify a particular intron upstream of the start codon
+my $filterOutShortLength = 10000; # introns are partioned in blocks, this is the block length
+my %sumMult;						# contains the summed intron multiplicity of all introns in a gene (gene is key)
+my %averageMult;				# contains the average intron multiplicity of all introns in a gene (gene is key)
+my $percentMult = 0.2;   # This is the coverage expected from a neighboring intron to count a gene as "bad"
+my %maxCdsSize;			# contains max CDS size of a gene (gene is key)
+my $boolShortBad;
 
 
 
@@ -119,6 +137,7 @@ GetOptions( 'genemark=s' => \$genemark,
             'introns=s'  => \$introns,
             'output=s'   => \$output_file,
             'suppress!'  => \$suppress,
+	     'filterOutShort!' => \$filterOutShort,
             'help!'      => \$help);
 
 if($help){
@@ -220,6 +239,11 @@ sub introns{
     if(scalar(@line) == 9){
       $introns{$line[0]}{$line[6]}{$line[3]}{$line[4]} = $line[5];
       $intron_mults += $line[5];
+			if($filterOutShort){
+				use integer;
+				my $segm = $line[3]/$filterOutShortLength;
+				push(@{$introns_for_filterOutShort{$line[0]}{$segm}}, $_);
+			}
     }
   }  
   close (INTRONS) or die("Could not close file $introns!\n");
@@ -275,6 +299,9 @@ sub convert_and_filter{
         $start_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
         $gene_start = $line[3];
         $start_ID = $ID_old[1];
+				if($filterOutShort){
+					$sumMult{$ID_new} = 0;
+				}
       # gene ends
       }elsif(($line[2] eq "stop_codon" && $line[6] eq "+") || ($line[2] eq "start_codon" && $line[6] eq "-") ){
         if($start_ID eq $ID_old[1]){
@@ -296,6 +323,9 @@ sub convert_and_filter{
             if(defined($introns{$line[0]}{$line[6]}{$intron_start}{$intron_end})){
               $true_count++;
               $mults += $introns{$line[0]}{$line[6]}{$intron_start}{$intron_end};
+							if($filterOutShort){
+								$sumMult{$ID_new} += $introns{$line[0]}{$line[6]}{$intron_start}{$intron_end};
+							}
             }
             $intron_start = $line[4] + 1;
           }
@@ -329,7 +359,60 @@ sub convert_and_filter{
 
 # print genes in corresponding file (good or bad)
 sub print_gene{
-  my $size = scalar(@CDS) / 2; 
+  my $size = scalar(@CDS) / 2;
+	if($filterOutShort){
+		$boolShortBad = "false";
+	  # variables compute average CDS size of gene 
+		my $nCds = 0;
+  	my @cdsLine;
+		# variables to determine CDS to be checked upstream
+		my $checkUpstreamOf;
+		my $checkStrand;
+  	foreach(@CDS){
+			if(m/\tCDS\t/){
+				@cdsLine = split(/\t/);
+				$checkStrand = $cdsLine[6];
+				if((not(defined($checkUpstreamOf)) && ($checkStrand eq "+")) or (($checkStrand eq "+") && ($cdsLine[3] < $checkUpstreamOf))){
+					$checkUpstreamOf = $cdsLine[4];
+				}elsif((not(defined($checkUpstreamOf)) && ($checkStrand eq "-")) or (($checkStrand eq "-") && ($cdsLine[4] > $checkUpstreamOf))){
+					$checkUpstreamOf = $cdsLine[3];
+				}
+			}
+			if(not(defined($maxCdsSize{$cdsLine[8]}))){
+				$maxCdsSize{$cdsLine[8]} = $cdsLine[4]-$cdsLine[3]+1;
+			}elsif($maxCdsSize{$cdsLine[8]} < ($cdsLine[4]-$cdsLine[3]+1)){
+				$maxCdsSize{$cdsLine[8]} = $cdsLine[4]-$cdsLine[3]+1;
+			}
+			$nCds++;
+		}
+		if(defined($sumMult{$cdsLine[8]})){ # otherwise gene has not intron support and will be bad, anyway
+			$averageMult{$cdsLine[8]} = $sumMult{$cdsLine[8]}/$nCds;
+			# check whether we need to screen one or two intron blocks
+			my @screenBlocks;
+			if($checkStrand eq "+"){
+				use integer;
+				$screenBlocks[0] = $checkUpstreamOf/$filterOutShortLength;
+				if(not($checkUpstreamOf/$filterOutShortLength == ($checkUpstreamOf-$maxCdsSize{$cdsLine[8]})/$filterOutShortLength)){
+					$screenBlocks[1] = ($checkUpstreamOf-$maxCdsSize{$cdsLine[8]});
+				}
+			}elsif($checkStrand eq "-"){
+				use integer;
+				$screenBlocks[0] = $checkUpstreamOf/$filterOutShortLength;
+				if(not($checkUpstreamOf/$filterOutShortLength == ($checkUpstreamOf+$maxCdsSize{$cdsLine[8]})/$filterOutShortLength)){
+					$screenBlocks[1] = ($checkUpstreamOf+$maxCdsSize{$cdsLine[8]});
+				}
+			}
+			foreach(@screenBlocks){
+				foreach(@{$introns_for_filterOutShort{$cdsLine[0]}{$_}}){ 
+					my @intronLine = split(/\t/);
+					if(($checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[4] < $checkUpstreamOf && $intronLine[4] > ($checkUpstreamOf - $maxCdsSize{$cdsLine[8]}) && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5]) or ($checkStrand eq "-"  && $intronLine[3] > $checkUpstreamOf && $intronLine[3] < ($checkUpstreamOf + $maxCdsSize{$cdsLine[8]}) && $checkStrand eq $intronLine[6] && $percentMult * $averageMult{$cdsLine[8]} < $intronLine[5])){
+						$boolShortBad = "true";
+					}
+				}
+			}
+	
+		}
+  }
   if( ($true_count + 1 ) != $size && $size != 1){
     $bool_good = "false";
   }
@@ -340,7 +423,7 @@ sub print_gene{
     $average_nr_introns += $size - 1;
   }
   # all exons in intron file
-  if($bool_good eq "true" && $bool_complete eq "true"){
+  if($bool_good eq "true" && $bool_complete eq "true" && !$filterOutShort){
     $nr_of_good++;
     $good_mults += $mults;
     if(!defined($suppress)){
@@ -351,7 +434,18 @@ sub print_gene{
       print GOOD "$stop_codon";
     }
    # not all exons in intron file or gene incomplete
-   }else{
+  }elsif($bool_good eq "true" && $bool_complete eq "true" && $filterOutShort && $boolShortBad eq "false"){
+		# filter for genes that do NOT have an upstream intron in close proximity
+    $nr_of_good++;
+    $good_mults += $mults;
+    if(!defined($suppress)){
+      print GOOD "$start_codon";
+      foreach (@CDS){
+        print GOOD "$_\n";
+      }
+      print GOOD "$stop_codon";
+    }
+	}else{
     $nr_of_bad++;
     if(!defined($suppress)){
       print BAD "$start_codon";
