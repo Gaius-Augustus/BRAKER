@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: Dec 13th 2015                                                                      #
+# Release date: February 24th 2016                                                                 #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -120,7 +120,7 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 1.8;                    # braker.pl version number
+my $version = 1.9;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;                          # path to augustus
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
@@ -180,8 +180,9 @@ my $testsize;                         # AUGUSTUS training parameter: number of g
 my $useexisting = 0;                  # use existing species config and parameter files, no changes on those files
 my $UTR = "off";                      # UTR prediction on/off. currently not available für new species 
 my $workDir;                          # in the working directory results and temporary files are stored
-my $filterOutShort;										# filterOutShort option (see help)
-
+my $filterOutShort;		      # filterOutShort option (see help)
+my @allowedHints = ("intron");        # Currently, BRAKER only supports intron hints. Hint type from input hintsfile will
+                                      # be checked.
 
 # list of forbidden words for species name
 @forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while");  
@@ -189,6 +190,7 @@ my $filterOutShort;										# filterOutShort option (see help)
 # lists for extrinsic files
 @bonus = ("1e1", "1e0", "1e2", "1e3", "1e4", "1e5");
 @malus = ("0.1", "0.2", "0.4", "1.0"); 
+
 
 if(@ARGV==0){
   print "$usage\n"; 
@@ -1239,6 +1241,21 @@ sub check_gff{
         close(GFF) or die("Could not close gff file $gfffile!\n");
         exit(1);
       }
+    }
+    my $isAllowed = 0;
+    foreach(@allowedHints){
+	if($gff_line[2] eq $_){
+	    $isAllowed = 1;
+	}
+    }
+    if($isAllowed != 1){
+	print STDERR "ERROR: File $gfffile contains hints of a feature type that is currently not supported by BRAKER\n";
+	print STDERR "Currently allowed hint types:\n";
+	foreach(@allowedHints){
+	    print STDERR $_."\n";
+	}
+	close(GFF) or die("Could not close gff file $gfffile!\n");
+	exit(1);
     }
   }
   close(GFF) or die("Could not close gff file $gfffile!\n");
