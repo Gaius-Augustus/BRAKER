@@ -48,20 +48,12 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
 
 6. Unpack and install AUGUSTUS. AUGUSTUS comes with pre-compiled binaries (located in the 
    augustus-x.x.x/bin folder). However, you should compile AUGUSTUS on your own system in order
-   to avoid future problems. Compilation instructions are provided in the AUGUSTUS README file.
-   However, bam2hints compilation is not covered by the AUGUSTUS README. Therefore, compile
-   bam2hints as described, here. First, you need to edit the Makefile of bam2hints in order
-   point to the correct location of BAMTOOLS on your system. Therefore open the file with 
-   an editor of your choice, e.g. emacs:
+   to avoid future problems. Compilation instructions are provided in the AUGUSTUS README file
+   (augustus-x.x.x/README.txt).
+   Make sure, you also compile bam2hints (included in the main AUGUSTUS Makefile; in case
+   of problems, you find further instructions on bam2hints compilation in the file
+   augustus-x.x.x/auxprogs/bam2hints/README).
 
-   emacs augustus-x.x.x/auxprogs/bam2hints/Makefile
-   
-   Replace "/home/mario/tools/bamtools" by your individual path to BAMTOOLS.
-
-   cd augustus-x.x.x/auxprogs/bam2hints
-   make
-   mv bam2hints ../../bin
-   
 7. Optional: 
       SAMTOOLS is not required for running BRAKER1 if all your files are formatted, correctly
       (i.e. all sequences should have short and unique fasta names). If you are not sure
