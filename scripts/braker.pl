@@ -109,6 +109,8 @@ OPTIONS
 					 and a neighboring RNA-Seq supported intron upstream of the start codon within 
 					 the range of the maximum CDS size of that gene and with a multiplicity that
 					 is at least as high as 20% of the average intron multiplicity of that gene.
+    --crf                                Execute CRF training for AUGUSTUS; resulting parameters are only kept for
+                                         final predictions if they show higher accuracy than HMM parameters.
     --version                            print version number of braker.pl
                            
 
@@ -183,6 +185,9 @@ my $workDir;                          # in the working directory results and tem
 my $filterOutShort;		      # filterOutShort option (see help)
 my @allowedHints = ("intron");        # Currently, BRAKER only supports intron hints. Hint type from input hintsfile will
                                       # be checked.
+my $crf;                              # flag that determines whether CRF training should be tried
+
+
 
 # list of forbidden words for species name
 @forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while");  
@@ -219,7 +224,8 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'useexisting!'                  => \$useexisting,
             'UTR=s'                         => \$UTR,
             'workingdir=s'                  => \$workDir,
-						'filterOutShort!'								=> \$filterOutShort,
+	    'filterOutShort!'		    => \$filterOutShort,
+	    'crf!'                          => \$crf,
             'help!'                         => \$help,
             'version!'                      => \$printVersion);
 
@@ -980,6 +986,17 @@ sub training{
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "second test finished.\n";  
+    }
+
+    if($crf){
+    # optional CRF training
+	if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/crftraining.stdout"]) || $overwrite){
+	    $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+	    print STDOUT "NEXT STEP: CRF training\n";
+	    $errorfile = "$errorfilesDir/crftraining.stderr";
+	    $stdoutfile = "$otherfilesDir/crftraining.stdout";
+	    
+	}
     }
   }
   
