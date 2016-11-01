@@ -234,13 +234,13 @@ sub get_intron{
     my $line = shift;
     $intron_score = $prevScore + @{$line}[5] / 2;
     if ($prevParent ne $parent){
-        if(@{$line}[6] eq "-" && $prgsrc eq "spn2h"){
-            $intron_end = @{$line}[3] - 1;
-        }else{
+        if (@{$line}[6] eq "-" && ($prgsrc eq "spn2h" || $prgsrc eq "scipio2h")){
+            $intron_end = @{$line}[3] - 1; # these spliced aligners output in reverse order in genome
+        } else {
             $intron_start = @{$line}[4] + 1;
         }
     } else {
-        if (@{$line}[6] eq "-" && $prgsrc eq "spn2h"){
+        if (@{$line}[6] eq "-" && ($prgsrc eq "spn2h" || $prgsrc eq "scipio2h")){
             $intron_start = @{$line}[4] + 1;
         } else{
             $intron_end = @{$line}[3] - 1;
