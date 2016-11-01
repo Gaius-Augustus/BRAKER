@@ -258,7 +258,7 @@ sub get_intron{
                 print HINTS "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t$intron_score\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
             }
         }
-        if (@{$line}[6] eq "-" && $prgsrc eq "spn2h"){
+        if (@{$line}[6] eq "-" && ($prgsrc eq "spn2h" || $prgsrc eq "scipio2h")){
             $intron_end = @{$line}[3] - 1;
         } else {
             $intron_start = @{$line}[4] + 1;
