@@ -65,7 +65,17 @@ OPTIONS
     --help                               Print this help message
     --alternatives-from-evidence=true    Output alternative transcripts based on explicit evidence from 
                                          hints (default is true).
-    --AUGUSTUS_CONFIG_PATH=/path/        Set path to AUGUSTUS (if not specified as environment variable).
+    --AUGUSTUS_PATH=/path/               Set path to the AUGUSTUS directory that contains the folders bin/
+                                         and scripts/ (this path may also contain the config/ folder but
+                                         for global installation, you need write permission to that folder,
+                                         thus you need to specify a separate variable AUGUSTUS_CONFIG_PATH).
+                                         If you do not set AUGUSTUS path and if you do not have an 
+                                         environment variable AUGUSTUS_PATH, then we will assume that
+                                         AUGUSTUS_PATH and AUGUSTUS_CONFIG_PATH are identical. This will only
+                                         work for local AUGUSTUS installations. For global installations, you
+                                         must specify AUGUSTUS_PATH!
+    --AUGUSTUS_CONFIG_PATH=/path/        Set path to config directory of AUGUSTUS (if not specified as 
+                                         environment variable).
       to/augustus/                       Has higher priority than environment variable.
     --BAMTOOLS_PATH=/path/to/            Set path to bamtools (if not specified as environment 
       bamtools/                          variable). Has higher priority than the environment variable.
@@ -103,12 +113,13 @@ OPTIONS
     --UTR                                Predict untranslated regions. Default is off.
     --workingdir=/path/to/wd/            Set path to working directory. In the working directory results
                                          and temporary files are stored
-    --filterOutShort			 It may happen that a "good" training gene, i.e. one that has intron
-					 support from RNA-Seq in all introns predicted by GeneMark, is in fact
-					 too short. This flag will discard such genes that have supported introns
-					 and a neighboring RNA-Seq supported intron upstream of the start codon within 
-					 the range of the maximum CDS size of that gene and with a multiplicity that
-					 is at least as high as 20% of the average intron multiplicity of that gene.
+    --filterOutShort                     It may happen that a "good" training gene, i.e. one that has intron
+                                         support from RNA-Seq in all introns predicted by GeneMark, is in fact
+                                         too short. This flag will discard such genes that have supported introns
+                                         and a neighboring RNA-Seq supported intron upstream of the start codon 
+                                         within the range of the maximum CDS size of that gene and with a 
+                                         multiplicity that is at least as high as 20% of the average intron 
+                                         multiplicity of that gene.
     --crf                                Execute CRF training for AUGUSTUS; resulting parameters are only kept for
                                          final predictions if they show higher accuracy than HMM parameters.
     --version                            print version number of braker.pl
@@ -126,6 +137,13 @@ my $version = 1.9;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;                          # path to augustus
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
+my $augustus_path;                    # path to augustus folder bin/ and scripts; higher priority than 
+                                      # $AUGUSTUS_PATH on system
+if(-e $ENV{'AUGUSTUS_PATH'}){
+  my $AUGUSTUS_PATH = $ENV{'AUGUSTUS_PATH'};
+}else{
+  my $AUGUSTUS_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
+}
 my $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
 my @bam;                              # bam file names
 my $bamtools_path;                    # path to bamtools executable, higher priority than $BAMTOOLS_BIN_PATH on system
@@ -204,6 +222,7 @@ if(@ARGV==0){
 
 GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'AUGUSTUS_CONFIG_PATH=s'        => \$augustus_cfg_path,
+            'AUGUSTUS_PATH=s'               => \$augustus_path,
             'bam=s'                         => \@bam,
             'BAMTOOLS_PATH=s'               => \$bamtools_path,
             'cores=i'                       => \$CPU,
@@ -259,6 +278,15 @@ if(! -w $workDir){
   exit(1);
 }
 
+# set path to augustus folder
+if(defined($augustus_path)){
+  my $last_char = substr($augustus_path, -1);
+  if($last_char eq "\/"){
+    chop($augustus_path);
+  }
+  $AUGUSTUS_PATH = $augustus_path;
+}
+
 
 # set path to augustus config folder
 if(defined($augustus_cfg_path)){
@@ -266,7 +294,7 @@ if(defined($augustus_cfg_path)){
   if($last_char eq "\/"){
     chop($augustus_cfg_path);
   }
- $AUGUSTUS_CONFIG_PATH = $augustus_cfg_path;
+  $AUGUSTUS_CONFIG_PATH = $augustus_cfg_path;
 }
 
 
@@ -305,7 +333,7 @@ check_options();
 
 # check whether RNAseq files are specified
 if(!@bam && !@hints){
-  print STDERR "ERROR: No RNAseq or hints files specified. Please set at least one RNAseq file.\n$usage";
+  print STDERR "ERROR: No RNAseq or hints files specified. Please set at least one RNAseq BAM file.\n$usage";
   exit(1);
 }
 
@@ -370,7 +398,7 @@ if(!defined($species) || $bool_species eq "false"){
   if($bool_species eq "false"){
     print STDOUT "Programme will use $species instead.\n";
   }else{
-    print STDOUT "No species was set. Programme will use $species.\n";
+    print STDOUT "No species was set. Program will use $species.\n";
   }
 }
     
@@ -487,14 +515,17 @@ if(! -f "$genome"){
   new_species();                # create new species parameter files
   training();                   # train species-specific parameters with optimize_augustus.pl and etraining
 
-    # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
+  # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
   if(!defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && $soft_mask)){
     extrinsic(); # use default extrinsic file
   }
   # copy extrinsic file to species parameters directory
-  if(defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg")){
-    if(!defined($extrinsicCfgFile)){
+  if(defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg") || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_PATH/species/$species/extrinsic.$species.cfg")){
+    # using cfg files from AUGUSTUS_CONFIG_PATH has higher priority than from AUGUSTUS_PATH
+    if(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"){
       $extrinsicCfgFile = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
+    }elsif(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_PATH/species/$species/extrinsic.$species.cfg"){
+      $extrinsicCfgFile = "$AUGUSTUS_PATH/species/$species/extrinsic.$species.cfg";
     }
     @_ = split(/\//, $extrinsicCfgFile);
     if(!uptodate([$extrinsicCfgFile],["$parameterDir/$species/".$_[-1]])  || $overwrite){
@@ -537,7 +568,11 @@ sub make_hints{
       if(!uptodate([$bam[$i]],[$hintsfile])  || $overwrite){
         $bam[$i] = check_bam_headers($bam[$i]);
         print STDOUT "NEXT STEP: make hints from BAM file $bam[$i]\n";
-        $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
+        if(-e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints"){
+          $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
+        }else{
+          $augpath = "$AUGUSTUS_PATH/bin/bam2hints";
+        }
         $cmdString = "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
         print LOG "\# ".(localtime).": make hints from BAM file $bam[$i]\n";
         print LOG "$cmdString\n\n";
@@ -572,7 +607,6 @@ sub make_hints{
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
       print STDOUT "hints sorted.\n";
-
       print STDOUT "NEXT STEP: summarize multiple identical hints to one\n";
       $string = find("join_mult_hints.pl");
       $errorfile = "$errorfilesDir/join_mult_hints.stderr";
@@ -677,17 +711,23 @@ sub new_species{
 
 
 # create default extrinsic file (without BLAST)
+
 sub extrinsic{  
-  my $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
+  if(-e "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg"){
+    my $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
+    print STDOUT "Will use $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg as template for this project's extrinsic.cfg\n";
+  }elsif(-e "$AUGUSTUS_PATH/extrinsic/extrinsic.M.RM.E.W.cfg"){
+    my $extrinsic = "$AUGUSTUS_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
+    print STDOUT "Will use $AUGUSTUS_PATH/extrinsic/extrinsic.M.RM.E.W.cfg as template for this project's extrinsic.cfg\n";
+  }
   my $extrinsic_cp = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
   if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -e $extrinsicCfgFile) ){
     if(!defined($extrinsicCfgFile)){
-      print STDOUT "No extrinsic file assigned. Programme will create one.\n"; # other check/warning see beginning 
+      print STDOUT "No extrinsic file assigned. Program will create one.\n"; # other check/warning see beginning 
     }
     if(! -e $extrinsic_cp){
       print STDOUT "NEXT STEP: create extrinsic file: $extrinsic_cp\n";
       print LOG "\# ".(localtime).": create extrinsic file\n";
-      print LOG "cp $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg $AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg\n\n"; 
       print STDOUT "species $species created.\n";
 
       open (EXTRINSIC, $extrinsic) or die "Cannot open file: $extrinsic\n";
@@ -753,7 +793,7 @@ sub extrinsic{
       $extrinsicCfgFile = $extrinsic_cp;
     }
   }else{
-    print STDOUT "No extrinsic file was created. Programme uses assigned extrinsic file: $extrinsicCfgFile\n";
+    print STDOUT "No extrinsic file was created. Program uses assigned extrinsic file: $extrinsicCfgFile\n";
   }
 }
 
@@ -856,7 +896,11 @@ sub training{
 
       # first try with etraining
       print STDOUT "NEXT STEP: first etraining\n"; 
-      $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+      if(-e "$AUGUSTUS_CONFIG_PATH/../bin/etraining"){
+        $augupath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+      }else{
+        $augpath = "$AUGUSTUS_PATH/bin/etraining";
+      }
       $errorfile = "$errorfilesDir/firstetraining.stderr";
       $stdoutfile = "$otherfilesDir/firstetraining.stdout";
       $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
@@ -917,7 +961,11 @@ sub training{
     # first test
     if(!uptodate(["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firsttest.stdout"])  || $overwrite){
       print STDOUT "NEXT STEP: first test\n";
-      $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
+      if(-e "$AUGUSTUS_CONFIG_PATH/../bin/augustus"){
+        $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
+      }else{
+        $augpath = "$AUGUSTUS_PATH/bin/augustus";
+      }
       $errorfile = "$errorfilesDir/firsttest.stderr";
       $stdoutfile = "$otherfilesDir/firsttest.stdout";
       $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
@@ -955,7 +1003,11 @@ sub training{
     # train AUGUSTUS for the second time
     if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondetraining.stdout"])){
       print STDOUT "NEXT STEP: second etraining\n";
-      $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+      if(-e "$AUGUSTUS_CONFIG_PATH/../bin/etraining"){
+        $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+      }else{
+        $augpath = "$AUGUSTUS_PATH/bin/etraining";
+      }
       $errorfile = "$errorfilesDir/secondetraining.stderr";
       $stdoutfile = "$otherfilesDir/secondetraining.stdout";
       $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
@@ -972,7 +1024,11 @@ sub training{
 
     # second test
     if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondtest.out"]) || $overwrite){
-      $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
+      if(-e "$AUGUSTUS_CONFIG_PATH/../bin/augustus"){
+        $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
+      }else{
+        $augpath = "$AUGUSTUS_PATH/bin/augustus";
+      }
       print STDOUT "NEXT STEP: second test\n";
       $errorfile = "$errorfilesDir/secondtest.stderr";
       $stdoutfile = "$otherfilesDir/secondtest.stdout";
@@ -991,7 +1047,11 @@ sub training{
     if($crf){
     # optional CRF training
 	if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/crftraining.stdout"]) || $overwrite){
+          if(-e "$AUGUSTUS_CONFIG_PATH/../bin/etraining"){
 	    $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+          }else{
+	    $augpath = "$AUGUSTUS_PATH/bin/etraining";
+          }
 	    print STDOUT "NEXT STEP: CRF training\n";
 	    $errorfile = "$errorfilesDir/crftraining.stderr";
 	    $stdoutfile = "$otherfilesDir/crftraining.stdout";
@@ -1016,8 +1076,16 @@ sub training{
          ####################### run AUGUSTUS  #########################
 # run AUGUSTUS for given species with given options
 sub augustus{
-  $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
-  my $scriptpath = "$AUGUSTUS_CONFIG_PATH/../scripts";
+  if(-e "$AUGUSTUS_CONFIG_PATH/../bin/augustus"){
+    $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
+  }else{
+    $augpath = "$AUGUSTUS_PATH/bin/augustus";
+  }
+  if(-e "$AUGUSTUS_CONFIG_PATH/../scripts"){
+    $scriptpath = "$AUGUSTUS_CONFIG_PATH/../scripts";
+  }else{
+    my $scriptpath = "$AUGUSTUS_PATH/scripts";
+  }
   my $extrinsic;
   my @genome_files;
   my $pm;
@@ -1181,8 +1249,12 @@ sub check_upfront{ # see autoAug.pl
 
   # check whether environmental variables are set or other path variables are defined
   if(!$ENV{'AUGUSTUS_CONFIG_PATH'} && !defined($augustus_cfg_path)){ # see autoAug.pl
-    print STDERR "ERROR: The environment variable AUGUSTUS_CONFIG_PATH is not defined. Please export an environment variable for AUGUSTUS or use --AUGUSTUS_CONFIG_PATH=path/to/augustus.\n"; # see autoAug.pl
+    print STDERR "ERROR: The environment variable AUGUSTUS_CONFIG_PATH is not defined. Please export an environment variable for AUGUSTUS or use --AUGUSTUS_CONFIG_PATH=path/to/augustus where path/to/augustus contains the directory config/ of augustus.\n"; # see autoAug.pl
     exit(1);
+  }
+
+  if(!$ENV{'AUGUSTUS_PATH'} && !defined($augustus_path)){
+    print STDOUT "WARNING: The environment varialbe AUGUSTUS_PATH is not defined. This is okay if you are using a local AUGUSTUS installation. We will use AUGUSTUS_CONFIG_PATH to access binaries and scripts. If you are using a global AUGUSTUS installation, you must export an AUGUSTUS_PATH variable (to a directory that contains bin/ and scripts/ of AUGUSTUS) or specify the command line option --AUGUSTUS_PATH.\n";
   }
   
   if(!$ENV{'GENEMARK_PATH'} && !defined($GMET_path)){
@@ -1196,7 +1268,11 @@ sub check_upfront{ # see autoAug.pl
   }
 
   # check for augutus executable
-  $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
+  if(-e "$AUGUSTUS_CONFIG_PATH/../bin/augustus"){
+    $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/augustus";
+  }else{
+    $augpath = "$AUGUSTUS_PATH/bin/augustus";
+  }
   if(system("$augpath > /dev/null 2> /dev/null") != 0){                   # see autoAug.pl
     if(! -f $augpath){                                                    # see autoAug.pl
       print STDERR "ERROR: augustus executable not found at $augpath.\n"; # see autoAug.pl
@@ -1213,7 +1289,12 @@ sub check_upfront{ # see autoAug.pl
   }
 
   # check for etraining executable
-  my $etrainpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+  my $etrainpath;
+  if(-e "$AUGUSTUS_CONFIG_PATH/../bin/etraining"){
+    $etrainpath = "$AUGUSTUS_CONFIG_PATH/../bin/etraining";
+  }else{
+    $etrainpath = "$AUGUSTUS_PATH/bin/etraining";
+  }
   if(system("$etrainpath > /dev/null 2> /dev/null") != 0){                   
     if(! -f $etrainpath){                                                    
       print STDERR "ERROR: etraining executable not found at $etrainpath.\n";
@@ -1223,7 +1304,7 @@ sub check_upfront{ # see autoAug.pl
     exit(1);
   }
   
-  # check whether the necessary perl scripts exist and cand be found
+  # check whether the necessary perl scripts exist and can be found
   find("gff2gbSmallDNA.pl");
   find("filterGenemark.pl");
   find("filterIntronsFindStrand.pl");

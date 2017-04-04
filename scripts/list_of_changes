@@ -1,4 +1,7 @@
 # ----------------------------------------------------------------------
+# | enabled proper usage of        | braker.pl (Hoff)     | 04.04.2017 |
+# | AUGUSTUS_CONFIG_PATH; added    | helpMod.pl (Hoff)    |            |
+# | AUGUSTUS_PATH variable         |                      |            |
 # | added hints type filter (gff)  | braker.pl (Hoff)     | 24.02.2016 |
 # | removed BLAST param optim.     | braker.pl (Hoff)     | 13.12.2015 |
 # | improved OS X compatibility    | braker.pl (Hoff)     | 08.12.2015 |

@@ -53,6 +53,8 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
    Make sure, you also compile bam2hints (included in the main AUGUSTUS Makefile; in case
    of problems, you find further instructions on bam2hints compilation in the file
    augustus-x.x.x/auxprogs/bam2hints/README).
+   BRAKER1 needs writing access to the AUGUSTUS directory config/. If you install AUGUSTUS
+   globally, you need to copy config/ to a location where users have writing permission.
 
 7. Optional: 
       SAMTOOLS is not required for running BRAKER1 if all your files are formatted, correctly
@@ -93,10 +95,45 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
    Exporting the location of AUGUSTUS and AUGUSTUS scripts is not required 
    by BRAKER1 if you set the environment variables in step 10.
 
-10. Optional: set environment variables $AUGUSTUS_CONFIG_PATH, $GENEMARK_PATH and $BAMTOOLS_PATH 
-              (and $SAMTOOLS_PATH)
+10. Optional: set environment variables $AUGUSTUS_PATH, $AUGUSTUS_CONFIG_PATH, $GENEMARK_PATH and 
+              $BAMTOOLS_PATH (and $SAMTOOLS_PATH)
+
+    AUGUSTUS by default contains three directories that are of importance to BRAKER1: bin/ config/
+    and scripts/. 
+      Scenario 1: You are using a local AUGUSTUS installation, i.e. AUGUSTUS resides in your home
+                  directory. Then, those three folders are contained in the AUGUSTUS installation
+                  folder. You have writing access to the subfolder and subfolders of config/. 
+                  You must either specify the command line argument --AUGUSTUS_CONFIG_PATH=/path
+                  /to/augustus/config, or you must export an environment variable 
+                  $AUGUSTUS_CONFIG_PATH. (Exporting the variable is described further down).
+      Scenario 2: You are using a global AUGUSTuS installation, i.e. AUGUSTUS folders bin/ and
+                  scripts/ are not located in your home directory. Let's assume, they reside in
+                  /usr/local/augustus. You do not have writing access to /usr/local/augustus/config.
+                  If this is the case, you must specify two different paths: one to the directory
+                  that contains bin/ and scripts/ folder (AUGUSTUS_PATH) and a second path to 
+                  a writable AUGUSTUS config directory (AUGUSTUS_CONFIG_PATH). The AUGUSTUS config
+                  directory cannot be a random writeable directory. It must be local copy of the 
+                  config/ folder that was installed with AUGUSTUS (or you download AUGUSTUS, 
+                  separately, unpack, and copy the there contained config/ folder to a location of
+                  your choice).
+      Scenario 3: There is a global AUGUSTUS installation and a local AUGUSTUS installation. In
+                  this case, BRAKER1 will always favour the local installation. Please use the
+                  directions given for scenario 1. If you use the directions given in scenario 2,
+                  BRAKER1 will nevertheless always check for the local sources, first (i.e. global
+                  installation will not be used).
+    If the environment variable $AUGUSTUS_PATH is set, it should contain the following folders of
+    AUGUSTUS installation: bin/ (containing compiled binaries augustus and etraining) and scripts/
+    (containing AUGUSTUS related scripts).
+
+    export AUGUSTUS_PATH=/my_path_to_AUGUSTUS/augustus
+
+    $AUGUSTUS_PATH - if exported, and if bin/ and scripts/ do not exist in $AUGUSTUS_CONFIG_PATH../,
+                     is used to determine path to AUGUSTUS executables, AUGUSTUS scripts and 
+                     bam2hints (global installation).
+
     The $AUGUSTUS_CONFIG_PATH determines which directory is used for reading and writing species 
-    configuration files. During training, AUGUSTUS writes species-specific parameter files to this 
+    configuration files (and in case of local installation, also for finding augustus binaries
+    and scripts). During training, AUGUSTUS writes species-specific parameter files to this 
     directory. Therefore, you need write permissions for the directory that is $AUGUSTUS_CONFIG_PATH. 
     If the $AUGUSTUS_CONFIG_PATH environment variable is not set, then the programs will look in the 
     path ../config relative to the directory in which the AUGUSTUS executable is located. If required,
@@ -105,7 +142,8 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
     export AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/
 
     $AUGUSTUS_CONFIG_PATH - if exported - is also used by BRAKER1 to determine the relative 
-    			    path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints. 
+    			    path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints (local
+                            installaton).
 
     If the environment variable $GENEMARK_PATH is set, BRAKER1 will look there for the gmes_petap.pl 
     script. Export the variable e.g. for your current bash session:
@@ -187,6 +225,10 @@ Selected parameters:
 --AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/ 
   Path to AUGUSTUS config directory (if not specified as environment variable). Has higher priority than the
   environment variable.
+
+--AUGUSTUS_PATH=/my_path_to_AUGUSTUS_folders_bin_and_scripts/
+  Path to AUGUSTUS directories bin/ and scripts (if not specified as environment variable). If a local installation
+  exists (i.e. AUGUSTUS_CONFIG_PATH/../ contains bin/ and scripts/), the local installation will be used, instead!
 
 --cores=n
   Specifies the maximum number of cores that can be used during computation
