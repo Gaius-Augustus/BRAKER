@@ -20,16 +20,18 @@ use File::Basename qw(dirname);
 
 sub find{
   my $script=shift;           # script to find
+  my $augustus_bin_path=shift;           # augustus_bin_path
+  my $augustus_scripts_path=shift;	      # augustus_scripts_path
+  my $AUGUSTUS_CONFIG_PATH=shift;
   my $exist;                  # boolean variable, to remark if $script is found
   my $string;                 # the absolute name for $script
 
-  my $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};      # the environment varialbe AUGUSTUS_CONFIG_PATH
-  my $AUGUSTUS_PATH = $ENV{'AUGUSTUS_PATH'};                    # the environment variable AUGUSTUS_PATH
-  my $path_1="$AUGUSTUS_CONFIG_PATH/../scripts";                # first searching path of $script
-  my $path_2=dirname(rel2abs($0));                              # second searching path of $script
-  my $path_3="$AUGUSTUS_PATH/scripts";                          # third searching path of $script
-
-  foreach(("$path_1/$script", "$path_2/$script", "$path_3/$script")){
+  my $path_1=dirname(rel2abs($augustus_scripts_path));               # first searching path of $script
+  my $path_2=dirname(rel2abs("$augustus_bin_path/../scripts"));                              # second searching path of $script
+  my $path_3=dirname(rel2abs("$AUGUSTUS_CONFIG_PATH/../scripts"));                          # third searching path of $script
+  my $path_4=dirname(rel2abs($0));
+  
+  foreach(("$path_1/$script", "$path_2/$script", "$path_3/$script", "$path_4/$script")){
     if(-f $_){
       $exist=1;
       $string=$_;
@@ -42,7 +44,7 @@ sub find{
   }
   else{
     # if not found, output error
-    die("Error: found neither $path_1/$script nor $path_2/$script nor $path_3/$script!\nPlease Check the environment variables AUGUSTUS_CONFIG_PATH and AUGUSTUS_PATH or install AUGUSTUS, again!\n");
+    die("Error: found neither $path_1/$script nor $path_2/$script nor $path_3/$script nor $path_4/$script!\nPlease Check the environment variables AUGUSTUS_CONFIG_PATH and command line options AUGUSTUS_BIN_PATH and AUGUSTUS_SCRIPTS_PATH or install AUGUSTUS, again!\n");
   }
 }
 
