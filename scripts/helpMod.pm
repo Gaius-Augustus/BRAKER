@@ -9,6 +9,7 @@ use Exporter 'import';
 
 use strict;
 use Cwd;
+use Cwd 'abs_path';
 use File::Spec::Functions qw(rel2abs);
 use File::Basename qw(dirname);
 
@@ -26,12 +27,20 @@ sub find{
   my $exist;                  # boolean variable, to remark if $script is found
   my $string;                 # the absolute name for $script
 
-  my $path_1=dirname(rel2abs($augustus_scripts_path));               # first searching path of $script
-  my $path_2=dirname(rel2abs("$augustus_bin_path/../scripts"));                              # second searching path of $script
-  my $path_3=dirname(rel2abs("$AUGUSTUS_CONFIG_PATH/../scripts"));                          # third searching path of $script
+  my $path_1=abs_path($augustus_scripts_path);               # first searching path of $script
+  my $path_2=abs_path("$augustus_bin_path/../scripts");                              # second searching path of $script
+  my $path_3=abs_path("$AUGUSTUS_CONFIG_PATH/../scripts");                          # third searching path of $script
   my $path_4=dirname(rel2abs($0));
-  
-  foreach(("$path_1/$script", "$path_2/$script", "$path_3/$script", "$path_4/$script")){
+
+  # paths can be redundant, remove redundancies:
+  my @unique;
+  my %seen;
+  foreach my $value (("$path_1/$script", "$path_2/$script", "$path_3/$script", "$path_4/$script")) {
+      if (! $seen{$value}++ ) {
+	  push @unique, $value;
+      }
+  }
+  foreach(@unique){
     if(-f $_){
       $exist=1;
       $string=$_;
