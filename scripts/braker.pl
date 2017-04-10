@@ -29,6 +29,7 @@ use List::Util qw(min);
 use Parallel::ForkManager;
 
 use Cwd;
+use Cwd 'abs_path';
 
 use File::Spec::Functions qw(rel2abs);
 use File::Basename qw(dirname basename);
@@ -277,6 +278,8 @@ if(!defined $workDir){
   if($last_char eq "\/"){
     chop($workDir);
   }
+  my $tmp_dir_name = abs_path($workDir);
+  $workDir = $temp_dir_name;
 }
 
 
