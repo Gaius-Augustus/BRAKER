@@ -146,9 +146,12 @@ my $augpath;                          # path to augustus
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
 my $augustus_bin_path;                # path to augustus folder binaries folder
 my $augustus_scripts_path;	      # path to augustus scripts folder
+my $AUGUSTUS_CONFIG_PATH;
 if(-e $ENV{'AUGUSTUS_CONFIG_PATH'}){
-  my $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
+  $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
 }
+my $AUGUSTUS_BIN_PATH;
+my $AUGUSTUS_SCRIPTS_PATH;
 my @bam;                              # bam file names
 my $bamtools_path;                    # path to bamtools executable, higher priority than $BAMTOOLS_BIN_PATH on system
 my $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'}; # bamtools environment variable
@@ -301,6 +304,7 @@ if(defined($augustus_bin_path)){
   $AUGUSTUS_BIN_PATH = $augustus_bin_path;
 }else{
   $AUGUSTUS_BIN_PATH = "$AUGUSTUS_CONFIG_PATH/../bin";
+}
 
 if(defined($augustus_scripts_path)){
   my $last_char = substr($augustus_scripts_path, -1);
@@ -727,13 +731,16 @@ sub new_species{
 
 # create default extrinsic file (without BLAST)
 
-sub extrinsic{  
+sub extrinsic{
+    my $extrinsic;
   if(-e "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg"){
-    my $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
+    $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
     print STDOUT "Will use $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg as template for this project's extrinsic.cfg\n";
   }elsif(-e "$AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.cfg"){
-    my $extrinsic = "$AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.cfg";
+    $extrinsic = "$AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.cfg";
     print STDOUT "Will use $AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.cfg as template for this project's extrinsic.cfg\n";
+  }else{
+      die "Cannot find extrinsic template file $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg or $AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.cfg. Please check whether AUGUSTUS_CONFIG_PATH (and/or AUGUSTUS_BIN_PATH) are correct. Looking for template file in extrinsic folder of AUGUSTUS_CONFIG_PATH and relative ../config/extrinsic to AUGUSTUS_BIN_PATH.\n";
   }
   my $extrinsic_cp = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
   if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -e $extrinsicCfgFile) ){
