@@ -398,6 +398,7 @@ if(defined($species)){
     }
   }
 }
+
 # use standard name when no name is assigned or when it contains invalid parts
 if(!defined($species) || $bool_species eq "false"){
   my $no = 1;
@@ -479,7 +480,6 @@ if(! -f "$genome"){
   if(! -d $otherfilesDir){
     make_path($otherfilesDir);
     $bool_otherDir = "true";
-
   }
   open (LOG, ">>".$logfile) or die "Cannot open file: $logfile\n";
   if($bool_rootDir eq "true"){
@@ -1059,7 +1059,6 @@ sub training{
 	    $errorfile = "$errorfilesDir/crftraining.stderr";
 	    $stdoutfile = "$otherfilesDir/crftraining.stdout";
 	    
-	}
     }
   }
   
@@ -1079,14 +1078,15 @@ sub training{
          ####################### run AUGUSTUS  #########################
 # run AUGUSTUS for given species with given options
 sub augustus{
-    $augpath = "$AUGUSTUS_BIN_PATH/augustus";
-    if(defined($augustus_scripts_path)){
-      $scriptpath = $AUGUSTUS_SCRIPTS_PATH;
-    }elsif(defined($AUGUSTUS_BIN_PATH)){
-      $scriptpath = "$AUGUSTUS_BIN_PATH/../scripts";
-    }else{
-      $scriptpath = "$AUGUSTUS_CONFIG_PATH/../scripts";
-    }
+  my $scriptpath;
+  $augpath = "$AUGUSTUS_BIN_PATH/augustus";
+  if(defined($augustus_scripts_path)){
+    $scriptpath = $AUGUSTUS_SCRIPTS_PATH;
+  }elsif(defined($AUGUSTUS_BIN_PATH)){
+    $scriptpath = "$AUGUSTUS_BIN_PATH/../scripts";
+  }else{
+    $scriptpath = "$AUGUSTUS_CONFIG_PATH/../scripts";
+  }
   my $extrinsic;
   my @genome_files;
   my $pm;
@@ -1258,7 +1258,7 @@ sub check_upfront{ # see autoAug.pl
     print STDOUT "WARNING: The command line option --AUGUSTUS_BIN_PATH was not used. This is ok if binaries of augustus reside in ../bin relative to AUGUSTUS_CONFIG_PATH. Otherwise, please specify --AUGUSTUS_BIN_PATH\n";
   }
   
-    if(!defined($augustus_scripts_path)){
+  if(!defined($augustus_scripts_path)){
     print STDOUT "WARNING: The command line option --AUGUSTUS_SCRIPTS_PATH was not used. This is ok if scripts of augustus reside in ../scripts relative to AUGUSTUS_CONFIG_PATH or AUGUSTUS_BIN_PATH (will first look for them in AUGUSTUS_BIN_PATH). Otherwise, please specify --AUGUSTUS_SCRIPTS_PATH\n";
   }
   
@@ -1292,7 +1292,6 @@ sub check_upfront{ # see autoAug.pl
   # check for etraining executable
   my $etrainpath;
   $etrainpath = "$AUGUSTUS_BIN_PATH/etraining";
-  }
   if(system("$etrainpath > /dev/null 2> /dev/null") != 0){                   
     if(! -f $etrainpath){                                                    
       print STDERR "ERROR: etraining executable not found at $etrainpath.\n";
