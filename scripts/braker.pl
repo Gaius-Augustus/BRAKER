@@ -160,7 +160,7 @@ my @bonus;                            # array of bonus values for extrinsic file
 my $bool_species = "true";            # false, if $species contains forbidden words (e.g. chmod)
 my $cmdString;                        # to store shell commands
 my $CPU = 1;                          # number of CPUs that can be used
-my $currentDir = cwd();               # working superdirectory where programme is called from
+my $currentDir = cwd();               # working superdirectory where program is called from
 my $errorfile;                        # stores current error file name
 my $errorfilesDir;                    # directory for error files
 my $extrinsicCfgFile;                 # assigned extrinsic file
@@ -419,7 +419,7 @@ if(!defined($species) || $bool_species eq "false"){
     exit(1);
   }
   if($bool_species eq "false"){
-    print STDOUT "Programme will use $species instead.\n";
+    print STDOUT "Program will use $species instead.\n";
   }else{
     print STDOUT "No species was set. Program will use $species.\n";
   }
@@ -448,7 +448,7 @@ if(defined($extrinsicCfgFile)){
   $extrinsicCfgFile = rel2abs($extrinsicCfgFile);
 }
 if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile){
-  print STDOUT "WARNING: Assigned extrinsic file $extrinsicCfgFile does not exist. Programme will create extrinsic file instead.\n";
+  print STDOUT "WARNING: Assigned extrinsic file $extrinsicCfgFile does not exist. Program will create extrinsic file instead.\n";
   $extrinsicCfgFile = undef;
 }
 
@@ -1229,7 +1229,7 @@ sub clean_up{
 
          ########################### some checks beforehand ############################
 # check upfront whether any common problems will occur later
-# find out if some programmes are not installed. 
+# find out if some programs are not installed. 
 # checks for GeneMark-ET: perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager
 # checks for braker: perl modules: Scalar::Util::Numeric
 sub check_upfront{ # see autoAug.pl
@@ -1439,12 +1439,12 @@ sub check_fasta_headers{            # see autoAug.pl
       }
 
       if($_ =~ m/^>/){
-        my $line = substr($_,1);
-        # remove whitespaces, if necessary
-        my @fasta_line = split(/\s/, $line);
-        @fasta_line = split(/\|/, $fasta_line[0]);
-        print OUTPUT ">$fasta_line[0]\n";   # see simplifyFastaHeaders.pl
-        print MAP ">$fasta_line[0]\t$_\n";  # see simplifyFastaHeaders.pl  
+        # replace | and whitespaces by _
+	my $oldHeader = $_;
+	$_ =~ s/\s/_/g;
+	$_ =~ s/\|/_/g;
+	print OUTPUT "$_\n";
+	print MAP "$_\t$oldHeader\n";
       }else{
         if(length($_) > 0){    # see simplifyFastaHeaders.pl
           $genome_length += length($_);
@@ -1515,24 +1515,29 @@ sub check_bam_headers{
 
         @seq_line = split(/\:/, $seq_line[1]);
         my $old_name = $seq_line[1];
+	my $new_name = $old_name;
         # remove whitespaces, if necessary
         @seq_line = split(/\s/, $seq_line[1]);
 
         if(scalar(@seq_line) > 1){
           if($spaces == 0){
-            print STDOUT "WARNING: Detected whitespace in BAM header of file $bamFile. ".$stdStr; # see autoAug.pl
+	      print STDOUT "WARNING: Detected whitespace in BAM header of file $bamFile. ".$stdStr; # see autoAug.pl
+	      print STDOUT "Replacing whitespaces by underscores in Bam headers.\n";
             $spaces++;        # see autoAug.pl
           }
         }
-        @seq_line = split(/\|/, $seq_line[0]);
-        $map_hash{$old_name} = $seq_line[0];
-        $seq_line[0] = "\@SQ\tSN:$seq_line[0]\t$seq_end";
-        if(scalar(@seq_line) > 1){
-          if($orSign == 0){   # see autoAug.pl
-            print STDOUT "WARNING: Detected | in header of file $bamFile. ".$stdStr; # see autoAug.pl
-            $orSign++;        # see autoAug.pl
-          }
-        }
+	$new_name =~ s/\s/_/g; # removing whitespaces (if any)
+        @seq_line = split(/\|/, $old_name);
+	if(scalar(@seq_line) > 1){
+	    if($orSign == 0){   # see autoAug.pl
+		print STDOUT "WARNING: Detected | in header of file $bamFile. ".$stdStr; # see autoAug.pl
+		print STDOUT "Replacing | by underscores in Bam headers.\n";
+		$orSign++;        # see autoAug.pl
+	    }
+	}
+	$new_name =~ s/\|/_/g; # replace or signs by underscores (if any)
+        $map_hash{$old_name} = $new_name;
+        $seq_line[0] = "\@SQ\tSN:$new_name\t$seq_end";
         if($seq_line[0] !~ m/[>a-zA-Z0-9]/){
           if($someThingWrongWithHeader==0){   # see autoAug.pl
             print STDOUT "WARNING: BAM headers in file $bamFile seem to contain non-letter and non-number characters. That means they may contain some kind of special character. ".$stdStr; # see autoAug.pl
@@ -1552,6 +1557,7 @@ sub check_bam_headers{
     close(OUTPUT) or die("Could not close output SAM file $samHeaderFile_new!\n");
     close(MAP) or die("Could not close map file $mapFile!\n");
     print STDOUT "headers check for BAM file $bamFile complete.\n";
+    print STDOUT "Deleting SAM header file $samHeaderFile (will not be needed from here on)\n";
     unlink($samHeaderFile);
     # something wrong with header part
     if($spaces != 0 || $orSign != 0 || $someThingWrongWithHeader != 0){
@@ -1564,7 +1570,7 @@ sub check_bam_headers{
       }else{
         if(!$ENV{'SAMTOOLS_PATH'} && !defined($SAMTOOLS_PATH_OP)){
           print STDOUT "WARNING: The environment variable SAMTOOLS_PATH is not defined. Please export an environment variable for samtools or use --SAMTOOLS_PATH=path/to/samtools.\n"; # see autoAug.pl
-          print STDOUT "The programme will try to use 'samtools' to start samtools, which may not work on your system.\n"; # see autoAug.pl
+          print STDOUT "The program will try to use 'samtools' to start samtools, which may not work on your system.\n"; # see autoAug.pl
           $SAMTOOLS_PATH = "samtools";
         }
         print STDOUT "NEXT STEP: convert BAM file to SAM format.\n";
