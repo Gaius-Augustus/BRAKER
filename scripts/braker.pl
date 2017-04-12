@@ -279,7 +279,7 @@ if(!defined $workDir){
     chop($workDir);
   }
   my $tmp_dir_name = abs_path($workDir);
-  $workDir = $temp_dir_name;
+  $workDir = $tmp_dir_name;
 }
 
 
