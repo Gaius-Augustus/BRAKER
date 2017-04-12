@@ -1069,6 +1069,7 @@ sub training{
     }
 
     if($crf){
+	print LOG "WARNING: crf training has not been tested within BRAKER1, yet! Do not rely on results!\n";
     # optional CRF training
 	if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/crftraining.stdout"]) || $overwrite){
 	    $augpath = "$AUGUSTUS_BIN_PATH/etraining";
