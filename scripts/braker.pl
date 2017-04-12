@@ -298,6 +298,12 @@ if(defined($augustus_cfg_path)){
   $AUGUSTUS_CONFIG_PATH = $augustus_cfg_path;
 }
 
+# check early on whether AUGUSTUS_CONFIG_PATH is writable
+if(not(-w "$AUGUSTUS_CONFIG_PATH/species")){
+    print STDERR "ERROR: AUGUSTUS_CONFIG_PATH/species (in this case $AUGUSTUS_CONFIG_PATH/species) is not writeable.\n";
+    exit(1)
+}
+
 # set path to augustus folders
 if(defined($augustus_bin_path)){
   my $last_char = substr($augustus_bin_path, -1);
@@ -721,13 +727,22 @@ sub GeneMark_ET{
 sub new_species{
   $augpath = "$AUGUSTUS_CONFIG_PATH/species/$species";
   if((!uptodate([$augpath."/$species\_metapars.cfg"],[$augpath."/$species\_parameters.cfg", $augpath."/$species\_exon_probs.pbl"]) && !$useexisting) || ! -d "$AUGUSTUS_CONFIG_PATH/species/$species"){
-    print STDOUT "NEXT STEP: create new species $species\n"; 
-    $string=find("new_species.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    $errorfile = "$errorfilesDir/new_species.stderr";
-    $perlCmdString="perl $string --species=$species 2>$errorfile";
-    print LOG "\# ".(localtime).": create new species $species\n";
-    print LOG "$perlCmdString\n\n";
-    system("$perlCmdString")==0 or die("failed to execute: $!\n");
+      if(-d "$AUGUSTUS_CONFIG_PATH/species"){
+	  if(-w "$AUGUSTUS_CONFIG_PATH/species"){
+	      print STDOUT "NEXT STEP: create new species $species in $AUGUSTUS_CONFIG_PATH/species\n";
+      
+	      $string=find("new_species.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	      $errorfile = "$errorfilesDir/new_species.stderr";
+	      $perlCmdString="perl $string --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH 2>$errorfile";
+	      print LOG "\# ".(localtime).": create new species $species\n";
+	      print LOG "$perlCmdString\n\n";
+	      system("$perlCmdString")==0 or die("Failed to create new species with new_species.pl, check write permissions in $AUGUSTUS_CONFIG_PATH/species directory! $!\n");
+	  }else{
+	      print STDERR "Directory $AUGUSTUS_CONFIG_PATH/species is not writable! You must make the directory AUGUSTUS_CONFIG_PATH/species writable or specify another AUGUSTUS_CONFIG_PATH!\n";
+	  }
+      }else{
+	  print STDERR "Directory $AUGUSTUS_CONFIG_PATH/species does not exist. Please check that AUGUSTUS_CONFIG_PATH is set, correctly; and/or create species directory!\n";
+      }
   }
 }
 
@@ -926,15 +941,15 @@ sub training{
       $stdoutfile = "$otherfilesDir/firstetraining.stdout";
       $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
       if($gb_good_size <= 1000){
-        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
         $testsize = $gb_good_size - 1;
       }else{
         $testsize = 1000;
-        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       }
       print LOG "\# ".(localtime).": first etraining\n";
       print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
+      system("$cmdString")==0 or die("failed to execute first etraining: $!\n");
       print STDOUT "first training complete.\n";
 
       # set "stopCodonExcludedFromCDS" to false and run etraining again if necessary
@@ -950,7 +965,7 @@ sub training{
         print STDOUT "NEXT STEP: Trying etraining again\n";
         print LOG "\# ".(localtime).": Trying etraining again\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
+        system("$cmdString")==0 or die("failed to execute second etraining: $!\n");
         print STDOUT "trying etraining again complete.\n";
       }
 
@@ -987,9 +1002,9 @@ sub training{
       $stdoutfile = "$otherfilesDir/firsttest.stdout";
       $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
       if($gb_good_size <= 1000){
-        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
       }else{
-        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
       }
       print LOG "\# ".(localtime).": first test\n";
       print LOG "$cmdString\n\n";
@@ -1006,9 +1021,9 @@ sub training{
         $stdoutfile = "$otherfilesDir/optimize_augustus.stdout";
         $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
         if($gb_good_size <= 1000){
-          $perlCmdString = "perl $string --species=$species --cpus=$CPU $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+          $perlCmdString = "perl $string --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
         }else{
-          $perlCmdString = "perl $string  --species=$species --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+          $perlCmdString = "perl $string  --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
         }
         print LOG "\# ".(localtime).": optimize AUGUSTUS parameter\n";
         print LOG "$perlCmdString\n\n";
@@ -1025,13 +1040,13 @@ sub training{
       $stdoutfile = "$otherfilesDir/secondetraining.stdout";
       $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
       if($gb_good_size <= 1000){
-        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
       }else{
-        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       }
       print LOG "\# ".(localtime).": second etraining\n";
       print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
+      system("$cmdString")==0 or die("failed to execute etraining (second time): $!\n");
       print STDOUT "second etraining complete\n";
     }
 
@@ -1043,13 +1058,13 @@ sub training{
       $stdoutfile = "$otherfilesDir/secondtest.stdout";
       $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
       if($gb_good_size <= 1000){
-        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
+        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
       }else{
-        $cmdString = "$augpath --species=$species $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
+        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
       }
       print LOG "\# ".(localtime).": second test\n";
       print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
+      system("$cmdString")==0 or die("failed to execute augustus (second test): $!\n");
       print STDOUT "second test finished.\n";  
     }
 
@@ -1127,7 +1142,7 @@ sub augustus{
       my $idx = $i + 1;
       $errorfile = "$errorfilesDir/augustus.$idx.stderr";
       $stdoutfile = "$otherfilesDir/augustus.$idx.gff";
-      $cmdString = "$augpath --species=$species --extrinsicCfgFile=$extrinsic --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
+      $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsic --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
       if(defined($optCfgFile)){
         $cmdString .= " --optCfgFile=$optCfgFile"; 
       }
@@ -1137,7 +1152,7 @@ sub augustus{
       $cmdString .= " $genome_files[$i] 1>$stdoutfile 2>$errorfile";
       print LOG "\# ".(localtime).": run AUGUSTUS for file $genome_files[$idx-1]\n";
       print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
+      system("$cmdString")==0 or die("failed to execute augustus (prediction step): $!\n");
       $pm->finish;
 
     }
@@ -1150,22 +1165,24 @@ sub augustus{
       my $cat_file = "$otherfilesDir/augustus.tmp.gff";
       for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
         $cmdString = "cat $otherfilesDir/augustus.$idx.gff >> $cat_file";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
+        system("$cmdString")==0 or die("failed to execute cat augustus.idx.gff files: $!\n");
       }
       $cmdString = "perl $string <$cat_file >$otherfilesDir/augustus.gff";
       print LOG "\# ".(localtime).": concatenate and join AUGUSTUS output files\n";
       print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
+      system("$cmdString")==0 or die("failed to execute join_aug_pred.pl: $!\n");
       print STDOUT "join AUGUSTUS predictions complete.\n";
       for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
-        unlink("$otherfilesDir/augustus.$idx.gff");
+	  unlink("$otherfilesDir/augustus.$idx.gff");
+	  print LOG "Deleting $otherfilesDir/augustus.$idx.gff\n";
       }
       unlink("$otherfilesDir/augustus.tmp.gff");
+      print LOG "Deleting $otherfilesDir/augustus.tmp.gff\n";
     }else{
       $cmdString = "mv $otherfilesDir/augustus.1.gff $otherfilesDir/augustus.gff";
       print LOG "\# ".(localtime).": rename AUGUSTUS file\n";
       print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
+      system("$cmdString")==0 or die("failed to execute mv for renaming AUGUSTUS file: $!\n");
     }
   }
 }
@@ -1180,7 +1197,7 @@ sub getAnnoFasta{
   my $perlCmdString = "perl $string $AUG_pred 2>$errorfile";
   print LOG "\# ".(localtime).": make a fasta file with protein sequences for $AUG_pred\n";
   print LOG "$perlCmdString\n\n";
-  system("$perlCmdString")==0 or die("failed to execute: $!\n");
+  system("$perlCmdString")==0 or die("failed to execute getAnnoFasta.pl: $!\n");
 }
 
 # make gtf file
@@ -1195,7 +1212,7 @@ sub make_gtf{
   print "$cmdString\n\n";
   print LOG "\# ".(localtime).": make a gtf file from $AUG_pred\n";
   print LOG "$cmdString\n\n";
-  system("$cmdString")==0 or die("failed to execute: $!\n");
+  system("$cmdString")==0 or die("failed to execute  gtf2gff.pl: $!\n");
   if($gff3){
     my $gff3_file = substr($AUG_pred,0,-4).".gff3";
     my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
@@ -1204,7 +1221,7 @@ sub make_gtf{
     print "$cmdString\n\n";
     print LOG "\# ".(localtime).": make a gff3 file from $AUG_pred\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
+    system("$cmdString")==0 or die("failed to execute gtf2gff.pl: $!\n");
   }
 }   
   
@@ -1275,7 +1292,7 @@ sub check_upfront{ # see autoAug.pl
     exit(1);
   }
 
-  # check for augsutus executable
+  # check for augustus executable
   $augpath = "$AUGUSTUS_BIN_PATH/augustus";
   if(system("$augpath > /dev/null 2> /dev/null") != 0){                   # see autoAug.pl
     if(! -f $augpath){                                                    # see autoAug.pl
