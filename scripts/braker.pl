@@ -1,3 +1,4 @@
+
 #!/usr/bin/perl
 
 ####################################################################################################
@@ -64,6 +65,8 @@ braker.pl [OPTIONS] --genome=genome.fa --bam=rnaseq.bam
 OPTIONS
 
     --help                               Print this help message
+    --nice                               Execute all system calls within braker.pl and its submodules
+                                         with bash "nice" (default nice value)
     --alternatives-from-evidence=true    Output alternative transcripts based on explicit evidence from 
                                          hints (default is true).
     --AUGUSTUS_CONFIG_PATH=/path/        Set path to config directory of AUGUSTUS (if not specified as 
@@ -212,11 +215,12 @@ my $filterOutShort;		      # filterOutShort option (see help)
 my @allowedHints = ("intron");        # Currently, BRAKER only supports intron hints. Hint type from input hintsfile will
                                       # be checked.
 my $crf;                              # flag that determines whether CRF training should be tried
-
+my $nice;                             # flag that determines whether system calls should be executed with bash nice (default
+                                      # nice value)
 
 
 # list of forbidden words for species name
-@forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while");  
+@forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while", "nice");  
 
 # lists for extrinsic files
 @bonus = ("1e1", "1e0", "1e2", "1e3", "1e4", "1e5");
@@ -254,6 +258,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'workingdir=s'                  => \$workDir,
 	    'filterOutShort!'		    => \$filterOutShort,
 	    'crf!'                          => \$crf,
+	    'nice!'                         => \$nice,
             'help!'                         => \$help,
             'version!'                      => \$printVersion);
 
@@ -557,12 +562,16 @@ if(! -f "$genome"){
     }
     @_ = split(/\//, $extrinsicCfgFile);
     if(!uptodate([$extrinsicCfgFile],["$parameterDir/$species/".$_[-1]])  || $overwrite){
-      print STDOUT "NEXT STEP: copy extrinsic file to working directory\n";
-      $cmdString = "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
-      print LOG "\# ".(localtime).": copy extrinsic file to working directory\n";
-      print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
-      print STDOUT "extrinsic file copied.\n";
+	print STDOUT "NEXT STEP: copy extrinsic file to working directory\n";
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+	$cmdString .= "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
+	print LOG "\# ".(localtime).": copy extrinsic file to working directory\n";
+	print LOG "$cmdString\n\n";
+	system("$cmdString")==0 or die("failed to execute: $!\n");
+	print STDOUT "extrinsic file copied.\n";
     }
   }
 
@@ -601,11 +610,19 @@ sub make_hints{
         }else{
           $augpath = "$AUGUSTUS_BIN_PATH/bin/bam2hints";
         }
-        $cmdString = "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+	$cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
         print LOG "\# ".(localtime).": make hints from BAM file $bam[$i]\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
-        $cmdString = "cat $bam_temp >>$hintsfile_temp";
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+        $cmdString .= "cat $bam_temp >>$hintsfile_temp";
         print LOG "\# ".(localtime).": add hints from BAM file $bam[$i] to hints file\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -618,11 +635,15 @@ sub make_hints{
   if(@hints){
     for(my $i=0; $i<scalar(@hints); $i++){
       if(!uptodate([$hints[$i]],[$hintsfile]) || $overwrite){
-        print STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
-        $cmdString = "cat $hints[$i] >> $hintsfile_temp";
-        print LOG "\# ".(localtime).": add hints from file $hints[$i]\n";
-        print LOG "$cmdString\n\n";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
+	  print STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
+	  $cmdString = "";
+	  if($nice){
+	      $cmdString .= "nice ";
+	  }
+	  $cmdString .= "cat $hints[$i] >> $hintsfile_temp";
+	  print LOG "\# ".(localtime).": add hints from file $hints[$i]\n";
+	  print LOG "$cmdString\n\n";
+	  system("$cmdString")==0 or die("failed to execute: $!\n");
       }
     }
   }
@@ -630,7 +651,11 @@ sub make_hints{
     if(!uptodate([$hintsfile_temp],[$hintsfile]) || $overwrite){
       my $hintsfile_temp_sort = "$otherfilesDir/hints.temp.sort.gff";
       print STDOUT "NEXT STEP: sort hints\n";
-      $cmdString = "cat $hintsfile_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
+      $cmdString .= "cat $hintsfile_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
       print LOG "\# ".(localtime).": sort hints\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -638,7 +663,11 @@ sub make_hints{
       print STDOUT "NEXT STEP: summarize multiple identical hints to one\n";
       $string = find("join_mult_hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
       $errorfile = "$errorfilesDir/join_mult_hints.stderr";
-      $perlCmdString = "perl $string <$hintsfile_temp_sort >$hintsfile_temp 2>$errorfile";
+      $perlCmdString = "";
+      if($nice){
+	  $perlCmdString .= "nice ";
+      }
+      $perlCmdString .= "perl $string <$hintsfile_temp_sort >$hintsfile_temp 2>$errorfile";
       print LOG "\# ".(localtime).": join multiple hints\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
@@ -650,7 +679,11 @@ sub make_hints{
       print STDOUT "NEXT STEP: filter introns, find strand and change score to \'mult\' entry\n";
       $string = find("filterIntronsFindStrand.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
       $errorfile = "$errorfilesDir/filterIntronsFindStrand.stderr";
-      $perlCmdString = "perl $string $genome $hintsfile_temp --score 1>$hintsfile 2>$errorfile";
+      $perlCmdString = "";
+      if($nice){
+	  $perlCmdString .= "nice ";
+      }
+      $perlCmdString .= "perl $string $genome $hintsfile_temp --score 1>$hintsfile 2>$errorfile";
       print LOG "\# ".(localtime).": filter introns, find strand and change score to \'mult\' entry\n";
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
@@ -681,7 +714,11 @@ sub GeneMark_ET{
       $string = "$GENEMARK_PATH/gmes_petap.pl";
       $errorfile = "$errorfilesDir/GeneMark-ET.stderr";
       $stdoutfile = "$otherfilesDir/GeneMark-ET.stdout";
-      $perlCmdString = "perl $string --sequence=$genome --ET=$hintsfile --cores=$CPU";
+      $perlCmdString = "";
+      if($nice){
+	  $perlCmdString .= "nice ";
+      }
+      $perlCmdString .= "perl $string --sequence=$genome --ET=$hintsfile --cores=$CPU";
       if($fungus){
         $perlCmdString .= " --fungus";
       }
@@ -694,7 +731,11 @@ sub GeneMark_ET{
       print LOG "$perlCmdString\n\n";
       system("$perlCmdString")==0 or die("failed to execute: $perlCmdString\n");
       print STDOUT "GeneMark-ET finished.\n";
-      $cmdString = "cd $rootDir";
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
+      $cmdString .= "cd $rootDir";
       print LOG "\# ".(localtime).": change to working directory $rootDir\n";
       print LOG "$cmdString\n\n";
       chdir $rootDir or die ("Could not change to directory $rootDir.\n");
@@ -707,11 +748,15 @@ sub GeneMark_ET{
     $string=find("filterGenemark.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     $errorfile = "$errorfilesDir/filterGenemark.stderr";
     $stdoutfile = "$otherfilesDir/filterGenemark.stdout";
+    $perlCmdString = "";
+    if($nice){
+	$perlCmdString .= "nice ";
+    }
     if(!$filterOutShort){
-        $perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
+        $perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
     }else{
 	print STDOUT "Option activated: Filtering out training genes from GeneMark that are too short (upstream intron)\n";
-	$perlCmdString="perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --filterOutShort 1>$stdoutfile 2>$errorfile";
+	$perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --filterOutShort 1>$stdoutfile 2>$errorfile";
     }
     print LOG "\# ".(localtime).": convert GeneMark-ET output to real gtf format\n";
     print LOG "$perlCmdString\n\n";
@@ -733,7 +778,11 @@ sub new_species{
       
 	      $string=find("new_species.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
 	      $errorfile = "$errorfilesDir/new_species.stderr";
-	      $perlCmdString="perl $string --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH 2>$errorfile";
+	      $perlCmdString = "";
+	      if($nice){
+		  $perlCmdString .= "nice ";
+	      }
+	      $perlCmdString .= "perl $string --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH 2>$errorfile";
 	      print LOG "\# ".(localtime).": create new species $species\n";
 	      print LOG "$perlCmdString\n\n";
 	      system("$perlCmdString")==0 or die("Failed to create new species with new_species.pl, check write permissions in $AUGUSTUS_CONFIG_PATH/species directory! $!\n");
@@ -880,7 +929,11 @@ sub training{
       print STDERR "ERROR: The GeneMark-ET output file is empty. Please check.\n";
       exit(1);
     }
-    $perlCmdString = "perl $string $genemarkDir/genemark.c.gtf $genome $flanking_DNA $genbank 2>$errorfile";
+    $perlCmdString = "";
+    if($nice){
+	$perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "perl $string $genemarkDir/genemark.c.gtf $genome $flanking_DNA $genbank 2>$errorfile";
     print LOG "\# ".(localtime).": create genbank file\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
@@ -896,7 +949,11 @@ sub training{
       print STDERR "ERROR: The GeneMark-ET output file does not contain genes that are supported by the intron hints.\n";
       exit(1);
     }
-    $perlCmdString = "perl $string $genemarkDir/genemark.f.good.gtf $genbank 1>$otherfilesDir/genbank.good.gb 2>$errorfile";
+    $perlCmdString = "";
+    if($nice){
+	$perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "perl $string $genemarkDir/genemark.f.good.gtf $genbank 1>$otherfilesDir/genbank.good.gb 2>$errorfile";
     print LOG "\# ".(localtime).": filter genbank file\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("failed to execute: $!\n");
@@ -908,7 +965,11 @@ sub training{
     print STDOUT "NEXT STEP: split genbank file into train and test file\n";
     $string = find("randomSplit.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     $errorfile = "$errorfilesDir/randomSplit.stderr";
-    $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+    if($nice){
+        $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+    }else{
+	$gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+    }
     if($gb_good_size < 300){
       print STDOUT "WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
     }
@@ -917,12 +978,16 @@ sub training{
       exit(1);
     }
     if($gb_good_size > 1000){
-      $testsize = 1000;
-      $perlCmdString = "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
-      print LOG "\# ".(localtime).": split genbank file into train and test file\n";
-      print LOG "$perlCmdString\n\n";
-      system("$perlCmdString")==0 or die("failed to execute: $!\n");
-      print STDOUT "genbank file splitted.\n";
+	$testsize = 1000;
+	$perlCmdString = "";
+	if($nice){
+	    $perlCmdString .= "nice ";
+	}
+	$perlCmdString .= "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
+	print LOG "\# ".(localtime).": split genbank file into train and test file\n";
+	print LOG "$perlCmdString\n\n";
+	system("$perlCmdString")==0 or die("failed to execute: $!\n");
+	print STDOUT "genbank file splitted.\n";
     }
   }
 
@@ -939,13 +1004,21 @@ sub training{
       $augpath = "$AUGUSTUS_BIN_PATH/etraining";
       $errorfile = "$errorfilesDir/firstetraining.stderr";
       $stdoutfile = "$otherfilesDir/firstetraining.stdout";
-      $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      if($nice){
+          $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      }else{
+	  $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      }
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
       if($gb_good_size <= 1000){
-        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+        $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
         $testsize = $gb_good_size - 1;
       }else{
         $testsize = 1000;
-        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+        $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       }
       print LOG "\# ".(localtime).": first etraining\n";
       print LOG "$cmdString\n\n";
@@ -954,7 +1027,12 @@ sub training{
 
       # set "stopCodonExcludedFromCDS" to false and run etraining again if necessary
       my $t_b_t = $gb_good_size - $testsize;      # see autoAugTrain.pl
-      my $err_stopCodonExcludedFromCDS = `grep -c "exon doesn't end in stop codon" $errorfile`; # see autoAugTrain.pl
+      my $err_stopCodonExcludedFromCDS;
+      if($nice){
+	  $err_stopCodonExcludedFromCDS = `nice grep -c "exon doesn't end in stop codon" $errorfile`;
+      }else{
+	  $err_stopCodonExcludedFromCDS = `grep -c "exon doesn't end in stop codon" $errorfile`; # see autoAugTrain.pl
+      }
       my $err_rate =  $err_stopCodonExcludedFromCDS / $t_b_t;  # see autoAugTrain.pl
       print STDOUT "Error rate of missing stop codon is $err_rate\n";  # see autoAugTrain.pl
       print LOG "\# ".(localtime).": Error rate of missing stop codon is $err_rate\n"; # see autoAugTrain.pl
@@ -1000,11 +1078,19 @@ sub training{
       $augpath = "$AUGUSTUS_BIN_PATH/augustus";
       $errorfile = "$errorfilesDir/firsttest.stderr";
       $stdoutfile = "$otherfilesDir/firsttest.stdout";
-      $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-      if($gb_good_size <= 1000){
-        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+      if($nice){
+          $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
       }else{
-        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+	  $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      }
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
+      if($gb_good_size <= 1000){
+        $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+      }else{
+        $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
       }
       print LOG "\# ".(localtime).": first test\n";
       print LOG "$cmdString\n\n";
@@ -1019,11 +1105,19 @@ sub training{
         $string=find("optimize_augustus.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         $errorfile = "$errorfilesDir/optimize_augustus.stderr";
         $stdoutfile = "$otherfilesDir/optimize_augustus.stdout";
-        $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+	if($nice){
+	    $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+	}else{
+            $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+	}
+	$perlCmdString = "";
+	if($nice){
+	    $perlCmdString .= "nice ";
+	}
         if($gb_good_size <= 1000){
-          $perlCmdString = "perl $string --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+          $perlCmdString .= "perl $string --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
         }else{
-          $perlCmdString = "perl $string  --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+          $perlCmdString .= "perl $string  --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
         }
         print LOG "\# ".(localtime).": optimize AUGUSTUS parameter\n";
         print LOG "$perlCmdString\n\n";
@@ -1038,11 +1132,19 @@ sub training{
       $augpath = "$AUGUSTUS_BIN_PATH/etraining";
       $errorfile = "$errorfilesDir/secondetraining.stderr";
       $stdoutfile = "$otherfilesDir/secondetraining.stdout";
-      $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-      if($gb_good_size <= 1000){
-        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+      if($nice){
+	  $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
       }else{
-        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+          $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      }
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
+      if($gb_good_size <= 1000){
+        $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+      }else{
+        $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
       }
       print LOG "\# ".(localtime).": second etraining\n";
       print LOG "$cmdString\n\n";
@@ -1056,11 +1158,19 @@ sub training{
       print STDOUT "NEXT STEP: second test\n";
       $errorfile = "$errorfilesDir/secondtest.stderr";
       $stdoutfile = "$otherfilesDir/secondtest.stdout";
-      $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-      if($gb_good_size <= 1000){
-        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
+      if($nice){
+          $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
       }else{
-        $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
+	  $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+      }
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
+      if($gb_good_size <= 1000){
+        $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
+      }else{
+        $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
       }
       print LOG "\# ".(localtime).": second test\n";
       print LOG "$cmdString\n\n";
@@ -1083,12 +1193,16 @@ sub training{
   
   # copy species files to working directory
   if(! -d "$parameterDir/$species"){
-    print STDOUT "NEXT STEP: copy optimized parameters to working directory\n";
-    $cmdString = "cp -r $AUGUSTUS_CONFIG_PATH/species/$species $parameterDir";
-    print LOG "\# ".(localtime).": copy optimized parameters to working directory\n";
-    print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
-    print STDOUT "parameter files copied.\n";
+      print STDOUT "NEXT STEP: copy optimized parameters to working directory\n";
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
+      $cmdString .= "cp -r $AUGUSTUS_CONFIG_PATH/species/$species $parameterDir";
+      print LOG "\# ".(localtime).": copy optimized parameters to working directory\n";
+      print LOG "$cmdString\n\n";
+      system("$cmdString")==0 or die("failed to execute: $!\n");
+      print STDOUT "parameter files copied.\n";
   }
 }
 
@@ -1125,9 +1239,17 @@ sub augustus{
       $string = find("splitMfasta.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);    
       $errorfile = "$errorfilesDir/splitMfasta.stderr";
       my $minsize = floor($genome_length / $CPU);
-      $perlCmdString = "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
+      $perlCmdString = "";
+      if($nice){
+	  $perlCmdString .= "nice ";
+      }
+      $perlCmdString .= "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
       system("$perlCmdString")==0 or die("failed to execute: $!\n");
-      @genome_files = `find $otherfilesDir -name "genome.split.*"`;
+      if($nice){
+          @genome_files = `nice find $otherfilesDir -name "genome.split.*"`;
+      }else{
+	  @genome_files = `find $otherfilesDir -name "genome.split.*"`;
+      }
       print LOG "\# ".(localtime).": split genome file in ".scalar(@genome_files)." parts\n";
       print LOG "$perlCmdString\n\n";
       print STDOUT "split genome file in ".scalar(@genome_files)." parts complete.\n";
@@ -1143,7 +1265,11 @@ sub augustus{
       my $idx = $i + 1;
       $errorfile = "$errorfilesDir/augustus.$idx.stderr";
       $stdoutfile = "$otherfilesDir/augustus.$idx.gff";
-      $cmdString = "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsic --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
+      $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsic --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
       if(defined($optCfgFile)){
         $cmdString .= " --optCfgFile=$optCfgFile"; 
       }
@@ -1165,10 +1291,18 @@ sub augustus{
       $string = find("join_aug_pred.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
       my $cat_file = "$otherfilesDir/augustus.tmp.gff";
       for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
-        $cmdString = "cat $otherfilesDir/augustus.$idx.gff >> $cat_file";
-        system("$cmdString")==0 or die("failed to execute cat augustus.idx.gff files: $!\n");
+	  $cmdString = "";
+	  if($nice){
+	      $cmdString .= "nice ";
+	  }
+	  $cmdString .= "cat $otherfilesDir/augustus.$idx.gff >> $cat_file";
+	  system("$cmdString")==0 or die("failed to execute cat augustus.idx.gff files: $!\n");
       }
-      $cmdString = "perl $string <$cat_file >$otherfilesDir/augustus.gff";
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
+      $cmdString .= "perl $string <$cat_file >$otherfilesDir/augustus.gff";
       print LOG "\# ".(localtime).": concatenate and join AUGUSTUS output files\n";
       print LOG "$cmdString\n\n";
       system("$cmdString")==0 or die("failed to execute join_aug_pred.pl: $!\n");
@@ -1180,10 +1314,14 @@ sub augustus{
       unlink("$otherfilesDir/augustus.tmp.gff");
       print LOG "Deleting $otherfilesDir/augustus.tmp.gff\n";
     }else{
-      $cmdString = "mv $otherfilesDir/augustus.1.gff $otherfilesDir/augustus.gff";
-      print LOG "\# ".(localtime).": rename AUGUSTUS file\n";
-      print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute mv for renaming AUGUSTUS file: $!\n");
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+	$cmdString .= "mv $otherfilesDir/augustus.1.gff $otherfilesDir/augustus.gff";
+	print LOG "\# ".(localtime).": rename AUGUSTUS file\n";
+	print LOG "$cmdString\n\n";
+	system("$cmdString")==0 or die("failed to execute mv for renaming AUGUSTUS file: $!\n");
     }
   }
 }
@@ -1195,7 +1333,11 @@ sub getAnnoFasta{
   my $name_base = substr($_[-1],0,-4);
   my $string = find("getAnnoFasta.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
   my $errorfile = "$errorfilesDir/getAnnoFasta.$name_base.stderr";
-  my $perlCmdString = "perl $string $AUG_pred 2>$errorfile";
+  $perlCmdString = "";
+  if($nice){
+      $perlCmdString .= "nice ";
+  }
+  my $perlCmdString .= "perl $string $AUG_pred 2>$errorfile";
   print LOG "\# ".(localtime).": make a fasta file with protein sequences for $AUG_pred\n";
   print LOG "$perlCmdString\n\n";
   system("$perlCmdString")==0 or die("failed to execute getAnnoFasta.pl: $!\n");
@@ -1209,7 +1351,11 @@ sub make_gtf{
   my $gtf_file = substr($AUG_pred,0,-4).".gtf";
   my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gtf.stderr";
   my $perlstring = find("gtf2gff.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-  my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
+  $cmdString = "";
+  if($nice){
+      $cmdString .= "nice ";
+  }
+  my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
   print "$cmdString\n\n";
   print LOG "\# ".(localtime).": make a gtf file from $AUG_pred\n";
   print LOG "$cmdString\n\n";
@@ -1218,7 +1364,11 @@ sub make_gtf{
     my $gff3_file = substr($AUG_pred,0,-4).".gff3";
     my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
     my $perlstring = find("gtf2gff.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    my $cmdString = "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
+    $cmdString = "";
+    if($nice){
+	$cmdString .= "nice ";
+    }
+    my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
     print "$cmdString\n\n";
     print LOG "\# ".(localtime).": make a gff3 file from $AUG_pred\n";
     print LOG "$cmdString\n\n";
@@ -1230,8 +1380,12 @@ sub make_gtf{
          ####################### delete all zero sized files #########################
 # delete empty files
 sub clean_up{
-  print STDOUT "NEXT STEP: delete empty files\n";
-  @files = `find $otherfilesDir -empty`;
+    print STDOUT "NEXT STEP: delete empty files\n";
+    if($nice){
+	@files = `nice find $otherfilesDir -empty`;
+    }else{
+        @files = `find $otherfilesDir -empty`;
+    }
   print LOG "\# ".(localtime).": delete empty files\n";
   for(my $i=0; $i <= $#files; $i++){
     chomp($files[$i]); # to prevent error: Unsuccessful stat on filename containing newline
@@ -1513,63 +1667,67 @@ sub check_bam_headers{
   
   if(!uptodate([$bamFile],["$otherfilesDir/$bamFile"]) || $overwrite){
     # extract header information 
-    print STDOUT "NEXT STEP: create SAM header file $samHeaderFile.\n";
-    $cmdString = "$BAMTOOLS_BIN_PATH/bamtools header -in $bamFile > $samHeaderFile";
-    print LOG "\# ".(localtime).": create header file $samHeaderFile\n";
-    print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
-    print STDOUT "SAM file $samHeaderFile complete.\n";
-
-    print STDOUT "NEXT STEP: check BAM headers\n";
-    open(SAM, "<", $samHeaderFile) or die("Could not open SAM file $samHeaderFile!\n");
-    open(OUTPUT, ">", "$samHeaderFile_new") or die("Could not open SAM file $samHeaderFile_new!\n");
-    open(MAP, ">", $mapFile) or die("Could not open map file $mapFile.\n");
-    while(<SAM>){
-      chomp;
-      # only check sequence entries
-      if($_ =~ m/^\@SQ/){
-        my @seq_line = split(/\t/, $_);
-        my $seq_end = $seq_line[-1];
-
-        @seq_line = split(/\:/, $seq_line[1]);
-        my $old_name = $seq_line[1];
-	my $new_name = $old_name;
-        # remove whitespaces, if necessary
-        @seq_line = split(/\s/, $seq_line[1]);
-
-        if(scalar(@seq_line) > 1){
-          if($spaces == 0){
-	      print STDOUT "WARNING: Detected whitespace in BAM header of file $bamFile. ".$stdStr; # see autoAug.pl
-	      print STDOUT "Replacing whitespaces by underscores in Bam headers.\n";
-            $spaces++;        # see autoAug.pl
-          }
-        }
-	$new_name =~ s/\s/_/g; # removing whitespaces (if any)
-        @seq_line = split(/\|/, $old_name);
-	if(scalar(@seq_line) > 1){
-	    if($orSign == 0){   # see autoAug.pl
-		print STDOUT "WARNING: Detected | in header of file $bamFile. ".$stdStr; # see autoAug.pl
-		print STDOUT "Replacing | by underscores in Bam headers.\n";
-		$orSign++;        # see autoAug.pl
-	    }
-	}
-	$new_name =~ s/\|/_/g; # replace or signs by underscores (if any)
-        $map_hash{$old_name} = $new_name;
-        $seq_line[0] = "\@SQ\tSN:$new_name\t$seq_end";
-        if($seq_line[0] !~ m/[>a-zA-Z0-9]/){
-          if($someThingWrongWithHeader==0){   # see autoAug.pl
-            print STDOUT "WARNING: BAM headers in file $bamFile seem to contain non-letter and non-number characters. That means they may contain some kind of special character. ".$stdStr; # see autoAug.pl
-            $someThingWrongWithHeader++;      # see autoAug.pl
-          }
-        }
-
-        print OUTPUT "$seq_line[0]\n";   # see simplifyFastaHeaders.pl
-        print MAP "$map_hash{$old_name}\t$old_name\n";  # see simplifyFastaHeaders.pl
-      }elsif(eof){
-        print OUTPUT "$_";
-      }else{
-        print OUTPUT "$_\n";
+      print STDOUT "NEXT STEP: create SAM header file $samHeaderFile.\n";
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
       }
+      $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools header -in $bamFile > $samHeaderFile";
+      print LOG "\# ".(localtime).": create header file $samHeaderFile\n";
+      print LOG "$cmdString\n\n";
+      system("$cmdString")==0 or die("failed to execute: $!\n");
+      print STDOUT "SAM file $samHeaderFile complete.\n";
+
+      print STDOUT "NEXT STEP: check BAM headers\n";
+      open(SAM, "<", $samHeaderFile) or die("Could not open SAM file $samHeaderFile!\n");
+      open(OUTPUT, ">", "$samHeaderFile_new") or die("Could not open SAM file $samHeaderFile_new!\n");
+      open(MAP, ">", $mapFile) or die("Could not open map file $mapFile.\n");
+      while(<SAM>){
+	  chomp;
+	  # only check sequence entries
+	  if($_ =~ m/^\@SQ/){
+	      my @seq_line = split(/\t/, $_);
+	      my $seq_end = $seq_line[-1];
+
+	      @seq_line = split(/\:/, $seq_line[1]);
+	      my $old_name = $seq_line[1];
+	      my $new_name = $old_name;
+	      # remove whitespaces, if necessary
+	      @seq_line = split(/\s/, $seq_line[1]);
+
+	      if(scalar(@seq_line) > 1){
+		  if($spaces == 0){
+		      print STDOUT "WARNING: Detected whitespace in BAM header of file $bamFile. ".$stdStr; # see autoAug.pl
+		      print STDOUT "Replacing whitespaces by underscores in Bam headers.\n";
+		      $spaces++;        # see autoAug.pl
+		  }
+	      }
+	      $new_name =~ s/\s/_/g; # removing whitespaces (if any)
+	      @seq_line = split(/\|/, $old_name);
+	      if(scalar(@seq_line) > 1){
+		  if($orSign == 0){   # see autoAug.pl
+		      print STDOUT "WARNING: Detected | in header of file $bamFile. ".$stdStr; # see autoAug.pl
+		      print STDOUT "Replacing | by underscores in Bam headers.\n";
+		      $orSign++;        # see autoAug.pl
+		  }
+	      }
+	      $new_name =~ s/\|/_/g; # replace or signs by underscores (if any)
+	      $map_hash{$old_name} = $new_name;
+	      $seq_line[0] = "\@SQ\tSN:$new_name\t$seq_end";
+	      if($seq_line[0] !~ m/[>a-zA-Z0-9]/){
+		  if($someThingWrongWithHeader==0){   # see autoAug.pl
+		      print STDOUT "WARNING: BAM headers in file $bamFile seem to contain non-letter and non-number characters. That means they may contain some kind of special character. ".$stdStr; # see autoAug.pl
+		      $someThingWrongWithHeader++;      # see autoAug.pl
+		  }
+	      }
+
+	      print OUTPUT "$seq_line[0]\n";   # see simplifyFastaHeaders.pl
+	      print MAP "$map_hash{$old_name}\t$old_name\n";  # see simplifyFastaHeaders.pl
+	  }elsif(eof){
+	      print OUTPUT "$_";
+	  }else{
+	      print OUTPUT "$_\n";
+	  }
     }
     close(SAM) or die("Could not close header file $samHeaderFile!\n");
     close(OUTPUT) or die("Could not close output SAM file $samHeaderFile_new!\n");
@@ -1594,7 +1752,11 @@ sub check_bam_headers{
         print STDOUT "NEXT STEP: convert BAM file to SAM format.\n";
         my $samFile = "$otherfilesDir/".$_[0].".sam";
         my $samFile_new = "$otherfilesDir/".$_[0]."_new.sam";
-        $cmdString = "$SAMTOOLS_PATH view $bamFile > $samFile";
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+        $cmdString .= "$SAMTOOLS_PATH view $bamFile > $samFile";
         print LOG "\# ".(localtime).": convert BAM to SAM file $samFile\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -1614,7 +1776,11 @@ sub check_bam_headers{
         close(SAM) or die("Could not close SAM file $samFile!\n");
         close(OUTPUT) or die("Could not close output SAM file $samFile_new!\n");
         print STDOUT "NEXT STEP: concatenate new header and SAM file.\n";
-        $cmdString = "cat $samHeaderFile_new $samFile_new > $samFile";
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+        $cmdString .= "cat $samHeaderFile_new $samFile_new > $samFile";
         print LOG "\# ".(localtime).": concatenate new header and SAM file\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -1622,6 +1788,10 @@ sub check_bam_headers{
         unlink($samFile_new);
 
         print STDOUT "NEXT STEP: convert new SAM file to BAM format.\n";
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
         $cmdString = "$SAMTOOLS_PATH view -bSh $samFile > $otherfilesDir/".$_[0].".bam";
         print LOG "\# ".(localtime).": convert new SAM file to BAM format\n";
         print LOG "$cmdString\n\n";
