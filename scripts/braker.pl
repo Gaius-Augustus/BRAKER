@@ -1,4 +1,3 @@
-
 #!/usr/bin/perl
 
 ####################################################################################################
@@ -1115,9 +1114,17 @@ sub training{
 	    $perlCmdString .= "nice ";
 	}
         if($gb_good_size <= 1000){
-          $perlCmdString .= "perl $string --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+	    if($nice){
+		$perlCmdString .= "perl $string --nice --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+	    }else{
+		$perlCmdString .= "perl $string --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+	    }
         }else{
-          $perlCmdString .= "perl $string  --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+	    if($nice){
+		$perlCmdString .= "perl $string --nice --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+	    }else{
+		$perlCmdString .= "perl $string  --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+	    }
         }
         print LOG "\# ".(localtime).": optimize AUGUSTUS parameter\n";
         print LOG "$perlCmdString\n\n";
