@@ -1,4 +1,6 @@
 # ----------------------------------------------------------------------
+# | fixed double usage of species  | braker.pl (Hoff)     | 26.04.2017 |
+# | name problem                   |                      |            |
 # | fixed rel2abs problem in       | helpMod.pm (Hoff)    | 10.04.2017 |
 # | helperMod.pm                   |                      |            |
 # | enabled proper usage of        | braker.pl (Hoff)     | 04.04.2017 |

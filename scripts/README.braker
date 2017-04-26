@@ -257,6 +257,9 @@ Selected parameters:
   Existing species files will not be overwritten. If the argument --species is not used, BRAKER1 generates
   speciesnames of the type Sp_1 etc. For example you may type
 
+--nice
+  execute all time consuming subprocesses of braker.pl with bash program "nice" (default nice level)
+
 --version
   Print version number of braker.pl
 
