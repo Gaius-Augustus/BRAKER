@@ -541,10 +541,10 @@ if(! -f "$genome"){
   print LOG "$cmdString\n\n";
   chdir $rootDir or die ("Could not change to directory $rootDir.\n");
 
+  new_species();                # create new species parameter files; we do this FIRST, before anything else, because if you start several processes in parallel, you might otherwise end up with those processes using the same species directory!
   check_fasta_headers($genome); # check fasta headers
   make_hints();                 # make hints from RNA-Seq or gtf input
   GeneMark_ET();                # run GeneMark-ET
-  new_species();                # create new species parameter files
   training();                   # train species-specific parameters with optimize_augustus.pl and etraining
 
   # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
