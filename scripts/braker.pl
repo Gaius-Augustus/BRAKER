@@ -1254,15 +1254,15 @@ sub training{
 	        # cp config files
 	        print "Copy parameter files to $species*.CRF\n";
 	        for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")){
-	            $cmdString = "cp $AUGUSTUS_CONFIG_PATH/config/$species/$_ $_".".CRF";
+	            $cmdString = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ $_".".CRF";
 	            system($cmdString)==0 or die("failed to execute: copying of CRF parameters $!\n");
 	        }
 	        # if the accuracy doesn't improve with CRF, overwrite the config files with the HMM parameters from last etraining
 	        if($target_2>$target_3){
 	            for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")){
-	                $cmdString = "rm $AUGUSTUS_CONFIG_PATH/config/$species/$_";
+	                $cmdString = "rm $AUGUSTUS_CONFIG_PATH/species/$species/$_";
                     system("$cmdString")==0 or die("failed to execute: removing CRF parameter file $_!\n");
-                    $cmdString = "cp $AUGUSTUS_CONFIG_PATH/config/$species/$_".".withoutCRF $AUGUSTUS_CONFIG_PATH/config/$species/$_";
+                    $cmdString = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_".".withoutCRF $AUGUSTUS_CONFIG_PATH/config/$species/$_";
                     system("$cmdString")==0 or die("faled to execute: copying withoutCRF parameter file to parameter file in use!\n");
 		        }
 	        }	          
