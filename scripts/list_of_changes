@@ -1,4 +1,7 @@
 # ----------------------------------------------------------------------
+# | changed perl shebang to env    | braker.pl (Hoff)     | 29.06.2017 |
+# | perl shebang                   |                      |            |
+# | Finished implementation of CRF | braker.pl (Hoff)     | June 2017  |
 # | fixed double usage of species  | braker.pl (Hoff)     | 26.04.2017 |
 # | name problem                   |                      |            |
 # | fixed rel2abs problem in       | helpMod.pm (Hoff)    | 10.04.2017 |
