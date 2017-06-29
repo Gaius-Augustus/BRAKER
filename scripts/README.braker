@@ -187,6 +187,9 @@ perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseq.gff
 
 Selected parameters:
 
+--nice
+  Executes (almost) all system calls by braker.pl with bash nice (default nice level)
+
 --alternatives-from-evidence=true/false
   Report alternative transcripts when they are suggested by hints, default is true.
 
