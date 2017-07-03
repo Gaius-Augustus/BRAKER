@@ -21,7 +21,7 @@
 # | add getScore() for score option   |                |07.10.2014 |
 # | add error message if sequence     |                |23.01.2015 |
 # | name of hints and fasta file do   |                |           |
-# | not match -> programme stops then |                |           |
+# | not match -> program   stops then |                |           |
 # ------------------------------------------------------------------
 
 use strict;
@@ -169,7 +169,7 @@ sub findStrand{
     return 0;
   }else{
     print STDERR "WARNING: '$seqname' does not match any sequence in the fasta file. Maybe the two files do not belong together.\n";
-  #  print STDERR "The programme terminates here.\n";
+  #  print STDERR "The program terminates here.\n";
   #  exit(1)
   }
 }

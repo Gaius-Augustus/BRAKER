@@ -36,9 +36,9 @@ use warnings;
 my $usage = <<'ENDUSAGE';
 
 startAlign.pl  split genome file in single sequences or sequence parts and protein file according 
-               to contigIDs then run alignment programme exonerate, spaln or genomeThreader (gth) 
+               to contigIDs then run alignment program exonerate, spaln or genomeThreader (gth) 
                for each contigID or each sequence. When no list and/or pos file(s) are/is assigned
-               the programme will use the whole protein file.
+               the program will use the whole protein file.
 
 SYNOPSIS
 
@@ -59,7 +59,7 @@ OPTIONS
     --maxintronlen=n             Exonerate option: Alignments with longer gaps are discarded (default 30000).
     --reg                        Use region parts and not whole sequences.
     --offset=n                   This many bp are added before and after cutout coordinates.
-    --prg=s                      Alignment programme to call. Valid options are 'gth', 'spaln' or 'exonerate'.
+    --prg=s                      Alignment program to call. Valid options are 'gth', 'spaln' or 'exonerate'.
     --pos=dna.pos                Contains information on contigs and genome sequence. Format
                                  contigID nr_of_prots_mapped start end strand chrID
 
@@ -78,7 +78,7 @@ my $cmdString;              # to store shell commands
 my %contigIDs;              # hash for contig IDs
 my $counterW = 0;           # print message 'add amino ...' for gth only once per protein
 my $CPU = 1;                # number of CPUs that can be used
-my $dir;                    # working superdirectory where programme is called from
+my $dir;                    # working superdirectory where program is called from
 my $genome_file;            # genome file
 my $help;                   # print usage 
 my $list_file;              # blast hit list file
@@ -86,7 +86,7 @@ my $log;                    # log file name
 my $maxintronlen = 30000;   # maximal intron length (for usage with exonerate)
 my $offset = 10000;         # offset for cutout [start-offset, end+offset] 
 my $pos_file;               # position list file
-my $prgsrc;                 # source programme (exonerate, spaln or gth)
+my $prgsrc;                 # source program (exonerate, spaln or gth)
 my $prot_file;              # protein database file
 my $prot_file_base;         # protein database file name base for $protwhole option
 my %protIDs;                # hash for protein IDs
@@ -191,11 +191,11 @@ if(defined($genome_file)){
 
 
 if(!defined($prgsrc)){
-  print STDERR "ERROR: Please assign the source programme with --prg. Possible Options are 'exonerate', 'spaln' or 'gth'.\n";
+  print STDERR "ERROR: Please assign the source program with --prg. Possible Options are 'exonerate', 'spaln' or 'gth'.\n";
   exit(1);
 }
  
-# check programme source option
+# check program source option
 if($prgsrc ne "exonerate" && $prgsrc ne "spaln" && $prgsrc ne "gth"){
   print STDERR "ERROR: Invalid value '$prgsrc' for option --prg. Possible Options are 'exonerate', 'spaln' or 'gth'. Please check.\n";
   exit(1);
@@ -462,7 +462,7 @@ sub start_align{
   }
 }
 
-# call assigned alignment programme
+# call assigned alignment program
 sub call_exonerate{
   my $tFile = shift;
   my $qFile = shift;
