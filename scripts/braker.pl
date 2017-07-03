@@ -1262,7 +1262,7 @@ sub training{
 	            for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")){
 	                $cmdString = "rm $AUGUSTUS_CONFIG_PATH/species/$species/$_";
                     system("$cmdString")==0 or die("failed to execute: removing CRF parameter file $_!\n");
-                    $cmdString = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_".".HMM $AUGUSTUS_CONFIG_PATH/config/$species/$_";
+                    $cmdString = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_".".HMM $AUGUSTUS_CONFIG_PATH/species/$species/$_";
                     system("$cmdString")==0 or die("faled to execute: copying withoutCRF parameter file to parameter file in use!\n");
 		        }
 	        }	          
