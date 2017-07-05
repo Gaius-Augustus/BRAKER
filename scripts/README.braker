@@ -25,10 +25,10 @@ BRAKER1 is a pipeline for unsupervised RNA-Seq-based genome annotation that comb
 
 At the time of release, this BRAKER1 version, the pipeline was tested with:
 
-   * AUGUSTUS 3.1.0
-   * GeneMark-ET 4.29
-   * BAMTOOLS 2.3.0
-   * SAMTOOLS 1.2 (using htslib 1.2.1)
+   * AUGUSTUS 3.2.2
+   * GeneMark-ET 4.32
+   * BAMTOOLS 2.4.1
+   * SAMTOOLS 1.1.19
 
 1. Download GeneMark-ET from http://exon.gatech.edu/GeneMark/license_download.cgi
 
@@ -70,7 +70,7 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
       subsequently follow SAMTOOLS documentation for installation). 
 
 8. Install the required PERL modules available on CPAN:
-   			     	File::Spec::Functions
+   			    File::Spec::Functions
 				Hash::Merge
 				List::Util
 				Logger::Simple
@@ -142,7 +142,7 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
               3. RUNNING BRAKER1
               ------------------
 
-BRAKER1 has two mandatory arguments: a genome file in fasta format and an RNA-Seq alignment file in bam format.
+BRAKER1 has two mandatory arguments: a genome file in fasta format and one file containing information on RNA-Seq alignments to that genome file (either in bam format or in AUGUSTUS hints format).
 
 The genome file contains the DNA input sequence and must be in uncompressed (multiple) fasta format, the file may look like this:
 
@@ -153,9 +153,7 @@ gtgctngcatgctagctagctggtgtnntgaaaaatt
 
 Every letter other than a,c,g,t,A,C,G and T is interpreted as an unknown base. Digits and white spaces are ignored. The number of characters per line is not restricted.
 
-The bam file contains unassembled RNA-Seq read alignments. 
-
-Alternatively to the bam file, spliced alignment information may be passed as "intron hints" in gff format using the argument --hints=gff-hintsfilename, the file may look like this:
+For RNA-Seq information, you can either specify a bam-file or a hints file generated from RNA-Seq alignment information. The bam file contains unassembled RNA-Seq read alignments. Alternatively to the bam file, spliced alignment information may be passed as "intron hints" in gff format using the argument --hints=gff-hintsfilename, the file may look like this:
 
 contig_name	TopHat2	intron	2740	2888	25	+	.	.
 
@@ -249,6 +247,10 @@ Selected parameters:
 --UTR=on/off
   Predict the untranslated regions in addition to the coding sequence. This currently works only for the species
   human, galdieria, toxoplasma and caenorhabditis.
+
+--crf
+  Execute CRF training for AUGUSTUS; resulting parameters are only kept for final predictions if they show
+  higher accuracy than HMM parameters.
 
 --workingdir=/path/to/wd/
   Path to working directory in which results and temporary files are stored (default: current directory).
