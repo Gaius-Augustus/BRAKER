@@ -99,7 +99,7 @@ OPTIONS
     --GENEMARK_PATH=/path/to/            Set path to GeneMark-ET (if not specified as environment 
       gmes_petap.pl/                     variable). Has higher priority than environment variable.
     --gff3                               Output in GFF3 format.
-    --hints=hints.gff                    Alternatively to calling braker.pl with a bam file, it is 
+    --rnaseq-hints=hints.gff             Alternatively to calling braker.pl with a bam file, it is 
                                          possible to call it with a file that contains introns extracted 
                                          from RNA-Seq data in gff format. This flag also allows the usage
                                          of hints from additional extrinsic sources for gene prediction 
@@ -107,7 +107,7 @@ OPTIONS
                                          you need to use the flag --optCfgFile to specify parameters for 
                                          all sources in the hints file
                                          (including the source "E" for intron hints from RNA-Seq).
-    --optCfgFile=ppx.cfg                 Optional custom config file for AUGUSTUS (see --hints).
+    --optCfgFile=ppx.cfg                 Optional custom config file for AUGUSTUS (see --rnaseq-hints).
     --overwrite                          Overwrite existing files (except for species parameter files)
     --SAMTOOLS_PATH=/path/to/            Optionally set path to samtools (if not specified as environment 
       samtools/                          variable) to fix BAM files automatically, if necessary. Has higher     
@@ -120,7 +120,8 @@ OPTIONS
                                          Uses Sp_1 etc., if no species is assigned                          
     --useexisting                        Use the present config and parameter files if they exist for 
                                          'species'
-    --UTR                                Predict untranslated regions. Default is off.
+    --UTR                                Predict untranslated regions. Default is off. (Only works if UTR
+                                         parameters were previously optimized outside of BRAKER!)
     --workingdir=/path/to/wd/            Set path to working directory. In the working directory results
                                          and temporary files are stored
     --filterOutShort                     It may happen that a "good" training gene, i.e. one that has intron
@@ -132,6 +133,37 @@ OPTIONS
                                          multiplicity of that gene.
     --crf                                Execute CRF training for AUGUSTUS; resulting parameters are only kept for
                                          final predictions if they show higher accuracy than HMM parameters.
+    --protein-seq=prot.fa                A protein sequence file in multiple fasta format. This file will be used
+                                         to generate protein hints for AUGUSTUS by running one of the three
+                                         alignment tools Exonerate (--prg=exonerate), Spaln (--prg=spaln) or 
+                                         GenomeThreader (--prg=gth). Default is GenomeThreader if the tool is not 
+                                         specified.
+                                         Currently, hints from proteins are only used in the prediction step with
+                                         AUGUSTUS. If --protein-seq is specified, it is not allowed to 
+                                         specify --protein-aln or --protein-hints.
+    --protein-aln=prot.aln          Alignment file generated from aligning protein sequences against the 
+                                         genome with either Exonerate (--prg=exonerate), or Spaln (--prg=spaln), or                                                                                                                                 GenomeThreader (--prg=gth).
+                                         To prepare alignment file, run Spaln2 with the following command:
+                                            spaln -O0 ... > spalnfile
+                                         To prepare alignment file, run Exonerate with the following command:
+                                            exonerate --model protein2genome --showtargetgff T ... > exfile
+                                         To prepare alignment file, run GenomeThreader with the following command:
+                                            gth -genomic genome.fa  -protein protein.fa -gff3out -skipalignmentout 
+                                               ... -o gthfile
+                                         A valid option prg=... must be specified in combination with 
+                                         --protein-aln. Generating tool will not be guessed.
+                                         Currently, hints from proteins are only used in the prediction step with                                                                                                                                   AUGUSTUS.If --protein-aln is specified it is not allowed to allowed 
+                                         to specify --protein-seq or --protein-hints.
+    --protein-hints=prothints.gff   File containing protein hints for gene prediction with AUGUSTUS.
+                                         Allowed features: NEED TO ADD THE FEATURES, LATER!
+                                         If --protein-hints is specified it is not allowed to allowed                                                                                           
+                                         to specify --protein-aln or --protein-seq.
+    --prg=gth|exonerate|spaln            Alignment tool ght (GenomeThreader), exonerate (Exonerate) or Spaln2
+                                         (spaln) that will be used to generate protein alignments that will be the 
+                                         basis for hints generation for gene prediction with AUGUSTUS (if specified
+                                         in combination with --protein-seq) or that was used to externally
+                                         generate an alignment file with the commands listed in description of 
+                                         --protein-aln (if used in combination with --protein-aln).
     --version                            print version number of braker.pl
                            
 
@@ -143,7 +175,7 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 1.11;                    # braker.pl version number
+my $version = 2.0;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;                          # path to augustus
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
@@ -217,6 +249,10 @@ my $crf;                              # flag that determines whether CRF trainin
 my $nice;                             # flag that determines whether system calls should be executed with bash nice (default
                                       # nice value)
 my ($target_1, $target_2, $target_3) = 0; # variables that store AUGUSTUS accuracy after different training steps
+my $prg;                              # variable to store protein alignment tool
+my $prot_seq_file;                    # variable to store protein sequence file name
+my $prot_aln_file;                    # variable to store protein alingment file name
+my $prot_hints_file;                  # variable to store protein hints file name
 
 
 # list of forbidden words for species name
@@ -244,7 +280,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'GENEMARK_PATH=s'               => \$GMET_path,
             'genome=s'                      => \$genome,
             'gff3'                          => \$gff3,
-            'hints=s'                       => \@hints,
+            'rnaseq-hints=s'                => \@hints,
             'optCfgFile=s'                  => \$optCfgFile,
             'overwrite!'                    => \$overwrite,
             'SAMTOOLS_PATH=s'               => \$SAMTOOLS_PATH_OP,
@@ -256,10 +292,14 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'useexisting!'                  => \$useexisting,
             'UTR=s'                         => \$UTR,
             'workingdir=s'                  => \$workDir,
-	        'filterOutShort!'		        => \$filterOutShort,
-	        'crf!'                          => \$crf,
-	        'nice!'                         => \$nice,
+	    'filterOutShort!'		    => \$filterOutShort,
+	    'crf!'                          => \$crf,
+	    'nice!'                         => \$nice,
             'help!'                         => \$help,
+	    'prg=s'                         => \$prg,
+	    'prot_seq=s'                    => \$prot_seq_file,
+	    'prot_aln=s'                    => \$prot_aln_file,
+	    'prot_hints=s'                  => \$prot_hints_file,
             'version!'                      => \$printVersion);
 
 if($help){
@@ -468,6 +508,86 @@ if(!defined($genome)){
   print STDERR "ERROR: No genome file was specified. Please set a genome file.\n";
   exit(1);
 }
+
+# check whether protein sequence file is given
+if(defined($prot_seq_file)){
+    if(! -f $prot_seq_file){
+	print STDERR "ERROR: protein sequence file $prot_seq_file does not exist.\n";
+	exit(1);
+    }
+    if(defined($prot_aln_file)){
+	print STDERR "ERROR: protein sequence file and protein alingment file cannot be specified simultaneously!\n";
+	exit(1);
+    }
+    if(defined($prot_hints_file)){
+	print STDERR "ERROR: protein sequence file and protein hints file cannot be specified simultaneously!\n";
+    }
+    if(!defined($prg)){
+        # if no alignment tools was specified, set Genome Threader as default
+	$prg="gth";
+    }
+}
+
+# check whether protein alignment file is given
+if(defined($prot_aln_file)){
+    if(! -f $prot_aln_file){
+	print STDDERR "ERROR: protein alignment file $prot_aln_file does not exist.\n";
+	exit(1);
+    }
+    if(!defined($prg)){
+	print STDERR "ERROR: if protein alignment file is specified, you must specify the source tool that was used to create that alignment file, i.e. --prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for Exonerate.\n";
+	exit(1):
+    }
+    # simulteneous specification of prot_seq_file is already checked in prot_seq_file check definition above.
+    if(defined($prot_hints_file)){
+	print STDERR "ERROR: if protein alignment file is specified, you cannot specify a protein hints file, simultaneously (neither a protein sequence file).\n";
+	exit(1);
+    }
+}
+
+# check whether a protein hints file is given
+if(defined($prot_hints_file)){
+    if(! -f $prot_hints_file){
+	print STDERR "ERROR: protein hints file $prot_hints_file does not exist.\n";
+	exit(1);
+    }
+    if(defined($prg)){
+	print STDERR "ERROR: if a protein hints file is specified, no alignment tool should be specified.\n";
+	exit(1);
+    }
+}
+
+# check whether alignment program is given
+if(defined($prg)){
+    if(not($prg=~m/gth/) and not($prg=~m/exonerate/) and not($prg=~m/spaln/)){
+	print STDERR "ERROR: An alignment tool other than gth, exonerate, and spaln has been specified with option --prg=$prg. BRAKER currently only supports the options gth, exonerate and spaln.\n";
+	exit(1);
+    }
+    if(!defined($protein_seq_file) and !defined($prot_aln_file)){
+	print STDERR "ERROR: a protein alignment tool ($prg) has been given, but neither a protein sequence file, nor a protein alignment file generated by such a tool have been specified.\n";
+	exit(1);
+    }
+    # check whether a given tool is installed and whether dependencies are ok, if any
+    if($prg=~m/gth/){
+
+    }elsif($prg=~m/spaln/){
+
+	# check whether spaln environment variables are configured
+	if(!$ENV{'ALN_DBS'}){
+	    print STDERR "ERROR: The environment variable ALN_DBS for spaln2 is not defined. Please export an environment variable with:' export ALN_DBS=/path/to/spaln2/seqdb'\n";
+	    exit(1);
+	}
+
+	if(!$ENV{'ALN_TAB'}){
+	    print STDERR "ERROR: The environment variable ALN_TAB for spaln2 is not defined. Please export an environment variable with:' export ALN_TAB=/path/to/spaln2/table'\n";
+	    exit(1);
+	}
+	
+    }elsif($prg=~m/exonerate/){
+
+    }
+}
+
 
 # check whether genome file exist
 if(! -f "$genome"){
