@@ -142,7 +142,8 @@ OPTIONS
                                          AUGUSTUS. If --protein-seq is specified, it is not allowed to 
                                          specify --protein-aln or --protein-hints.
     --protein-aln=prot.aln          Alignment file generated from aligning protein sequences against the 
-                                         genome with either Exonerate (--prg=exonerate), or Spaln (--prg=spaln), or                                                                                                                                 GenomeThreader (--prg=gth).
+                                         genome with either Exonerate (--prg=exonerate), or Spaln (--prg=spaln), or
+                                         GenomeThreader (--prg=gth).
                                          To prepare alignment file, run Spaln2 with the following command:
                                             spaln -O0 ... > spalnfile
                                          To prepare alignment file, run Exonerate with the following command:
@@ -152,11 +153,12 @@ OPTIONS
                                                ... -o gthfile
                                          A valid option prg=... must be specified in combination with 
                                          --protein-aln. Generating tool will not be guessed.
-                                         Currently, hints from proteins are only used in the prediction step with                                                                                                                                   AUGUSTUS.If --protein-aln is specified it is not allowed to allowed 
+                                         Currently, hints from proteins are only used in the prediction step with
+                                         AUGUSTUS.If --protein-aln is specified it is not allowed to allowed 
                                          to specify --protein-seq or --protein-hints.
     --protein-hints=prothints.gff   File containing protein hints for gene prediction with AUGUSTUS.
                                          Allowed features: NEED TO ADD THE FEATURES, LATER!
-                                         If --protein-hints is specified it is not allowed to allowed                                                                                           
+                                         If --protein-hints is specified it is not allowed to allowed
                                          to specify --protein-aln or --protein-seq.
     --prg=gth|exonerate|spaln            Alignment tool ght (GenomeThreader), exonerate (Exonerate) or Spaln2
                                          (spaln) that will be used to generate protein alignments that will be the 
@@ -164,6 +166,9 @@ OPTIONS
                                          in combination with --protein-seq) or that was used to externally
                                          generate an alignment file with the commands listed in description of 
                                          --protein-aln (if used in combination with --protein-aln).
+    --ALIGNMENT_TOOL_PATH                Set path to alignment tool (GenomeThreader, Spaln, or Exonerate) if not 
+                                         specified as environment variable. Has higher priority than environment
+                                         variable.
     --version                            print version number of braker.pl
                            
 
@@ -253,7 +258,7 @@ my $prg;                              # variable to store protein alignment tool
 my $prot_seq_file;                    # variable to store protein sequence file name
 my $prot_aln_file;                    # variable to store protein alingment file name
 my $prot_hints_file;                  # variable to store protein hints file name
-
+my $ALIGNMENT_TOOL_PATH;              # stores path to binary of gth, spaln or exonerate for running protein alignments
 
 # list of forbidden words for species name
 @forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while", "nice");  
@@ -272,6 +277,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'AUGUSTUS_CONFIG_PATH=s'        => \$augustus_cfg_path,
             'AUGUSTUS_BIN_PATH=s'           => \$augustus_bin_path,
             'AUGUSTUS_SCRIPTS_PATH=s'       => \$augustus_scripts_path,
+	    'ALIGNMENT_TOOL_PATH=s'         => \$ALIGNMENT_TOOL_PATH,
             'bam=s'                         => \@bam,
             'BAMTOOLS_PATH=s'               => \$bamtools_path,
             'cores=i'                       => \$CPU,
@@ -396,6 +402,14 @@ if(defined($SAMTOOLS_PATH_OP)){
     chop($SAMTOOLS_PATH_OP);
   }
   $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
+}
+
+# set path to alignment tool (gth, spaln or exonerate, optional)
+if(defined($ALIGNMENT_TOOL_PATH)){
+    my $last_char = substr($ALIGNMENT_TOOL_PATH, -1);
+    if($last_char eq "\/"){
+	chop($ALIGNMENT_TOOL_PATH);
+    }
 }
 
 # check upfront whether any common problems will occur later # see autoAug.pl
@@ -524,6 +538,7 @@ if(defined($prot_seq_file)){
     }
     if(!defined($prg)){
         # if no alignment tools was specified, set Genome Threader as default
+	print LOG "WARNING: No alignment tool was specified for aligning protein sequences against genome. Setting GenomeThreader as default alignment tool.\n";
 	$prg="gth";
     }
 }
@@ -1640,6 +1655,10 @@ sub check_upfront{ # see autoAug.pl
     exit(1);
   }
 
+  if(!$ENV{'ALIGNMENT_TOOL_PATH'} && !defined($ALIGNMENT_TOOL_PATH) && defined($prot_seq_file)){
+      print STDERR "ERROR: The environment variable  ALIGNMENT_TOOL_PATH to either the exectuable of GenomeThreader, Exonerate or Spaln is not defined. Please expoert an environment variable or use --ALIGNMENT_TOOL_PATH=path/to/aligner.\n";
+  }
+
   if(!$ENV{'BAMTOOLS_PATH'} && !defined($bamtools_path)){ # see autoAug.pl
     print STDERR "ERROR: The environment variable BAMTOOLS_PATH is not defined. Please export an environment variable for bamtools or use --BAMTOOLS_PATH=path/to/bamtools.\n"; # see autoAug.pl
     exit(1);
@@ -1673,6 +1692,44 @@ sub check_upfront{ # see autoAug.pl
     }
     exit(1);
   }
+
+  # check for alignment executable
+  my $prot_aligner
+  if(defined($prot_seq_file)){
+      if($prg eq 'gth'){
+	  $prot_aligner = "$ALIGNMENT_TOOL_PATH/gth";
+	  if(system("$prot_aligner > /dev/null 2> /dev/null)") != 0){
+	      if(! -f $prot_aligner){
+		  print STDERR "ERROR: GenomeThreader executable not found at $prot_aligner.\n";
+	      }else{
+		  print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
+	      }
+	      exit(1);
+	  }
+      }elsif($prg eq 'spaln'){
+	  $prot_aligner = "$ALIGNMENT_TOOL_PATH/spaln";
+	  if(system("$prot_aligner > /dev/null 2> /dev/null)") != 0){
+	      if(! -f $prot_aligner){
+		  printSTDERR "ERROR: Spaln executable not found at $prot_aligner.\n";
+	      }else{
+		  printSTDERR "ERROR: $prot_aligner not executable on this machine.\n";
+	      }
+	      exit(1);
+	  }
+      }elsif($prg eq 'exonerate'){
+	  $prot_aligner = "$ALIGNMENT_TOOL_PATH/exonerate";
+	  if(system("$prot_aligner > /dev/null 2> /dev/null)") != 0){
+	      if(! -f $prot_aligner){
+		  printSTDERR "ERROR: Exonerate executable not found at $prot_aligner.\n";
+	      }else{
+		  printSTDERR "ERROR: $prot_aligner not executable on this machine.\n";
+	      }
+	      exit(1);
+	  }
+	  
+      }
+  }
+  
   
   # check whether the necessary perl scripts exist and can be found
   find("gff2gbSmallDNA.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
