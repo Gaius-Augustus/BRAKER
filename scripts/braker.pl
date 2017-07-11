@@ -231,7 +231,7 @@ my $printVersion = 0;                 # print version number, if set
 my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'}; # samtools environment variable
 my $SAMTOOLS_PATH_OP;                 # path to samtools executable, higher priority than $SAMTOOLS_PATH on system
 my $scriptPath=dirname($0);           # path of directory where this script is located
-my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source) 
+my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source)
 my $skipoptimize = 0;                 # skip optimize parameter step
 my $species;                          # species name
 my $soft_mask = 0;                    # soft-masked flag
@@ -251,13 +251,13 @@ my $filterOutShort;		      # filterOutShort option (see help)
 my @allowedHints = ("intron");        # Currently, BRAKER only supports intron hints. Hint type from input hintsfile will
                                       # be checked.
 my $crf;                              # flag that determines whether CRF training should be tried
-my $nice;                             # flag that determines whether system calls should be executed with bash nice (default
-                                      # nice value)
+my $nice;                             # flag that determines whether system calls should be executed with bash nice 
+                                      #(default nice value)
 my ($target_1, $target_2, $target_3) = 0; # variables that store AUGUSTUS accuracy after different training steps
 my $prg;                              # variable to store protein alignment tool
-my $prot_seq_file;                    # variable to store protein sequence file name
-my $prot_aln_file;                    # variable to store protein alingment file name
-my $prot_hints_file;                  # variable to store protein hints file name
+my @prot_seq_files;                    # variable to store protein sequence file name
+my @prot_aln_files;                    # variable to store protein alingment file name
+my @prot_hints_files;                  # variable to store protein hints file name
 my $ALIGNMENT_TOOL_PATH;              # stores path to binary of gth, spaln or exonerate for running protein alignments
 
 # list of forbidden words for species name
@@ -303,9 +303,9 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
 	    'nice!'                         => \$nice,
             'help!'                         => \$help,
 	    'prg=s'                         => \$prg,
-	    'prot_seq=s'                    => \$prot_seq_file,
-	    'prot_aln=s'                    => \$prot_aln_file,
-	    'prot_hints=s'                  => \$prot_hints_file,
+	    'prot_seq=s'                    => \@prot_seq_files,
+	    'prot_aln=s'                    => \@prot_aln_files,
+	    'prot_hints=s'                  => \@prot_hints_files,
             'version!'                      => \$printVersion);
 
 if($help){
@@ -524,17 +524,17 @@ if(!defined($genome)){
 }
 
 # check whether protein sequence file is given
-if(defined($prot_seq_file)){
-    if(! -f $prot_seq_file){
-	print STDERR "ERROR: protein sequence file $prot_seq_file does not exist.\n";
-	exit(1);
+if(@prot_seq_files){
+    @prot_seq_files = split(/[\s,]/, join(',',@prot_seq_files));
+    foreach(@prot_seq_files){
+	if(! -f $_){
+	    print STDERR "ERROR: protein sequence file $_ does not exist.\n";
+	    exit(1);
+	}
     }
-    if(defined($prot_aln_file)){
+    if(@prot_aln_files){
 	print STDERR "ERROR: protein sequence file and protein alingment file cannot be specified simultaneously!\n";
 	exit(1);
-    }
-    if(defined($prot_hints_file)){
-	print STDERR "ERROR: protein sequence file and protein hints file cannot be specified simultaneously!\n";
     }
     if(!defined($prg)){
         # if no alignment tools was specified, set Genome Threader as default
@@ -544,27 +544,28 @@ if(defined($prot_seq_file)){
 }
 
 # check whether protein alignment file is given
-if(defined($prot_aln_file)){
-    if(! -f $prot_aln_file){
-	print STDDERR "ERROR: protein alignment file $prot_aln_file does not exist.\n";
-	exit(1);
+if(@prot_aln_files){
+    @prot_aln_files = split(/[\s,]/, join(',',@prot_aln_files));
+    foreach(@prot_aln_files){
+	if(! -f $_){
+	    print STDDERR "ERROR: protein alignment file $_ does not exist.\n";
+	    exit(1);
+	}
     }
     if(!defined($prg)){
 	print STDERR "ERROR: if protein alignment file is specified, you must specify the source tool that was used to create that alignment file, i.e. --prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for Exonerate.\n";
 	exit(1);
     }
-    # simulteneous specification of prot_seq_file is already checked in prot_seq_file check definition above.
-    if(defined($prot_hints_file)){
-	print STDERR "ERROR: if protein alignment file is specified, you cannot specify a protein hints file, simultaneously (neither a protein sequence file).\n";
-	exit(1);
-    }
 }
 
 # check whether a protein hints file is given
-if(defined($prot_hints_file)){
-    if(! -f $prot_hints_file){
-	print STDERR "ERROR: protein hints file $prot_hints_file does not exist.\n";
-	exit(1);
+if(@prot_hints_files){
+    @prot_hints_files = split(/[\s,]/, join(',',@prot_hints_files));
+    foreach(@prot_hints_files){
+	if(! -f $_){
+	    print STDERR "ERROR: protein hints file $_ does not exist.\n";
+	    exit(1);
+	}
     }
     if(defined($prg)){
 	print STDERR "ERROR: if a protein hints file is specified, no alignment tool should be specified.\n";
@@ -578,7 +579,7 @@ if(defined($prg)){
 	print STDERR "ERROR: An alignment tool other than gth, exonerate, and spaln has been specified with option --prg=$prg. BRAKER currently only supports the options gth, exonerate and spaln.\n";
 	exit(1);
     }
-    if(!defined($prot_seq_file) and !defined($prot_aln_file)){
+    if(!@prot_seq_files and !@prot_aln_files)){
 	print STDERR "ERROR: a protein alignment tool ($prg) has been given, but neither a protein sequence file, nor a protein alignment file generated by such a tool have been specified.\n";
 	exit(1);
     }
@@ -660,7 +661,15 @@ if(! -f "$genome"){
 
   new_species();                # create new species parameter files; we do this FIRST, before anything else, because if you start several processes in parallel, you might otherwise end up with those processes using the same species directory!
   check_fasta_headers($genome); # check fasta headers
-  make_hints();                 # make hints from RNA-Seq or gtf input
+  if(@prot_seq_files){
+      foreach(@prot_seq_files){
+	  check_fasta_headers($_);
+      }
+  }
+  make_rna_seq_hints();         # make hints from RNA-Seq or gtf input
+  if(@prot_seq_files or @prot_aln_files or @prot_hints_files){
+      make_prot_hints();
+  }
   GeneMark_ET();                # run GeneMark-ET
   training();                   # train species-specific parameters with optimize_augustus.pl and etraining
 
@@ -709,7 +718,7 @@ if(! -f "$genome"){
 
          ####################### make hints #########################
 # make hints from BAM files and optionally combine it with additional hints file
-sub make_hints{
+sub make_rna_seq_hints{
   my $bam_hints;
   my $hintsfile_temp = "$otherfilesDir/hintsfile.temp.gff";
   $hintsfile = "$otherfilesDir/hintsfile.gff";
@@ -1676,7 +1685,7 @@ sub check_upfront{ # see autoAug.pl
 
   # check for alignment executable and in case of SPALN for environment variables
   my $prot_aligner;
-  if(defined($prot_seq_file)){
+  if(@prot_seq_files){
       if($prg eq 'gth'){
 	  $prot_aligner = "$ALIGNMENT_TOOL_PATH/gth";
 	  if(system("$prot_aligner > /dev/null 2> /dev/null)") != 0){

@@ -2,13 +2,14 @@
 
 ####################################################################################################
 #                                                                                                  #
-# startExonerate.pl - run exonerate on partial sequences and correspondig protein file             #
+# startAlign2.pl - run alignment program Spaln2, Exonerate or GenomeThreader to align protein      #
+#                  sequences to genome                                                             #
 #                                                                                                  #
-# Author: Simone Lange                                                                             #
+# Author: Simone Lang                                                                              #
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: October 28th 2015                                                                  #
+# Release date: July 11th 2017                                                                     #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -17,6 +18,7 @@
 
 
 # ----------------------------------------------------------------
+# | changed script description      | Katharina Hoff |11.07.2017 |
 # | first outline                   | Simone Lange   |28.10.2015 |
 # | changed default from region to  |                |01.12.2015 |
 # | whole sequence (noreg to reg)   |                |           |
@@ -35,7 +37,7 @@ use warnings;
 
 my $usage = <<'ENDUSAGE';
 
-startAlign.pl  split genome file in single sequences or sequence parts and protein file according 
+startAlign2.pl split genome file in single sequences or sequence parts and protein file according 
                to contigIDs then run alignment program exonerate, spaln or genomeThreader (gth) 
                for each contigID or each sequence. When no list and/or pos file(s) are/is assigned
                the program will use the whole protein file.
