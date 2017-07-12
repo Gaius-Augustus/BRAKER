@@ -64,6 +64,10 @@ OPTIONS
     --prg=s                      Alignment program to call. Valid options are 'gth', 'spaln' or 'exonerate'.
     --pos=dna.pos                Contains information on contigs and genome sequence. Format
                                  contigID nr_of_prots_mapped start end strand chrID
+    --ALIGNMENT_TOOL_PATH=/path/to/binary
+                                 Path to alignment tool binary, either exonerate or Splan or Genome Threader.
+                                 By default, if no path is given, script assumes they are in the current 
+                                 $PATH bash variable.
 
 
 DESCRIPTION
@@ -104,6 +108,7 @@ my $gcmincoverage = 80; # 70 - 95
 my $prhdist  = 2;       # 2 - 6 
 my $prseedlength = 20;  # 19, 20, 21 (gth: error: -prminmatchlen must be >= -prseedlength)
 my $prminmatchlen = 20;
+my $ALIGNMENT_TOOL_PATH;
 
 if(@ARGV==0){
   print "$usage\n"; 
@@ -121,7 +126,8 @@ GetOptions( 'CPU=i'         => \$CPU,
             'pos=s'         => \$pos_file,
             'prg=s'         => \$prgsrc,
             'prot=s'        => \$prot_file,
-            'help!'         => \$help);
+            'help!'         => \$help,
+            'ALIGNMENT_TOOL_PATH=s' => \$ALIGNMENT_TOOL_PATH);
 
 if($help){
   print $usage;
@@ -133,7 +139,13 @@ if(!defined($dir)){
  $dir = cwd(); 
 }
 
-
+# remove tailing slash from ALIGNMENT_TOOL_PATH
+if(defined($ALIGNMENT_TOOL_PATH)){
+    my $last_char = substr($ALIGNMENT_TOOL_PATH, -1);
+    if($last_char eq "\/"){
+	chop($ALIGNMENT_TOOL_PATH);
+    }    
+}
 
 
 
@@ -468,7 +480,11 @@ sub start_align{
 sub call_exonerate{
   my $tFile = shift;
   my $qFile = shift;
-  $cmdString = "exonerate --model protein2genome --maxintron $maxintronlen --showtargetgff --showalignment no --query $qFile -t   $tFile > $stdoutfile 2>$errorfile";
+  $cmdString = "";
+  if(defined($ALIGNMENT_TOOL_PATH)){
+      $cmdString .= $ALIGNMENT_TOOL_PATH."/";
+  }
+  $cmdString .= "exonerate --model protein2genome --maxintron $maxintronlen --showtargetgff --showalignment no --query $qFile -t   $tFile > $stdoutfile 2>$errorfile";
   print LOG "\# ".(localtime).": run exonerate for target '$tFile' and query '$qFile'\n";
   print LOG "$cmdString\n\n";
   system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -477,7 +493,11 @@ sub call_exonerate{
 sub call_gth{
   my $genomic = shift;
   my $protein = shift;
-  $cmdString = "gth -genomic $genomic -protein $protein -gff3out -skipalignmentout -paralogs -prseedlength $prseedlength -prhdist $prhdist -gcmincoverage $gcmincoverage -prminmatchlen $prminmatchlen -o  $stdoutfile 2>$errorfile";
+  $cmdString = "";
+  if(defined($ALIGNMENT_TOOL_PATH)){
+      $cmdString .= $ALIGNMENT_TOOL_PATH."/";
+  }
+  $cmdString .= "gth -genomic $genomic -protein $protein -gff3out -skipalignmentout -paralogs -prseedlength $prseedlength -prhdist $prhdist -gcmincoverage $gcmincoverage -prminmatchlen $prminmatchlen -o  $stdoutfile 2>$errorfile";
   print LOG "\# ".(localtime).": run GenomeThreader for genome '$genomic' and protein '$protein'\n";
   print LOG "$cmdString\n\n";
   system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -487,8 +507,12 @@ sub call_spaln{
   my $tFile = shift;
   my $qFile = shift;
   my @split = split(/\./, $tFile);
-  if(! -f "$split[0].idx"){ 
-    $cmdString = "makdbs -KP $tFile;";
+  if(! -f "$split[0].idx"){
+    $cmdString = "";
+      if(defined($ALIGNMENT_TOOL_PATH)){
+	  $cmdString .= $ALIGNMENT_TOOL_PATH."/";
+    }
+    $cmdString .= "makdbs -KP $tFile;";
     print LOG "\# ".(localtime).": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for target '$tFile' \n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -502,7 +526,11 @@ sub call_spaln{
 
   @split = split(/\./, $qFile);
   if(! -f "$split[0].idx"){
-    $cmdString = "makdbs -KA $qFile;";
+    $cmdString = "";
+    if(defined($ALIGNMENT_TOOL_PATH)){
+      $cmdString .= $ALIGNMENT_TOOL_PATH."/";
+    }
+    $cmdString .= "makdbs -KA $qFile;";
     print LOG "\# ".(localtime).": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for query '$qFile' \n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -513,8 +541,11 @@ sub call_spaln{
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $!\n");
   }
-
-  $cmdString = "spaln -Q7 -O0 $tFile $qFile > $stdoutfile 2>$errorfile";
+  $cmdString = "";
+  if(defined($ALIGNMENT_TOOL_PATH)){
+      $cmdString .= $ALIGNMENT_TOOL_PATH."/";
+  }
+  $cmdString .= "spaln -Q7 -O0 $tFile $qFile > $stdoutfile 2>$errorfile";
   print LOG "\# ".(localtime).": run spaln for target '$tFile' and query '$qFile'\n";
   print LOG "$cmdString\n\n";
   system("$cmdString")==0 or die("failed to execute: $!\n");

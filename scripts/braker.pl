@@ -827,7 +827,8 @@ sub make_prot_hints{
     $prot_hintsfile = "$otherfilesDir/prot_hintsfile.gff";
     # convert protein sequences to fasta format
     if(@prot_seq_files){
-	foreach my $curr_prot_seq_file (@prot_seq_files){
+	for(my $i=0; $i<scalar(@prot_seq_files); $i++){
+	
 	    
 	}
     }
