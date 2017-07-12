@@ -466,7 +466,8 @@ sub start_align{
         $pm->finish;
       }
     }elsif($CPU == 1 && $prgsrc eq "gth" && $protWhole){
-	print "3) Stdoutfile $stdoutfile\nerrfile $errorfile\n";
+	  $errorfile = "$alignDir/$ID.$prgsrc.stderr";
+      $stdoutfile = "$alignDir/$ID.$prgsrc.aln";
       call_gth($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
     }     
   }
