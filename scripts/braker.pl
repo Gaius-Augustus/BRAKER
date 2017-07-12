@@ -529,11 +529,12 @@ if(!defined($genome)){
 # check whether protein sequence file is given
 if(@prot_seq_files){
     @prot_seq_files = split(/[\s,]/, join(',',@prot_seq_files));
-    foreach(@prot_seq_files){
-	if(! -f $_){
-	    print STDERR "ERROR: protein sequence file $_ does not exist.\n";
+    for(my $i=0; $i<scalar(@prot_seq_files); $i++){
+	if(! -f $prot_seq_files[$i]){
+	    print STDERR "ERROR: protein sequence file $prot_seq_files[$i] does not exist.\n";
 	    exit(1);
 	}
+	$prot_seq_files[$i] = rel2abs($prot_seq_files[$i]);
     }
     if(!defined($prg)){
         # if no alignment tools was specified, set Genome Threader as default
@@ -545,11 +546,12 @@ if(@prot_seq_files){
 # check whether protein alignment file is given
 if(@prot_aln_files){
     @prot_aln_files = split(/[\s,]/, join(',',@prot_aln_files));
-    foreach(@prot_aln_files){
-	if(! -f $_){
-	    print STDDERR "ERROR: protein alignment file $_ does not exist.\n";
+    for(my $i=0; $i<scalar(@prot_aln_files); $i++){
+	if(! -f $prot_aln_files[$i]){
+	    print STDDERR "ERROR: protein alignment file $prot_aln_files[$i] does not exist.\n";
 	    exit(1);
 	}
+	$prot_aln_files[$i] = rel2abs($prot_aln_files[$i]);
     }
     if(!defined($prg)){
 	print STDERR "ERROR: if protein alignment file is specified, you must specify the source tool that was used to create that alignment file, i.e. --prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for Exonerate.\n";
@@ -560,11 +562,12 @@ if(@prot_aln_files){
 # check whether a protein hints file is given
 if(@prot_hints_files){
     @prot_hints_files = split(/[\s,]/, join(',',@prot_hints_files));
-    foreach(@prot_hints_files){
-	if(! -f $_){
-	    print STDERR "ERROR: protein hints file $_ does not exist.\n";
+    for(my $i=0; $i<scalar(@prot_hints_files); $i++){	
+	if(! -f $prot_hints_files[$i]){
+	    print STDERR "ERROR: protein hints file $prot_hints_files[$i] does not exist.\n";
 	    exit(1);
 	}
+	$prot_hints_files[$i] = rel2abs($prot_hints_files[$i]);
     }
 }
 
@@ -825,7 +828,7 @@ sub make_prot_hints{
     # convert protein sequences to fasta format
     if(@prot_seq_files){
 	foreach my $curr_prot_seq_file (@prot_seq_files){
-
+	    
 	}
     }
 }
