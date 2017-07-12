@@ -18,6 +18,7 @@
 
 
 # ----------------------------------------------------------------
+# | added path to alignment tools   | Katharina Hoff |12.07.2017 |
 # | changed script description      | Katharina Hoff |11.07.2017 |
 # | first outline                   | Simone Lange   |28.10.2015 |
 # | changed default from region to  |                |01.12.2015 |
