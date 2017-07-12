@@ -411,17 +411,17 @@ sub start_align{
       }
       
       if($prgsrc eq "exonerate"){
-        call_exonerate($target, $query);
+        call_exonerate($target, $query, $stdoutfile, $errorfile);
         $stdAdjusted = adjust_exonerate($stdoutfile, $ID);
       }
       
       if($prgsrc eq "spaln"){
-        call_spaln($target, $query);
+        call_spaln($target, $query, $stdoutfile, $errorfile);
         $stdAdjusted = adjust($stdoutfile, $ID);
       }
     
       if($prgsrc eq "gth"){
-        call_gth($target, $query);
+        call_gth($target, $query, $stdoutfile, $errorfile);
         $stdAdjusted = adjust($stdoutfile, $ID);
       }
       $cmdString = "cat $stdAdjusted >>$whole_prediction_file";
@@ -449,15 +449,15 @@ sub start_align{
           print_seq($target, $seq{$ID}, $ID);
         }
         if($prgsrc eq "exonerate"){
-          call_exonerate($target, $query);
+          call_exonerate($target, $query, $stdoutfile, $errorfile);
         }
         
         if($prgsrc eq "spaln"){
-          call_spaln($target, $query);
+          call_spaln($target, $query, $stdoutfile, $errorfile);
         }
       
         if($prgsrc eq "gth"){
-          call_gth($target, $query);
+          call_gth($target, $query, $stdoutfile, $errorfile);
         }
         $cmdString = "cat $stdoutfile >>$whole_prediction_file";
         print LOG "\# ".(localtime).": add prediction from file $stdoutfile to file $whole_prediction_file\n";
@@ -466,7 +466,7 @@ sub start_align{
         $pm->finish;
       }
     }elsif($CPU == 1 && $prgsrc eq "gth" && $protWhole){
-      call_gth($genome_file, "$prot_file_base.addstop");
+      call_gth($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
     }     
   }
   $pm->wait_all_children;
@@ -481,11 +481,13 @@ sub start_align{
 sub call_exonerate{
   my $tFile = shift;
   my $qFile = shift;
+  my $stdoutfile = shift;
+  my $errorfile = shift;
   $cmdString = "";
   if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
   }
-  $cmdString .= "exonerate --model protein2genome --maxintron $maxintronlen --showtargetgff --showalignment no --query $qFile -t   $tFile > $stdoutfile 2>$errorfile";
+  $cmdString .= "exonerate --model protein2genome --maxintron $maxintronlen --showtargetgff --showalignment no --query $qFile -t   $tFile > $stdoutfile 2> $errorfile";
   print LOG "\# ".(localtime).": run exonerate for target '$tFile' and query '$qFile'\n";
   print LOG "$cmdString\n\n";
   system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -494,6 +496,8 @@ sub call_exonerate{
 sub call_gth{
   my $genomic = shift;
   my $protein = shift;
+  my $stdoutfile = shift;
+  my $errorfile = shift;
   $cmdString = "";
   if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
@@ -507,6 +511,8 @@ sub call_gth{
 sub call_spaln{
   my $tFile = shift;
   my $qFile = shift;
+  my $stdoutfile = shift;
+  my $errorfile = shift;
   my @split = split(/\./, $tFile);
   if(! -f "$split[0].idx"){
     $cmdString = "";

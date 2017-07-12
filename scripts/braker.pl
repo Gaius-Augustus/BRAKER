@@ -828,7 +828,7 @@ sub make_prot_hints{
     # convert protein sequences to fasta format
     if(@prot_seq_files){
 	for(my $i=0; $i<scalar(@prot_seq_files); $i++){
-	
+	    
 	    
 	}
     }
