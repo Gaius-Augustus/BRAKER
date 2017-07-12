@@ -339,28 +339,28 @@ sub prots{
   my $seqname;
   my $sequencepart = "";
   while(<PROT>){
-    if($_ =~ m/^>/){
+      if($_ =~ m/^>/){
       chomp;
-      if($seqname){
-        if($protWhole){
-          $counterW++;
-          print_prot("$tmpDir/$prot_file_base.addstop", $seqname, $sequencepart);
-        }else{
-          if(defined($protIDs{$seqname})){
-            for(my $i=0; $i<scalar(@{$protIDs{$seqname}}); $i++){
-              if($reg){
-                if(defined($contigIDs{@{$protIDs{$seqname}}[$i]})){
-                  $counterW++;
-                  print_prot("$tmpDir/@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
-                }
-              }else{
-                $counterW++;
-                print_prot("$tmpDir/prot@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
-              }
-            }
-          }
-        }
-      }
+	  if($seqname){
+	      if($protWhole){
+		  $counterW++;
+		  print_prot("$tmpDir/$prot_file_base.addstop", $seqname, $sequencepart);
+	      }else{
+		  if(defined($protIDs{$seqname})){
+		      for(my $i=0; $i<scalar(@{$protIDs{$seqname}}); $i++){
+			  if($reg){
+			      if(defined($contigIDs{@{$protIDs{$seqname}}[$i]})){
+				  $counterW++;
+				  print_prot("$tmpDir/@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
+			      }
+			  }else{
+			      $counterW++;
+			      print_prot("$tmpDir/prot@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
+			  }
+		      }
+		  }
+	      }
+	  }
       $seqname = substr($_,1);
       $sequencepart = "";
     }else{ 
@@ -368,16 +368,21 @@ sub prots{
     } 
   }
 
-  if(defined($protIDs{$seqname})){
-    for(my $i=0; $i<scalar(@{$protIDs{$seqname}}); $i++){
-      if($reg){
-        if(defined($contigIDs{@{$protIDs{$seqname}}[$i]})){
-          print_prot("$tmpDir/@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
-        }
-      }else{
-        print_prot("$tmpDir/prot@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
+  if($protWhole){
+      $counterW++;
+      print_prot("$tmpDir/$prot_file_base.addstop", $seqname, $sequencepart);
+  }else{
+      if(defined($protIDs{$seqname})){
+	  for(my $i=0; $i<scalar(@{$protIDs{$seqname}}); $i++){
+	      if($reg){
+		  if(defined($contigIDs{@{$protIDs{$seqname}}[$i]})){
+		      print_prot("$tmpDir/@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
+		  }
+	      }else{
+		  print_prot("$tmpDir/prot@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
+	      }
+	  }
       }
-    }
   }
   close(PROT) or die("Could not close file $prot_file!\n");
 }
@@ -466,8 +471,8 @@ sub start_align{
         $pm->finish;
       }
     }elsif($CPU == 1 && $prgsrc eq "gth" && $protWhole){
-	  $errorfile = "$alignDir/$ID.$prgsrc.stderr";
-      $stdoutfile = "$alignDir/$ID.$prgsrc.aln";
+      $errorfile = "$alignDir/$prgsrc.stderr";
+      $stdoutfile = "$alignDir/$prgsrc.aln";
       call_gth($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
     }     
   }
@@ -504,10 +509,10 @@ sub call_gth{
   if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
   }
-  $cmdString .= "gth -genomic $genomic -protein $protein -gff3out -skipalignmentout -paralogs -prseedlength $prseedlength -prhdist $prhdist -gcmincoverage $gcmincoverage -prminmatchlen $prminmatchlen -o  $stdoutfile 2>$errorfile";
+  $cmdString .= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -prseedlength $prseedlength -prhdist $prhdist -gcmincoverage $gcmincoverage -prminmatchlen $prminmatchlen -o  $stdoutfile 2>$errorfile";
   print LOG "\# ".(localtime).": run GenomeThreader for genome '$genomic' and protein '$protein'\n";
   print LOG "$cmdString\n\n";
-  system("$cmdString")==0 or die("failed to execute: $!\n");
+  system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 }
 
 sub call_spaln{
