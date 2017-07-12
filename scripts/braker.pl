@@ -68,6 +68,9 @@ OPTIONS
                                          with bash "nice" (default nice value)
     --alternatives-from-evidence=true    Output alternative transcripts based on explicit evidence from 
                                          hints (default is true).
+    --augustus-args="--some_arg=bla"     One or several command line arguments to be passed to AUGUSTUS,
+                                         if several arguments are given, separate by whitespace, i.e.
+                                         "--first_arg=sth --second_arg=sth". 
     --AUGUSTUS_CONFIG_PATH=/path/        Set path to config directory of AUGUSTUS (if not specified as 
                                          environment variable). BRAKER1 will assume that the directories
                                          ../bin and ../scripts of AUGUSTUS are located relative to
@@ -236,6 +239,7 @@ my $soft_mask = 0;                    # soft-masked flag
 my $standard = 0;                     # index for standard malus/ bonus value (currently 0.1 and 1e1)optimize_augustus.pl
 my $stdoutfile;                       # stores current standard output
 my $string;                           # string for storing script path
+my $augustus_args;                    # string that stores command line arguments to be passed to augustus
 my $testsize;                         # AUGUSTUS training parameter: number of genes in a file that is
                                       # used to measure accuracy during parameter estimation with
                                       # optimize_augustus.pl. Default: 1000. If there are less than 1000
@@ -304,6 +308,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
 	    'prot_seq=s'                    => \@prot_seq_files,
 	    'prot_aln=s'                    => \@prot_aln_files,
 	    'prot_hints=s'                  => \@prot_hints_files,
+	    'augustus_args=s'               => \$augustus_args,
             'version!'                      => \$printVersion);
 
 if($help){
@@ -1381,7 +1386,7 @@ sub training{
 	        # cp config files
 	        print "Copy parameter files to $species*.CRF\n";
 	        for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")){
-	            $cmdString = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ $_".".CRF";
+	            $cmdString = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ cp $AUGUSTUS_CONFIG_PATH/species/$species/$_".".CRF";
 	            system($cmdString)==0 or die("failed to execute: copying of CRF parameters $!\n");
 	        }
 	        # if the accuracy doesn't improve with CRF, overwrite the config files with the HMM parameters from last etraining
@@ -1480,6 +1485,9 @@ sub augustus{
       }
       if($soft_mask){
         $cmdString .= " --softmasking=1";
+      }
+      if(defined($augustus_args)){
+	  $cmdString .= " $augustus_args";
       }
       $cmdString .= " $genome_files[$i] 1>$stdoutfile 2>$errorfile";
       print LOG "\# ".(localtime).": run AUGUSTUS for file $genome_files[$idx-1]\n";
