@@ -71,6 +71,7 @@ OPTIONS
                                  $PATH bash variable.
 
 
+
 DESCRIPTION
       
   Example:
@@ -242,6 +243,7 @@ if($prgsrc eq "spaln"){
   }
 }
 
+
 # add 80 bp to coordinates, if --prg is spaln, 0 otherwise
 if($prgsrc ne "spaln"){
   $spalnErrAdj = 0;
@@ -258,6 +260,7 @@ prots();
 if($CPU > 1){
   get_seqs();
 }
+
 start_align();
 clean_up();
 
@@ -400,7 +403,7 @@ sub start_align{
   my $pm = new Parallel::ForkManager($CPU);
   my $whole_prediction_file = "$alignDir/$prgsrc.concat.aln";
   if($reg){
-    foreach my $ID (keys %contigIDs){
+      foreach my $ID (keys %contigIDs){
       my $pid = $pm->start and next;
       my $target = "$contigIDs{$ID}{\"seq\"}$ID.fa";     # genome sequence
       my $query = "$ID.fa";                              # protein file
@@ -414,7 +417,6 @@ sub start_align{
         my $subseq = substr($seq{$contigIDs{$ID}{"seq"}}, $substart, $length);
         print_seq($target, $subseq, $contigIDs{$ID}{"seq"});
       }
-      
       if($prgsrc eq "exonerate"){
         call_exonerate($target, $query, $stdoutfile, $errorfile);
         $stdAdjusted = adjust_exonerate($stdoutfile, $ID);
@@ -436,45 +438,48 @@ sub start_align{
       $pm->finish;
     }
   }else{
-    if($CPU > 1 || ($CPU == 1 && !$protWhole) || ($CPU == 1 && $protWhole && $prgsrc ne "gth")){
-      foreach my $ID (keys %seq){
-        my $pid = $pm->start and next;
-        my $target = "genome$ID.fa";  # genome sequence
-        my $query;
-        if(!$protWhole){
-          $query = "prot$ID.fa";     # protein file
-        }else{
-          $query = "$prot_file_base.addstop";
-        }
-        $errorfile = "$alignDir/$ID.$prgsrc.stderr";
-        $stdoutfile = "$alignDir/$ID.$prgsrc.aln";
-
-        # create target file (whole sequences)
-        if(! -e $target){
-          print_seq($target, $seq{$ID}, $ID);
-        }
-        if($prgsrc eq "exonerate"){
-          call_exonerate($target, $query, $stdoutfile, $errorfile);
-        }
+      if($CPU > 1 || ($CPU == 1 && !$protWhole) || ($CPU == 1 && $protWhole && $prgsrc ne "gth")){
+	  # ERROR: %seq SEEMS TO BE EMPTY
+	  # %seq is only populated if CPU > 1
+	  # It cannot be allowed to come here if CPU is not > 1!!!!!!
+	  foreach my $ID (keys %seq){
+	      my $pid = $pm->start and next;
+	      my $target = "genome$ID.fa";  # genome sequence
+	      my $query;
+	      if(!$protWhole){
+		  $query = "prot$ID.fa";     # protein file
+	      }else{
+		  $query = "$prot_file_base.addstop";
+	      }
+	      $errorfile = "$alignDir/$ID.$prgsrc.stderr";
+	      $stdoutfile = "$alignDir/$ID.$prgsrc.aln";
+	      print "NOCH DA\n";
+	      # create target file (whole sequences)
+	      if(! -e $target){
+		  print_seq($target, $seq{$ID}, $ID);
+	      }
+	      if($prgsrc eq "exonerate"){
+		  call_exonerate($target, $query, $stdoutfile, $errorfile);
+	      }
         
-        if($prgsrc eq "spaln"){
-          call_spaln($target, $query, $stdoutfile, $errorfile);
-        }
+	      if($prgsrc eq "spaln"){
+		  call_spaln($target, $query, $stdoutfile, $errorfile);
+	      }
       
-        if($prgsrc eq "gth"){
-          call_gth($target, $query, $stdoutfile, $errorfile);
-        }
-        $cmdString = "cat $stdoutfile >>$whole_prediction_file";
-        print LOG "\# ".(localtime).": add prediction from file $stdoutfile to file $whole_prediction_file\n";
-        print LOG "$cmdString\n\n";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
-        $pm->finish;
-      }
-    }elsif($CPU == 1 && $prgsrc eq "gth" && $protWhole){
-      $errorfile = "$alignDir/$prgsrc.stderr";
-      $stdoutfile = "$alignDir/$prgsrc.aln";
-      call_gth($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
-    }     
+	      if($prgsrc eq "gth"){
+		  call_gth($target, $query, $stdoutfile, $errorfile);
+	      }
+	      $cmdString = "cat $stdoutfile >>$whole_prediction_file";
+	      print LOG "\# ".(localtime).": add prediction from file $stdoutfile to file $whole_prediction_file\n";
+	      print LOG "$cmdString\n\n";
+	      system("$cmdString")==0 or die("failed to execute: $!\n");
+	      $pm->finish;
+	  }
+      }elsif($CPU == 1 && $prgsrc eq "gth" && $protWhole){
+	  $errorfile = "$alignDir/$prgsrc.stderr";
+	  $stdoutfile = "$alignDir/$prgsrc.aln";
+	  call_gth($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
+      }     
   }
   $pm->wait_all_children;
   chdir $dir or die ("Could not change to directory $dir.\n");
