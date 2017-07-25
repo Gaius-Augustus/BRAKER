@@ -169,42 +169,8 @@ if(defined($pos_file)  && defined($list_file)){
     $list_file = rel2abs($list_file);
   }
 }else{
-  $protWhole = 1;
+    $protWhole = 1;
 }
-
-
-# check whether protein file is specified
-if(defined($prot_file)){
-  # check whether protein file exists
-  if(! -e $prot_file){
-    print STDERR "ERROR: Protein file $prot_file does not exist. Please check.\n";
-    exit(1);
-  }else{
-    my @a = split(/\//, $prot_file);
-    $prot_file_base = $a[-1];
-    $prot_file = rel2abs($prot_file);
-  }
-}else{
-  print STDERR "ERROR: No protein file specified. Please check.\n";
-  exit(1);  
-}
-
-
-# check whether genome file is specified
-if(defined($genome_file)){
-  # check whether genome file exists
-  if(! -e $genome_file){
-    print STDERR "ERROR: Genome file $genome_file does not exist. Please check.\n";
-    exit(1);
-  }else{
-    $genome_file = rel2abs($genome_file);
-  }
-}else{
-  print STDERR "ERROR: No genome file specified. Please check.\n";
-  exit(1);
-}
-
-
 
 if(!defined($prgsrc)){
   print STDERR "ERROR: Please assign the source program with --prg. Possible Options are 'exonerate', 'spaln' or 'gth'.\n";
@@ -218,12 +184,87 @@ if($prgsrc ne "exonerate" && $prgsrc ne "spaln" && $prgsrc ne "gth"){
 }
 
 if(!defined($log)){
-  $log = "$dir/startAlign$prgsrc.log"; 
+  $log = "$dir/startAlign_$prgsrc.log"; 
 }
-open (LOG, ">>".$log) or die "Cannot open file: $log\n";
+open (LOG, ">".$log) or die "Cannot open file: $log\n";
 
-$tmpDir = "$dir/tmp$prgsrc"; 
-$alignDir = "$dir/align$prgsrc";
+# check whether genome file is specified
+if(defined($genome_file)){
+    # check whether genome file exists
+    if(! -e $genome_file){
+	print STDERR "ERROR: Genome file $genome_file does not exist!\n";
+	exit(1);
+    }else{
+	$genome_file = rel2abs($genome_file);
+	my $nDots = ($genome_file =~ tr/\.//);
+	if($nDots > 1){ # more than one dot in file name, need to avoid that for spaln
+	    my $linkName = $genome_file;
+	    for(my $i = 0; $i < ($nDots-1); $i++){
+		$linkName =~ s/\./_/;
+	    }
+	    if(! -e $linkName){
+		$cmdString = "ln -s $genome_file $linkName";
+		system($cmdString)==0 or die ("Failed to execute $cmdString!\n");
+		print LOG "\# ".(localtime).": $cmdString\n";
+	    }else{
+		print LOG "\# ".(localtime)." WARNING: $linkName does already exist. Will assume that $linkName is a link to $genome_file!\n";
+	    }
+	    $genome_file = $linkName;
+	}
+    }
+}else{
+    print STDERR "ERROR: No genome file specified!\n";
+    exit(1);
+}
+
+
+# check whether protein file is specified
+if(defined($prot_file)){
+    # check whether protein file exists
+    if(! -e $prot_file){
+	print STDERR "ERROR: Protein file $prot_file does not exist!\n";
+	exit(1);
+    }else{
+	my @a = split(/\//, $prot_file);
+	$prot_file_base = $a[-1];
+	$prot_file = rel2abs($prot_file);
+	my $nDots = ($prot_file =~ tr/\.//);
+	if($nDots > 1){ # more than one dot in file name, need to avoid that for spaln
+	    my $linkName = $prot_file;
+	    for(my $i = 0; $i < ($nDots-1); $i++){
+		$linkName =~ s/\./_/;
+	    }
+	    if(! -e $linkName){
+		$cmdString = "ln -s $prot_file $linkName";
+		system($cmdString)==0 or die ("Failed to execute $cmdString!\n");
+		print LOG "\# ".(localtime).": $cmdString\n";
+	    }else{
+		print LOG "\# ".(localtime)." WARNING: $linkName does already exist. Will assume that $linkName is a link to $prot_file!\n";
+	    }
+	    $prot_file = $linkName;
+	}
+    }
+}else{
+    print STDERR "ERROR: No protein file specified!\n";
+    exit(1);
+}
+
+
+
+$tmpDir = "$dir/tmp_$prgsrc"; 
+$alignDir = "$dir/align_$prgsrc";
+if(! -d $tmpDir){
+    make_path($tmpDir);
+    print LOG "\# ".(localtime).": create working directory $tmpDir\n";
+    print LOG "mkdir $tmpDir\n\n";
+}else{
+    $cmdString = "rm -r $tmpDir";
+    print LOG "\# ".(localtime).": delete existing files from $tmpDir\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
+    make_path($tmpDir);
+}
+
 
 my $last_char = substr($dir, -1);
 if($last_char eq "\/"){
@@ -257,8 +298,8 @@ if(!$protWhole){
 # get protein sequences from files and store in hash
 prots();
 
-if($CPU > 1){
-  get_seqs();
+if($CPU > 1 || ($CPU == 1 && !$protWhole)){
+    get_seqs();
 }
 
 start_align();
@@ -325,18 +366,6 @@ sub get_seqs{
 
 
 sub prots{
-  if(! -d $tmpDir){
-    make_path($tmpDir);
-    print LOG "\# ".(localtime).": create working directory $tmpDir\n";
-    print LOG "mkdir $tmpDir\n\n";
-  }else{
-    $cmdString = "rm -r $tmpDir";
-    print LOG "\# ".(localtime).": delete existing files from $tmpDir\n";
-    print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
-    make_path($tmpDir);
-  }
-
   open (PROT, $prot_file) or die "Cannot open file: $prot_file\n";
   print LOG "\# ".(localtime).": read in fasta sequences from $prot_file\n";
   my $seqname;
@@ -396,6 +425,11 @@ sub start_align{
     make_path($alignDir);
     print LOG "\# ".(localtime).": create working directory $alignDir\n";
     print LOG "mkdir $alignDir\n\n";
+  }else{
+      print LOG "\# ".(localtime).": working directory $alignDir already exists. Deleting files in that directory.\n";
+      $cmdString = "rm -r $alignDir";
+      system($cmdString)==0 or die("Failed to execute $cmdString\n");
+      make_path($alignDir);
   }
 
   chdir $tmpDir or die("Could not change to directory $tmpDir.\n");
@@ -404,44 +438,41 @@ sub start_align{
   my $whole_prediction_file = "$alignDir/$prgsrc.concat.aln";
   if($reg){
       foreach my $ID (keys %contigIDs){
-      my $pid = $pm->start and next;
-      my $target = "$contigIDs{$ID}{\"seq\"}$ID.fa";     # genome sequence
-      my $query = "$ID.fa";                              # protein file
-      $errorfile = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.stderr";
-      $stdoutfile = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.aln";
-      my $stdAdjusted;
-      # create target file (contigIDs)
-      if(! -e $target){ 
-        my $length = $contigIDs{$ID}{"end"} - $contigIDs{$ID}{"start"} + 1 + (2 * $offset);
-        my $substart = $contigIDs{$ID}{"start"} - $offset;
-        my $subseq = substr($seq{$contigIDs{$ID}{"seq"}}, $substart, $length);
-        print_seq($target, $subseq, $contigIDs{$ID}{"seq"});
+	  my $pid = $pm->start and next;
+	  my $target = "$contigIDs{$ID}{\"seq\"}$ID.fa";     # genome sequence
+	  my $query = "$ID.fa";                              # protein file
+	  $errorfile = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.stderr";
+	  $stdoutfile = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.aln";
+	  my $stdAdjusted;
+	  # create target file (contigIDs)
+	  if(! -e $target){ 
+	      my $length = $contigIDs{$ID}{"end"} - $contigIDs{$ID}{"start"} + 1 + (2 * $offset);
+	      my $substart = $contigIDs{$ID}{"start"} - $offset;
+	      my $subseq = substr($seq{$contigIDs{$ID}{"seq"}}, $substart, $length);
+	      print_seq($target, $subseq, $contigIDs{$ID}{"seq"});
+	  }
+	  if($prgsrc eq "exonerate"){
+	      call_exonerate($target, $query, $stdoutfile, $errorfile);
+	      $stdAdjusted = adjust_exonerate($stdoutfile, $ID);
+	  }
+	  
+	  if($prgsrc eq "spaln"){
+	      call_spaln($target, $query, $stdoutfile, $errorfile);
+	      $stdAdjusted = adjust($stdoutfile, $ID);
+	  }
+	  
+	  if($prgsrc eq "gth"){
+	      call_gth($target, $query, $stdoutfile, $errorfile);
+	      $stdAdjusted = adjust($stdoutfile, $ID);
+	  }
+	  $cmdString = "cat $stdAdjusted >>$whole_prediction_file";
+	  print LOG "\# ".(localtime).": add prediction from file $stdAdjusted to file $whole_prediction_file\n";
+	  print LOG "$cmdString\n\n";
+	  system("$cmdString")==0 or die("failed to execute: $!\n");
+	  $pm->finish;
       }
-      if($prgsrc eq "exonerate"){
-        call_exonerate($target, $query, $stdoutfile, $errorfile);
-        $stdAdjusted = adjust_exonerate($stdoutfile, $ID);
-      }
-      
-      if($prgsrc eq "spaln"){
-        call_spaln($target, $query, $stdoutfile, $errorfile);
-        $stdAdjusted = adjust($stdoutfile, $ID);
-      }
-    
-      if($prgsrc eq "gth"){
-        call_gth($target, $query, $stdoutfile, $errorfile);
-        $stdAdjusted = adjust($stdoutfile, $ID);
-      }
-      $cmdString = "cat $stdAdjusted >>$whole_prediction_file";
-      print LOG "\# ".(localtime).": add prediction from file $stdAdjusted to file $whole_prediction_file\n";
-      print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
-      $pm->finish;
-    }
   }else{
-      if($CPU > 1 || ($CPU == 1 && !$protWhole) || ($CPU == 1 && $protWhole && $prgsrc ne "gth")){
-	  # ERROR: %seq SEEMS TO BE EMPTY
-	  # %seq is only populated if CPU > 1
-	  # It cannot be allowed to come here if CPU is not > 1!!!!!!
+      if($CPU > 1 || ($CPU == 1 && !$protWhole)){
 	  foreach my $ID (keys %seq){
 	      my $pid = $pm->start and next;
 	      my $target = "genome$ID.fa";  # genome sequence
@@ -453,7 +484,6 @@ sub start_align{
 	      }
 	      $errorfile = "$alignDir/$ID.$prgsrc.stderr";
 	      $stdoutfile = "$alignDir/$ID.$prgsrc.aln";
-	      print "NOCH DA\n";
 	      # create target file (whole sequences)
 	      if(! -e $target){
 		  print_seq($target, $seq{$ID}, $ID);
@@ -479,7 +509,15 @@ sub start_align{
 	  $errorfile = "$alignDir/$prgsrc.stderr";
 	  $stdoutfile = "$alignDir/$prgsrc.aln";
 	  call_gth($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
-      }     
+      }elsif($CPU == 1 && $prgsrc eq "exonerate" && $protWhole){
+	  $errorfile = "$alignDir/$prgsrc.stderr";
+	  $stdoutfile = "$alignDir/$prgsrc.aln";
+	  call_exonerate($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
+      }elsif($CPU == 1 && $prgsrc eq "spaln" && $protWhole){
+	  $errorfile = "$alignDir/$prgsrc.stderr";
+	  $stdoutfile = "$alignDir/$prgsrc.aln";
+	  call_spaln($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
+      }
   }
   $pm->wait_all_children;
   chdir $dir or die ("Could not change to directory $dir.\n");
@@ -530,11 +568,15 @@ sub call_spaln{
     $cmdString = "";
       if(defined($ALIGNMENT_TOOL_PATH)){
 	  $cmdString .= $ALIGNMENT_TOOL_PATH."/";
-    }
-    $cmdString .= "makdbs -KP $tFile;";
+      }
+    # ERROR IS THAT THE GENOME AND PROT FILE ARE NOT IN THE EXECUTING DIRECTORY!
+    # CHANGE SOFTLINK ABOVE!
+    $cmdString .= "makdbs -KP $tFile";
     print LOG "\# ".(localtime).": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for target '$tFile' \n";
     print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
+    print "I am here!\n";
+    print $cmdString."\n";
+    system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
   if(! -f "$split[0].bkp"){
     $cmdString = "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bkp -KP $tFile";
@@ -549,7 +591,7 @@ sub call_spaln{
     if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
     }
-    $cmdString .= "makdbs -KA $qFile;";
+    $cmdString .= "makdbs -KA $qFile";
     print LOG "\# ".(localtime).": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for query '$qFile' \n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $!\n");
@@ -727,7 +769,7 @@ sub adjust_spaln_noreg{
 
 # delete empty files
 sub clean_up{
-  print STDOUT "NEXT STEP: delete empty files\n";
+  print OUT "NEXT STEP: delete empty files\n";
   my @files = `find $alignDir -empty`;
   print LOG "\# ".(localtime).": delete empty files\n";
   for(my $i=0; $i <= $#files; $i++){
@@ -737,5 +779,5 @@ sub clean_up{
       unlink(rel2abs($files[$i]));
     }
   }
-  print STDOUT "empty files deleted.\n";
+  print OUT "empty files deleted.\n";
 }
