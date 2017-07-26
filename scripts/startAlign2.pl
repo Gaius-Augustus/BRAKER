@@ -188,6 +188,20 @@ if(!defined($log)){
 }
 open (LOG, ">".$log) or die "Cannot open file: $log\n";
 
+$tmpDir = "$dir/tmp_$prgsrc";
+$alignDir = "$dir/align_$prgsrc";
+if(! -d $tmpDir){
+    make_path($tmpDir);
+    print LOG "\# ".(localtime).": create working directory $tmpDir\n";
+    print LOG "mkdir $tmpDir\n\n";
+}else{
+    $cmdString = "rm -r $tmpDir";
+    print LOG "\# ".(localtime).": delete existing files from $tmpDir\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
+    make_path($tmpDir);
+}
+
 # check whether genome file is specified
 if(defined($genome_file)){
     # check whether genome file exists
@@ -197,20 +211,23 @@ if(defined($genome_file)){
     }else{
 	$genome_file = rel2abs($genome_file);
 	my $nDots = ($genome_file =~ tr/\.//);
+	my $linkName = $genome_file;
 	if($nDots > 1){ # more than one dot in file name, need to avoid that for spaln
-	    my $linkName = $genome_file;
-	    for(my $i = 0; $i < ($nDots-1); $i++){
+	    for(my $i = 0; $i < ($nDots-1); $i++){	
 		$linkName =~ s/\./_/;
 	    }
-	    if(! -e $linkName){
-		$cmdString = "ln -s $genome_file $linkName";
-		system($cmdString)==0 or die ("Failed to execute $cmdString!\n");
-		print LOG "\# ".(localtime).": $cmdString\n";
-	    }else{
-		print LOG "\# ".(localtime)." WARNING: $linkName does already exist. Will assume that $linkName is a link to $genome_file!\n";
-	    }
-	    $genome_file = $linkName;
 	}
+	# create link to genome file in tmpDir (Spaln is looking for related database files, there)
+	my @pathParts = split(/\//, $linkName);
+	$linkName = $tmpDir."/".$pathParts[scalar(@pathParts)-1];
+	if(! -e $linkName){
+	    $cmdString = "ln -s $genome_file $linkName";
+	    system($cmdString)==0 or die ("Failed to execute $cmdString!\n");
+	    print LOG "\# ".(localtime).": $cmdString\n";
+	}else{
+	    print LOG "\# ".(localtime)." WARNING: $linkName does already exist. Will assume that $linkName is a link to $genome_file!\n";
+	}
+	$genome_file = $linkName;
     }
 }else{
     print STDERR "ERROR: No genome file specified!\n";
@@ -225,46 +242,31 @@ if(defined($prot_file)){
 	print STDERR "ERROR: Protein file $prot_file does not exist!\n";
 	exit(1);
     }else{
-	my @a = split(/\//, $prot_file);
-	$prot_file_base = $a[-1];
 	$prot_file = rel2abs($prot_file);
+	my $linkName = $prot_file;
 	my $nDots = ($prot_file =~ tr/\.//);
 	if($nDots > 1){ # more than one dot in file name, need to avoid that for spaln
-	    my $linkName = $prot_file;
 	    for(my $i = 0; $i < ($nDots-1); $i++){
 		$linkName =~ s/\./_/;
 	    }
-	    if(! -e $linkName){
-		$cmdString = "ln -s $prot_file $linkName";
-		system($cmdString)==0 or die ("Failed to execute $cmdString!\n");
-		print LOG "\# ".(localtime).": $cmdString\n";
-	    }else{
-		print LOG "\# ".(localtime)." WARNING: $linkName does already exist. Will assume that $linkName is a link to $prot_file!\n";
-	    }
-	    $prot_file = $linkName;
 	}
+	my @pathParts = split(/\//, $linkName);
+	$linkName = $tmpDir."/".$pathParts[scalar(@pathParts)-1];
+	if(! -e $linkName){
+	    $cmdString = "ln -s $prot_file $linkName";
+	    system($cmdString)==0 or die ("Failed to execute $cmdString!\n");
+	    print LOG "\# ".(localtime).": $cmdString\n";
+	}else{
+	                print LOG "\# ".(localtime)." WARNING: $linkName does already exist. Will assume that $linkName is a link to $prot_file!\n";
+	}
+	$prot_file = $linkName;
+	my @a = split(/\//, $prot_file);
+	$prot_file_base = $a[-1];
     }
 }else{
     print STDERR "ERROR: No protein file specified!\n";
     exit(1);
 }
-
-
-
-$tmpDir = "$dir/tmp_$prgsrc"; 
-$alignDir = "$dir/align_$prgsrc";
-if(! -d $tmpDir){
-    make_path($tmpDir);
-    print LOG "\# ".(localtime).": create working directory $tmpDir\n";
-    print LOG "mkdir $tmpDir\n\n";
-}else{
-    $cmdString = "rm -r $tmpDir";
-    print LOG "\# ".(localtime).": delete existing files from $tmpDir\n";
-    print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
-    make_path($tmpDir);
-}
-
 
 my $last_char = substr($dir, -1);
 if($last_char eq "\/"){
@@ -366,6 +368,7 @@ sub get_seqs{
 
 
 sub prots{
+    print "This is the file: ".$prot_file."\n";
   open (PROT, $prot_file) or die "Cannot open file: $prot_file\n";
   print LOG "\# ".(localtime).": read in fasta sequences from $prot_file\n";
   my $seqname;
@@ -376,7 +379,7 @@ sub prots{
 	  if($seqname){
 	      if($protWhole){
 		  $counterW++;
-		  print_prot("$tmpDir/$prot_file_base.addstop", $seqname, $sequencepart);
+		  print_prot("$tmpDir/$prot_file_base"."_addstop", $seqname, $sequencepart);
 	      }else{
 		  if(defined($protIDs{$seqname})){
 		      for(my $i=0; $i<scalar(@{$protIDs{$seqname}}); $i++){
@@ -402,7 +405,7 @@ sub prots{
 
   if($protWhole){
       $counterW++;
-      print_prot("$tmpDir/$prot_file_base.addstop", $seqname, $sequencepart);
+      print_prot("$tmpDir/$prot_file_base"."_addstop", $seqname, $sequencepart);
   }else{
       if(defined($protIDs{$seqname})){
 	  for(my $i=0; $i<scalar(@{$protIDs{$seqname}}); $i++){
@@ -480,7 +483,7 @@ sub start_align{
 	      if(!$protWhole){
 		  $query = "prot$ID.fa";     # protein file
 	      }else{
-		  $query = "$prot_file_base.addstop";
+		  $query = "$prot_file_base"."_addstop";
 	      }
 	      $errorfile = "$alignDir/$ID.$prgsrc.stderr";
 	      $stdoutfile = "$alignDir/$ID.$prgsrc.aln";
@@ -508,15 +511,15 @@ sub start_align{
       }elsif($CPU == 1 && $prgsrc eq "gth" && $protWhole){
 	  $errorfile = "$alignDir/$prgsrc.stderr";
 	  $stdoutfile = "$alignDir/$prgsrc.aln";
-	  call_gth($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
+	  call_gth($genome_file, "$prot_file_base"."_addstop", $stdoutfile, $errorfile);
       }elsif($CPU == 1 && $prgsrc eq "exonerate" && $protWhole){
 	  $errorfile = "$alignDir/$prgsrc.stderr";
 	  $stdoutfile = "$alignDir/$prgsrc.aln";
-	  call_exonerate($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
+	  call_exonerate($genome_file, "$prot_file_base"."_addstop", $stdoutfile, $errorfile);
       }elsif($CPU == 1 && $prgsrc eq "spaln" && $protWhole){
 	  $errorfile = "$alignDir/$prgsrc.stderr";
 	  $stdoutfile = "$alignDir/$prgsrc.aln";
-	  call_spaln($genome_file, "$prot_file_base.addstop", $stdoutfile, $errorfile);
+	  call_spaln($genome_file, "$prot_file_base"."_addstop", $stdoutfile, $errorfile);
       }
   }
   $pm->wait_all_children;
@@ -564,17 +567,16 @@ sub call_spaln{
   my $stdoutfile = shift;
   my $errorfile = shift;
   my @split = split(/\./, $tFile);
+  # some fo the spaln perl scripts expect spaln in $PATH
+  $ENV{PATH} = "$ALIGNMENT_TOOL_PATH:$ENV{PATH}";
   if(! -f "$split[0].idx"){
     $cmdString = "";
       if(defined($ALIGNMENT_TOOL_PATH)){
 	  $cmdString .= $ALIGNMENT_TOOL_PATH."/";
       }
-    # ERROR IS THAT THE GENOME AND PROT FILE ARE NOT IN THE EXECUTING DIRECTORY!
-    # CHANGE SOFTLINK ABOVE!
     $cmdString .= "makdbs -KP $tFile";
     print LOG "\# ".(localtime).": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for target '$tFile' \n";
     print LOG "$cmdString\n\n";
-    print "I am here!\n";
     print $cmdString."\n";
     system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
@@ -582,7 +584,7 @@ sub call_spaln{
     $cmdString = "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bkp -KP $tFile";
     print LOG "\# ".(localtime).": create *.bkp file for target '$tFile'\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
+    system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
 
   @split = split(/\./, $qFile);
@@ -594,13 +596,14 @@ sub call_spaln{
     $cmdString .= "makdbs -KA $qFile";
     print LOG "\# ".(localtime).": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for query '$qFile' \n";
     print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
+    system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
   if(! -f "$split[0].bka"){
     $cmdString = "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bka -KA $qFile";
     print LOG "\# ".(localtime).": create *.bka file for query '$qFile'\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString")==0 or die("failed to execute: $!\n");
+    print "Option 5: $cmdString\n";
+    system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
   $cmdString = "";
   if(defined($ALIGNMENT_TOOL_PATH)){
@@ -609,7 +612,7 @@ sub call_spaln{
   $cmdString .= "spaln -Q7 -O0 $tFile $qFile > $stdoutfile 2>$errorfile";
   print LOG "\# ".(localtime).": run spaln for target '$tFile' and query '$qFile'\n";
   print LOG "$cmdString\n\n";
-  system("$cmdString")==0 or die("failed to execute: $!\n");
+  system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 }
 
 sub print_prot{
