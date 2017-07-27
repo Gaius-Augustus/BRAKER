@@ -492,7 +492,7 @@ sub start_align{
 	      if(!$protWhole){
 		  $query = "prot$ID.fa";     # protein file
 	      }else{
-		  $query = "$tmpDir/$prot_addstop_file";
+		  $query = "$prot_addstop_file";
 	      }
 	      $errorfile = "$alignDir/$ID.$prgsrc.stderr";
 	      $stdoutfile = "$alignDir/$ID.$prgsrc.aln";
@@ -525,9 +525,9 @@ sub start_align{
 	  $errorfile = "$alignDir/$prgsrc.stderr";
 	  $stdoutfile = "$alignDir/$prgsrc.aln";
 	  if($CPU == 1 && $prgsrc eq "gth" && $protWhole){
-	      call_gth($genome_file, "$tmpDir/$prot_addstop_file", $stdoutfile, $errorfile);
+	      call_gth($genome_file, "$prot_addstop_file", $stdoutfile, $errorfile);
 	  }elsif($CPU == 1 && $prgsrc eq "exonerate" && $protWhole){
-	      call_exonerate($genome_file, "$tmpDir/$prot_addstop_file", $stdoutfile, $errorfile);
+	      call_exonerate($genome_file, "$prot_addstop_file", $stdoutfile, $errorfile);
 	  }elsif($CPU == 1 && $prgsrc eq "spaln" && $protWhole){
 	      call_spaln($genome_file, "$tmpDir/$prot_addstop_file", $stdoutfile, $errorfile, 1);
 	  }
