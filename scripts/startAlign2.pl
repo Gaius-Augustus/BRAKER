@@ -97,6 +97,7 @@ my $pos_file;               # position list file
 my $prgsrc;                 # source program (exonerate, spaln or gth)
 my $prot_file;              # protein database file
 my $prot_file_base;         # protein database file name base for $protwhole option
+my $prot_addstop_file;      # file name that will be automatically derived from $prot_file_base
 my %protIDs;                # hash for protein IDs
 my $protWhole = 0;          # use whole protein database file
 my $reg = 0;                # use regions
@@ -104,7 +105,7 @@ my %seq;                    # hash for genome sequences
 my $stdoutfile;             # standard output file name
 my $tmpDir;                 # temporary directory for storing protein and genome part files
 
-my $spalnErrAdj = 80;       # version spaln2.2.0 misses a line while "counting coordinates" (+80 because of how the fasta files are printed here, see line 529-534) 
+my $spalnErrAdj = 80;       # version spaln2.2.0 misses a line while "counting coordinates" (+80 because of how the fasta files are printed here, see line 529-534); error still persists with version 2.3.1
 # gth options           # and other values that have proven to work well for Drosophila on chromosome 2L
 my $gcmincoverage = 80; # 70 - 95 
 my $prhdist  = 2;       # 2 - 6 
@@ -262,6 +263,14 @@ if(defined($prot_file)){
 	$prot_file = $linkName;
 	my @a = split(/\//, $prot_file);
 	$prot_file_base = $a[-1];
+	# define prot_file.addstop file name
+	$prot_addstop_file = $prot_file_base;
+	@pathParts = split(/\./, $prot_file_base);
+	if(scalar(@pathParts)==2){
+	    $prot_addstop_file = $pathParts[0]."_addstop.".$pathParts[1];
+	}else{
+	    die ("Unexpected error in prot_addstop_file name definition\n");
+	}
     }
 }else{
     print STDERR "ERROR: No protein file specified!\n";
@@ -368,7 +377,6 @@ sub get_seqs{
 
 
 sub prots{
-    print "This is the file: ".$prot_file."\n";
   open (PROT, $prot_file) or die "Cannot open file: $prot_file\n";
   print LOG "\# ".(localtime).": read in fasta sequences from $prot_file\n";
   my $seqname;
@@ -379,7 +387,7 @@ sub prots{
 	  if($seqname){
 	      if($protWhole){
 		  $counterW++;
-		  print_prot("$tmpDir/$prot_file_base"."_addstop", $seqname, $sequencepart);
+		  print_prot("$tmpDir/$prot_addstop_file", $seqname, $sequencepart);
 	      }else{
 		  if(defined($protIDs{$seqname})){
 		      for(my $i=0; $i<scalar(@{$protIDs{$seqname}}); $i++){
@@ -405,7 +413,7 @@ sub prots{
 
   if($protWhole){
       $counterW++;
-      print_prot("$tmpDir/$prot_file_base"."_addstop", $seqname, $sequencepart);
+      print_prot("$tmpDir/$prot_addstop_file", $seqname, $sequencepart);
   }else{
       if(defined($protIDs{$seqname})){
 	  for(my $i=0; $i<scalar(@{$protIDs{$seqname}}); $i++){
@@ -438,6 +446,7 @@ sub start_align{
   chdir $tmpDir or die("Could not change to directory $tmpDir.\n");
   
   my $pm = new Parallel::ForkManager($CPU);
+  # ERROR IS NOW THAT CONCAT IS NOT WRITTEN IN ALL CASES
   my $whole_prediction_file = "$alignDir/$prgsrc.concat.aln";
   if($reg){
       foreach my $ID (keys %contigIDs){
@@ -460,7 +469,7 @@ sub start_align{
 	  }
 	  
 	  if($prgsrc eq "spaln"){
-	      call_spaln($target, $query, $stdoutfile, $errorfile);
+	      call_spaln($target, $query, $stdoutfile, $errorfile, 1);
 	      $stdAdjusted = adjust($stdoutfile, $ID);
 	  }
 	  
@@ -471,7 +480,7 @@ sub start_align{
 	  $cmdString = "cat $stdAdjusted >>$whole_prediction_file";
 	  print LOG "\# ".(localtime).": add prediction from file $stdAdjusted to file $whole_prediction_file\n";
 	  print LOG "$cmdString\n\n";
-	  system("$cmdString")==0 or die("failed to execute: $!\n");
+	  system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 	  $pm->finish;
       }
   }else{
@@ -483,7 +492,7 @@ sub start_align{
 	      if(!$protWhole){
 		  $query = "prot$ID.fa";     # protein file
 	      }else{
-		  $query = "$prot_file_base"."_addstop";
+		  $query = "$tmpDir/$prot_addstop_file";
 	      }
 	      $errorfile = "$alignDir/$ID.$prgsrc.stderr";
 	      $stdoutfile = "$alignDir/$ID.$prgsrc.aln";
@@ -496,7 +505,11 @@ sub start_align{
 	      }
         
 	      if($prgsrc eq "spaln"){
-		  call_spaln($target, $query, $stdoutfile, $errorfile);
+		  if(scalar(keys %seq) > 1){
+		      call_spaln($target, $query, $stdoutfile, $errorfile, 1);
+		  }else{
+		      call_spaln($target, $query, $stdoutfile, $errorfile, $CPU);
+		  }
 	      }
       
 	      if($prgsrc eq "gth"){
@@ -505,21 +518,23 @@ sub start_align{
 	      $cmdString = "cat $stdoutfile >>$whole_prediction_file";
 	      print LOG "\# ".(localtime).": add prediction from file $stdoutfile to file $whole_prediction_file\n";
 	      print LOG "$cmdString\n\n";
-	      system("$cmdString")==0 or die("failed to execute: $!\n");
+	      system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 	      $pm->finish;
 	  }
-      }elsif($CPU == 1 && $prgsrc eq "gth" && $protWhole){
+      }else{
 	  $errorfile = "$alignDir/$prgsrc.stderr";
 	  $stdoutfile = "$alignDir/$prgsrc.aln";
-	  call_gth($genome_file, "$prot_file_base"."_addstop", $stdoutfile, $errorfile);
-      }elsif($CPU == 1 && $prgsrc eq "exonerate" && $protWhole){
-	  $errorfile = "$alignDir/$prgsrc.stderr";
-	  $stdoutfile = "$alignDir/$prgsrc.aln";
-	  call_exonerate($genome_file, "$prot_file_base"."_addstop", $stdoutfile, $errorfile);
-      }elsif($CPU == 1 && $prgsrc eq "spaln" && $protWhole){
-	  $errorfile = "$alignDir/$prgsrc.stderr";
-	  $stdoutfile = "$alignDir/$prgsrc.aln";
-	  call_spaln($genome_file, "$prot_file_base"."_addstop", $stdoutfile, $errorfile);
+	  if($CPU == 1 && $prgsrc eq "gth" && $protWhole){
+	      call_gth($genome_file, "$tmpDir/$prot_addstop_file", $stdoutfile, $errorfile);
+	  }elsif($CPU == 1 && $prgsrc eq "exonerate" && $protWhole){
+	      call_exonerate($genome_file, "$tmpDir/$prot_addstop_file", $stdoutfile, $errorfile);
+	  }elsif($CPU == 1 && $prgsrc eq "spaln" && $protWhole){
+	      call_spaln($genome_file, "$tmpDir/$prot_addstop_file", $stdoutfile, $errorfile, 1);
+	  }
+	  $cmdString = "cat $stdoutfile >>$whole_prediction_file";
+	  print LOG "\# ".(localtime).": add prediction from file $stdoutfile to file $whole_prediction_file\n";
+	  print LOG "$cmdString\n\n";
+	  system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
       }
   }
   $pm->wait_all_children;
@@ -543,7 +558,7 @@ sub call_exonerate{
   $cmdString .= "exonerate --model protein2genome --maxintron $maxintronlen --showtargetgff --showalignment no --query $qFile -t   $tFile > $stdoutfile 2> $errorfile";
   print LOG "\# ".(localtime).": run exonerate for target '$tFile' and query '$qFile'\n";
   print LOG "$cmdString\n\n";
-  system("$cmdString")==0 or die("failed to execute: $!\n");
+  system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 }
 
 sub call_gth{
@@ -566,6 +581,7 @@ sub call_spaln{
   my $qFile = shift;
   my $stdoutfile = shift;
   my $errorfile = shift;
+  my $cpus = shift; # separate variable because multithreading shall only be used if data parallelization is not taking place, already
   my @split = split(/\./, $tFile);
   # some fo the spaln perl scripts expect spaln in $PATH
   $ENV{PATH} = "$ALIGNMENT_TOOL_PATH:$ENV{PATH}";
@@ -574,10 +590,9 @@ sub call_spaln{
       if(defined($ALIGNMENT_TOOL_PATH)){
 	  $cmdString .= $ALIGNMENT_TOOL_PATH."/";
       }
-    $cmdString .= "makdbs -KP $tFile";
+    $cmdString .= "makdbs -KP $tFile ";
     print LOG "\# ".(localtime).": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for target '$tFile' \n";
     print LOG "$cmdString\n\n";
-    print $cmdString."\n";
     system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
   if(! -f "$split[0].bkp"){
@@ -586,7 +601,6 @@ sub call_spaln{
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
-
   @split = split(/\./, $qFile);
   if(! -f "$split[0].idx"){
     $cmdString = "";
@@ -602,14 +616,18 @@ sub call_spaln{
     $cmdString = "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bka -KA $qFile";
     print LOG "\# ".(localtime).": create *.bka file for query '$qFile'\n";
     print LOG "$cmdString\n\n";
-    print "Option 5: $cmdString\n";
+    print LOG "\# OUTPUT OF makblk.pl STARTING #\n";
     system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
   $cmdString = "";
   if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
   }
-  $cmdString .= "spaln -Q7 -O0 $tFile $qFile > $stdoutfile 2>$errorfile";
+  $cmdString .= "spaln ";
+  if($cpus > 1){
+      $cmdString .= "-t[$cpus] ";
+  }
+  $cmdString .= "-Q7 -O0 $tFile $qFile > $stdoutfile 2>$errorfile";
   print LOG "\# ".(localtime).": run spaln for target '$tFile' and query '$qFile'\n";
   print LOG "$cmdString\n\n";
   system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
@@ -772,7 +790,7 @@ sub adjust_spaln_noreg{
 
 # delete empty files
 sub clean_up{
-  print OUT "NEXT STEP: delete empty files\n";
+  print LOG "NEXT STEP: delete empty files\n";
   my @files = `find $alignDir -empty`;
   print LOG "\# ".(localtime).": delete empty files\n";
   for(my $i=0; $i <= $#files; $i++){
@@ -782,5 +800,5 @@ sub clean_up{
       unlink(rel2abs($files[$i]));
     }
   }
-  print OUT "empty files deleted.\n";
+  print LOG "empty files deleted.\n";
 }
