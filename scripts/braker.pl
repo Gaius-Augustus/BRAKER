@@ -827,52 +827,65 @@ sub make_prot_hints{
     my $prot_hints;
     my $prot_hints_file_temp = "$otherfilesDir/prot_hintsfile.temp.gff";
     $prot_hintsfile = "$otherfilesDir/prot_hintsfile.gff";
-    my $alignment_outfile = "$otherfilesDir/protein_alignment_$prg.gff3";
+    my $alignment_outfile = "$otherfilesDir/protein_alignment_$prg.gff3";   
+    # change to working directory
+    $cmdString = "cd $otherfilesDir";
+    print LOG "\# ".(localtime).": Changing to $otherfilesDir\n";
+    print LOG "$cmdString\n";
+    chdir $otherfilesDir or die ("Failed to execude $cmdString!\n");
     # from fasta files
     if(@prot_seq_files){
-	print STDOUT "NEXT STEP: runninig alignment tool $prg\n";
+	print STDOUT "NEXT STEP: running alignment tool $prg\n";
 	$string = find("startAlign.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-	$errorfile = "$errorfilesDir/startAlign2.stderr";
-	$logfile = "$errorfilesDir/startAlign2.stdout";
+	$errorfile = "$errorfilesDir/startAlign.stderr";
+	$logfile = "$errorfilesDir/startAlign.stdout";
 	for(my $i=0; $i<scalar(@prot_seq_files); $i++){
-	    $perlCmdString = "";
-	    if($nice){
-		$perlCmdString .= "nice ";
-	    }
-	    $perlCmdString .= "perl $string --genome=$genome --prot=$prot_seq_files[$i] --ALIGNMENT_TOOL_PATH=$ALIGNMENT_TOOL_PATH ";
-	    if($prg eq "gth"){
-		$perlCmdString .= "--prg=gth ";
-		print LOG "\# ".(localtime).": running Genome Threader to produce protein to genome alignments\n";
-	    }elsif($prg eq "exonerate"){
-		$perlCmdString .= "--prg=exonerate ";
-		print LOG "\# ".(localtime).": running Exonerate to produce protein to genome alignments\n";
-	    }elsif($prg eq "spaln"){
-		$perlCmdString .= "--prg=spaln ";
-		print LOG "\# ".(localtime).": running Spaln to produce protein to genome alignments\n";
-	    }
-	    if($CPU>1){
-		$perlCmdString .= "--CPU=$CPU ";
-	    }
-	    $perlCmdString .= ">> $logfile 2>>$errorfile";
-	    print LOG "$perlCmdString\n\n";
-	    system("$perlCmdString")==0 or die ("failed to execute: $perlCmdString!\n");
-	    print STDOUT "Alignments created from file $prot_seq_files[$i] created.\n";
-	    $cmdString = "cat align_$prg/$prg.concat.aln >> $alignment_outfile";	    
-	    print LOG "\# ".(localtime).": concatenating alignment file to $alignment_outfile\n";
-	    print LOG "$cmdString\n\n";
-	    system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
-	    print LOG "\# ".(localtime).": moving startAlign output files\n";
-	    $cmdString = "mv startAlign_$prg.log startAlign_$prg.log$i";
-	    pring LOG "$cmdString\n";
-	    system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
-	    $cmdString = "mv tmp_$prg tmp_$prg$i";
-	    pring LOG "$cmdString\n";
-	    system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
-	    $cmdString = "mv align_$prg align_$prg$i";
-	    pring LOG "$cmdString\n";
-	    system("$cmdString")==0 or die("Failed to execute $cmdString!\n\n");	    
+	    if(!uptodate([$prot_seq_files[$i]],[$alignment_outfile])  || $overwrite){
+		$perlCmdString = "";
+		if($nice){
+		    $perlCmdString .= "nice ";
+		}
+		$perlCmdString .= "perl $string --genome=$genome --prot=$prot_seq_files[$i] --ALIGNMENT_TOOL_PATH=$ALIGNMENT_TOOL_PATH ";
+		if($prg eq "gth"){
+		    $perlCmdString .= "--prg=gth ";
+		    print LOG "\# ".(localtime).": running Genome Threader to produce protein to genome alignments\n";
+		}elsif($prg eq "exonerate"){
+		    $perlCmdString .= "--prg=exonerate ";
+		    print LOG "\# ".(localtime).": running Exonerate to produce protein to genome alignments\n";
+		}elsif($prg eq "spaln"){
+		    $perlCmdString .= "--prg=spaln ";
+		    print LOG "\# ".(localtime).": running Spaln to produce protein to genome alignments\n";
+		}
+		if($CPU>1){
+		    $perlCmdString .= "--CPU=$CPU ";
+		}
+		if($nice){
+		    $perlCmdString .= "--nice ";
+		}
+		$perlCmdString .= ">> $logfile 2>>$errorfile";
+		print LOG "$perlCmdString\n\n";
+		system("$perlCmdString")==0 or die ("failed to execute: $perlCmdString!\n");
+		print STDOUT "Alignments from file $prot_seq_files[$i] created.\n";
+		$cmdString = "cat align_$prg/$prg.concat.aln >> $alignment_outfile";	    
+		print LOG "\# ".(localtime).": concatenating alignment file to $alignment_outfile\n";
+		print LOG "$cmdString\n\n";
+		system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
+		print LOG "\# ".(localtime).": moving startAlign output files\n";
+		$cmdString = "mv startAlign_$prg.log startAlign_$prg.log$i";
+		print LOG "$cmdString\n";
+		system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
+		$cmdString = "mv tmp_$prg tmp_$prg$i";
+		print LOG "$cmdString\n";
+		system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
+		$cmdString = "mv align_$prg align_$prg$i";
+		print LOG "$cmdString\n";
+		system("$cmdString")==0 or die("Failed to execute $cmdString!\n\n");	  
+	    }else{
+		print STDOUT "Skipping running alignment tool because files $prot_seq_files[$i] and $alignment_outfile were up to date.\n";		
+	    }  
 	}
     }
+    
 }
 
 
@@ -959,7 +972,7 @@ sub new_species{
 	      if($nice){
 		  $perlCmdString .= "nice ";
 	      }
-	      $perlCmdString .= "perl $string --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH 2>$errorfile";
+	      $perlCmdString .= "perl $string --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH 1> /dev/null 2>$errorfile";
 	      print LOG "\# ".(localtime).": create new species $species\n";
 	      print LOG "$perlCmdString\n\n";
 	      system("$perlCmdString")==0 or die("Failed to create new species with new_species.pl, check write permissions in $AUGUSTUS_CONFIG_PATH/species directory! $!\n");
@@ -1753,23 +1766,22 @@ sub check_upfront{ # see autoAug.pl
 	  }
       }elsif($prg eq 'spaln'){
 	  $prot_aligner = "$ALIGNMENT_TOOL_PATH/spaln";
-	  if(system("$prot_aligner > /dev/null 2> /dev/null)") != 0){
-	      if(! -f $prot_aligner){
-		  print STDERR "ERROR: Spaln executable not found at $prot_aligner.\n";
-	      }else{
-		  print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
-	      }
+	  if(! -f $prot_aligner){
+	      print STDERR "ERROR: Spaln executable not found at $prot_aligner.\n";
+	      exit(1);
+	  }elsif(! -x $prot_aligner){
+	      print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
 	      exit(1);
 	  }
 	  # check whether spaln environment variables are configured
 	  if(!$ENV{'ALN_DBS'} or !$ENV{'ALN_TAB'}){
 	      if(!$ENV{'ALN_DBS'}){
-		  print STDERR "ERROR: The environment variable ALN_DBS for spaln2 is not defined. Please export an\
- environment variable with:' export ALN_DBS=/path/to/spaln2/seqdb'\n";
+		  print STDERR "ERROR: The environment variable ALN_DBS for spaln is not defined. Please export an\
+ environment variable with:' export ALN_DBS=/path/to/spaln/seqdb'\n";
 	      }
 	      if(!$ENV{'ALN_TAB'}){
-		  print STDERR "ERROR: The environment variable ALN_TAB for spaln2 is not defined. Please export an\
- environment variable with:' export ALN_TAB=/path/to/spaln2/table'\n";
+		  print STDERR "ERROR: The environment variable ALN_TAB for spaln is not defined. Please export an\
+ environment variable with:' export ALN_TAB=/path/to/spaln/table'\n";
 	      }
 	      exit(1);
 	  }
@@ -1801,7 +1813,7 @@ sub check_upfront{ # see autoAug.pl
   find("join_aug_pred.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
   find("getAnnoFasta.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
   find("gtf2gff.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-  find("startAlign2.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+  find("startAlign.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
   find("align2hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
 }
 

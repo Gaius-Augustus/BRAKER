@@ -38,7 +38,7 @@ use warnings;
 
 my $usage = <<'ENDUSAGE';
 
-startAlign2.pl split genome file in single sequences or sequence parts and protein file according 
+startAlign.pl split genome file in single sequences or sequence parts and protein file according 
                to contigIDs then run alignment program exonerate, spaln or genomeThreader (gth) 
                for each contigID or each sequence. When no list and/or pos file(s) are/is assigned
                the program will use the whole protein file.
