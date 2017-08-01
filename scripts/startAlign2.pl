@@ -70,6 +70,9 @@ OPTIONS
                                  By default, if no path is given, script assumes they are in the current 
                                  $PATH bash variable.
 
+    --nice                       Execute all system calls within braker.pl and its submodules with bash "nice" 
+                                 (default nice value) 
+
 
 
 DESCRIPTION
@@ -104,6 +107,8 @@ my $reg = 0;                # use regions
 my %seq;                    # hash for genome sequences
 my $stdoutfile;             # standard output file name
 my $tmpDir;                 # temporary directory for storing protein and genome part files
+my $nice;                   # flag that determines whether system calls should be executed with bash nice
+                            #(default nice value)
 
 my $spalnErrAdj = 80;       # version spaln2.2.0 misses a line while "counting coordinates" (+80 because of how the fasta files are printed here, see line 529-534); error still persists with version 2.3.1
 # gth options           # and other values that have proven to work well for Drosophila on chromosome 2L
@@ -130,6 +135,7 @@ GetOptions( 'CPU=i'         => \$CPU,
             'prg=s'         => \$prgsrc,
             'prot=s'        => \$prot_file,
             'help!'         => \$help,
+	    'nice!'         => \$nice,	    
             'ALIGNMENT_TOOL_PATH=s' => \$ALIGNMENT_TOOL_PATH);
 
 if($help){
@@ -477,7 +483,11 @@ sub start_align{
 	      call_gth($target, $query, $stdoutfile, $errorfile);
 	      $stdAdjusted = adjust($stdoutfile, $ID);
 	  }
-	  $cmdString = "cat $stdAdjusted >>$whole_prediction_file";
+	  $cmdString = "";
+	  if($nice){
+	      $cmdString .= "nice ";
+	  }
+	  $cmdString .= "cat $stdAdjusted >>$whole_prediction_file";
 	  print LOG "\# ".(localtime).": add prediction from file $stdAdjusted to file $whole_prediction_file\n";
 	  print LOG "$cmdString\n\n";
 	  system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
@@ -515,7 +525,11 @@ sub start_align{
 	      if($prgsrc eq "gth"){
 		  call_gth($target, $query, $stdoutfile, $errorfile);
 	      }
-	      $cmdString = "cat $stdoutfile >>$whole_prediction_file";
+	      $cmdString = "";
+	      if($nice){
+		  $cmdString .= "nice ";
+	      }
+	      $cmdString .= "cat $stdoutfile >>$whole_prediction_file";
 	      print LOG "\# ".(localtime).": add prediction from file $stdoutfile to file $whole_prediction_file\n";
 	      print LOG "$cmdString\n\n";
 	      system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
@@ -531,7 +545,11 @@ sub start_align{
 	  }elsif($CPU == 1 && $prgsrc eq "spaln" && $protWhole){
 	      call_spaln($genome_file, "$tmpDir/$prot_addstop_file", $stdoutfile, $errorfile, 1);
 	  }
-	  $cmdString = "cat $stdoutfile >>$whole_prediction_file";
+	  $cmdString = "";
+	  if($nice){
+	      $cmdString .= "nice ";
+	  }
+	  $cmdString .= "cat $stdoutfile >>$whole_prediction_file";
 	  print LOG "\# ".(localtime).": add prediction from file $stdoutfile to file $whole_prediction_file\n";
 	  print LOG "$cmdString\n\n";
 	  system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
@@ -552,6 +570,9 @@ sub call_exonerate{
   my $stdoutfile = shift;
   my $errorfile = shift;
   $cmdString = "";
+  if($nice){
+      $cmdString .= "nice ";
+  }
   if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
   }
@@ -567,6 +588,9 @@ sub call_gth{
   my $stdoutfile = shift;
   my $errorfile = shift;
   $cmdString = "";
+  if($nice){
+      $cmdString .= "nice ";
+  }
   if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
   }
@@ -586,7 +610,10 @@ sub call_spaln{
   # some fo the spaln perl scripts expect spaln in $PATH
   $ENV{PATH} = "$ALIGNMENT_TOOL_PATH:$ENV{PATH}";
   if(! -f "$split[0].idx"){
-    $cmdString = "";
+      $cmdString = "";
+      if($nice){
+	  $cmdString .= "nice ";
+      }
       if(defined($ALIGNMENT_TOOL_PATH)){
 	  $cmdString .= $ALIGNMENT_TOOL_PATH."/";
       }
@@ -596,7 +623,11 @@ sub call_spaln{
     system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
   if(! -f "$split[0].bkp"){
-    $cmdString = "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bkp -KP $tFile";
+    $cmdString = "";
+    if($nice){
+	  $cmdString .= "nice ";
+    }
+    $cmdString .= "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bkp -KP $tFile";
     print LOG "\# ".(localtime).": create *.bkp file for target '$tFile'\n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
@@ -604,6 +635,10 @@ sub call_spaln{
   @split = split(/\./, $qFile);
   if(! -f "$split[0].idx"){
     $cmdString = "";
+    $cmdString = "";
+    if($nice){
+	  $cmdString .= "nice ";
+    }
     if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
     }
@@ -613,13 +648,20 @@ sub call_spaln{
     system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
   if(! -f "$split[0].bka"){
-    $cmdString = "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bka -KA $qFile";
+    $cmdString = "";
+    if($nice){
+        $cmdString .= "nice ";
+    }
+    $cmdString .= "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bka -KA $qFile";
     print LOG "\# ".(localtime).": create *.bka file for query '$qFile'\n";
     print LOG "$cmdString\n\n";
     print LOG "\# OUTPUT OF makblk.pl STARTING #\n";
     system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
   }
   $cmdString = "";
+  if($nice){
+      $cmdString .= "nice ";
+  }
   if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
   }

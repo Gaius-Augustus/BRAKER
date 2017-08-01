@@ -136,7 +136,7 @@ OPTIONS
                                          multiplicity of that gene.
     --crf                                Execute CRF training for AUGUSTUS; resulting parameters are only kept for
                                          final predictions if they show higher accuracy than HMM parameters.
-    --protein-seq=prot.fa                A protein sequence file in multiple fasta format. This file will be used
+    --prot_seq=prot.fa                   A protein sequence file in multiple fasta format. This file will be used
                                          to generate protein hints for AUGUSTUS by running one of the three
                                          alignment tools Exonerate (--prg=exonerate), Spaln (--prg=spaln) or 
                                          GenomeThreader (--prg=gth). Default is GenomeThreader if the tool is not 
@@ -144,7 +144,7 @@ OPTIONS
                                          Currently, hints from proteins are only used in the prediction step with
                                          AUGUSTUS. If --protein-seq is specified, it is not allowed to 
                                          specify --protein-aln or --protein-hints.
-    --protein-aln=prot.aln               Alignment file generated from aligning protein sequences against the 
+    --prot_aln=prot.aln                  Alignment file generated from aligning protein sequences against the 
                                          genome with either Exonerate (--prg=exonerate), or Spaln (--prg=spaln), or
                                          GenomeThreader (--prg=gth).
                                          To prepare alignment file, run Spaln2 with the following command:
@@ -155,17 +155,17 @@ OPTIONS
                                             gth -genomic genome.fa  -protein protein.fa -gff3out -skipalignmentout 
                                                ... -o gthfile
                                          A valid option prg=... must be specified in combination with 
-                                         --protein-aln. Generating tool will not be guessed.
+                                         --prot_aln. Generating tool will not be guessed.
                                          Currently, hints from proteins are only used in the prediction step with
                                          AUGUSTUS.
-    --protein-hints=prothints.gff        File containing protein hints for gene prediction with AUGUSTUS.
+    --prot_hints   =prothints.gff        File containing protein hints for gene prediction with AUGUSTUS.
                                          Allowed features: NEED TO ADD THE FEATURES, LATER!
     --prg=gth|exonerate|spaln            Alignment tool ght (GenomeThreader), exonerate (Exonerate) or Spaln2
                                          (spaln) that will be used to generate protein alignments that will be the 
                                          basis for hints generation for gene prediction with AUGUSTUS (if specified
-                                         in combination with --protein-seq) or that was used to externally
+                                         in combination with --prot_seq) or that was used to externally
                                          generate an alignment file with the commands listed in description of 
-                                         --protein-aln (if used in combination with --protein-aln).
+                                         --prot_aln (if used in combination with --prot_aln).
     --ALIGNMENT_TOOL_PATH=/path/to/tool  Set path to alignment tool (GenomeThreader, Spaln, or Exonerate) if not 
                                          specified as environment variable. Has higher priority than environment
                                          variable.
@@ -548,7 +548,7 @@ if(@prot_aln_files){
     @prot_aln_files = split(/[\s,]/, join(',',@prot_aln_files));
     for(my $i=0; $i<scalar(@prot_aln_files); $i++){
 	if(! -f $prot_aln_files[$i]){
-	    print STDDERR "ERROR: protein alignment file $prot_aln_files[$i] does not exist.\n";
+	    print STDERR "ERROR: protein alignment file $prot_aln_files[$i] does not exist.\n";
 	    exit(1);
 	}
 	$prot_aln_files[$i] = rel2abs($prot_aln_files[$i]);
@@ -664,13 +664,14 @@ if(! -f "$genome"){
 	  check_fasta_headers($_);
       }
   }
-  make_rna_seq_hints();         # make hints from RNA-Seq or gtf input
+###  make_rna_seq_hints();         # make hints from RNA-Seq or gtf input
   if(@prot_seq_files or @prot_aln_files or @prot_hints_files){
       make_prot_hints();
   }
-  GeneMark_ET();                # run GeneMark-ET
-  training();                   # train species-specific parameters with optimize_augustus.pl and etraining
+###  GeneMark_ET();                # run GeneMark-ET
+###  training();                   # train species-specific parameters with optimize_augustus.pl and etraining
 
+=head
   # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
   if(!defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && $soft_mask)){
     extrinsic(); # use default extrinsic file
@@ -698,14 +699,15 @@ if(! -f "$genome"){
     }
   }
 
-  augustus(); # run augustus
+###  augustus(); # run augustus
   if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.aa"])  || $overwrite){
-    getAnnoFasta("$otherfilesDir/augustus.gff"); # create protein sequence file
+###    getAnnoFasta("$otherfilesDir/augustus.gff"); # create protein sequence file
   }
   if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.gtf"])  || $overwrite){
-    make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf and gff3 (if desired) format
+###    make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf and gff3 (if desired) format
   }
-  clean_up(); # delete all empty files
+###  clean_up(); # delete all empty files
+=cut
   close(LOG) or die("Could not close log file $logfile!\n");
 }
 
@@ -809,7 +811,7 @@ sub make_rna_seq_hints{
       $perlCmdString .= "perl $string $genome $hintsfile_temp --score 1>$hintsfile 2>$errorfile";
       print LOG "\# ".(localtime).": filter introns, find strand and change score to \'mult\' entry\n";
       print LOG "$perlCmdString\n\n";
-      system("$perlCmdString")==0 or die("failed to execute: $!\n");
+      system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
       print STDOUT "strands found and score changed.\n";
       unlink($hintsfile_temp);
       print STDOUT "hints file complete.\n";
@@ -825,11 +827,50 @@ sub make_prot_hints{
     my $prot_hints;
     my $prot_hints_file_temp = "$otherfilesDir/prot_hintsfile.temp.gff";
     $prot_hintsfile = "$otherfilesDir/prot_hintsfile.gff";
-    # convert protein sequences to fasta format
+    my $alignment_outfile = "$otherfilesDir/protein_alignment_$prg.gff3";
+    # from fasta files
     if(@prot_seq_files){
+	print STDOUT "NEXT STEP: runninig alignment tool $prg\n";
+	$string = find("startAlign.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	$errorfile = "$errorfilesDir/startAlign2.stderr";
+	$logfile = "$errorfilesDir/startAlign2.stdout";
 	for(my $i=0; $i<scalar(@prot_seq_files); $i++){
-	    
-	    
+	    $perlCmdString = "";
+	    if($nice){
+		$perlCmdString .= "nice ";
+	    }
+	    $perlCmdString .= "perl $string --genome=$genome --prot=$prot_seq_files[$i] --ALIGNMENT_TOOL_PATH=$ALIGNMENT_TOOL_PATH ";
+	    if($prg eq "gth"){
+		$perlCmdString .= "--prg=gth ";
+		print LOG "\# ".(localtime).": running Genome Threader to produce protein to genome alignments\n";
+	    }elsif($prg eq "exonerate"){
+		$perlCmdString .= "--prg=exonerate ";
+		print LOG "\# ".(localtime).": running Exonerate to produce protein to genome alignments\n";
+	    }elsif($prg eq "spaln"){
+		$perlCmdString .= "--prg=spaln ";
+		print LOG "\# ".(localtime).": running Spaln to produce protein to genome alignments\n";
+	    }
+	    if($CPU>1){
+		$perlCmdString .= "--CPU=$CPU ";
+	    }
+	    $perlCmdString .= ">> $logfile 2>>$errorfile";
+	    print LOG "$perlCmdString\n\n";
+	    system("$perlCmdString")==0 or die ("failed to execute: $perlCmdString!\n");
+	    print STDOUT "Alignments created from file $prot_seq_files[$i] created.\n";
+	    $cmdString = "cat align_$prg/$prg.concat.aln >> $alignment_outfile";	    
+	    print LOG "\# ".(localtime).": concatenating alignment file to $alignment_outfile\n";
+	    print LOG "$cmdString\n\n";
+	    system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
+	    print LOG "\# ".(localtime).": moving startAlign output files\n";
+	    $cmdString = "mv startAlign_$prg.log startAlign_$prg.log$i";
+	    pring LOG "$cmdString\n";
+	    system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
+	    $cmdString = "mv tmp_$prg tmp_$prg$i";
+	    pring LOG "$cmdString\n";
+	    system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
+	    $cmdString = "mv align_$prg align_$prg$i";
+	    pring LOG "$cmdString\n";
+	    system("$cmdString")==0 or die("Failed to execute $cmdString!\n\n");	    
 	}
     }
 }
@@ -1062,7 +1103,7 @@ sub training{
         print STDOUT "NEXT STEP: create genbank file\n";
         $errorfile = "$errorfilesDir/gff2gbSmallDNA.stderr";
         if(-z "$genemarkDir/genemark.c.gtf"){
-            print STDERR "ERROR: The GeneMark-ET output file is empty. Please check.\n";
+            print STDERR "ERROR: The GeneMark-ET output file is empty!\n";
             exit(1);
         }
         $perlCmdString = "";
@@ -1730,6 +1771,7 @@ sub check_upfront{ # see autoAug.pl
 		  print STDERR "ERROR: The environment variable ALN_TAB for spaln2 is not defined. Please export an\
  environment variable with:' export ALN_TAB=/path/to/spaln2/table'\n";
 	      }
+	      exit(1);
 	  }
       }elsif($prg eq 'exonerate'){
 	  $prot_aligner = "$ALIGNMENT_TOOL_PATH/exonerate";
