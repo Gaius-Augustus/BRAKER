@@ -885,8 +885,65 @@ sub make_prot_hints{
 	    }  
 	}
     }
+    # convert pipeline created protein alignments to protein hints
+    if(@prot_seq_files && -e $alignment_outfile){
+	if(!uptodate([$alignment_outfile], [$prot_hintsfile]) || $overwrite){
+	    aln2hints($alignment_outfile, $prot_hints_file_temp, $prot_hintsfile);
+	}
+    }
+    # convert command line specified protein alignments to protein hints
+    if(@prot_aln_files){
+	for(my $i=0; $i<scalar(@prot_aln_files); $i++){
+	    if(!uptodate([$prot_aln_files[$i]], [$prot_hintsfile]) || $overwrite){
+		aln2hints($prot_aln_files[$i], $prot_hints_file_temp, $prot_hintsfile);
+	    }
+	}
+    }
+    # append command line specified hints
+    if(@prot_hints_files){
+	for(my $i=0; $i<scalar(@prot_hints_files); $i++){
+	    if(!uptodate([$prot_hints_files[$i]], [$prot_hintsfile]) || $overwrite){
+		print STDOUT "NEXT STEP: appending hints file $prot_hints_files[$i] to protein hints file $prot_hintsfile\n";
+		print "\# ".(localtime).": Appending hints file $prot_hints_files[$i] to protein hints file $prot_hintsfile\n";
+		$cmdString = "cat $prot_hints_files[$i] >> $prot_hintsfile";
+		print LOG $cmdString."\n";
+		system($cmdString) or die ("Could not execute $cmdString!\n");
+		print STDOUT "File appended.\n";
+	    }
+	}
+    }
     
 }
+
+
+sub aln2hints{
+    my $aln_file = shift;
+    my $out_file_name = shift;
+    my $final_out_file = shift;
+    print STDOUT "NEXT STEP: converting alignment file $aln_file to protein hints file\n";
+    print LOG "\# ".(localtime).": Converting protein alignment file $aln_file to hints for AUGUSTUS\n";
+    $perlCmdString = "perl ";
+    if($nice){
+	$perlCmdString .= "nice ";
+    }
+    $string = find("align2hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+    $perlCmdString .= "$string --in=$aln_file --out=$out_file_name ";
+    if($prg eq "spaln"){
+	$perlCmdString .= "--prg=spaln";
+    }elsif($prg eq "gth"){
+	$perlCmdString .= "--prg=gth";
+    }elsif($prg eq "exonerate"){
+	$perlCmdString .= "--prg=exonerate --genome_file=$genome";
+    }
+    print LOG "$perlCmdString\n";
+    system("$perlCmdString") or die ("Failed to execute $perlCmdString!\n\n");
+    print STDOUT "$out_file_name protein hints file created.\n";
+    $cmdString = "cat $out_file_name >> $final_out_file";
+    print LOG "\# ".(localtime).": concatenating protein hints from $out_file_name to $final_out_file\n";
+    print LOG $cmdString."\n";
+    system("$cmdString") or die ("Could not execute $cmdString!\n");
+}
+    
 
 
 
