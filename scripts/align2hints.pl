@@ -53,7 +53,8 @@ OPTIONS
     --priority=n             Priority of hint group (default 4).
     --prg=s                  Alignment program of input file, either 'gth', 'spaln', 'exonerate', or 'scipio'.
     --source=s               Source identifier (default 'P')
-
+    --genome_file=s          if prg is exonerate and start hints shall be created, the genome file from which the 
+                             alignments were generated, must be specified.
 
 Format:
   seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB> strand <TAB> frame <TAB> src=source;grp=target_protein;pri=priority
@@ -88,6 +89,8 @@ my ($qstart, $qend, $prevQend);   # positions in query protein (scipio only), to
 my $prgsrc;                       # source programme (exonerate, spaln or gth)
 my $priority = 4;                 # priority for hints
 my $source = "P";                 # source for extrinsic file
+my $genome_file;                  # genome file name
+my %genome;                       # hash to store genome sequence
 
 
 
@@ -104,6 +107,7 @@ GetOptions('in=s'             => \$alignfile,
            'minintronlen:i'   => \$minintronlen,
            'priority:i'       => \$priority,
            'prg=s'            => \$prgsrc,
+           'genome_file=s'    => \$genome_file,
            'source:s'         => \$source);
 
 # mainly for usage within BRAKER2
@@ -157,6 +161,23 @@ if ($prgsrc eq "scipio"){
     $prgsrc = "scipio2h";
 }
 
+if(not($prgsrc eq "xnt2h") && defined($genome_file)){
+   print STDERR "ERROR: program name is $prgsrc and a genome file was specified. Will ignore genome file.\n";
+}elsif($prgsrc eq "xnt2h" && defined($genome_file)){
+   open(GENOME, "<", $genome_file) or die("Could not open genome fasta file $genome_file!\n");
+   my $header;
+   while(<GENOME>){
+      chomp;
+      if(m/^>(.*)/){
+         $genome{$1} = "";
+         $header = $1;
+      }else{
+         $genome{$header} .= $_;
+      }
+   }
+   close(GENOME) or die("Could not close genome fasta file $genome_file!\n");
+}
+
 
 open (ALN, "<$alignfile") or die("Cannot open file: $alignfile\n");
 open (HINTS, ">$hintsfilename") or die("Cannot open file: $hintsfilename");
@@ -199,6 +220,28 @@ while(<ALN>) {
         $parent = $1;
         $qstart = $2; # start of alignment in query protein
         $qend = $3; # start of alignment in query protein
+    }
+    # create start hints from exonerate
+    if($type eq "gene" && $prgsrc eq "xnt2h" && defined($genome_file)){
+        my $pot_start;
+        if($strand eq "+"){
+           $pot_start = substr($genome{$seqname}, $start-1, 3);
+        }elsif($strand eq "-"){
+           $pot_start = substr($genome{$seqname}, $end-3, 3);
+           $pot_start =~ tr/acgtACGT/tgcaTGCA/;
+           $pot_start = reverse($pot_start);
+        }
+        if(defined($pot_start)){
+           if($pot_start =~ m/(ATG)|(TTG)|(GTG)|(CTG)/i){
+              print_start($seqname, $strand, $start, $end, $score);
+           }
+        }
+    }elsif($prgsrc eq "spn2h" || $prgsrc eq "gth2h"){
+       if(($type eq "cds" && $f[8] =~ m/Target=.* (\d+) \d+ (\+|-)/ && $prgsrc eq "spn2h") || ($type eq "mRNA" && $f[8] =~ m/Target=.* (\d+) \d+ (\+|-)/ && $prgsrc eq "gth2h")){
+          if($1 == 1){
+             print_start($seqname, $strand, $start, $end, $score);
+          }
+       }
     }
 
     if ($type eq "CDS" || $type eq "cds" || $type eq "protein_match"){
@@ -269,4 +312,17 @@ sub get_intron{
     $prevQend = $qend if (defined($qend));
 }
 
-
+sub print_start{
+    my $seqname = shift;
+    my $strand = shift;
+    my $start = shift;
+    my $end = shift;
+    my $score = shift;
+    print HINTS "$seqname\t$prgsrc\tstart\t";
+    if($strand eq "+"){
+	print HINTS "$start\t".($start+2);
+    }else{
+	print HINTS ($end-2)."\t$end";
+    }
+    print HINTS "\t$score\t$strand\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+}

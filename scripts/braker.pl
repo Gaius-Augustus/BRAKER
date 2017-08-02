@@ -1756,12 +1756,11 @@ sub check_upfront{ # see autoAug.pl
   if(@prot_seq_files){
       if($prg eq 'gth'){
 	  $prot_aligner = "$ALIGNMENT_TOOL_PATH/gth";
-	  if(system("$prot_aligner > /dev/null 2> /dev/null)") != 0){
-	      if(! -f $prot_aligner){
-		  print STDERR "ERROR: GenomeThreader executable not found at $prot_aligner.\n";
-	      }else{
-		  print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
-	      }
+	  if(! -f $prot_aligner){
+	      print STDERR "ERROR: GenomeThreader executable not found at $prot_aligner.\n";
+	      exit(1);
+	   }elsif(! -x $prot_aligner){
+	      print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
 	      exit(1);
 	  }
       }elsif($prg eq 'spaln'){
@@ -1787,12 +1786,11 @@ sub check_upfront{ # see autoAug.pl
 	  }
       }elsif($prg eq 'exonerate'){
 	  $prot_aligner = "$ALIGNMENT_TOOL_PATH/exonerate";
-	  if(system("$prot_aligner > /dev/null 2> /dev/null)") != 0){
-	      if(! -f $prot_aligner){
-		  print STDERR "ERROR: Exonerate executable not found at $prot_aligner.\n";
-	      }else{
-		  print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
-	      }
+	  if(! -f $prot_aligner){
+	      print STDERR "ERROR: Exonerate executable not found at $prot_aligner.\n";
+	      exit(1);
+	  }elsif(! -x $prot_aligner){
+	      print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
 	      exit(1);
 	  }
 	  
