@@ -694,7 +694,7 @@ if(! -f "$genome"){
 	$cmdString .= "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
 	print LOG "\# ".(localtime).": copy extrinsic file to working directory\n";
 	print LOG "$cmdString\n\n";
-	system("$cmdString")==0 or die("failed to execute: $!\n");
+	system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 	print STDOUT "extrinsic file copied.\n";
     }
   }
@@ -742,7 +742,7 @@ sub make_rna_seq_hints{
 	$cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
         print LOG "\# ".(localtime).": make hints from BAM file $bam[$i]\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
+        system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 	$cmdString = "";
 	if($nice){
 	    $cmdString .= "nice ";
@@ -750,7 +750,7 @@ sub make_rna_seq_hints{
         $cmdString .= "cat $bam_temp >>$hintsfile_temp";
         print LOG "\# ".(localtime).": add hints from BAM file $bam[$i] to hints file\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
+        system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
         print STDOUT "hints from BAM file $bam[$i] added.\n";
       }
     }
@@ -760,7 +760,7 @@ sub make_rna_seq_hints{
   if(@hints){
     for(my $i=0; $i<scalar(@hints); $i++){
       if(!uptodate([$hints[$i]],[$hintsfile]) || $overwrite){
-	  print STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
+	  pricnt STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
 	  $cmdString = "";
 	  if($nice){
 	      $cmdString .= "nice ";
@@ -768,38 +768,14 @@ sub make_rna_seq_hints{
 	  $cmdString .= "cat $hints[$i] >> $hintsfile_temp";
 	  print LOG "\# ".(localtime).": add hints from file $hints[$i]\n";
 	  print LOG "$cmdString\n\n";
-	  system("$cmdString")==0 or die("failed to execute: $!\n");
+	  system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
       }
     }
   }
   if(-f $hintsfile_temp || $overwrite){
     if(!uptodate([$hintsfile_temp],[$hintsfile]) || $overwrite){
-      my $hintsfile_temp_sort = "$otherfilesDir/hints.temp.sort.gff";
-      print STDOUT "NEXT STEP: sort hints\n";
-      $cmdString = "";
-      if($nice){
-	  $cmdString .= "nice ";
-      }
-      $cmdString .= "cat $hintsfile_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
-      print LOG "\# ".(localtime).": sort hints\n";
-      print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
-      print STDOUT "hints sorted.\n";
-      print STDOUT "NEXT STEP: summarize multiple identical hints to one\n";
-      $string = find("join_mult_hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-      $errorfile = "$errorfilesDir/join_mult_hints.stderr";
-      $perlCmdString = "";
-      if($nice){
-	  $perlCmdString .= "nice ";
-      }
-      $perlCmdString .= "perl $string <$hintsfile_temp_sort >$hintsfile_temp 2>$errorfile";
-      print LOG "\# ".(localtime).": join multiple hints\n";
-      print LOG "$perlCmdString\n\n";
-      system("$perlCmdString")==0 or die("failed to execute: $!\n");
-      print STDOUT "hints joined.\n";
-      unlink($hintsfile_temp_sort);
+	join_mult_hints($hintsfile_temp, "rnaseq");
     }
-
     if(!uptodate([$hintsfile_temp],[$hintsfile]) || $overwrite){
       print STDOUT "NEXT STEP: filter introns, find strand and change score to \'mult\' entry\n";
       $string = find("filterIntronsFindStrand.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
@@ -840,7 +816,7 @@ sub make_prot_hints{
 	$errorfile = "$errorfilesDir/startAlign.stderr";
 	$logfile = "$errorfilesDir/startAlign.stdout";
 	for(my $i=0; $i<scalar(@prot_seq_files); $i++){
-	    if(!uptodate([$prot_seq_files[$i]],[$alignment_outfile])  || $overwrite){
+	    if(!uptodate([$prot_seq_files[$i]],[$prot_hintsfile])  || $overwrite){
 		$perlCmdString = "";
 		if($nice){
 		    $perlCmdString .= "nice ";
@@ -881,21 +857,23 @@ sub make_prot_hints{
 		print LOG "$cmdString\n";
 		system("$cmdString")==0 or die("Failed to execute $cmdString!\n\n");	  
 	    }else{
-		print STDOUT "Skipping running alignment tool because files $prot_seq_files[$i] and $alignment_outfile were up to date.\n";		
+		print STDOUT "Skipping running alignment tool because files $prot_seq_files[$i] and $prot_hintsfile were up to date.\n";		
 	    }  
 	}
     }
     # convert pipeline created protein alignments to protein hints
     if(@prot_seq_files && -e $alignment_outfile){
 	if(!uptodate([$alignment_outfile], [$prot_hintsfile]) || $overwrite){
-	    aln2hints($alignment_outfile, $prot_hints_file_temp, $prot_hintsfile);
+	    aln2hints($alignment_outfile, $prot_hints_file_temp);
 	}
     }
     # convert command line specified protein alignments to protein hints
     if(@prot_aln_files){
 	for(my $i=0; $i<scalar(@prot_aln_files); $i++){
 	    if(!uptodate([$prot_aln_files[$i]], [$prot_hintsfile]) || $overwrite){
-		aln2hints($prot_aln_files[$i], $prot_hints_file_temp, $prot_hintsfile);
+		aln2hints($prot_aln_files[$i], $prot_hints_file_temp);
+	    }else{
+		print "Skipped converting alignment file $prot_aln_files[$i] to hints because it was up to date with $prot_hintsfile\n";
 	    }
 	}
     }
@@ -903,45 +881,95 @@ sub make_prot_hints{
     if(@prot_hints_files){
 	for(my $i=0; $i<scalar(@prot_hints_files); $i++){
 	    if(!uptodate([$prot_hints_files[$i]], [$prot_hintsfile]) || $overwrite){
-		print STDOUT "NEXT STEP: appending hints file $prot_hints_files[$i] to protein hints file $prot_hintsfile\n";
-		print "\# ".(localtime).": Appending hints file $prot_hints_files[$i] to protein hints file $prot_hintsfile\n";
-		$cmdString = "cat $prot_hints_files[$i] >> $prot_hintsfile";
+		print STDOUT "NEXT STEP: appending hints file $prot_hints_files[$i] to protein hints file $prot_hints_file_temp\n";
+		print LOG "\# ".(localtime).": Appending hints file $prot_hints_files[$i] to protein hints file $prot_hints_file_temp\n";
+		$cmdString = "cat $prot_hints_files[$i] >> $prot_hints_file_temp";
 		print LOG $cmdString."\n";
-		system($cmdString) or die ("Could not execute $cmdString!\n");
+		system($cmdString)==0 or die ("Could not execute $cmdString!\n");
 		print STDOUT "File appended.\n";
 	    }
 	}
     }
-    
+    if(-f $prot_hints_file_temp || $overwrite){
+	if(!uptodate([$prot_hints_file_temp],[$prot_hintsfile])|| $overwrite){
+	    join_mult_hints($prot_hints_file_temp, "prot");
+	    print STDOUT "NEXT STEP: moving $prot_hints_file_temp to $prot_hintsfile\n";
+	    print LOG "\# ".(localtime).": moving $prot_hints_file_temp to $prot_hintsfile\n";
+$cmdString = "mv $prot_hints_file_temp $prot_hintsfile";
+	    print LOG "$cmdString\n";
+	    system($cmdString)==0 or die ("Could not execute $cmdString!\n");
+	    print LOG "Deleting $prot_hints_file_temp\n";
+	    unlink($prot_hints_file_temp);
+	    print STDOUT "file moved.\n";
+	}
+    }
+    if(-z $prot_hintsfile){
+	print STDERR "ERROR: The hints file is empty. There were no protein alignments.\n";
+	exit(1);
+    }
 }
 
 
 sub aln2hints{
     my $aln_file = shift;
-    my $out_file_name = shift;
-    my $final_out_file = shift;
-    print STDOUT "NEXT STEP: converting alignment file $aln_file to protein hints file\n";
-    print LOG "\# ".(localtime).": Converting protein alignment file $aln_file to hints for AUGUSTUS\n";
-    $perlCmdString = "perl ";
+    if(! (-z $aln_file)){
+	my $out_file_name = "$otherfilesDir/prot_hintsfile.aln2hints.temp.gff";
+	my $final_out_file = shift;
+	print STDOUT "NEXT STEP: converting alignment file $aln_file to protein hints file\n";
+	print LOG "\# ".(localtime).": Converting protein alignment file $aln_file to hints for AUGUSTUS\n";
+	$perlCmdString = "perl ";
+	if($nice){
+	    $perlCmdString .= "nice ";
+	}
+	$string = find("align2hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	$perlCmdString .= "$string --in=$aln_file --out=$out_file_name ";
+	if($prg eq "spaln"){
+	    $perlCmdString .= "--prg=spaln";
+	}elsif($prg eq "gth"){
+	    $perlCmdString .= "--prg=gth";
+	}elsif($prg eq "exonerate"){
+	    $perlCmdString .= "--prg=exonerate --genome_file=$genome";
+	}
+	print LOG "$perlCmdString\n";
+	system("$perlCmdString")==0 or die ("Failed to execute $perlCmdString!\n\n");
+	print STDOUT "$out_file_name protein hints file created.\n";
+	$cmdString = "cat $out_file_name >> $final_out_file";
+	print LOG "\# ".(localtime).": concatenating protein hints from $out_file_name to $final_out_file\n";
+	print LOG $cmdString."\n";
+	system("$cmdString")==0 or die ("Could not execute $cmdString!\n");
+    }else{
+	print "Alignment file $aln_file was empty!\n";
+	print LOG "\# ".(localtime).": Alignment file $aln_file was empty!\n";
+    }
+}
+
+sub join_mult_hints{
+    my $hints_file_temp = shift;
+    my $type = shift; # rnaseq or prot or whatever will follow
+    my $hintsfile_temp_sort = "$otherfilesDir/hints.$type.temp.sort.gff";
+    print STDOUT "NEXT STEP: sort hints\n";
+    $cmdString = "";
+    if($nice){
+	$cmdString .= "nice ";
+    }
+    $cmdString .= "cat $hints_file_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
+    print LOG "\# ".(localtime).": sort hints of type $type\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
+    print STDOUT "hints sorted.\n";
+    print STDOUT "NEXT STEP: summarize multiple identical hints of type to one\n";
+    $string = find("join_mult_hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+    $errorfile = "$errorfilesDir/join_mult_hints.$type.stderr";
+    $perlCmdString = "";
     if($nice){
 	$perlCmdString .= "nice ";
     }
-    $string = find("align2hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    $perlCmdString .= "$string --in=$aln_file --out=$out_file_name ";
-    if($prg eq "spaln"){
-	$perlCmdString .= "--prg=spaln";
-    }elsif($prg eq "gth"){
-	$perlCmdString .= "--prg=gth";
-    }elsif($prg eq "exonerate"){
-	$perlCmdString .= "--prg=exonerate --genome_file=$genome";
-    }
-    print LOG "$perlCmdString\n";
-    system("$perlCmdString") or die ("Failed to execute $perlCmdString!\n\n");
-    print STDOUT "$out_file_name protein hints file created.\n";
-    $cmdString = "cat $out_file_name >> $final_out_file";
-    print LOG "\# ".(localtime).": concatenating protein hints from $out_file_name to $final_out_file\n";
-    print LOG $cmdString."\n";
-    system("$cmdString") or die ("Could not execute $cmdString!\n");
+    $perlCmdString .= "perl $string <$hintsfile_temp_sort >$hints_file_temp 2>$errorfile";
+    print LOG "\# ".(localtime).": join multiple hints\n";
+    print LOG "$perlCmdString\n\n";
+    system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
+    print STDOUT "hints joined.\n";
+    unlink($hintsfile_temp_sort);
 }
     
 
@@ -1007,7 +1035,7 @@ sub GeneMark_ET{
     }
     print LOG "\# ".(localtime).": convert GeneMark-ET output to real gtf format\n";
     print LOG "$perlCmdString\n\n";
-    system("$perlCmdString")==0 or die("failed to execute: $!\n");
+    system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
     print STDOUT "GeneMark-ET conversion.\n";
   }
 }
@@ -1183,7 +1211,7 @@ sub training{
         $perlCmdString .= "perl $string $genemarkDir/genemark.c.gtf $genome $flanking_DNA $genbank 2>$errorfile";
         print LOG "\# ".(localtime).": create genbank file\n";
         print LOG "$perlCmdString\n\n";
-        system("$perlCmdString")==0 or die("failed to execute: $!\n");
+        system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
         print STDOUT "genbank file created.\n";  
     }
 
@@ -1203,7 +1231,7 @@ sub training{
         $perlCmdString .= "perl $string $genemarkDir/genemark.f.good.gtf $genbank 1>$otherfilesDir/genbank.good.gb 2>$errorfile";
         print LOG "\# ".(localtime).": filter genbank file\n";
         print LOG "$perlCmdString\n\n";
-        system("$perlCmdString")==0 or die("failed to execute: $!\n");
+        system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
         print STDOUT "genbank file filtered.\n";
     }
 
@@ -1233,7 +1261,7 @@ sub training{
 	        $perlCmdString .= "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
 	        print LOG "\# ".(localtime).": split genbank file into train and test file\n";
 	        print LOG "$perlCmdString\n\n";
-	        system("$perlCmdString")==0 or die("failed to execute: $!\n");
+	        system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
 	        print STDOUT "genbank file splitted.\n";
         }
     }
@@ -1340,7 +1368,7 @@ sub training{
             }
             print LOG "\# ".(localtime).": first test\n";
             print LOG "$cmdString\n\n";
-            system("$cmdString")==0 or die("failed to execute: $!\n");
+            system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 	        $target_1 = accuracy_calculator($stdoutfile);
 	        print LOG "\# The accuracy after initial training (no optimize_augustus.pl, no CRF) is $target_1\n";      
             print STDOUT "first test finished.\n";
@@ -1377,7 +1405,7 @@ sub training{
                 }
                 print LOG "\# ".(localtime).": optimize AUGUSTUS parameter\n";
                 print LOG "$perlCmdString\n\n";
-                system("$perlCmdString")==0 or die("failed to execute: $!\n");
+                system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
                 print STDOUT "parameter optimized.\n";
             }
         }
@@ -1526,7 +1554,7 @@ sub training{
         $cmdString .= "cp -r $AUGUSTUS_CONFIG_PATH/species/$species $parameterDir";
         print LOG "\# ".(localtime).": copy optimized parameters to working directory\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
+        system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
         print STDOUT "parameter files copied.\n";
     }
 }
@@ -1569,7 +1597,7 @@ sub augustus{
 	  $perlCmdString .= "nice ";
       }
       $perlCmdString .= "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
-      system("$perlCmdString")==0 or die("failed to execute: $!\n");
+      system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
       if($nice){
           @genome_files = `nice find $otherfilesDir -name "genome.split.*"`;
       }else{
@@ -2055,7 +2083,7 @@ sub check_bam_headers{
       $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools header -in $bamFile > $samHeaderFile";
       print LOG "\# ".(localtime).": create header file $samHeaderFile\n";
       print LOG "$cmdString\n\n";
-      system("$cmdString")==0 or die("failed to execute: $!\n");
+      system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
       print STDOUT "SAM file $samHeaderFile complete.\n";
 
       print STDOUT "NEXT STEP: check BAM headers\n";
@@ -2139,7 +2167,7 @@ sub check_bam_headers{
         $cmdString .= "$SAMTOOLS_PATH view $bamFile > $samFile";
         print LOG "\# ".(localtime).": convert BAM to SAM file $samFile\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
+        system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
         print STDOUT "SAM file $samFile created.\n";
         open(SAM, "<", $samFile) or die("Could not open SAM file $samFile!\n");
         open(OUTPUT, ">", "$samFile_new") or die("Could not open SAM file $samFile_new!\n");
@@ -2163,7 +2191,7 @@ sub check_bam_headers{
         $cmdString .= "cat $samHeaderFile_new $samFile_new > $samFile";
         print LOG "\# ".(localtime).": concatenate new header and SAM file\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
+        system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
         print STDOUT "new SAM file created.\n";
         unlink($samFile_new);
 
@@ -2175,7 +2203,7 @@ sub check_bam_headers{
         $cmdString = "$SAMTOOLS_PATH view -bSh $samFile > $otherfilesDir/".$_[0].".bam";
         print LOG "\# ".(localtime).": convert new SAM file to BAM format\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString")==0 or die("failed to execute: $!\n");
+        system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
         print STDOUT "new BAM file created.\n";
         unlink($samFile);
         $bamFile = "$otherfilesDir/".$_[0].".bam";
