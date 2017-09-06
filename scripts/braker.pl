@@ -102,9 +102,9 @@ OPTIONS
     --GENEMARK_PATH=/path/to/            Set path to GeneMark-ET (if not specified as environment 
       gmes_petap.pl/                     variable). Has higher priority than environment variable.
     --gff3                               Output in GFF3 format.
-    --rnaseq-hints=hints.gff             Alternatively to calling braker.pl with a bam file, it is 
+    --hints=hints.gff                    Alternatively to calling braker.pl with a bam file, it is 
                                          possible to call it with a file that contains introns extracted 
-                                         from RNA-Seq data in gff format. This flag also allows the usage
+                                         from RNA-Seq (or other data) in gff format. This flag also allows the usage
                                          of hints from additional extrinsic sources for gene prediction 
                                          with AUGUSTUS. To consider such additional extrinsic information,
                                          you need to use the flag --optCfgFile to specify parameters for 
@@ -158,8 +158,6 @@ OPTIONS
                                          --prot_aln. Generating tool will not be guessed.
                                          Currently, hints from proteins are only used in the prediction step with
                                          AUGUSTUS.
-    --prot_hints   =prothints.gff        File containing protein hints for gene prediction with AUGUSTUS.
-                                         Allowed features: NEED TO ADD THE FEATURES, LATER!
     --prg=gth|exonerate|spaln            Alignment tool ght (GenomeThreader), exonerate (Exonerate) or Spaln2
                                          (spaln) that will be used to generate protein alignments that will be the 
                                          basis for hints generation for gene prediction with AUGUSTUS (if specified
@@ -218,8 +216,9 @@ my $genome_length = 0;                # length of genome file
 my $gff3 = 0;                         # create output file in GFF3 format
 my $help;                             # print usage
 my @hints;                            # input hints file names
-my $hintsfile;                        # hints file later used by AUGUSTUS (RNA-Seq)
-my $prot_hintsfile;                   # hints file later used by AUGUStUS (proteins)
+my $hintsfile;                        # hints file (all hints)
+my $prot_hintsfile;                   # hints file with protein hints
+my $genemark_hintsfile;               # contains only intron hints in case $hintsfile also contains other hints types
 my $limit = 10000000;                 # maximum for generic species Sp_$limit
 my $logfile;                          # contains used shell commands
 my @malus;                            # array of malus values for extrinsic file
@@ -259,7 +258,6 @@ my ($target_1, $target_2, $target_3) = 0; # variables that store AUGUSTUS accura
 my $prg;                              # variable to store protein alignment tool
 my @prot_seq_files;                    # variable to store protein sequence file name
 my @prot_aln_files;                    # variable to store protein alingment file name
-my @prot_hints_files;                  # variable to store protein hints file name
 my $ALIGNMENT_TOOL_PATH;              # stores path to binary of gth, spaln or exonerate for running protein alignments
 
 # list of forbidden words for species name
@@ -307,7 +305,6 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
 	    'prg=s'                         => \$prg,
 	    'prot_seq=s'                    => \@prot_seq_files,
 	    'prot_aln=s'                    => \@prot_aln_files,
-	    'prot_hints=s'                  => \@prot_hints_files,
 	    'augustus_args=s'               => \$augustus_args,
             'version!'                      => \$printVersion);
 
@@ -559,18 +556,6 @@ if(@prot_aln_files){
     }
 }
 
-# check whether a protein hints file is given
-if(@prot_hints_files){
-    @prot_hints_files = split(/[\s,]/, join(',',@prot_hints_files));
-    for(my $i=0; $i<scalar(@prot_hints_files); $i++){	
-	if(! -f $prot_hints_files[$i]){
-	    print STDERR "ERROR: protein hints file $prot_hints_files[$i] does not exist.\n";
-	    exit(1);
-	}
-	$prot_hints_files[$i] = rel2abs($prot_hints_files[$i]);
-    }
-}
-
 # check whether alignment program is given
 if(defined($prg)){
     if(not($prg=~m/gth/) and not($prg=~m/exonerate/) and not($prg=~m/spaln/)){
@@ -664,9 +649,12 @@ if(! -f "$genome"){
 	  check_fasta_headers($_);
       }
   }
-###  make_rna_seq_hints();         # make hints from RNA-Seq or gtf input
-  if(@prot_seq_files or @prot_aln_files or @prot_hints_files){
+###  make_rna_seq_hints();         # make hints from RNA-Seq
+  if(@prot_seq_files or @prot_aln_files){
       make_prot_hints();
+  }
+  if(@hints){
+      add_other_hints();
   }
 ###  GeneMark_ET();                # run GeneMark-ET
 ###  training();                   # train species-specific parameters with optimize_augustus.pl and etraining
@@ -755,22 +743,6 @@ sub make_rna_seq_hints{
       }
     }
     unlink($bam_temp);
-  }
-  # from gtf input files
-  if(@hints){
-    for(my $i=0; $i<scalar(@hints); $i++){
-      if(!uptodate([$hints[$i]],[$hintsfile]) || $overwrite){
-	  pricnt STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
-	  $cmdString = "";
-	  if($nice){
-	      $cmdString .= "nice ";
-	  }
-	  $cmdString .= "cat $hints[$i] >> $hintsfile_temp";
-	  print LOG "\# ".(localtime).": add hints from file $hints[$i]\n";
-	  print LOG "$cmdString\n\n";
-	  system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
-      }
-    }
   }
   if(-f $hintsfile_temp || $overwrite){
     if(!uptodate([$hintsfile_temp],[$hintsfile]) || $overwrite){
@@ -877,30 +849,28 @@ sub make_prot_hints{
 	    }
 	}
     }
-    # append command line specified hints
-    if(@prot_hints_files){
-	for(my $i=0; $i<scalar(@prot_hints_files); $i++){
-	    if(!uptodate([$prot_hints_files[$i]], [$prot_hintsfile]) || $overwrite){
-		print STDOUT "NEXT STEP: appending hints file $prot_hints_files[$i] to protein hints file $prot_hints_file_temp\n";
-		print LOG "\# ".(localtime).": Appending hints file $prot_hints_files[$i] to protein hints file $prot_hints_file_temp\n";
-		$cmdString = "cat $prot_hints_files[$i] >> $prot_hints_file_temp";
-		print LOG $cmdString."\n";
-		system($cmdString)==0 or die ("Could not execute $cmdString!\n");
-		print STDOUT "File appended.\n";
-	    }
-	}
-    }
+    # appending protein hints to $hintsfile (combined with RNA_Seq)
     if(-f $prot_hints_file_temp || $overwrite){
 	if(!uptodate([$prot_hints_file_temp],[$prot_hintsfile])|| $overwrite){
 	    join_mult_hints($prot_hints_file_temp, "prot");
-	    print STDOUT "NEXT STEP: moving $prot_hints_file_temp to $prot_hintsfile\n";
-	    print LOG "\# ".(localtime).": moving $prot_hints_file_temp to $prot_hintsfile\n";
-$cmdString = "mv $prot_hints_file_temp $prot_hintsfile";
-	    print LOG "$cmdString\n";
-	    system($cmdString)==0 or die ("Could not execute $cmdString!\n");
-	    print LOG "Deleting $prot_hints_file_temp\n";
-	    unlink($prot_hints_file_temp);
-	    print STDOUT "file moved.\n";
+	    if(-f $hintsfile){
+		print STDOUT "NEXT STEP: moving $prot_hints_file_temp to $prot_hintsfile\n";
+		print LOG "\# ".(localtime).": moving $prot_hints_file_temp to $prot_hintsfile\n";
+		$cmdString = "mv $prot_hints_file_temp $prot_hintsfile";
+		print LOG "$cmdString\n";
+		system($cmdString)==0 or die ("Could not execute $cmdString!\n");
+		print LOG "Deleting $prot_hints_file_temp\n";
+		unlink($prot_hints_file_temp);
+		print STDOUT "file moved.\n";
+		print STDOUT "NEXT STEP: joining protein and RNA-Seq hints files\n";
+		print LOG "\# ".(localtime).": appending $prot_hintsfile to $hintsfile\n";
+		$cmdString = "cat $prot_hintsfile >> $hintsfile";
+		print LOG "$cmdString\n";
+		system($cmdString)==0 or die ("Could not execute $cmdString!\n");
+		print LOG "Deleting $prot_hintsfile\n";
+		unlink($prot_hintsfile);
+		print STDOUT "file appended.\n";
+	    }
 	}
     }
     if(-z $prot_hintsfile){
@@ -908,6 +878,50 @@ $cmdString = "mv $prot_hints_file_temp $prot_hintsfile";
 	exit(1);
     }
 }
+
+# adding externally created hints
+sub add_other_hints{
+    if(@hints){
+	for(my $i=0; $i<scalar(@hints); $i++){
+	    if(!uptodate([$hints[$i]],[$hintsfile]) || $overwrite){
+		print STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
+		$cmdString = "";
+		if($nice){
+		    $cmdString .= "nice ";
+		}
+		$cmdString .= "cat $hints[$i] >> $hintsfile";
+		print LOG "\# ".(localtime).": add hints from file $hints[$i]\n";
+		print LOG "$cmdString\n\n";
+		system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
+	    }else{
+		print STDOUT "Adding hints from file $hints[$i] to $hintsfile skipped because files were up to date.\n";
+	    }
+	}
+	join_mult_hints($hintsfile, "all");
+    }
+}
+
+# split into two hints files: one for GeneMark with intron hints, only, and one for AUGUSTUS with all hints
+sub separateHints{
+    # Find out whether $hintsfile contains anything but intron hints
+    print STDOUT "Checking whether $hintsfile contains hints other than intron\n";
+    print LOG "\# ".(localtime).": Checking whether $hintsfile contains hints other than intron\n";
+    my @notIntron = `cut -f 3 $hintsfile | grep -m 1 -v intron`;
+    if(not(scalar(@notIntron)==0)){
+	print STDOUT "Hint types other than intron are contained in $hintsfile\nExtracting intron hints for GeneMark.\n";
+	print LOG "\# ".(localtime).":  Hint types other than intron are contained in $hintsfile\nExtracting intron hints for GeneMark.\n";
+	$cmdString = "grep intron $hintsfile > $genemark_hintsfile";
+	print LOG "$cmdString\n\n";
+	system($cmdString)==0 or die("failed to execute: $cmdString!\n");
+    }else{
+	print STDOUT "No other hint types found. Creating softlink from $genemark_hintsfile to $hintsfile\n";
+	print LOG "\# ".(localtime).":  No other hint types found. Creating softlink from $genemark_hintsfile to $hintsfile\n";
+	$cmdString = "ln -s $hintsfile $genemark_hintsfile";
+	print LOG "$cmdString\n";
+	system($cmdString)==0 or die("failed to execute: $cmdString!\n");
+    }
+}
+
 
 
 sub aln2hints{
@@ -979,7 +993,7 @@ sub join_mult_hints{
 # start GeneMark-ET and convert its output to real gtf format
 sub GeneMark_ET{
   if(!$skipGeneMarkET){
-    if(!uptodate([$genome,$hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
+    if(!uptodate([$genome,$genemark_hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
       $cmdString = "cd $genemarkDir";
       print LOG "\# ".(localtime).": change to GeneMark-ET directory $genemarkDir\n";
       print LOG "$cmdString\n\n";
@@ -993,7 +1007,7 @@ sub GeneMark_ET{
       if($nice){
 	  $perlCmdString .= "nice ";
       }
-      $perlCmdString .= "perl $string --sequence=$genome --ET=$hintsfile --cores=$CPU";
+      $perlCmdString .= "perl $string --sequence=$genome --ET=$genemark_hintsfile --cores=$CPU";
       if($fungus){
         $perlCmdString .= " --fungus";
       }
