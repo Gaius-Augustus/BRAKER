@@ -201,7 +201,6 @@ my $currentDir = cwd();               # working superdirectory where program is 
 my $errorfile;                        # stores current error file name
 my $errorfilesDir;                    # directory for error files
 my $extrinsicCfgFile;                 # assigned extrinsic file
-my $extrinsicfilesDir;                # directory for test extrinsic files
 my @files;                            # contains all files in $rootDir
 my $flanking_DNA;                     # length of flanking DNA, default value is min{ave. gene length/2, 10000}
 my @forbidden_words;                  # words/commands that are not allowed in species name (e.g. unlink)
@@ -259,6 +258,51 @@ my $prg;                              # variable to store protein alignment tool
 my @prot_seq_files;                    # variable to store protein sequence file name
 my @prot_aln_files;                    # variable to store protein alingment file name
 my $ALIGNMENT_TOOL_PATH;              # stores path to binary of gth, spaln or exonerate for running protein alignments
+my %hintTypes;                         # stores hint types occuring over all generated and supplied hints for comparison
+
+############################################################
+# Variables for modification of template extrinsic.cfg file
+my @start_malus = (0.3, 0.8, 1);
+my @start_p_bonus = ("1e3");
+my $idx_start_p_malus = 0;
+my $idx_start_p_bonus = 0;
+my @stop_malus = (0.3, 0.8, 1);
+my @stop_p_bonus = ("1e3");
+my $idx_stop_p_malus = 0;
+my $idx_stop_p_bonus = 0;
+my @ass_local_malus = (0.95);
+my $idx_ass_local_malus = 0;
+my @ass_p_bonus = (100);
+my $idx_ass_p_bonus = 0;
+my @dss_local_malus = (0.95);
+my $idx_dss_local_malus = 0;
+my @dss_p_bonus = (100);
+my $idx_dss_p_bonus = 0;
+my @exonpart_local_malus = (0.992);
+my $idx_exonpart_local_malus = 0;
+my @exonpart_malus = (0.985);
+my $idx_exonpart_malus = 0;
+my @exonpart_w_bonus = (1.02);
+my $idx_exonpart_w_bonus = 0;
+my @exon_malus = (0.9);
+my $idx_exon_malus = 0;
+my @exon_p_bonus = ("1e4");
+my $idx_exon_p_bonus = 0;
+my @intron_malus = (0.34);
+my $idx_intron_malus = 0;
+my @intron_e_bonus = ("1e6");
+my $idx_intron_e_bonus = 0;
+my @intron_p_bonus = (100);
+my $idx_intron_p_bonus = 0;
+my @cdspart_malus = (0.985);
+my $idx_cdspart_malus = 0;
+my @cdspart_p_bonus = ("1e5");
+my $idx_cdspart_p_bonus = 0;
+my @utrpart_malus = (0.985);
+my $idx_utrpart_malus = 0;
+my @utrpart_w_bonus = ("1e5");
+my $idx_utrpart_w_bonus = 0;
+#############################################################
 
 # list of forbidden words for species name
 @forbidden_words = ("system", "exec", "passthru", "run", "fork", "qx", "backticks", "chmod", "chown", "chroot", "unlink", "do", "eval", "kill", "rm", "mv", "grep", "cd", "top", "cp", "for", "done", "passwd", "while", "nice");  
@@ -586,7 +630,6 @@ if(! -f "$genome"){
   $parameterDir = "$rootDir/$species/species";
   $otherfilesDir = "$rootDir/$species";
   $errorfilesDir = "$rootDir/$species/errors";
-  $extrinsicfilesDir = "$rootDir/$species/species/extrinsic";
 
   $logfile = "$otherfilesDir/braker.log";
   # create other directories if necessary
@@ -624,12 +667,6 @@ if(! -f "$genome"){
     print LOG "mkdir $parameterDir\n\n";
   }
 
-  if(! -d $extrinsicfilesDir){
-    make_path($extrinsicfilesDir);
-    print LOG "\# ".(localtime).": create working directory $extrinsicfilesDir\n";
-    print LOG "mkdir $extrinsicfilesDir\n\n";
-  }
-
   if(! -d $errorfilesDir){
     make_path($errorfilesDir);
     print LOG "\# ".(localtime).": create working directory $errorfilesDir\n";
@@ -649,17 +686,17 @@ if(! -f "$genome"){
 	  check_fasta_headers($_);
       }
   }
-###  make_rna_seq_hints();         # make hints from RNA-Seq
+  make_rna_seq_hints();         # make hints from RNA-Seq
   if(@prot_seq_files or @prot_aln_files){
       make_prot_hints();
   }
   if(@hints){
       add_other_hints();
   }
-###  GeneMark_ET();                # run GeneMark-ET
-###  training();                   # train species-specific parameters with optimize_augustus.pl and etraining
+  GeneMark_ET();                # run GeneMark-ET
+  training();                   # train species-specific parameters with optimize_augustus.pl and etraining
 
-=head
+
   # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
   if(!defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && $soft_mask)){
     extrinsic(); # use default extrinsic file
@@ -687,15 +724,15 @@ if(! -f "$genome"){
     }
   }
 
-###  augustus(); # run augustus
+  augustus(); # run augustus
   if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.aa"])  || $overwrite){
-###    getAnnoFasta("$otherfilesDir/augustus.gff"); # create protein sequence file
+    getAnnoFasta("$otherfilesDir/augustus.gff"); # create protein sequence file
   }
   if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.gtf"])  || $overwrite){
-###    make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf and gff3 (if desired) format
+    make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf and gff3 (if desired) format
   }
-###  clean_up(); # delete all empty files
-=cut
+  clean_up(); # delete all empty files
+
   close(LOG) or die("Could not close log file $logfile!\n");
 }
 
@@ -901,6 +938,18 @@ sub add_other_hints{
     }
 }
 
+# checks which hint types are present in the hintsfile that will be used for running AUGUSTUS
+sub identifyHintTypes{
+    open(HINTS, "<", $hintsfile) or die ("Could not open hints file $hintsfile!\n");
+    while(<HINTS>){
+	$_=~m/;src=(\w);/;
+	if(not(defined($hintTypes{$1}))){
+	    $hintTypes{$1} = 1;
+	}
+    }
+    close(HINTS) or die ("Could not close hints file $hintsfile!\n");
+}
+
 # split into two hints files: one for GeneMark with intron hints, only, and one for AUGUSTUS with all hints
 sub separateHints{
     # Find out whether $hintsfile contains anything but intron hints
@@ -1089,90 +1138,142 @@ sub new_species{
 
 sub extrinsic{
     my $extrinsic;
-  if(-e "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg"){
-    $extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg";
-    print STDOUT "Will use $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg as template for this project's extrinsic.cfg\n";
-  }elsif(-e "$AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.cfg"){
-    $extrinsic = "$AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.cfg";
-    print STDOUT "Will use $AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.cfg as template for this project's extrinsic.cfg\n";
-  }else{
-      die "Cannot find extrinsic template file $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.cfg or $AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.cfg. Please check whether AUGUSTUS_CONFIG_PATH (and/or AUGUSTUS_BIN_PATH) are correct. Looking for template file in extrinsic folder of AUGUSTUS_CONFIG_PATH and relative ../config/extrinsic to AUGUSTUS_BIN_PATH.\n";
-  }
-  my $extrinsic_cp = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-  if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -e $extrinsicCfgFile) ){
-    if(!defined($extrinsicCfgFile)){
-      print STDOUT "No extrinsic file assigned. Program will create one.\n"; # other check/warning see beginning 
-    }
-    if(! -e $extrinsic_cp){
-      print STDOUT "NEXT STEP: create extrinsic file: $extrinsic_cp\n";
-      print LOG "\# ".(localtime).": create extrinsic file\n";
-      print STDOUT "species $species created.\n";
-
-      open (EXTRINSIC, $extrinsic) or die "Cannot open file: $extrinsic\n";
-      open (OUT, ">".$extrinsic_cp) or die "Cannot open file: $extrinsic_cp\n";
-      my $GENERAL = "false";
-      my $bonus_idx = $standard; # 0 => 1e1  (currently standard)
-      my $malus_idx = $standard; # 0 => 0.1  (currently standard)
-      while(<EXTRINSIC>){
-        chomp;
-        next if($GENERAL eq "true" && $_ !~ m /^\#/);
-        if($GENERAL eq "true" && $_ =~ m /^\#/){
-          $GENERAL = "false";
-        }
-        print OUT "$_\n";
-        
-        if($_ =~ m/^\[GENERAL\]/){
-          $GENERAL = "true";
-          print OUT "\n";
-          print OUT "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "        tss        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "     intron        1      $malus[$malus_idx]  M    1  1e+100  RM  1  1.15    E 1  $bonus[$bonus_idx]    W 1    1\n";
-          print OUT "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print OUT "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-
-          print LOG "\# ".(localtime).": edit extrinsic file and add\n$_\n";
-          print LOG "\n";
-          print LOG "      start        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "       stop        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "        tss        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "        tts        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "        ass        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "        dss        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "   exonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "       exon        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG " intronpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "     intron        1      $malus[$malus_idx]  M    1  1e+100  RM  1  1.15    E 1  $bonus[$bonus_idx]    W 1    1\n";
-          print LOG "    CDSpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "        CDS        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "    UTRpart        1   1    1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "        UTR        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "     irpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "nonexonpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-          print LOG "  genicpart        1        1  M    1  1e+100  RM  1     1    E 1    1    W 1    1\n";
-        }
-      }
-      close(OUT) or die("Could not close extrinsic file $extrinsic_cp!\n");
-      close(EXTRINSIC) or die("Could not close extrinsic file $extrinsic!\n");
-      print STDOUT "extrinsic file created.\n";
-      $extrinsicCfgFile = $extrinsic_cp;
+    if(-e "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg"){
+	$extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg";
+	print STDOUT "Will use $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg as template for this project's extrinsic.cfg\n";
+    }elsif(-e "$AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.P.cfg"){
+	$extrinsic = "$AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.P.cfg";
+	print STDOUT "Will use $AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.P.cfg as template for this project's extrinsic.cfg\n";
     }else{
-      $extrinsicCfgFile = $extrinsic_cp;
+	die "Cannot find extrinsic template file $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg or $AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.P.cfg. Please check whether AUGUSTUS_CONFIG_PATH (and/or AUGUSTUS_BIN_PATH) are correct. Looking for template file in extrinsic folder of AUGUSTUS_CONFIG_PATH and relative ../config/extrinsic to AUGUSTUS_BIN_PATH.\n";
     }
-  }else{
-    print STDOUT "No extrinsic file was created. Program uses assigned extrinsic file: $extrinsicCfgFile\n";
-  }
+    my $extrinsic_cp = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
+    if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -e $extrinsicCfgFile) ){
+	if(!defined($extrinsicCfgFile)){
+	    print STDOUT "No extrinsic file assigned. Program will create one.\n"; # other check/warning see beginning
+	    identifyHintTypes(); # checks which hint types occur in the hintsfile for AUGUSTUS $hintsfile, stores in %hintTypes
+	}
+	if(! -e $extrinsic_cp){
+	    # braker.pl heavily depends on the correct format of the template extrinsic.cfg file (e.g. order of columns,
+	    # number of bonus per source, etc.
+	    print STDOUT "NEXT STEP: create extrinsic file: $extrinsic_cp\n";
+	    print LOG "\# ".(localtime).": create extrinsic file\n";
+
+	    open (EXTRINSIC, "<", $extrinsic) or die "Cannot open file: $extrinsic\n";
+	    open (OUT, ">", $extrinsic_cp) or die "Cannot open file: $extrinsic_cp\n";
+	    my $GENERAL = "false";
+	    my $bonus_idx = $standard; # 0 => 1e1  (currently standard)
+	    my $malus_idx = $standard; # 0 => 0.1  (currently standard)
+	    my $sourcesSeen = 0;
+	    while(<EXTRINSIC>){
+		if(($_=~m/#/) or ($_=~m/^\n/)){
+		    print OUT $_;
+		}elsif($_=~m/[SOURCES]/){
+		    $sourcesSeen = 1;
+		    print OUT $_;
+		}elsif($sourcesSeen==1){
+		    chomp;
+		    # checking whether all hint types (e.g. E, W, P) that are present in the hints file to be used are also present in the config template file. Currently, braker.pl supports hints of type E, W, and P. 
+		    my @typesInCfg = split(" ", $_);
+		    foreach(@typesInCfg){
+			if(not(defined($hintTypes{$_}))){
+			    print STDERR "Hints file contains hints from type $_. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
+			    exit(1);
+			}
+		    }
+		    $sourcesSeen=0;
+		    print OUT $_."\n";
+		}elsif(($_=~m/[SOURCE-PARAMETERS]/)or($_ =~ m/^\[GENERAL\]/)){
+		    print OUT $_;
+		}else{ # actual parameter lines
+		    $_ =~ s/^\s+//; # remove whitespace before first field
+		    my @line = split(/\s+/, $_);
+		    # check whether order and number of columns in template extrinsic file are compatible with braker.pl of this version
+		    if(scalar(@line)==18){ # local malus present
+			if(not(($line[4]=~m/^M$/) and ($line[7]=~m/RM/) and ($line[10]=~m/E/) and ($line[13]=~m/W/) and ($line[16]=~m/P/))){
+			    print STDERR "In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 11 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line without local malus)\n";
+			    exit(1);
+			}
+		    }else{ # local malus not present, 19 columns
+			if(not(($line[5]=~m/^M$/) and ($line[8]=~m/RM/) and ($line[11]=~m/E/) and ($line[14]=~m/W/) and ($line[17]=~m/P/))){
+			    print STDERR "In extrinsic template file $extrinsic, column 6 does not contain M, and/or column 9 does not contain RM, and/or column 12 does not contain E and/or column 15 does not contain W and/or column 18 does not contain P. Aborting braker! (line with local malus)\n";
+			    exit(1);
+			}
+		    }
+		    # print template based parameter lines depending on combination of input hint types
+		    if($line[0] =~ m/start/){
+			if(defined($hintTypes{P})){ # protein hints
+			    print OUT "      $line[0]      $line[1]       $start_malus[$idx_start_p_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]   $line[14]      $line[15]      $line[16]    $start_p_bonus[$idx_start_p_bonus]\n";
+			}else{ # no protein hints
+			    print OUT "      $line[0]      $line[1]       1  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]   $line[14]      $line[15]      $line[16]    1\n";
+			}
+		    }elsif($line[0]=~m/stop/){
+			if(defined($hintTypes{P})){ # protein hints
+			    print OUT "      $line[0]      $line[1]       $stop_malus[$idx_stop_p_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]   $line[14]      $line[15]      $line[16]    $stop_p_bonus[$idx_stop_p_bonus]\n";
+			}else{ # no protein hints
+			    print OUT "      $line[0]      $line[1]       1  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]   $line[14]      $line[15]      $line[16]    1\n";
+			}
+		    }elsif($line[0]=~m/ass/){
+			if(defined($hintTypes{P})){
+			    print OUT "        $line[0]      $line[1]   $ass_local_malus[$idx_ass_local_malus] $line[3]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     $ass_p_bonus[$idx_ass_p_bonus]\n";
+			}else{
+			    print OUT "        $line[0]      $line[1]   1 $line[3]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     1\n";
+			}
+		    }elsif($line[0]=~m/dss/){
+			if(defined($hintTypes{P})){
+			    print OUT "        $line[0]      $line[1]   $dss_local_malus[$idx_dss_local_malus] $line[3]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     $dss_p_bonus[$idx_dss_p_bonus]\n";
+			}else{
+			    print OUT "        $line[0]      $line[1]   1 $line[3]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     1\n";
+                        }
+		    }elsif($line[0]=~m/exonpart/){
+			if(defined($hintTypes{W})){
+			    print OUT "   $line[0]      $line[1]  $exonpart_local_malus[$idx_exonpart_local_malus] $exonpart_malus[$idx_exonpart_malus]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $exonpart_w_bonus[$idx_exonpart_w_bonus]   $line[16]       $line[17]       $line[18]\n";
+			}else{
+			    print OUT "   $line[0]      $line[1]  1 1  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    1   $line[16]       $line[17]       $line[18]\n";
+			}
+		    }elsif($line[0]=~m/^exon$/){
+			if(defined($hintTypes{P})){
+			    print OUT "       $line[0]      $line[1]        $exon_malus[$idx_exon_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]    $line[14]      $line[15]       $line[16]     $exon_p_bonus[$idx_exon_p_bonus]\n";
+			}else{
+			    print OUT "       $line[0]      $line[1]        1  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]    $line[14]          $line[15]       $line[16]     1\n";
+			}
+		    }elsif($line[0]=~m/intron/){
+			if(defined($hintTypes{E}) && defined($hintTypes{P})){
+			    print OUT "     $line[0]      $line[1]        $intron_malus[$idx_intron_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]  $intron_e_bonus[$idx_intron_e_bonus]    W 1    1      P       1     $intron_p_bonus[$idx_intron_p_bonus]\n";
+			}elsif(defined($hintTypes{P})){
+			    print OUT "     $line[0]      $line[1]        $intron_malus[$idx_intron_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]  1    W 1    1      P       1     $intron_p_bonus[$idx_intron_p_bonus]\n";
+			}else{ # only hintTypes{E}
+			    print OUT "     $line[0]      $line[1]        $intron_malus[$idx_intron_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]  $intron_e_bonus[$idx_intron_e_bonus]    W 1    1      P       1     1\n";
+			}
+		    }elsif($line[0]=~m/CDSpart/){
+			if(defined($hintTypes{P})){
+			    print OUT "    $line[0]      $line[1]     $line[2] $cdspart_malus[$idx_cdspart_malus]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     $cdspart_p_bonus[$idx_cdspart_p_bonus]\n";
+			}else{
+			    print OUT "    $line[0]      $line[1]     $line[2] 1  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     1\n";
+			}
+		    }elsif($line[0]=~m/UTRpart/){
+			if(defined($hintTypes{W})){
+			    print OUT "    $line[0]      $line[1]     $line[2] $utrpart_malus[$idx_utrpart_malus]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $utrpart_w_bonus[$idx_utrpart_w_bonus]      $line[16]       $line[17]       $line[18]\n";
+			}else{
+			    print OUT "    $line[0]      $line[1]     $line[2] 1  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    1      $line[16]       $line[17]       $line[18]\n";
+			}
+		    }else{
+			 print $_;
+		    }
+		}   
+	    }
+	    close(OUT) or die("Could not close extrinsic file $extrinsic_cp!\n");
+	    close(EXTRINSIC) or die("Could not close extrinsic file $extrinsic!\n");
+	    print STDOUT "extrinsic file created.\n";
+	    $extrinsicCfgFile = $extrinsic_cp;
+	}else{
+	    $extrinsicCfgFile = $extrinsic_cp;
+	    print STDOUT "Found extrinsic.cfg $extrinsic_cp, will use this file!\n";
+	    print LOG "\# ".(localtime).": Found extrinsic.cfg $extrinsic_cp, will use this file!\n";
+	}
+    }else{
+	print STDOUT "No extrinsic file was created. Program uses assigned extrinsic file: $extrinsicCfgFile\n";
+    }
 }
 
          ####################### train AUGUSTUS #########################
