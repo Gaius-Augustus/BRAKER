@@ -270,10 +270,14 @@ my @stop_malus = (0.3, 0.8, 1);
 my @stop_p_bonus = ("1e3");
 my $idx_stop_p_malus = 0;
 my $idx_stop_p_bonus = 0;
+my @ass_malus = (0.1);
+my $idx_ass_malus = 0;
 my @ass_local_malus = (0.95);
 my $idx_ass_local_malus = 0;
 my @ass_p_bonus = (100);
 my $idx_ass_p_bonus = 0;
+my @dss_malus = (0.1);
+my $idx_dss_malus = 0;
 my @dss_local_malus = (0.95);
 my $idx_dss_local_malus = 0;
 my @dss_p_bonus = (100);
@@ -686,12 +690,22 @@ if(! -f "$genome"){
 	  check_fasta_headers($_);
       }
   }
+  # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS can also handle other hints types
+  $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
   make_rna_seq_hints();         # make hints from RNA-Seq
   if(@prot_seq_files or @prot_aln_files){
       make_prot_hints();
   }
   if(@hints){
       add_other_hints();
+  }
+  if(@prot_seq_files or @prot_aln_files or @hints){
+      separateHints();
+  }else{
+      print LOG "\# ".(localtime).":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
+      $cmdString = "ln -s $hintsfile $genemark_hintsfile";
+      print LOG "$cmdString\n";
+      system($cmdString)==0 or die("failed to execute: $cmdString!\n");
   }
   GeneMark_ET();                # run GeneMark-ET
   training();                   # train species-specific parameters with optimize_augustus.pl and etraining
@@ -833,13 +847,13 @@ sub make_prot_hints{
 		$perlCmdString .= "perl $string --genome=$genome --prot=$prot_seq_files[$i] --ALIGNMENT_TOOL_PATH=$ALIGNMENT_TOOL_PATH ";
 		if($prg eq "gth"){
 		    $perlCmdString .= "--prg=gth ";
-		    print LOG "\# ".(localtime).": running Genome Threader to produce protein to genome alignments\n";
+		    print LOG "\n\# ".(localtime).": running Genome Threader to produce protein to genome alignments\n";
 		}elsif($prg eq "exonerate"){
 		    $perlCmdString .= "--prg=exonerate ";
-		    print LOG "\# ".(localtime).": running Exonerate to produce protein to genome alignments\n";
+		    print LOG "\n\# ".(localtime).": running Exonerate to produce protein to genome alignments\n";
 		}elsif($prg eq "spaln"){
 		    $perlCmdString .= "--prg=spaln ";
-		    print LOG "\# ".(localtime).": running Spaln to produce protein to genome alignments\n";
+		    print LOG "\n\# ".(localtime).": running Spaln to produce protein to genome alignments\n";
 		}
 		if($CPU>1){
 		    $perlCmdString .= "--CPU=$CPU ";
@@ -851,11 +865,15 @@ sub make_prot_hints{
 		print LOG "$perlCmdString\n\n";
 		system("$perlCmdString")==0 or die ("failed to execute: $perlCmdString!\n");
 		print STDOUT "Alignments from file $prot_seq_files[$i] created.\n";
-		$cmdString = "cat align_$prg/$prg.concat.aln >> $alignment_outfile";	    
-		print LOG "\# ".(localtime).": concatenating alignment file to $alignment_outfile\n";
-		print LOG "$cmdString\n\n";
-		system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
-		print LOG "\# ".(localtime).": moving startAlign output files\n";
+		if(-s "$otherfilesDir/align_$prg/$prg.concat.aln"){
+		    $cmdString = "cat $otherfilesDir/align_$prg/$prg.concat.aln >> $alignment_outfile";	    
+		    print LOG "\# ".(localtime).": concatenating alignment file to $alignment_outfile\n";
+		    print LOG "$cmdString\n\n";
+		    system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
+		}else{
+		    print LOG "\# ".(localtime).": alignment file $otherfilesDir/align_$prg/$prg.concat.aln in round $i was empty.\n";
+		}
+		print LOG "\n\# ".(localtime).": moving startAlign output files\n";
 		$cmdString = "mv startAlign_$prg.log startAlign_$prg.log$i";
 		print LOG "$cmdString\n";
 		system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
@@ -873,7 +891,11 @@ sub make_prot_hints{
     # convert pipeline created protein alignments to protein hints
     if(@prot_seq_files && -e $alignment_outfile){
 	if(!uptodate([$alignment_outfile], [$prot_hintsfile]) || $overwrite){
-	    aln2hints($alignment_outfile, $prot_hints_file_temp);
+	    if(-s $alignment_outfile){
+		aln2hints($alignment_outfile, $prot_hints_file_temp);
+	    }else{
+		print LOG "\# ".(localtime).": Alignment out file $alignment_outfile with protein alignments is empty. Not producing any hints from protein input sequences.\n";
+	    }
 	}
     }
     # convert command line specified protein alignments to protein hints
@@ -900,13 +922,25 @@ sub make_prot_hints{
 		unlink($prot_hints_file_temp);
 		print STDOUT "file moved.\n";
 		print STDOUT "NEXT STEP: joining protein and RNA-Seq hints files\n";
-		print LOG "\# ".(localtime).": appending $prot_hintsfile to $hintsfile\n";
+		print LOG "\n\# ".(localtime).": appending $prot_hintsfile to $hintsfile\n";
 		$cmdString = "cat $prot_hintsfile >> $hintsfile";
 		print LOG "$cmdString\n";
 		system($cmdString)==0 or die ("Could not execute $cmdString!\n");
 		print LOG "Deleting $prot_hintsfile\n";
 		unlink($prot_hintsfile);
 		print STDOUT "file appended.\n";
+		print STDOUT "NEXT STEP: sorting hints file $hintsfile\n";
+		print LOG "\n\# ".(localtime).": sorting hints file $hintsfile\n";
+		my $toBeSortedHintsFile = "$otherfilesDir/hintsfile.tmp.gff";
+		$cmdString = "mv $hintsfile $toBeSortedHintsFile";
+		print LOG "$cmdString\n";
+		system($cmdString)==0 or die ("Could not execute $cmdString!\n");
+		$cmdString = "cat $toBeSortedHintsFile | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 > $hintsfile";
+		print LOG "$cmdString\n";
+		system($cmdString)==0 or die("Could not execute $cmdString!\n");
+		print LOG "rm $toBeSortedHintsFile\n";
+		unlink($toBeSortedHintsFile);
+		print STDOUT "... $hintsfile sorted\n";
 	    }
 	}
     }
@@ -942,7 +976,7 @@ sub add_other_hints{
 sub identifyHintTypes{
     open(HINTS, "<", $hintsfile) or die ("Could not open hints file $hintsfile!\n");
     while(<HINTS>){
-	$_=~m/;src=(\w);/;
+	$_=~m/src=(\w)/;
 	if(not(defined($hintTypes{$1}))){
 	    $hintTypes{$1} = 1;
 	}
@@ -954,17 +988,17 @@ sub identifyHintTypes{
 sub separateHints{
     # Find out whether $hintsfile contains anything but intron hints
     print STDOUT "Checking whether $hintsfile contains hints other than intron\n";
-    print LOG "\# ".(localtime).": Checking whether $hintsfile contains hints other than intron\n";
+    print LOG "\n\# ".(localtime).": Checking whether $hintsfile contains hints other than intron\n";
     my @notIntron = `cut -f 3 $hintsfile | grep -m 1 -v intron`;
     if(not(scalar(@notIntron)==0)){
-	print STDOUT "Hint types other than intron are contained in $hintsfile\nExtracting intron hints for GeneMark.\n";
-	print LOG "\# ".(localtime).":  Hint types other than intron are contained in $hintsfile\nExtracting intron hints for GeneMark.\n";
-	$cmdString = "grep intron $hintsfile > $genemark_hintsfile";
+	print STDOUT "Hint types other than intron are contained in $hintsfile\nExtracting intron hints from b2h (bam file) for GeneMark.\n";
+	print LOG "\n\# ".(localtime).":  Hint types other than intron are contained in $hintsfile\nExtracting intron hints for GeneMark.\n";
+	$cmdString = "grep intron $hintsfile | grep b2h > $genemark_hintsfile";
 	print LOG "$cmdString\n\n";
 	system($cmdString)==0 or die("failed to execute: $cmdString!\n");
     }else{
 	print STDOUT "No other hint types found. Creating softlink from $genemark_hintsfile to $hintsfile\n";
-	print LOG "\# ".(localtime).":  No other hint types found. Creating softlink from $genemark_hintsfile to $hintsfile\n";
+	print LOG "\n\# ".(localtime).":  No other hint types found. Creating softlink from $genemark_hintsfile to $hintsfile\n";
 	$cmdString = "ln -s $hintsfile $genemark_hintsfile";
 	print LOG "$cmdString\n";
 	system($cmdString)==0 or die("failed to execute: $cmdString!\n");
@@ -979,7 +1013,7 @@ sub aln2hints{
 	my $out_file_name = "$otherfilesDir/prot_hintsfile.aln2hints.temp.gff";
 	my $final_out_file = shift;
 	print STDOUT "NEXT STEP: converting alignment file $aln_file to protein hints file\n";
-	print LOG "\# ".(localtime).": Converting protein alignment file $aln_file to hints for AUGUSTUS\n";
+	print LOG "\n\# ".(localtime).": Converting protein alignment file $aln_file to hints for AUGUSTUS\n";
 	$perlCmdString = "perl ";
 	if($nice){
 	    $perlCmdString .= "nice ";
@@ -997,7 +1031,7 @@ sub aln2hints{
 	system("$perlCmdString")==0 or die ("Failed to execute $perlCmdString!\n\n");
 	print STDOUT "$out_file_name protein hints file created.\n";
 	$cmdString = "cat $out_file_name >> $final_out_file";
-	print LOG "\# ".(localtime).": concatenating protein hints from $out_file_name to $final_out_file\n";
+	print LOG "\n\# ".(localtime).": concatenating protein hints from $out_file_name to $final_out_file\n";
 	print LOG $cmdString."\n";
 	system("$cmdString")==0 or die ("Could not execute $cmdString!\n");
     }else{
@@ -1016,11 +1050,11 @@ sub join_mult_hints{
 	$cmdString .= "nice ";
     }
     $cmdString .= "cat $hints_file_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
-    print LOG "\# ".(localtime).": sort hints of type $type\n";
+    print LOG "\n\# ".(localtime).": sort hints of type $type\n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
     print STDOUT "hints sorted.\n";
-    print STDOUT "NEXT STEP: summarize multiple identical hints of type to one\n";
+    print STDOUT "NEXT STEP: summarize multiple identical hints of type $type to one\n";
     $string = find("join_mult_hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     $errorfile = "$errorfilesDir/join_mult_hints.$type.stderr";
     $perlCmdString = "";
@@ -1044,7 +1078,7 @@ sub GeneMark_ET{
   if(!$skipGeneMarkET){
     if(!uptodate([$genome,$genemark_hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
       $cmdString = "cd $genemarkDir";
-      print LOG "\# ".(localtime).": change to GeneMark-ET directory $genemarkDir\n";
+      print LOG "\n\# ".(localtime).": change to GeneMark-ET directory $genemarkDir\n";
       print LOG "$cmdString\n\n";
       chdir $genemarkDir or die ("Could not change to directory $genemarkDir.\n");
 
@@ -1166,99 +1200,240 @@ sub extrinsic{
 	    my $malus_idx = $standard; # 0 => 0.1  (currently standard)
 	    my $sourcesSeen = 0;
 	    while(<EXTRINSIC>){
-		if(($_=~m/#/) or ($_=~m/^\n/)){
+		if(($_=~m/^\#/) or ($_=~m/^\n$/)){
 		    print OUT $_;
-		}elsif($_=~m/[SOURCES]/){
+		}elsif($_=~m/^\[SOURCES\]/){
 		    $sourcesSeen = 1;
 		    print OUT $_;
 		}elsif($sourcesSeen==1){
 		    chomp;
-		    # checking whether all hint types (e.g. E, W, P) that are present in the hints file to be used are also present in the config template file. Currently, braker.pl supports hints of type E, W, and P. 
+		    # checking whether all hint types (e.g. E, W, P) that are present in the hints file to be used are also present in the config template file. Currently, braker.pl supports hints of type E, W, and P (and M). 
 		    my @typesInCfg = split(" ", $_);
+		    my %typesInCfgHash;
 		    foreach(@typesInCfg){
-			if(not(defined($hintTypes{$_}))){
-			    print STDERR "Hints file contains hints from type $_. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
+			chomp;
+			if(not(defined($typesInCfgHash{$_}))){
+			    $typesInCfgHash{$_} = 1;
+			}
+		    }
+		    foreach my $key (keys(%hintTypes)) {
+			if(not(defined($typesInCfgHash{$key}))){
+			    print STDERR "Hints file contains hints from type $key. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
 			    exit(1);
 			}
+			
 		    }
 		    $sourcesSeen=0;
 		    print OUT $_."\n";
-		}elsif(($_=~m/[SOURCE-PARAMETERS]/)or($_ =~ m/^\[GENERAL\]/)){
+		}elsif(($_=~m/^\[SOURCE-PARAMETERS\]/)or($_ =~ m/^\[GENERAL\]/)){
 		    print OUT $_;
 		}else{ # actual parameter lines
 		    $_ =~ s/^\s+//; # remove whitespace before first field
 		    my @line = split(/\s+/, $_);
 		    # check whether order and number of columns in template extrinsic file are compatible with braker.pl of this version
-		    if(scalar(@line)==18){ # local malus present
-			if(not(($line[4]=~m/^M$/) and ($line[7]=~m/RM/) and ($line[10]=~m/E/) and ($line[13]=~m/W/) and ($line[16]=~m/P/))){
-			    print STDERR "In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 11 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line without local malus)\n";
+		    if(scalar(@line)==18){ # no local malus present
+			if(not(($line[3]=~m/^M$/) and ($line[6]=~m/RM/) and ($line[9]=~m/E/) and ($line[12]=~m/W/) and ($line[15]=~m/P/))){
+			    print STDERR "In extrinsic template file $extrinsic, column 4 does not contain M, and/or column 7 does not contain RM, and/or column 11 does not contain E and/or column 13 does not contain W and/or column 16 does not contain P. Aborting braker! (line without local malus)\n";
 			    exit(1);
 			}
-		    }else{ # local malus not present, 19 columns
-			if(not(($line[5]=~m/^M$/) and ($line[8]=~m/RM/) and ($line[11]=~m/E/) and ($line[14]=~m/W/) and ($line[17]=~m/P/))){
-			    print STDERR "In extrinsic template file $extrinsic, column 6 does not contain M, and/or column 9 does not contain RM, and/or column 12 does not contain E and/or column 15 does not contain W and/or column 18 does not contain P. Aborting braker! (line with local malus)\n";
+		    }else{ # local malus present, 19 columns
+			if(not(($line[4]=~m/^M$/) and ($line[7]=~m/RM/) and ($line[10]=~m/E/) and ($line[13]=~m/W/) and ($line[16]=~m/P/))){
+			    print STDERR "In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 111 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line with local malus)\n";
 			    exit(1);
 			}
 		    }
 		    # print template based parameter lines depending on combination of input hint types
 		    if($line[0] =~ m/start/){
 			if(defined($hintTypes{P})){ # protein hints
-			    print OUT "      $line[0]      $line[1]       $start_malus[$idx_start_p_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]   $line[14]      $line[15]      $line[16]    $start_p_bonus[$idx_start_p_bonus]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($start_malus[$idx_start_p_malus],12);
+			    for (my $i=3; $i <= 16; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($start_p_bonus[$idx_start_p_bonus],8);
+			    print OUT "\n";
 			}else{ # no protein hints
-			    print OUT "      $line[0]      $line[1]       1  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]   $line[14]      $line[15]      $line[16]    1\n";
+                            print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,12);
+			    for (my $i=3; $i <= 16; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    print OUT "\n";
 			}
 		    }elsif($line[0]=~m/stop/){
 			if(defined($hintTypes{P})){ # protein hints
-			    print OUT "      $line[0]      $line[1]       $stop_malus[$idx_stop_p_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]   $line[14]      $line[15]      $line[16]    $stop_p_bonus[$idx_stop_p_bonus]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($stop_malus[$idx_stop_p_malus],12);
+			    for (my $i=3; $i <= 16; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($stop_p_bonus[$idx_stop_p_bonus],8);
+			    print OUT "\n";
 			}else{ # no protein hints
-			    print OUT "      $line[0]      $line[1]       1  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]   $line[14]      $line[15]      $line[16]    1\n";
+                            print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,12);
+			    for (my $i=3; $i <= 16; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    print OUT "\n";
 			}
 		    }elsif($line[0]=~m/ass/){
 			if(defined($hintTypes{P})){
-			    print OUT "        $line[0]      $line[1]   $ass_local_malus[$idx_ass_local_malus] $line[3]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     $ass_p_bonus[$idx_ass_p_bonus]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($ass_local_malus[$idx_ass_local_malus],6).printCfg($ass_malus[$idx_ass_malus], 6);
+			    for (my $i=4; $i <= 17; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($ass_p_bonus[$idx_ass_p_bonus],8);
+			    print OUT "\n";
 			}else{
-			    print OUT "        $line[0]      $line[1]   1 $line[3]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     1\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,6).printCfg(1,6);
+			    for (my $i=4; $i <= 17; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    print OUT "\n";
 			}
 		    }elsif($line[0]=~m/dss/){
 			if(defined($hintTypes{P})){
-			    print OUT "        $line[0]      $line[1]   $dss_local_malus[$idx_dss_local_malus] $line[3]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     $dss_p_bonus[$idx_dss_p_bonus]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($dss_local_malus[$idx_dss_local_malus],6).printCfg($dss_malus[$idx_dss_malus],6);
+			    for (my $i=4; $i <= 17; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($dss_p_bonus[$idx_dss_p_bonus],8);
+			    print OUT "\n";
 			}else{
-			    print OUT "        $line[0]      $line[1]   1 $line[3]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     1\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,6).printCfg(1,6);
+			    for (my $i=4; $i <= 17; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    print OUT "\n";
                         }
-		    }elsif($line[0]=~m/exonpart/){
+		    }elsif($line[0]=~m/^exonpart$/){
 			if(defined($hintTypes{W})){
-			    print OUT "   $line[0]      $line[1]  $exonpart_local_malus[$idx_exonpart_local_malus] $exonpart_malus[$idx_exonpart_malus]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $exonpart_w_bonus[$idx_exonpart_w_bonus]   $line[16]       $line[17]       $line[18]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($exonpart_local_malus[$idx_exonpart_local_malus],6).printCfg($exonpart_malus[$idx_exonpart_malus],6);
+			    for (my $i=4; $i <= 14; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($exonpart_w_bonus[$idx_exonpart_w_bonus],8);
+			    for (my $i=16; $i <= 18; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT "\n";
 			}else{
-			    print OUT "   $line[0]      $line[1]  1 1  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    1   $line[16]       $line[17]       $line[18]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,6).printCfg(1,6);
+			    for (my $i=4; $i <= 14; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    for (my $i=16; $i <= 18; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT "\n";
 			}
 		    }elsif($line[0]=~m/^exon$/){
 			if(defined($hintTypes{P})){
-			    print OUT "       $line[0]      $line[1]        $exon_malus[$idx_exon_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]    $line[14]      $line[15]       $line[16]     $exon_p_bonus[$idx_exon_p_bonus]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($exon_malus[$idx_exon_malus],12);
+			    for (my $i=3; $i <= 16; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($exon_p_bonus[$idx_exon_p_bonus],8);
+			    print OUT "\n";
 			}else{
-			    print OUT "       $line[0]      $line[1]        1  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]    $line[11]    $line[12] $line[13]    $line[14]          $line[15]       $line[16]     1\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,12);
+			    for (my $i=3; $i <= 16; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    print OUT "\n";
 			}
-		    }elsif($line[0]=~m/intron/){
+		    }elsif($line[0]=~m/^intron$/){
 			if(defined($hintTypes{E}) && defined($hintTypes{P})){
-			    print OUT "     $line[0]      $line[1]        $intron_malus[$idx_intron_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]  $intron_e_bonus[$idx_intron_e_bonus]    W 1    1      P       1     $intron_p_bonus[$idx_intron_p_bonus]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($intron_malus[$idx_intron_malus],12);
+			    for (my $i=3; $i <= 10; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($intron_e_bonus[$idx_intron_e_bonus],8);
+			    for (my $i=12; $i <= 16; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($intron_p_bonus[$idx_intron_p_bonus],8);
+			    print OUT "\n";
 			}elsif(defined($hintTypes{P})){
-			    print OUT "     $line[0]      $line[1]        $intron_malus[$idx_intron_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]  1    W 1    1      P       1     $intron_p_bonus[$idx_intron_p_bonus]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($intron_malus[$idx_intron_malus],12);
+			    for (my $i=3; $i <= 10; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    for (my $i=12; $i <= 16; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($intron_p_bonus[$idx_intron_p_bonus],8);
+			    print OUT "\n";
 			}else{ # only hintTypes{E}
-			    print OUT "     $line[0]      $line[1]        $intron_malus[$idx_intron_malus]  $line[3]    $line[4]  $line[5]  $line[6]  $line[7]     $line[8]    $line[9] $line[10]  $intron_e_bonus[$idx_intron_e_bonus]    W 1    1      P       1     1\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($intron_malus[$idx_intron_malus],12);
+			    for (my $i=3; $i <= 10; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($intron_e_bonus[$idx_intron_e_bonus],8);
+			    for (my $i=12; $i <= 16; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    print OUT "\n";
 			}
 		    }elsif($line[0]=~m/CDSpart/){
 			if(defined($hintTypes{P})){
-			    print OUT "    $line[0]      $line[1]     $line[2] $cdspart_malus[$idx_cdspart_malus]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     $cdspart_p_bonus[$idx_cdspart_p_bonus]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg($cdspart_malus[$idx_cdspart_malus],6);
+			    for (my $i=4; $i <= 17; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($cdspart_p_bonus[$idx_cdspart_p_bonus],8);
+			    print OUT "\n";
 			}else{
-			    print OUT "    $line[0]      $line[1]     $line[2] 1  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $line[15]      $line[16]       $line[17]     1\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg(1,6);
+			    for (my $i=4; $i <= 17; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    print OUT "\n";
 			}
 		    }elsif($line[0]=~m/UTRpart/){
 			if(defined($hintTypes{W})){
-			    print OUT "    $line[0]      $line[1]     $line[2] $utrpart_malus[$idx_utrpart_malus]  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    $utrpart_w_bonus[$idx_utrpart_w_bonus]      $line[16]       $line[17]       $line[18]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg($utrpart_malus[$idx_utrpart_malus],6);
+			    for (my $i=4; $i <= 14; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg($utrpart_w_bonus[$idx_utrpart_w_bonus],8);
+			    for (my $i=16; $i <= 18; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT "\n";
 			}else{
-			    print OUT "    $line[0]      $line[1]     $line[2] 1  $line[4]    $line[5]  $line[6]  $line[7]  $line[8]     $line[9]    $line[10] $line[11]    $line[12]    $line[13] $line[14]    1      $line[16]       $line[17]       $line[18]\n";
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg(1,6);
+			    for (my $i=4; $i <= 14; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT printCfg(1,8);
+			    for (my $i=16; $i <= 18; $i++){
+				print OUT printCfg($line[$i], 8);
+			    }
+			    print OUT "\n";
 			}
 		    }else{
-			 print $_;
+			if(scalar(@line)==18){
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],12);
+			}else{
+			    print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg($line[3],6);
+			}
+			my $from;
+			if(scalar(@line)==18){
+			    $from = 3;
+			}else{
+			    $from = 4;
+			}
+			for (my $i=$from; $i <= ($from+14); $i++){
+			    print OUT printCfg($line[$i], 8);
+			}
+			print OUT "\n";
 		    }
 		}   
 	    }
@@ -1275,6 +1450,21 @@ sub extrinsic{
 	print STDOUT "No extrinsic file was created. Program uses assigned extrinsic file: $extrinsicCfgFile\n";
     }
 }
+
+# subroutine for printing extrinsic.cfg pretty
+sub printCfg{
+    my $field = shift;
+    my $length = shift;
+    my $nSpaces = $length - length($field);
+    if($nSpaces < 0){
+	print STDERR "Format error in extrinsic.cfg file. File will still be functional, but may look messy to human reader!\n";
+	$nSpaces = 1;
+    }
+    my $returnString = " " x $nSpaces;
+    $returnString .= $field;
+    return $returnString;
+}
+
 
          ####################### train AUGUSTUS #########################
 # create genbank file and train AUGUSTUS parameters for given species
@@ -1377,7 +1567,7 @@ sub training{
 	        print LOG "\# ".(localtime).": split genbank file into train and test file\n";
 	        print LOG "$perlCmdString\n\n";
 	        system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
-	        print STDOUT "genbank file splitted.\n";
+	        print STDOUT "genbank file split.\n";
         }
     }
 

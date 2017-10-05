@@ -452,12 +452,11 @@ sub start_align{
   chdir $tmpDir or die("Could not change to directory $tmpDir.\n");
   
   my $pm = new Parallel::ForkManager($CPU);
-  # ERROR IS NOW THAT CONCAT IS NOT WRITTEN IN ALL CASES
   my $whole_prediction_file = "$alignDir/$prgsrc.concat.aln";
   if($reg){
       foreach my $ID (keys %contigIDs){
 	  my $pid = $pm->start and next;
-	  my $target = "$contigIDs{$ID}{\"seq\"}$ID.fa";     # genome sequence
+	  my $target = "$tmpDir/$contigIDs{$ID}{\"seq\"}$ID.fa";     # genome sequence
 	  my $query = "$ID.fa";                              # protein file
 	  $errorfile = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.stderr";
 	  $stdoutfile = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.aln";
@@ -497,7 +496,7 @@ sub start_align{
       if($CPU > 1 || ($CPU == 1 && !$protWhole)){
 	  foreach my $ID (keys %seq){
 	      my $pid = $pm->start and next;
-	      my $target = "genome$ID.fa";  # genome sequence
+	      my $target = "$tmpDir/genome$ID.fa";  # genome sequence
 	      my $query;
 	      if(!$protWhole){
 		  $query = "prot$ID.fa";     # protein file
