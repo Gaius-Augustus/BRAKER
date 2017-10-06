@@ -248,8 +248,10 @@ my $useexisting = 0;                  # use existing species config and paramete
 my $UTR = "off";                      # UTR prediction on/off. currently not available für new species 
 my $workDir;                          # in the working directory results and temporary files are stored
 my $filterOutShort;		      # filterOutShort option (see help)
-my @allowedHints = ("intron");        # Currently, BRAKER only supports intron hints. Hint type from input hintsfile will
-                                      # be checked.
+# Hint type from input hintsfile will be checked; concers a) GeneMark-ET (requires
+# intron hints) and b) writing of extrinsic.cfg from BRAKER2: other hint types will be set to neutral.
+# If an extrinsic file is specified, this does not matter.
+my @allowedHints = ("intron", "start", "stop", "ass", "dss", "exonpart", "exon", "CDSpart", "UTRpart", "nonexonpart");
 my $crf;                              # flag that determines whether CRF training should be tried
 my $nice;                             # flag that determines whether system calls should be executed with bash nice 
                                       #(default nice value)
@@ -334,7 +336,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'GENEMARK_PATH=s'               => \$GMET_path,
             'genome=s'                      => \$genome,
             'gff3'                          => \$gff3,
-            'rnaseq-hints=s'                => \@hints,
+            'hints=s'                => \@hints,
             'optCfgFile=s'                  => \$optCfgFile,
             'overwrite!'                    => \$overwrite,
             'SAMTOOLS_PATH=s'               => \$SAMTOOLS_PATH_OP,
@@ -466,9 +468,9 @@ check_upfront();
 check_options();
 
 
-# check whether RNAseq files are specified
+# check whether RNA-Seq files are specified
 if(!@bam && !@hints){
-  print STDERR "ERROR: No RNAseq or hints files specified. Please set at least one RNAseq BAM file.\n$usage";
+  print STDERR "ERROR: No RNA-Seq or hints files specified. Please set at least one RNAseq BAM file.\n$usage";
   exit(1);
 }
 
@@ -2212,36 +2214,60 @@ sub check_gff{
   my $gfffile = shift;
   print STDOUT "NEXT STEP: check if input file $gfffile is in gff format\n";
   open (GFF, $gfffile) or die "Cannot open file: $gfffile\n";
+  my $nIntrons = 0;
+  my $printedAllowedHints = 0;
+  my %foundFeatures;
   while(<GFF>){
     my @gff_line = split(/\t/, $_);
     if(scalar(@gff_line) != 9){
-      print STDERR "ERROR: File $gfffile is not in gff format. Please check\n";
+      print STDERR "ERROR: File $gfffile is not in gff format!\n";
       close(GFF) or die("Could not close gff file $gfffile!\n");
       exit(1);
     }else{
       if(!isint($gff_line[3]) || !isint($gff_line[4]) || $gff_line[5] =~ m/[^\d\.]/g || $gff_line[6] !~ m/[\+\-\.]/ || length($gff_line[6]) != 1 || $gff_line[7] !~ m/[0-2\.]{1}/ || length($gff_line[7]) != 1){
-        print STDERR "ERROR: File $gfffile is not in gff format. Please check\n";
+        print STDERR "ERROR: File $gfffile is not in gff format!\n";
         close(GFF) or die("Could not close gff file $gfffile!\n");
         exit(1);
       }
     }
-    my $isAllowed = 0;
-    foreach(@allowedHints){
-	if($gff_line[2] eq $_){
-	    $isAllowed = 1;
+    # intron hints are the sole source of extrinsic information for GeneMark-ET, thus, if no bam file is given, the
+    # supplied hints file must contain intron hints (many)
+    if(!@bam){
+	if($gff_line[2] eq "intron"){
+	    $nIntrons++;
 	}
     }
-    if($isAllowed != 1){
-	print STDERR "ERROR: File $gfffile contains hints of a feature type that is currently not supported by BRAKER\n";
-	print STDERR "Currently allowed hint types:\n";
+    # if no extrinsic.cfg is specified, parameters in braker.pl written extrinsic.cfg correspond to hints in @allowedHints, only; other hints will be treated with neutral malus/bonus. Issue corresponding warning.
+    if(not(defined($extrinsicCfgFile))){
+	my $isAllowed = 0;
 	foreach(@allowedHints){
-	    print STDERR $_."\n";
+	    if($gff_line[2] eq $_){
+		$isAllowed = 1;
+	    }
 	}
-	close(GFF) or die("Could not close gff file $gfffile!\n");
-	exit(1);
+	if($isAllowed != 1){
+	    if(not(defined($foundFeatures{$gff_line[2]}))){	
+		print STDERR "WARNING: File $gfffile contains hints of a feature type $gff_line[2] that is currently not supported by BRAKER. Features of this type will be treated with neutral bonus/malus in the extrinsic.cfg file that will be used for running AUGUSTUS.\n";
+		print LOG "WARNING: File $gfffile contains hints of a feature type $gff_line[2] that is currently not supported by BRAKER. Features of this type will be treated with neutral bonus/malus in the extrinsic.cfg file that will be used for running AUGUSTUS.\n";
+		$foundFeatures{$gff_line[2]} = 1;
+	    }
+	    if($printedAllowedHints == 0){
+		print STDERR "Currently allowed hint types:\n";
+		foreach(@allowedHints){
+		    print STDERR $_."\n";
+		}
+		$printedAllowedHints = 1;
+	    }
+	}	
     }
   }
   close(GFF) or die("Could not close gff file $gfffile!\n");
+  if(!@bam){
+      if($nIntrons < 1000){
+	  print STDERR "ERROR: Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
+	  exit(1);
+      }
+  }
   print STDOUT "gff format check complete.\n";
 }
 
