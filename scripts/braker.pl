@@ -789,7 +789,7 @@ sub make_rna_seq_hints{
 	    $cmdString .= "nice ";
 	}
         $cmdString .= "cat $bam_temp >>$hintsfile_temp";
-        print LOG "\# ".(localtime).": add hints from BAM file $bam[$i] to hints file\n";
+        print LOG "\n\# ".(localtime).": add hints from BAM file $bam[$i] to hints file\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
         print STDOUT "hints from BAM file $bam[$i] added.\n";
@@ -914,36 +914,35 @@ sub make_prot_hints{
     if(-f $prot_hints_file_temp || $overwrite){
 	if(!uptodate([$prot_hints_file_temp],[$prot_hintsfile])|| $overwrite){
 	    join_mult_hints($prot_hints_file_temp, "prot");
-	    if(-f $hintsfile){
-		print STDOUT "NEXT STEP: moving $prot_hints_file_temp to $prot_hintsfile\n";
-		print LOG "\# ".(localtime).": moving $prot_hints_file_temp to $prot_hintsfile\n";
-		$cmdString = "mv $prot_hints_file_temp $prot_hintsfile";
-		print LOG "$cmdString\n";
-		system($cmdString)==0 or die ("Could not execute $cmdString!\n");
-		print LOG "Deleting $prot_hints_file_temp\n";
-		unlink($prot_hints_file_temp);
-		print STDOUT "file moved.\n";
-		print STDOUT "NEXT STEP: joining protein and RNA-Seq hints files\n";
-		print LOG "\n\# ".(localtime).": appending $prot_hintsfile to $hintsfile\n";
-		$cmdString = "cat $prot_hintsfile >> $hintsfile";
-		print LOG "$cmdString\n";
-		system($cmdString)==0 or die ("Could not execute $cmdString!\n");
-		print LOG "Deleting $prot_hintsfile\n";
-		unlink($prot_hintsfile);
-		print STDOUT "file appended.\n";
-		print STDOUT "NEXT STEP: sorting hints file $hintsfile\n";
-		print LOG "\n\# ".(localtime).": sorting hints file $hintsfile\n";
-		my $toBeSortedHintsFile = "$otherfilesDir/hintsfile.tmp.gff";
-		$cmdString = "mv $hintsfile $toBeSortedHintsFile";
-		print LOG "$cmdString\n";
-		system($cmdString)==0 or die ("Could not execute $cmdString!\n");
-		$cmdString = "cat $toBeSortedHintsFile | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 > $hintsfile";
-		print LOG "$cmdString\n";
-		system($cmdString)==0 or die("Could not execute $cmdString!\n");
-		print LOG "rm $toBeSortedHintsFile\n";
-		unlink($toBeSortedHintsFile);
-		print STDOUT "... $hintsfile sorted\n";
-	    }
+	    print STDOUT "NEXT STEP: moving $prot_hints_file_temp to $prot_hintsfile\n";
+	    print LOG "\# ".(localtime).": moving $prot_hints_file_temp to $prot_hintsfile\n";
+	    $cmdString = "mv $prot_hints_file_temp $prot_hintsfile";
+	    print LOG "$cmdString\n";
+	    system($cmdString)==0 or die ("Could not execute $cmdString!\n");
+	    print LOG "Deleting $prot_hints_file_temp\n";
+	    unlink($prot_hints_file_temp);
+	    print STDOUT "file moved.\n";
+	    print STDOUT "NEXT STEP: joining protein and RNA-Seq hints files\n";
+	    print LOG "\n\# ".(localtime).": appending $prot_hintsfile to $hintsfile\n";
+	    $cmdString = "cat $prot_hintsfile >> $hintsfile";
+	    print LOG "$cmdString\n";
+	    system($cmdString)==0 or die ("Could not execute $cmdString!\n");
+	    print LOG "Deleting $prot_hintsfile\n";
+	    unlink($prot_hintsfile);
+	    print STDOUT "file appended.\n";
+	    print STDOUT "NEXT STEP: sorting hints file $hintsfile\n";
+	    print LOG "\n\# ".(localtime).": sorting hints file $hintsfile\n";
+	    my $toBeSortedHintsFile = "$otherfilesDir/hintsfile.tmp.gff";
+	    $cmdString = "mv $hintsfile $toBeSortedHintsFile";
+	    print LOG "$cmdString\n";
+	    system($cmdString)==0 or die ("Could not execute $cmdString!\n");
+	    $cmdString = "cat $toBeSortedHintsFile | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 > $hintsfile";
+	    print LOG "$cmdString\n";
+	    system($cmdString)==0 or die("Could not execute $cmdString!\n");
+	    print LOG "rm $toBeSortedHintsFile\n";
+	    unlink($toBeSortedHintsFile);
+	    print STDOUT "... $hintsfile sorted\n";
+	    
 	}
     }
     if(-z $prot_hintsfile){
@@ -955,20 +954,17 @@ sub make_prot_hints{
 # adding externally created hints
 sub add_other_hints{
     if(@hints){
+	# have "uptodate" issues at this point, removed it... maybe fix later
 	for(my $i=0; $i<scalar(@hints); $i++){
-	    if(!uptodate([$hints[$i]],[$hintsfile]) || $overwrite){
-		print STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
-		$cmdString = "";
-		if($nice){
-		    $cmdString .= "nice ";
-		}
-		$cmdString .= "cat $hints[$i] >> $hintsfile";
-		print LOG "\# ".(localtime).": add hints from file $hints[$i]\n";
-		print LOG "$cmdString\n\n";
-		system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
-	    }else{
-		print STDOUT "Adding hints from file $hints[$i] to $hintsfile skipped because files were up to date.\n";
+	    print STDOUT "NEXT STEP: add hints from file $hints[$i]\n";
+	    $cmdString = "";
+	    if($nice){
+		$cmdString .= "nice ";
 	    }
+	    $cmdString .= "cat $hints[$i] >> $hintsfile";
+	    print LOG "\n\# ".(localtime).": add hints from file $hints[$i]\n";
+	    print LOG "$cmdString\n\n";
+	    system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 	}
 	join_mult_hints($hintsfile, "all");
     }
@@ -1578,7 +1574,7 @@ sub training{
         if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firstetraining.stdout"])){
             # set "stopCodonExcludedFromCDS" to true
             print STDOUT "NEXT STEP: Setting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n"; # see autoAugTrain.pl
-            print LOG "\# ".(localtime).": Setting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
+            print LOG "\n\# ".(localtime).": Setting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
             setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "true"); # see autoAugTrain.pl
 
             # first try with etraining
@@ -1623,7 +1619,7 @@ sub training{
                 print STDOUT "next step: Setting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"false\"\n"; # see autoAugTrain.pl
                 setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "false");  # see autoAugTrain.pl
                 print STDOUT "NEXT STEP: Trying etraining again\n";
-                print LOG "\# ".(localtime).": Trying etraining again\n";
+                print LOG "\n\# ".(localtime).": Trying etraining again\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString")==0 or die("failed to execute second etraining: $!\n");
                 print STDOUT "trying etraining again complete.\n";
