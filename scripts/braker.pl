@@ -94,7 +94,7 @@ OPTIONS
       bamtools/                          variable). Has higher priority than the environment variable.
     --cores                              Specifies the maximum number of cores that can be used during 
                                          computation
-    --extrinsicCfgFile                   Optional. This file contains the list of used sources for the 
+    --extrinsicCfgFile=file              Optional. This file contains the list of used sources for the 
                                          hints and their boni and mali. If not specified the file "extrinsic.cfg" 
                                          in the config directory $AUGUSTUS_CONFIG_PATH is copied and adjusted.
     --fungus                             GeneMark-ET option: run algorithm with branch point model (most 
@@ -107,10 +107,10 @@ OPTIONS
                                          from RNA-Seq (or other data) in gff format. This flag also allows the usage
                                          of hints from additional extrinsic sources for gene prediction 
                                          with AUGUSTUS. To consider such additional extrinsic information,
-                                         you need to use the flag --optCfgFile to specify parameters for 
+                                         you need to use the flag --extrinsicCfgFile to specify parameters for 
                                          all sources in the hints file
                                          (including the source "E" for intron hints from RNA-Seq).
-    --optCfgFile=ppx.cfg                 Optional custom config file for AUGUSTUS (see --rnaseq-hints).
+    --optCfgFile=ppx.cfg                 Optional custom config file for AUGUSTUS (see --hints).
     --overwrite                          Overwrite existing files (except for species parameter files)
     --SAMTOOLS_PATH=/path/to/            Optionally set path to samtools (if not specified as environment 
       samtools/                          variable) to fix BAM files automatically, if necessary. Has higher     
@@ -142,8 +142,7 @@ OPTIONS
                                          GenomeThreader (--prg=gth). Default is GenomeThreader if the tool is not 
                                          specified.
                                          Currently, hints from proteins are only used in the prediction step with
-                                         AUGUSTUS. If --protein-seq is specified, it is not allowed to 
-                                         specify --protein-aln or --protein-hints.
+                                         AUGUSTUS. 
     --prot_aln=prot.aln                  Alignment file generated from aligning protein sequences against the 
                                          genome with either Exonerate (--prg=exonerate), or Spaln (--prg=spaln), or
                                          GenomeThreader (--prg=gth).
@@ -158,7 +157,7 @@ OPTIONS
                                          --prot_aln. Generating tool will not be guessed.
                                          Currently, hints from proteins are only used in the prediction step with
                                          AUGUSTUS.
-    --prg=gth|exonerate|spaln            Alignment tool ght (GenomeThreader), exonerate (Exonerate) or Spaln2
+    --prg=gth|exonerate|spaln            Alignment tool gth (GenomeThreader), exonerate (Exonerate) or Spaln2
                                          (spaln) that will be used to generate protein alignments that will be the 
                                          basis for hints generation for gene prediction with AUGUSTUS (if specified
                                          in combination with --prot_seq) or that was used to externally
@@ -460,6 +459,8 @@ if(defined($ALIGNMENT_TOOL_PATH)){
     if($last_char eq "\/"){
 	chop($ALIGNMENT_TOOL_PATH);
     }
+}elsif($ENV{'ALIGNMENT_TOOL_PATH'} && @prot_seq_files){
+    $ALIGNMENT_TOOL_PATH=$ENV{'ALIGNMENT_TOOL_PATH'};
 }
 
 # check upfront whether any common problems will occur later # see autoAug.pl
@@ -2102,7 +2103,7 @@ sub check_upfront{ # see autoAug.pl
   }
 
   if(!$ENV{'ALIGNMENT_TOOL_PATH'} && !defined($ALIGNMENT_TOOL_PATH) && @prot_seq_files){
-      print STDERR "ERROR: The environment variable  ALIGNMENT_TOOL_PATH to either the exectuable of GenomeThreader, Exonerate or Spaln is not defined. Please expoert an environment variable or use --ALIGNMENT_TOOL_PATH=path/to/aligner.\n";
+      print STDERR "ERROR: The environment variable  ALIGNMENT_TOOL_PATH to either the exectuable of GenomeThreader, Exonerate or Spaln is not defined. Please export an environment variable or use --ALIGNMENT_TOOL_PATH=path/to/aligner.\n";
   }
 
   if(!$ENV{'BAMTOOLS_PATH'} && !defined($bamtools_path)){ # see autoAug.pl

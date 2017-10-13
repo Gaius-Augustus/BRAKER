@@ -1,34 +1,37 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                                                %
-%           BRAKER1                                                                              %
+%           BRAKER2                                                                              %
 %                                                                                                %
-%           Authors: Simone Lange and Katharina J. Hoff                                          %
+%           Authors: Katharina J. Hoff                                                           %
 %                                                                                                %
 %           Contact: katharina.hoff@uni-greifswald.de                                            %
 %                                                                                                %
-%           Date: May 11th, 2015                                                               %
+%           Date: October 9th 2017                                                               %
 %                                                                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   1.  INTRODUCTION
   2.  INSTALLATION
-  3.  RUNNING BRAKER1
-  4.  OUTPUT OF BRAKER1
+  3.  RUNNING BRAKER2
+  4.  OUTPUT OF BRAKER2
   5.  EXAMPLE DATA
 
               1. INTRODUCTION
               ---------------
-BRAKER1 is a pipeline for unsupervised RNA-Seq-based genome annotation that combines the advantages of GeneMark-ET and AUGUSTUS. BRAKER1 requires an RNA-Seq read alignment file (in the bam format) and a genome file as input. First,  GeneMark-ET performs iterative training and generates initial gene structures using support from RNA-Seq. Second, AUGUSTUS uses predicted genes for training and then integrates RNA-Seq read information as extrinsic evidence into final gene predictions. For more information on AUGUSTUS or GeneMark-ET see their respective README files.
+BRAKER2 is a pipeline for unsupervised RNA-Seq-based genome annotation that combines the advantages of GeneMark-ET and AUGUSTUS. BRAKER2 requires an RNA-Seq read alignment file (in the bam format) and a genome file as input. First,  GeneMark-ET performs iterative training and generates initial gene structures using support from RNA-Seq. Second, AUGUSTUS uses predicted genes for training and then integrates RNA-Seq read information as extrinsic evidence into final gene predictions. For more information on AUGUSTUS or GeneMark-ET see their respective README files. Further, if a protein sequence file in fasta format and/or an alignment output file from Spaln, GenomeThreader or exonerate and/or additional hints (from protein sequences) are given, BRAKER2 integrates the extrinsic evidence information from protein sequences into the AUGUSTUS gene prediction step.
 
               2. INSTALLATION
               ---------------
 
-At the time of release, this BRAKER1 version, the pipeline was tested with:
+At the time of release, this BRAKER2 version, the pipeline was tested with:
 
    * AUGUSTUS 3.2.2
    * GeneMark-ET 4.32
    * BAMTOOLS 2.4.1
-   * SAMTOOLS 1.1.19
+   * SAMTOOLS 0.1.19-96b5f2294a
+   * GenomeThreader 1.1.6
+   * Spaln 2.3.1
+   * Exonerate 2.2.0
 
 1. Download GeneMark-ET from http://exon.gatech.edu/GeneMark/license_download.cgi
 
@@ -36,7 +39,13 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
 
 3. Download BAMTOOLS (e.g. e.g. git clone https://github.com/pezmaster31/bamtools.git)
 
-4. Install BAMTOOLS by typing the following in your shell:
+4. If you wish to run protein to genome alignments with BRAKER2, download at least one of the following alignment tools:
+
+   * GenomeThreader from http://genomethreader.org/
+   * Spaln from http://www.genome.ist.i.kyoto-u.ac.jp/~aln_user
+   * Exonerate from https://github.com/nathanweeks/exonerate (or on Ubuntu, download and install via "apt-get install exonerate")
+
+5. Install BAMTOOLS by typing the following in your shell:
 
    cd your-bamtools-directory
    mkdir build
@@ -44,23 +53,23 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
    cmake ..
    make
 
-5. Unpack and install GeneMark-ET as described in GeneMark-ET's README file.
+6. Unpack and install GeneMark-ET as described in GeneMark-ET's README file.
 
-6. Unpack and install AUGUSTUS. AUGUSTUS comes with pre-compiled binaries (located in the 
+7. Unpack and install AUGUSTUS. AUGUSTUS comes with pre-compiled binaries (located in the 
    augustus-x.x.x/bin folder). However, you should compile AUGUSTUS on your own system in order
    to avoid future problems. Compilation instructions are provided in the AUGUSTUS README file
    (augustus-x.x.x/README.txt).
    Make sure, you also compile bam2hints (included in the main AUGUSTUS Makefile; in case
    of problems, you find further instructions on bam2hints compilation in the file
    augustus-x.x.x/auxprogs/bam2hints/README).
-   BRAKER1 needs writing access to the AUGUSTUS directory config/. If you install AUGUSTUS
+   BRAKER2 needs writing access to the AUGUSTUS directory config/. If you install AUGUSTUS
    globally, you need to copy config/ to a location where users have writing permission.
 
-7. Optional: 
-      SAMTOOLS is not required for running BRAKER1 if all your files are formatted, correctly
+8. Optional: 
+      SAMTOOLS is not required for running BRAKER2 if all your files are formatted, correctly
       (i.e. all sequences should have short and unique fasta names). If you are not sure
       whether all your files are fomatted correctly, it might be helpful to have SAMTOOLS
-      installed (BRAKER1 will then try to use SAMTOOLS to solve certain issues).
+      installed (BRAKER2 will then try to use SAMTOOLS to solve certain issues).
 
       As a prerequisite for SAMTOOLS, download and install htslib (e.g. 
       git clone https://github.com/samtools/htslib.git, follow the htslib documentation for 
@@ -69,7 +78,7 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
       Download and install SAMTOOLS (e.g. git clone git://github.com/samtools/samtools.git), 
       subsequently follow SAMTOOLS documentation for installation). 
 
-8. Install the required PERL modules available on CPAN:
+9. Install the required PERL modules available on CPAN:
    			    File::Spec::Functions
 				Hash::Merge
 				List::Util
@@ -81,21 +90,31 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
 				YAML 
    (on Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]")
 
-   BRAKER1 also uses the PERL module helpMod.pm that is not available on CPAN. This module is 
-   part of the BRAKER1 relase and does not require separate installation.
+   BRAKER2 also uses the PERL module helpMod.pm that is not available on CPAN. This module is 
+   part of the BRAKER2 relase and does not require separate installation.
 
-9. Add the directories in which braker.pl, AUGUSTUS executables, AUGUSTUS scripts reside to 
-   your $PATH environment variable, e.g. for your current bash session:
+10. Optional:
+       If you would like BRAKER2 to produce protein to genome alignments, install one or
+       several protein alignment tools (BRAKER2 will only execute one out of Spaln, GenomeThreader
+       and Exonerate at each run).
 
-   PATH=/my_path_to_braker/:/my_path_to_augustus/bin/:/my_path_to_augustus/scripts/:$PATH
-   export PATH
+           * GenomeThreader: Unpack and install according to gth/README
+	   * Spaln: Unpack and install according to spaln/doc/SpalnReadMe22.pdf
+	   * Exonerate: Unpack and install according to exonerate/README
+	                (or on Ubuntu: sudo apt-get install exonerate)
 
-   You may want to add these lines to a startup script (like ~/.bashrc).
+11. Add the directories in which braker.pl, AUGUSTUS executables, AUGUSTUS scripts reside to 
+    your $PATH environment variable, e.g. for your current bash session:
 
-   Exporting the location of AUGUSTUS and AUGUSTUS scripts is not required 
-   by BRAKER1 if you set the environment variables in step 10.
+    PATH=/my_path_to_braker/:/my_path_to_augustus/bin/:/my_path_to_augustus/scripts/:$PATH
+    export PATH
 
-10. Optional: set environment variable  $AUGUSTUS_CONFIG_PATH, $GENEMARK_PATH and 
+    You may want to add these lines to a startup script (like ~/.bashrc).
+
+    Exporting the location of AUGUSTUS and AUGUSTUS scripts is not required 
+    by BRAKER2 if you set the environment variables in step 10.
+
+12. Optional: set environment variable  $AUGUSTUS_CONFIG_PATH, $GENEMARK_PATH and 
               $BAMTOOLS_PATH (and $SAMTOOLS_PATH)
 
     The $AUGUSTUS_CONFIG_PATH determines which directory is used for reading and writing species 
@@ -108,22 +127,22 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
 
     export AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/
 
-    $AUGUSTUS_CONFIG_PATH - if exported - is also used by BRAKER1 to determine the relative 
+    $AUGUSTUS_CONFIG_PATH - if exported - is also used by BRAKER2 to determine the relative 
     			    path to the AUGUSTUS executable, AUGUSTUS scripts and bam2hints (local
                             installaton). (This can be overruled by setting command line
                             options AUGUSTUS_BIN_PATH and AUGUSTUS_SCRIPTS_PATH).
 
-    If the environment variable $GENEMARK_PATH is set, BRAKER1 will look there for the gmes_petap.pl 
+    If the environment variable $GENEMARK_PATH is set, BRAKER2 will look there for the gmes_petap.pl 
     script. Export the variable e.g. for your current bash session:
 
     export GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
 
-    If the environment variable $BAMTOOLS_PATH is set, BRAKER1 will look there for the bamtools 
+    If the environment variable $BAMTOOLS_PATH is set, BRAKER2 will look there for the bamtools 
     executable. Export the variable e.g. for your current bash session:
 
     export BAMTOOLS_PATH=/my_path_to_bamtools/bin/
 
-    If the environment variable $SAMTOOLS_PATH is set, BRAKER1 will look there for the samtools 
+    If the environment variable $SAMTOOLS_PATH is set, BRAKER2 will look there for the samtools 
     executable. Export the variable e.g. for your current bash session:
 
     export SAMTOOLS_PATH=/my_path_to_samtools/
@@ -132,17 +151,17 @@ At the time of release, this BRAKER1 version, the pipeline was tested with:
     do not specify the actual executable when exporting paths, but only the path to where the 
     executable resides.
 
-    Alternatively, you can specify these directories on the command line when running BRAKER1:
+    Alternatively, you can specify these directories on the command line when running BRAKER2:
 
     --AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/ 
     --GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
     --BAMTOOLS_PATH=/my_path_to_bamtools/bin/
     --SAMTOOLS_PATH=/my/path_to_samtools/
 
-              3. RUNNING BRAKER1
+              3. RUNNING BRAKER2
               ------------------
 
-BRAKER1 has two mandatory arguments: a genome file in fasta format and one file containing information on RNA-Seq alignments to that genome file (either in bam format or in AUGUSTUS hints format).
+BRAKER2 has two mandatory arguments: a genome file in fasta format and one file containing information on RNA-Seq alignments to that genome file (either in bam format or in AUGUSTUS hints format).
 
 The genome file contains the DNA input sequence and must be in uncompressed (multiple) fasta format, the file may look like this:
 
@@ -155,12 +174,12 @@ Every letter other than a,c,g,t,A,C,G and T is interpreted as an unknown base. D
 
 For RNA-Seq information, you can either specify a bam-file or a hints file generated from RNA-Seq alignment information. The bam file contains unassembled RNA-Seq read alignments. Alternatively to the bam file, spliced alignment information may be passed as "intron hints" in gff format using the argument --hints=gff-hintsfilename, the file may look like this:
 
-contig_name	TopHat2	intron	2740	2888	25	+	.	.
+contig_name	b2h	intron	2740	2888	25	+	.	.
 
 Required values in the gff format file for GeneMark-ET (for more details, see http://www.sanger.ac.uk/resources/software/gff/spec.html):
 
 Column <seqname>     value should match the corresponding definition line in the FASTA file with sequence
-Column <source>      in this case TopHat2 (value in this column may be anything)
+Column <source>      in this case b2h
 Column <feature>     value "intron" (obligatory!)
 Columns <start><end> intron coordinates, <start> points to first nucleotide of intron and <end> to the last one. 
                      Index starts from "1"
@@ -172,7 +191,9 @@ Values in other columns (frame and attribute) are not used in this program versi
 
 
 IMPORTANT: the names of contigs in <seqname> column in gff must be found as sequence names in the corresponding FASTA file (in the usage example below: genome.fa)!
-  
+
+IMPORTANT: With BRAKER2, it is possible to specify a single hints file that contains hints from RNA-Seq data (for training GeneMark-ET and predicting genes with AUGUSTUS) and that contains hints from proteins (for predicting genes with AUGUSTUS, only). If you are using protein and RNA-Seq evidence, the source tag must be "b2h" for RNA-Seq derived hints, and must be something else for protein derived hints (or nothing, if protein evidence is to be drived by BRAKER2 from alignments or fasta input file).
+
 Usage:
 
 perl braker.pl [OPTIONS] --genome=genome.fa --bam=RNAseq.bam
@@ -220,15 +241,50 @@ Selected parameters:
   environment variable.
 
 --SAMTOOLS_PATH=/path/to/samtools/
-  Optional: set path to samtools (if not specified as environment variable). In some cases, users of BRAKER1 reported that they "shortend" the headers of FASTA files after their first attempt to run BRAKER1, but they forgot to fix the same sequence names in the BAM file. SAMTOOLS is used by BRAKER1 to automatically fix such issues. The command line flag has higher priority than environment variable.
+  Optional: set path to samtools (if not specified as environment variable). In some cases, users of
+  BRAKER2 reported that they "shortend" the headers of FASTA files after their first attempt to run BRAKER2,
+  but they forgot to fix the same sequence names in the BAM file. SAMTOOLS is used by BRAKER2 to
+  automatically fix such issues. The command line flag has higher priority than environment variable.
 
 --hints=hints.gff            
   Additional hints files for gene predictions with AUGUSTUS in gff format (should only be used in combination
   with --optCfgFile)
 
---optCfgFile=extrinsic.cfg
+--prot_seq=prot.fa
+  A protein sequence file in multiple fasta format. This file will be used to generate protein hints for
+  AUGUSTUS by running one of the three alignment tools Exonerate (--prg=exonerate), Spaln (--prg=spaln),
+  or GenomeThreader (--prg=gth). Default is GenomeThreader if the tool is not specified.
+  Currently, hints from proteins are only used in the prediction step with AUGUSTUS. 
+
+--prot_aln=prot.aln
+  Alignment file generated from aligning protein sequences against the genome with either Exonerate
+  (--prg=exonerate), or Spaln (--prg=spaln), or GenomeThreader (--prg=gth).
+  To prepare alignment file, run Spaln2 with the following command:
+     spaln -O0 ... > spalnfile
+  To prepare alignment file, run Exonerate with the following command:
+     exonerate --model protein2genome --showtargetgff T ... > exfile
+  To prepare alignment file, run GenomeThreader with the following command:
+     gth -genomic genome.fa  -protein protein.fa -gff3out -skipalignmentout ... -o gthfile
+  A valid option prg=... must be specified in combination with --prot_aln. Generating tool will not be guessed.
+  Currently, hints from proteins are only used in the prediction step with AUGUSTUS.                                                                          
+
+--prg=gth|exonerate|spaln
+  Alignment tool gth (GenomeThreader), exonerate (Exonerate) or Spaln2 (spaln) that will be used to generate
+  protein alignments that will be the basis for hints generation for gene prediction with AUGUSTUS (if specified
+  in combination with --prot_seq) or that was used to externally generate an alignment file with the commands
+  listed in description of --prot_aln (if used in combination with --prot_aln).
+
+--ALIGNMENT_TOOL_PATH=/path/to/tool
+  Set path to alignment tool (GenomeThreader, Spaln, or Exonerate) if not specified as environment variable
+  ${ALIGNMENT_TOOL_PATH} (this will usually be the path to only one of the alignment tools, the one that is
+  specified with option --prg=..."). Has higher priority than environment variable .
+
+--extrinsicCfgFile=file
   Optional config file for AUGUSTUS, should be used if --hints is used, and if you desire to use extrinsic 
-  configuration parameters deviating from the BRAKER1 default values.
+  configuration parameters deviating from the BRAKER2 default values.
+
+--optCfgFile=ppx.cfg
+  Optional custom config file for AUGUSTUS 
 
 --overwrite
   Overwrite existing files
@@ -257,10 +313,16 @@ Selected parameters:
 
 --species=speciesname
   speciesname is a directory in ${AUGUSTUS_CONFIG_PATH}/species, which is used to read AUGUSTUS species
-  parameters from, and write such parameter so. Usually, BRAKER1 is used to train AUGUSTUS for new species, i.e.
+  parameters from, and write such parameter so. Usually, BRAKER2 is used to train AUGUSTUS for new species, i.e.
   the speciesname should be a species name that does not already exist in ${AUGUSTUS_CONFIG_PATH}/species.
-  Existing species files will not be overwritten. If the argument --species is not used, BRAKER1 generates
+  Existing species files will not be overwritten. If the argument --species is not used, BRAKER2 generates
   speciesnames of the type Sp_1 etc. For example you may type
+
+--augustus-args="--some_arg=bla"
+  For expert AUGUSTUS users: One or several command line arguments to be passed to AUGUSTUS (in addition to
+  the arguments that are already passed by BRAKER2), if several arguments are given, separate by whitespaces,
+  i.e. "--first_arg=sth --second_arg=sth".
+										  
 
 --nice
   execute all time consuming subprocesses of braker.pl with bash program "nice" (default nice level)
@@ -348,16 +410,16 @@ Selected parameters:
 
    The identifiers in parentheses denote older versions for that species.
 
-              4. OUTPUT OF BRAKER1
+              4. OUTPUT OF BRAKER2
               --------------------
 
-BRAKER1 produces three important output files in the working directory:
+BRAKER2 produces three important output files in the working directory:
 
-introns.gff   - The introns extraced from RNAseq.bam. These introns are used for training GeneMark-ET and
-                for predicting genes with AUGUSTUS. The file is in gff format (see section 3, input argument 
-                --hints).
-genemark.gtf  - Genes predicted by GeneMark-ET in gtf format
-augustus.gff  - Genes predicted by AUGUSTUS in gtf format
+hintsfile.gff             - The introns extraced from RNAseq.bam. These introns are used for training GeneMark-ET and
+                            for predicting genes with AUGUSTUS. The file is in gff format (see section 3, input argument 
+                            --hints).
+GeneMark-ET/genemark.gtf  - Genes predicted by GeneMark-ET in gtf format
+augustus.gff              - Genes predicted by AUGUSTUS in gtf format
 
 For details about gtf format, see http://www.sanger.ac.uk/Software/formats/GFF/. A gtf format file contains one line per predicted exon. Example:
 
@@ -371,9 +433,9 @@ seqname   source     feature    start   end   score   strand   frame    transcri
               5. EXAMPLE DATA
               ---------------
 
-Due to file size, example data for testing BRAKER1 is separately available for download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and http://exon.gatech.edu/ as archive BRAKER1examples.tar.gz.
+Due to file size, example data for testing BRAKER2 is separately available for download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and http://exon.gatech.edu/ as archive BRAKER2examples.tar.gz.
 
-After extraction, test BRAKER1 with the following command:
+After extraction, test BRAKER2 with the following command:
 
 perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam
 
