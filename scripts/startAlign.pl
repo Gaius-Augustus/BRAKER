@@ -479,6 +479,7 @@ sub start_align{
 	  }
 	  
 	  if($prgsrc eq "gth"){
+	      print "HERE 1\n";
 	      call_gth($target, $query, $stdoutfile, $errorfile);
 	      $stdAdjusted = adjust($stdoutfile, $ID);
 	  }
@@ -522,6 +523,7 @@ sub start_align{
 	      }
       
 	      if($prgsrc eq "gth"){
+		  print "HERE 2\n";
 		  call_gth($target, $query, $stdoutfile, $errorfile);
 	      }
 	      $cmdString = "";
@@ -538,6 +540,7 @@ sub start_align{
 	  $errorfile = "$alignDir/$prgsrc.stderr";
 	  $stdoutfile = "$alignDir/$prgsrc.aln";
 	  if($CPU == 1 && $prgsrc eq "gth" && $protWhole){
+	      print "HERE 3\n";
 	      call_gth($genome_file, "$prot_addstop_file", $stdoutfile, $errorfile);
 	  }elsif($CPU == 1 && $prgsrc eq "exonerate" && $protWhole){
 	      call_exonerate($genome_file, "$prot_addstop_file", $stdoutfile, $errorfile);
@@ -582,6 +585,7 @@ sub call_exonerate{
 }
 
 sub call_gth{
+    print "HERE 4\n";
   my $genomic = shift;
   my $protein = shift;
   my $stdoutfile = shift;
@@ -593,7 +597,9 @@ sub call_gth{
   if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
   }
-  $cmdString .= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -prseedlength $prseedlength -prhdist $prhdist -gcmincoverage $gcmincoverage -prminmatchlen $prminmatchlen -o  $stdoutfile 2>$errorfile";
+    print "HERE 5: $tmpDir/$protein\n";
+    $cmdString .= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -prseedlength $prseedlength -prhdist $prhdist -gcmincoverage $gcmincoverage -prminmatchlen $prminmatchlen -o  $stdoutfile 2>$errorfile";
+    print "CmdString: $cmdString\n";
   print LOG "\# ".(localtime).": run GenomeThreader for genome '$genomic' and protein '$protein'\n";
   print LOG "$cmdString\n\n";
   system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
