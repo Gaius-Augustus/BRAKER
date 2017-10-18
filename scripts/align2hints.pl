@@ -221,7 +221,7 @@ while(<ALN>) {
         $qstart = $2; # start of alignment in query protein
         $qend = $3; # start of alignment in query protein
     }
-    # create start hints from exonerate
+    # create start and stop hints from exonerate
     if($type eq "gene" && $prgsrc eq "xnt2h" && defined($genome_file)){
         my $pot_start;
         if($strand eq "+"){
@@ -233,13 +233,25 @@ while(<ALN>) {
         }
         if(defined($pot_start)){
            if($pot_start =~ m/(ATG)|(TTG)|(GTG)|(CTG)/i){
-              print_start($seqname, $strand, $start, $end, $score);
+              print_start($seqname, $strand, $start, $end);
            }
+        }
+        my $pot_stop;
+        if($strand eq "+"){
+           $pot_stop = substr($genome{$seqname}, $end-3, 3);
+        }else{
+           $pot_stop = substr($genome{$seqname}, $start-1,3);
+           $pot_stop =~ tr/acgtACGT/tgcaTGCA/;
+           $pot_stop = reverse($pot_stop);
+        }
+        if($pot_stop =~ m/(TAA)|(TGA)|(TAG)/i){
+           print_stop($seqname, $strand, $start, $end);
         }
     }elsif($prgsrc eq "spn2h" || $prgsrc eq "gth2h"){
        if(($type eq "cds" && $f[8] =~ m/Target=.* (\d+) \d+ (\+|-)/ && $prgsrc eq "spn2h") || ($type eq "mRNA" && $f[8] =~ m/Target=.* (\d+) \d+ (\+|-)/ && $prgsrc eq "gth2h")){
           if($1 == 1){
-             print_start($seqname, $strand, $start, $end, $score);
+             print_start($seqname, $strand, $start, $end);
+             print_stop($seqname, $strand, $start, $end);
           }
        }
     }
@@ -317,12 +329,25 @@ sub print_start{
     my $strand = shift;
     my $start = shift;
     my $end = shift;
-    my $score = shift;
     print HINTS "$seqname\t$prgsrc\tstart\t";
     if($strand eq "+"){
 	print HINTS "$start\t".($start+2);
     }else{
 	print HINTS ($end-2)."\t$end";
     }
-    print HINTS "\t$score\t$strand\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+    print HINTS "\t.\t$strand\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+}
+
+sub print_stop{
+    my $seqname = shift;
+    my $strand = shift;
+    my $start = shift;
+    my $end = shift;
+    print HINTS"$seqname\t$prgsrc\tstop\t";
+    if($strand eq "+"){
+	print HINTS ($end-2)."\t$end";
+    }else{
+	print HINTS "$start\t".($start+2);
+    }
+    print HINTS "\t.\t$strand\t.\tsrc=$source;grp=$parent;pri=$priority\n";
 }
