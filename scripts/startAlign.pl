@@ -54,7 +54,9 @@ startAlign.pl [OPTIONS] --genome=genome.fa --prot=db.fa  --prg=gth|exonerate|spa
 OPTIONS
 
     --help                       Print this help message
-    --CPU=n                      Specifies the maximum number of CPUs that can be used during
+    --CPU=n                      Specifies the maximum number of CPUs that can be used during 
+                                 WARNING: using more than one CPU will produce harddrive read/write
+                                 processes that may be speed limiting in case of GenomeThreader
     --dir=path/to/dir            Set path to working directory. In the working directory results
                                  and temporary files are stored.
     --list=BLAST.hit.list        Contains contig and protein ID. Format: contigID proteinID
@@ -479,7 +481,6 @@ sub start_align{
 	  }
 	  
 	  if($prgsrc eq "gth"){
-	      print "HERE 1\n";
 	      call_gth($target, $query, $stdoutfile, $errorfile);
 	      $stdAdjusted = adjust($stdoutfile, $ID);
 	  }
@@ -523,7 +524,6 @@ sub start_align{
 	      }
       
 	      if($prgsrc eq "gth"){
-		  print "HERE 2\n";
 		  call_gth($target, $query, $stdoutfile, $errorfile);
 	      }
 	      $cmdString = "";
@@ -540,7 +540,6 @@ sub start_align{
 	  $errorfile = "$alignDir/$prgsrc.stderr";
 	  $stdoutfile = "$alignDir/$prgsrc.aln";
 	  if($CPU == 1 && $prgsrc eq "gth" && $protWhole){
-	      print "HERE 3\n";
 	      call_gth($genome_file, "$prot_addstop_file", $stdoutfile, $errorfile);
 	  }elsif($CPU == 1 && $prgsrc eq "exonerate" && $protWhole){
 	      call_exonerate($genome_file, "$prot_addstop_file", $stdoutfile, $errorfile);
@@ -585,9 +584,25 @@ sub call_exonerate{
 }
 
 sub call_gth{
-    print "HERE 4\n";
   my $genomic = shift;
   my $protein = shift;
+  # gth manipulates the protein file; if run in parallel, this leads to problems because multiple processes try to manipulate the same protein file
+  # therefore we create a folder with a link to "protein", so that the linked file can be used by gth as template for file manipulations
+  my @proteinPath = split(/\//, $protein);
+  my $proteinStemPath;
+  if(scalar(@proteinPath)>1){
+      for(my $i=0; $i<scalar(@proteinPath); $i++){
+	  $proteinStemPath .= "/$proteinPath[$i]";
+      }
+  }
+  my @genomePath = split(/\//, $genomic);
+  $proteinStemPath .= "protFileFor_".$genomePath[(scalar(@genomePath)-1)];
+  mkdir $proteinStemPath;
+  die "Cannot create directory $proteinStemPath : $!\n" unless -d $proteinStemPath;
+  $cmdString = "ln -s ../$protein $proteinStemPath/".$proteinPath[(scalar(@proteinPath)-1)];
+  print LOG "\# ".(localtime).": $cmdString\n";
+  system("$cmdString")==0 or die ("failed to execute: $cmdString!\n");
+  $protein = $proteinStemPath."/".$proteinPath[(scalar(@proteinPath)-1)];
   my $stdoutfile = shift;
   my $errorfile = shift;
   $cmdString = "";
@@ -597,12 +612,14 @@ sub call_gth{
   if(defined($ALIGNMENT_TOOL_PATH)){
       $cmdString .= $ALIGNMENT_TOOL_PATH."/";
   }
-    print "HERE 5: $tmpDir/$protein\n";
-    $cmdString .= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -prseedlength $prseedlength -prhdist $prhdist -gcmincoverage $gcmincoverage -prminmatchlen $prminmatchlen -o  $stdoutfile 2>$errorfile";
-    print "CmdString: $cmdString\n";
+  $cmdString .= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -prseedlength $prseedlength -prhdist $prhdist -gcmincoverage $gcmincoverage -prminmatchlen $prminmatchlen -o  $stdoutfile 2>$errorfile";
+  print "CmdString: $cmdString\n";
   print LOG "\# ".(localtime).": run GenomeThreader for genome '$genomic' and protein '$protein'\n";
   print LOG "$cmdString\n\n";
   system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
+  $cmdString = "rm -r $proteinStemPath";
+  print LOG "\# ".(localtime).": $cmdString\n";
+  system ("$cmdString")==0 or die("failed to execute: $cmdString!\n");
 }
 
 sub call_spaln{
