@@ -1089,7 +1089,7 @@ sub GeneMark_ET{
       if($nice){
 	  $perlCmdString .= "nice ";
       }
-      $perlCmdString .= "perl $string --sequence=$genome --ET=$genemark_hintsfile --cores=$CPU";
+      $perlCmdString .= "perl $string --verbose --sequence=$genome --ET=$genemark_hintsfile --cores=$CPU"; # consider removing --verbose, later
       if($fungus){
         $perlCmdString .= " --fungus";
       }
