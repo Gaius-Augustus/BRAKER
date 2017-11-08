@@ -6,7 +6,7 @@
 %                                                                                                %
 %           Contact: katharina.hoff@uni-greifswald.de                                            %
 %                                                                                                %
-%           Date: October 9th 2017                                                               %
+%           Date: November 3rd 2017                                                              %
 %                                                                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -102,6 +102,8 @@ At the time of release, this BRAKER2 version, the pipeline was tested with:
 	   * Spaln: Unpack and install according to spaln/doc/SpalnReadMe22.pdf
 	   * Exonerate: Unpack and install according to exonerate/README
 	                (or on Ubuntu: sudo apt-get install exonerate)
+	Currently, we recommend the usage of GenomeThreader due to software availability
+	and runtime.
 
 11. Add the directories in which braker.pl, AUGUSTUS executables, AUGUSTUS scripts reside to 
     your $PATH environment variable, e.g. for your current bash session:
@@ -198,11 +200,15 @@ Usage:
 
 perl braker.pl [OPTIONS] --genome=genome.fa --bam=RNAseq.bam
 perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseq.gff
-
+perl braker.pl [OPTIONS] --genome=genome.fa --bam=RNAseq.bam --prot_seq=protein.fa --prg=gth|exonerate|spaln --ALIGNMENT_TOOL_PATH=/path/to/protaligner
+perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseq.gff --prot_seq=protein.fa --prg=gth|exonerate|spaln --ALIGNMENT_TOOL_PATH=/path/to/protaligner
+perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseqAndProtein.gff
 
 'genome.fa' is the filename (including relative path) to the file containing the query sequence(s) in fasta format.
-'RNAseq.bam' is the filename (including relative path) to the file containing the RNA-seq alingment data in bam format.
+'RNAseq.bam' is the filename (including relative path) to the file containing the RNA-seq alignment data in bam format.
 'RNAseq.gff' is the filename (including relative path) to the file containing introns extracted from RNA-Seq information in gff format.
+'protein.fa' is the filename (including relative path) to the file containg protein sequence(s) in fasta format.
+'RNAseqAndProtein.gff' is the filename (including relative path) to the file containing introns extracted from RNA-Seq information and introns and other hints extracted from protein data in gff format.
 
 Selected parameters:
 
@@ -437,6 +443,33 @@ Due to file size, example data for testing BRAKER2 is separately available for d
 
 After extraction, test BRAKER2 with the following command:
 
-perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam
+perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALGNMENT_TOOL_PATH=/path/to/aligner
 
 The runtime of this example should be around 46 hours on a 2.27 GHz single CPU.
+
+              6. BUG REPORTING
+              ----------------
+
+If you found a bug, please contact katharina.hoff@uni-greifswald.de
+
+Information worth mentioning in your bug report:
+
+Check in braker/yourSpecies/braker.log at which step braker.pl crashed.
+
+There are a number of other files that might be of interest:
+
+ * braker/yourSpecies/errors/bam2hints.*.stderr - will give details on a bam2hints crash (step for converting bam file to intron gff file)
+ 
+ * braker/yourSpecies/hintsfile.gff - is this file empty? If yes, something went wrong during hints generation!
+                                    - does this file contain hints from source "b2h" and of type "intron"? If not: GeneMark-ET will not be able to execute properly
+ 
+ * braker/yourSpecies/startAlign.stderr - if you provided a protein fasta file and this file is not empty, something went wrong during protein alignment
+   braker/yourSpecies/startAlign.stdout - may give clues on at which point protein alignment went wrong
+
+ * braker/yourSpecies/(align_gth|align_exonerate|align_spaln)/*err - error files should be empty or not existing. If there are error files, check the content, those are errors
+                                                                     reported by the alignment tools gth/exonerate/spaln, themselves
+
+ * braker/yourSpecies/errors/GeneMark-ET.stderr - errors reported by GeneMark-ET
+   braker/yourSpecies/errors/GeneMark-ET.stdout - may give clues about the point at which errors in GeneMark-ET occured
+
+
