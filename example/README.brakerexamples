@@ -56,11 +56,23 @@ BRAKER1 can be run with several input file combinations.
    c) with additional protein data and one of the aligners GenomeThreader, Spaln, Exonernate:
 
       perl braker --species=new_species  --genome=example.fa  --bam=example.bam \
-         --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALGNMENT_TOOL_PATH=/path/to/aligner
+         --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALIGNMENT_TOOL_PATH=/path/to/aligner
 
       perl braker --species=new_species  --genome=example.fa  --bam=example.bam \
-         --prot_seq=/path/to/examples/proteins.fa --prg=spaln --ALGNMENT_TOOL_PATH=/path/to/aligner
+         --prot_seq=/path/to/examples/proteins.fa --prg=spaln \
+         --ALIGNMENT_TOOL_PATH=/path/to/aligner
 
-perl braker --species=new_species  --genome=example.fa  --bam=example.bam \
+      perl braker --species=new_species  --genome=example.fa  --bam=example.bam \
          --prot_seq=/path/to/examples/proteins.fa --prg=exonerate \
-         --ALGNMENT_TOOL_PATH=/path/to/aligner
+         --ALIGNMENT_TOOL_PATH=/path/to/aligner
+
+      perl braker --species=new_species  --genome=example.fa  --hints=hintsfile.gff \
+         --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALIGNMENT_TOOL_PATH=/path/to/aligner
+
+      perl braker --species=new_species  --genome=example.fa  --hints=hintsfile.gff \
+         --prot_seq=/path/to/examples/proteins.fa --prg=spaln \
+         --ALIGNMENT_TOOL_PATH=/path/to/aligner
+
+      perl braker --species=new_species  --genome=example.fa  --hints=hintsfile.gff \
+         --prot_seq=/path/to/examples/proteins.fa --prg=exonerate \
+         --ALIGNMENT_TOOL_PATH=/path/to/aligner

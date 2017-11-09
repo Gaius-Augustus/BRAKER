@@ -496,7 +496,7 @@ perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAs
    choice):
 
 perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam \
-   --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALGNMENT_TOOL_PATH=/path/to/aligner
+   --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALIGNMENT_TOOL_PATH=/path/to/aligner
 
 The runtime of this example should be around 46 hours on a 2.27 GHz single CPU.
 
