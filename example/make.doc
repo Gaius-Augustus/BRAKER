@@ -1,0 +1,19 @@
+# Katharina J. Hoff
+# October 12th 2017
+# Example data for BRAKER2 with RNA-Seq & proteins (GeneMark-ET training with RNA-Seq)
+
+# downloaded proteins of d. ana from flybase (ftp://ftp.flybase.net/releases/FB2017_04/dana_r1.05/fasta/dana-all-translation-r1.05.fasta.gz) because accessing data from the tape archiving robot takes way too much time.
+
+grep -c ">" dana-all-translation-r1.05.fasta # 21191
+
+cat dana-all-translation-r1.05.fasta | perl -ne 'if(m/>/){@t=split; print $t[0]."\n";}else{print $_;}' > proteins.fa
+
+startAlign.pl --genome=/home/katharina/SVN/braker/trunks/example/example.fa --prot=/home/katharina/braker_test/Drosophila_melanogaster_6/data/proteins/proteins.fa--ALIGNMENT_TOOL_PATH=/home/katharina/gth/bin --prg=gth
+
+# the following has not been executed, yet
+cat align_gth/gth.concat.aln | perl -ne 'if(m/Target=(.*)\s\d/){@t = split(/\s/, $1); print $t[0]."\n";}' | sort -u > proteins.lst
+
+cdbfasta proteins.fa -o proteins.fa.idx
+
+cat proteins.lst | cdbyank proteins.fa.idx -d proteins.fa > example_proteins.fa
+
