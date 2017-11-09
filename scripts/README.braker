@@ -510,7 +510,7 @@ Information worth mentioning in your bug report:
 Check in braker/yourSpecies/braker.log at which step braker.pl crashed.
 
 There are a number of other files that might be of interest, depending on where in the pipeline the
-problem occured:
+problem occured. Some of the following files will not be present if they did not contain any errors.
 
  * braker/yourSpecies/errors/bam2hints.*.stderr - will give details on a bam2hints crash (step for 
                                                   converting bam file to intron gff file)
@@ -526,13 +526,9 @@ problem occured:
    braker/yourSpecies/startAlign.stdout - may give clues on at which point protein alignment went
                                           wrong
 
- * braker/yourSpecies/(align_gth|align_exonerate|align_spaln)/*err - error files should be empty or
-                                                                     not existing. If there are 
-                                                                     error files, check the 
-                                                                     content, those are errors 
-                                                                     reported by the alignment 
-                                                                     tools gth/exonerate/spaln, 
-                                                                     themselves
+ * braker/yourSpecies/(align_gth|align_exonerate|align_spaln)/*err - errors reported by the 
+																																		 alignment tools 
+                                                                     gth/exonerate/spaln
 
  * braker/yourSpecies/errors/GeneMark-ET.stderr - errors reported by GeneMark-ET
    braker/yourSpecies/errors/GeneMark-ET.stdout - may give clues about the point at which errors in
@@ -549,12 +545,11 @@ problem occured:
                                         number of training genes for training AUGUSTUS, should not
                                         be low
 
- * braker/yourSpecies/errors/firstetraining.stderr - if existing will contain errors from first 
-                                                     iteration of training AUGUSTUS
-   braker/yourSpecies/errors/secondetraining.stderr - if existing will contain errors from second
-                                                      iteration of training AUGUSTUS
-   braker/yourSpecies/errors/optimize_augustus.stderr - if existing will contain errors 
-                                                        optimize_augustus.pl (additional training 
-                                                        set for AUGUSTUS)
+ * braker/yourSpecies/errors/firstetraining.stderr - contains errors from first iteration of 
+                                                     training AUGUSTUS
+   braker/yourSpecies/errors/secondetraining.stderr - contains errors from second iteration of
+                                                      training AUGUSTUS
+   braker/yourSpecies/errors/optimize_augustus.stderr - contains errors optimize_augustus.pl 
+                                                        (additional training set for AUGUSTUS)
 
- * braker/yourSpecies/errors/augustus*.stderr - if existing will contain AUGUSTUS execution errors
+ * braker/yourSpecies/errors/augustus*.stderr - contain AUGUSTUS execution errors

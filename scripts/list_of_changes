@@ -1,4 +1,12 @@
 # ----------------------------------------------------------------------
+# | run protein alignments with    | braker.pl,           | 08.11.2017 |
+# | GenomeThreader, Spaln or       | startAlign.pl        |            |
+# | Exonerate; convert alignments  | align2hints.pl       |            |
+# | to hints; separate hints files | (Hoff)               |            |
+# | for GeneMark-ET and AUGUSTUS;  |                      |            |
+# | Automatically generate         |                      |            |
+# | extrinsic.cfg for AUGUSTUS     |                      |            |
+# | that suits hints sources       |                      |            |
 # | changed perl shebang to env    | braker.pl (Hoff)     | 29.06.2017 |
 # | perl shebang                   |                      |            |
 # | Finished implementation of CRF | braker.pl (Hoff)     | June 2017  |
