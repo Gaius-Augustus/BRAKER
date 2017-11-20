@@ -33,6 +33,7 @@ use Cwd 'abs_path';
 
 use File::Spec::Functions qw(rel2abs);
 use File::Basename qw(dirname basename);
+use File::Copy;
 
 BEGIN{
   $0 = rel2abs($0);
@@ -123,8 +124,6 @@ OPTIONS
                                          Uses Sp_1 etc., if no species is assigned                          
     --useexisting                        Use the present config and parameter files if they exist for 
                                          'species'
-    --UTR                                Predict untranslated regions. Default is off. (Only works if UTR
-                                         parameters were previously optimized outside of BRAKER!)
     --workingdir=/path/to/wd/            Set path to working directory. In the working directory results
                                          and temporary files are stored
     --filterOutShort                     It may happen that a "good" training gene, i.e. one that has intron
@@ -167,6 +166,17 @@ OPTIONS
                                          specified as environment variable. Has higher priority than environment
                                          variable.
     --version                            print version number of braker.pl
+
+#### New command line arguments for utrrnaseq #####
+
+    --UTR                                create UTR training examples from RNA-Seq coverage data; requires
+                                         options --bam=rnaseq.bam and --softmasking. Alternatively, if UTR
+                                         parameters already exist, training step will be skipped and those
+                                         pre-existing parameters are used.
+ 
+    --rnaseq2utr_args=params             expert option: pass additional parameters to rnaseq2utr as string
+
+#### End of new command line arguments for utrrnaseq ####
                            
 
 DESCRIPTION
@@ -177,7 +187,7 @@ DESCRIPTION
 
 ENDUSAGE
 
-my $version = 2.0;                    # braker.pl version number
+my $version = 2.1;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;                          # path to augustus
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
@@ -256,10 +266,11 @@ my $nice;                             # flag that determines whether system call
                                       #(default nice value)
 my ($target_1, $target_2, $target_3) = 0; # variables that store AUGUSTUS accuracy after different training steps
 my $prg;                              # variable to store protein alignment tool
-my @prot_seq_files;                    # variable to store protein sequence file name
-my @prot_aln_files;                    # variable to store protein alingment file name
+my @prot_seq_files;                   # variable to store protein sequence file name
+my @prot_aln_files;                   # variable to store protein alingment file name
 my $ALIGNMENT_TOOL_PATH;              # stores path to binary of gth, spaln or exonerate for running protein alignments
-my %hintTypes;                         # stores hint types occuring over all generated and supplied hints for comparison
+my %hintTypes;                        # stores hint types occuring over all generated and supplied hints for comparison
+my $rnaseq2utr_args;                # additional parameters to be passed to rnaseq2utr
 
 ############################################################
 # Variables for modification of template extrinsic.cfg file
@@ -355,6 +366,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
 	    'prot_seq=s'                    => \@prot_seq_files,
 	    'prot_aln=s'                    => \@prot_aln_files,
 	    'augustus_args=s'               => \$augustus_args,
+	    'rnaseq2utr_args=s'             => \$rnaseq2utr_args,
             'version!'                      => \$printVersion);
 
 if($help){
@@ -586,7 +598,7 @@ if(@prot_seq_files){
     }
     if(!defined($prg)){
         # if no alignment tools was specified, set Genome Threader as default
-	print LOG "WARNING: No alignment tool was specified for aligning protein sequences against genome. Setting GenomeThreader as default alignment tool.\n";
+	print STDOUT "WARNING: No alignment tool was specified for aligning protein sequences against genome. Setting GenomeThreader as default alignment tool.\n";
 	$prg="gth";
     }
 }
@@ -741,13 +753,18 @@ if(! -f "$genome"){
     }
   }
 
-  augustus(); # run augustus
+  augustus("off"); # run augustus witout UTR
   if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.aa"])  || $overwrite){
     getAnnoFasta("$otherfilesDir/augustus.gff"); # create protein sequence file
   }
   if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.gtf"])  || $overwrite){
     make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf and gff3 (if desired) format
   }
+
+  if($UTR eq "on"){
+      train_utr();
+  }
+
   clean_up(); # delete all empty files
 
   close(LOG) or die("Could not close log file $logfile!\n");
@@ -1171,14 +1188,12 @@ sub new_species{
 
 sub extrinsic{
     my $extrinsic;
-    if(-e "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg"){
-	$extrinsic = "$AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg";
-	print STDOUT "Will use $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg as template for this project's extrinsic.cfg\n";
-    }elsif(-e "$AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.P.cfg"){
-	$extrinsic = "$AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.P.cfg";
-	print STDOUT "Will use $AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.P.cfg as template for this project's extrinsic.cfg\n";
+    my $string = find("extrinsic.M.RM.E.W.P.cfg", $AUGUSTUS_BIN_PATH, "$AUGUSTUS_CONFIG_PATH/extrinsic" , $AUGUSTUS_CONFIG_PATH);
+    if(-e $string){
+	$extrinsic = $string;
+	print STDOUT "Will use $string as template for this project's extrinsic.cfg\n";
     }else{
-	die "Cannot find extrinsic template file $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg or $AUGUSTUS_BIN_PATH/../config/extrinsic/extrinsic.M.RM.E.W.P.cfg. Please check whether AUGUSTUS_CONFIG_PATH (and/or AUGUSTUS_BIN_PATH) are correct. Looking for template file in extrinsic folder of AUGUSTUS_CONFIG_PATH and relative ../config/extrinsic to AUGUSTUS_BIN_PATH.\n";
+	die "Cannot find extrinsic template file extrinsic.M.RM.E.W.P.cfg in BRAKER2 directory or $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg. Please check whether AUGUSTUS_CONFIG_PATH is correct.\n";
     }
     my $extrinsic_cp = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
     if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -e $extrinsicCfgFile) ){
@@ -1868,6 +1883,7 @@ sub training{
          ####################### run AUGUSTUS  #########################
 # run AUGUSTUS for given species with given options
 sub augustus{
+  my $localUTR = shift;
   my $scriptpath;
   $augpath = "$AUGUSTUS_BIN_PATH/augustus";
   if(defined($augustus_scripts_path)){
@@ -1926,7 +1942,7 @@ sub augustus{
       if($nice){
 	  $cmdString .= "nice ";
       }
-      $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsic --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$UTR";
+      $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsic --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$localUTR";
       if(defined($optCfgFile)){
         $cmdString .= " --optCfgFile=$optCfgFile"; 
       }
@@ -2140,6 +2156,10 @@ sub check_upfront{ # see autoAug.pl
     exit(1);
   }
 
+  # check whether bam2wig is executable
+  my $bam2wigPath = "$AUGUSTUS_BIN_PATH/../auxprogs/
+  if(
+
   # check for alignment executable and in case of SPALN for environment variables
   my $prot_aligner;
   if(@prot_seq_files){
@@ -2279,6 +2299,11 @@ sub check_options{
   if($UTR ne "on" && $UTR ne "off"){
     print STDERR "ERROR: \"$UTR\" is not a valid option for --UTR. Please use either 'on' or 'off'.\n";
     exit(1);
+  }
+
+  if(($UTR eq "on" && $soft_mask==0) or ($UTR eq "on" && not(@bam))){
+      print STDERR "ERROR: --UTR=on has been set but --softmasking has not been enabled. A softmasked genome file and the option --softmasking and a bam file must be provided in order to run --UTR=on.\n";
+      exit(1)
   }
 
   my $operatingSystem = "$^O";
@@ -2565,5 +2590,128 @@ sub accuracy_calculator{
     return $target;
 }
 
-
-
+# UTR training from rnaseq2utr
+sub train_utr{
+    print STDOUT "NEXT STEP: train UTR parameters\n";
+    print LOG "\# ".(localtime).": Move augustus predictions to *.noUTR.* files prior UTR training:\n";
+    # store predictions without UTRs, revert later if UTR model does not improve predictions
+    print LOG "mv $otherfilesDir/augustus.gff $otherfilesDir/augustus.noUtr.gff\n";
+    move("$otherfilesDir/augustus.gff", "$otherfilesDir/augustus.noUtr.gff");
+    print LOG "mv $otherfilesDir/augustus.gtf $otherfilesDir/augustus.noUtr.gtf\n";
+    move("$otherfilesDir/augustus.gtf", "$otherfilesDir/augustus.noUtr.gtf");
+    print LOG "$otherfilesDir/augustus.aa $otherfilesDir/augustus.noUtr.aa\n";
+    move("$otherfilesDir/augustus.aa", "$otherfilesDir/augustus.noUtr.aa");
+    # copy species parameter files, revert later if UTR model does not improve predictions
+    print LOG "\# ".(localtime).": Create backup of current species parameters:\n";
+    for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")){
+	print LOG "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ $AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR\n";
+	copy("$AUGUSTUS_CONFIG_PATH/species/$species/$_", "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR") or die ("Copy failed!\n");
+    }
+    chdir($otherfilesDir) or die ("Could not change into directory $otherfilesDir!\n");
+    # search all start and stop codons from augustus.noUtr.gtf and write them to the file stops.and.starts.gff
+    if (!uptodate(["augustus.noUtr.gtf"],["stops.and.starts.gff"])){
+	print "... creating stops.and.starts.gff\n";
+	
+	print LOG "\# ".(localtime).": extracting all stop and start codons from augustus.noUtr.gtf to stops.and.starts.gff\n";
+	my %nonRedundantCodons;
+	my @tmpGffLine;
+	open(AUG, "<", "augustus.noUtr.gtf") or die ("Could not open file augustus.noUtr.gtf!\n");
+	while(defined(my $i=<AUG>)){
+	    # TODO: we are not dealing with redundancy, correctly. Discarding duplicates is not the optimal solution
+	    #       because later, we filter for genes where both codons have UTR models. However, at this point in
+	    #       time, we ignore this matter and hope that we are left with a sufficient number of training
+	    #       examples.
+	    if($i=~/\t(start_codon|stop_codon)\t/) {
+		@tmpGffLine = split(/\t/, $i);
+		if(not(defined($nonRedundantCodons{"$tmpGffLine[0]_$tmpGffLine[3]_$tmpGffLine[4]_$tmpGffLine[6]"}))){
+		    $nonRedundantCodons{"$tmpGffLine[0]_$tmpGffLine[3]_$tmpGffLine[4]_$tmpGffLine[6]"} = $i;
+		}
+	    };
+	}
+	close(AUG) or die ("Could not close file augustus.noUtr.gtf!\n");
+	open(CODON, ">", "stops.and.starts.gff") or die ("Could not open file stops.and.starts.gff!\n");
+	foreach my $key (keys %nonRedundantCodons){
+	    print CODON $nonRedundantCodons{$key};
+	}
+	close(CODON) or die ("Could not close file stops.and.starts.gff!\n");
+	print "... stops.and.starts.gff file created.\n";
+    }
+    if(!uptodate(["$hintsfile"], ["rnaseq.utr.hints"])){
+	# TODO: currently, only using AT-AG, not AC-AG or any other splice site. Possibly extend to other splice patterns.
+	print LOG "\# ".(localtime).": filtering RNA-Seq hints for valid splice site AT-AG, storing in rnsaeq.utr.hints\n";
+	print STDOUT "... creating rnsaeq.utr.hints\n";
+	my %genome_hash;
+	my $hash_key;
+	open (FASTA, $genome) or die ("Could not open file $genome!\n");
+        LINE: while (my $line = <FASTA>){
+	    next LINE if $line =~ m/^#/; #discard comments
+	    if ($line =~ /^>/){
+		chomp($line);
+		$hash_key = substr($line, 1, length($line)-1);
+	    }else{
+		$line =~ s/[\x0A\x0D]+//g;
+		$line =~ s/(\s+)(\n)(\r)//g;
+		$line = uc($line);
+		$genome_hash{$hash_key}.=$line;
+	    }
+	}
+	close(FASTA) or die("Could not close file $genome!\n");
+	open (HINTS, $hintsfile) or die ("Could not open file $hintsfile!\n");
+	my @gff;
+	my ($siteA, $siteB, $given, $lastCol);
+	my $splice = "ATAG";
+	open (UTRHINTS, ">", "rnaseq.utr.hints") or die ("Could not open file rnaseq.utr.hints!\n");
+        LINE: while(my $line = <HINTS>){
+	    @gff = split(/\t/, $line);
+	    if(($gff[1] eq "b2h") && ($gff[2] eq "intron")){ # make sure to use only intron hints from RNA-Seq data
+		$siteA = substr($genome_hash{$gff[0]}, ($gff[3]-1), 2);
+		$siteB = substr($genome_hash{$gff[0]}, ($gff[4]-2), 2);
+		$given = $siteA.$siteB;
+		if($gff[8]=~m/mult=(\d+)/){
+		    $lastCol="mult=$1_$splice\n";
+		}else{
+		    $lastCol="mult=1_$splice\n";
+		}
+		if(uc($given) =~ m/$splice/){
+		    print $gff[0]."\t".$gff[1]."\t".$gff[2]."\t".$gff[3]."\t".$gff[4]."\t".$gff[5]."\t+\t".$gff[7]."\t".$lastCol;
+		}else{
+		    $given = reverse $given;
+		    $given =~ tr/ACGTacgt/TGCAtgca/;
+		    if(uc($given) =~ m/$splice/){
+			print $gff[0]."\t".$gff[1]."\t".$gff[2]."\t".$gff[3]."\t".$gff[4]."\t".$gff[5]."\t-\t".$gff[7]."\t".$lastCol;
+		    }
+		}
+	    }
+	}
+	close(UTRHINTS) or die("Could not close file rnaseq.utr.hints!\n");
+	close(HINTS) or die("Could not close file $hintsfile!\n");
+	print STDOUT "... rnsaeq.utr.hints created.\n";
+    }
+    # create wiggle file from bam files
+    if(!uptodate(["$hintsfile"], ["rnaseq.wig"])){
+	if(scalar(@bam)>1){
+	    print STDOUT "Merging bam files...\n";
+	    print LOG "\# ".(localtime).": converting bam files to wiggle file rnaseq.wig\n";
+	    $cmdString = "";
+	    if($nice){
+		$cmdString .= "nice ";
+	    }
+	    $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools merge ";
+	    foreach(@bam){
+		chomp;
+		$cmdString .= "-in $_ ";
+	    }
+	    $cmdString .= "-out merged.bam";
+	    print LOG "\n$cmdString\n\n";
+	    system("$cmdString") or die ("Failed to execute: $cmdString!\n");
+	    print STDOUT "... bam files merged\n";
+	}
+	
+	print STDOUT "... rnaseq.wig created.\n";
+    }
+    
+    
+    
+    
+    
+}
