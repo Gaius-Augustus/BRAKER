@@ -402,7 +402,13 @@ if(!defined $workDir){
   }
   my $tmp_dir_name = abs_path($workDir);
   $workDir = $tmp_dir_name;
+  if(not(-d $workDir)){
+      print STDOUT "Working directory $workDir das not exist yet, it will be created.\n";
+      mkdir $workDir;
+     
+  }
 }
+
 
 
 # check the write permission of $workDir before building of the work directory
