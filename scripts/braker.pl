@@ -119,6 +119,10 @@ OPTIONS
     --skipGeneMark-ET                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
                                          different source) 
     --skipOptimize                       Skip optimize parameter step (not recommended).
+    --skipAllTraining                    Skip GeneMark-ET (training and prediction), skip AUGUSTUS training,
+                                         only runs AUGUSTUS with pre-trained parameters, already
+                                         existing parameters (not recommended).
+                                         This option automatically sets --useexisting to true.
     --softmasking                        Softmasking option for soft masked genome files. Set to 'on' or '1'
     --species=sname                      Species name. Existing species will not be overwritten. 
                                          Uses Sp_1 etc., if no species is assigned                          
@@ -241,6 +245,7 @@ my $SAMTOOLS_PATH_OP;                 # path to samtools executable, higher prio
 my $scriptPath=dirname($0);           # path of directory where this script is located
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source)
 my $skipoptimize = 0;                 # skip optimize parameter step
+my $skipAllTraining = 0;              # skip all training (including no GeneMark-ET run)
 my $species;                          # species name
 my $soft_mask = 0;                    # soft-masked flag
 my $standard = 0;                     # index for standard malus/ bonus value (currently 0.1 and 1e1)optimize_augustus.pl
@@ -346,12 +351,13 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'GENEMARK_PATH=s'               => \$GMET_path,
             'genome=s'                      => \$genome,
             'gff3'                          => \$gff3,
-            'hints=s'                => \@hints,
+            'hints=s'                       => \@hints,
             'optCfgFile=s'                  => \$optCfgFile,
             'overwrite!'                    => \$overwrite,
             'SAMTOOLS_PATH=s'               => \$SAMTOOLS_PATH_OP,
             'skipGeneMark-ET!'              => \$skipGeneMarkET,
             'skipOptimize!'                 => \$skipoptimize,
+	    'skipAllTraining!'              => \$skipAllTraining,
             'species=s'                     => \$species,
             'softmasking!'                  => \$soft_mask,
             'testsize=i'                    => \$testsize,
@@ -377,6 +383,10 @@ if($help){
 if($printVersion){
     print "braker.pl version $version\n";
     exit(0);
+}
+
+if($skipAllTraining){ # if no training is performed, existing parameters must be used
+    $useexisting=1;
 }
 
              ############ make some regular checks ##############
@@ -698,7 +708,31 @@ if(! -f "$genome"){
   print LOG "$cmdString\n\n";
   chdir $rootDir or die ("Could not change to directory $rootDir.\n");
 
-  new_species();                # create new species parameter files; we do this FIRST, before anything else, because if you start several processes in parallel, you might otherwise end up with those processes using the same species directory!
+  if($skipAllTraining==0){
+      new_species();                # create new species parameter files; we do this FIRST, before anything else, because if you start several processes in parallel, you might otherwise end up with those processes using the same species directory!
+  }else{
+      # if no training will be executed, check whether species parameter files exist
+      my $specPath = "$AUGUSTUS_CONFIG_PATH/species/$species/$species"."_";
+      my @confFiles = ("exon_probs.pbl", "igenic_probs.pbl", "intron_probs.pbl", "metapars.cfg", "parameters.cfg", "weightmatrix.txt");
+      foreach(@confFiles){
+	  if(not(-e "$specPath"."$_")){
+	      print LOG "ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
+	      print STDERR "Config file $specPath"."$_ for species $species does not exist!\n";
+	      exit(1);
+	  }
+      }
+      if($UTR eq "on"){
+	  @confFiles = ("metapars.utr.cfg", "utr_probs.pbl");
+	  foreach(@confFiles){
+	      if(not(-e "$specPath"."$_")){
+		  print LOG "ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
+		  print STDERR "Config file $specPath"."$_ for species $species does not exist!\n";
+		  exit(1);
+	      }
+	  }
+      }
+  }
+  
   check_fasta_headers($genome); # check fasta headers
   if(@prot_seq_files){
       foreach(@prot_seq_files){
@@ -722,9 +756,11 @@ if(! -f "$genome"){
       print LOG "$cmdString\n";
       system($cmdString)==0 or die("failed to execute: $cmdString!\n");
   }
-  GeneMark_ET();                # run GeneMark-ET
-  training();                   # train species-specific parameters with optimize_augustus.pl and etraining
 
+  if($skipAllTraining==0){
+      GeneMark_ET();                # run GeneMark-ET
+      training();                   # train species-specific parameters with optimize_augustus.pl and etraining
+  }
 
   # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
   if(!defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && $soft_mask)){
@@ -744,6 +780,9 @@ if(! -f "$genome"){
 	$cmdString = "";
 	if($nice){
 	    $cmdString .= "nice ";
+	}
+	if(not(-d "$parameterDir/$species/")){
+	    mkdir "$parameterDir/$species/";
 	}
 	$cmdString .= "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
 	print LOG "\# ".(localtime).": copy extrinsic file to working directory\n";
@@ -2157,8 +2196,8 @@ sub check_upfront{ # see autoAug.pl
   }
 
   # check whether bam2wig is executable
-  my $bam2wigPath = "$AUGUSTUS_BIN_PATH/../auxprogs/
-  if(
+#  my $bam2wigPath = "$AUGUSTUS_BIN_PATH/../auxprogs/
+#  if(
 
   # check for alignment executable and in case of SPALN for environment variables
   my $prot_aligner;
