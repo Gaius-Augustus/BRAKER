@@ -323,6 +323,8 @@ my @utrpart_malus = (0.985);
 my $idx_utrpart_malus = 0;
 my @utrpart_w_bonus = ("1e5");
 my $idx_utrpart_w_bonus = 0;
+my $bam2wigPath; # make tool variable global
+my $rnaseq2utrPath; # make tool variable global
 #############################################################
 
 # list of forbidden words for species name
@@ -2202,8 +2204,33 @@ sub check_upfront{ # see autoAug.pl
   }
 
   # check whether bam2wig is executable
-#  my $bam2wigPath = "$AUGUSTUS_BIN_PATH/../auxprogs/
-#  if(
+  $bam2wigPath = "$AUGUSTUS_BIN_PATH/../auxprogs/bam2wig/bam2wig";
+  if($UTR eq "on" && $skipAllTraining==0){
+      if(not(-x $bam2wigPath)){
+	  if(! -f $bam2wigPath){
+	      print STDERR "ERROR: bam2wig executable not found at $bam2wigPath.\n";
+	  }else{
+	      print STDERR "ERROR: $bam2wigPath not executable on this machine.\n";
+	  }
+	  print STDERR "       UTR training from RNA-Seq is enabled. This requires bam2wig. Please check README.TXT of AUGUSTUS to compile bam2wig correctly.\n";
+	  exit(1);
+      }
+  }
+
+  # check whether rnaseq2utr is executable
+  $rnaseq2utrPath = "$AUGUSTUS_BIN_PATH/../auxprogs/utrrnaseq/trunks/Debug/utrrnaseq"; # FIX WHEN TOOL MIGRATES TO AUGUSTUS REPOSITORY BEFORE RELEASE!
+  if($UTR eq "on" && $skipAllTraining==0){
+      if(not(-x $rnaseq2utrPath)){
+	  if(! -f $rnaseq2utrPath){
+	      print STDERR "ERROR: rnaseq2utr executable not found at $rnaseq2utrPath.\n";
+	  }else{
+	      print STDERR "ERROR: $rnaseq2utrPath not executable on this machine.\n";
+	  }
+	  print STDERR "       UTR training from RNA-Seq is enabled. This requires rnaseq2utr. Please check README.TXT of AUGUSTUS to compile rnaseq2utr correctly.\n";
+	  exit(1);
+      }
+  }
+  
 
   # check for alignment executable and in case of SPALN for environment variables
   my $prot_aligner;
@@ -2687,7 +2714,7 @@ sub train_utr{
 	print STDOUT "... creating rnsaeq.utr.hints\n";
 	my %genome_hash;
 	my $hash_key;
-	open (FASTA, $genome) or die ("Could not open file $genome!\n");
+	open (FASTA , "<", $genome) or die ("Could not open file $genome!\n");
         LINE: while (my $line = <FASTA>){
 	    next LINE if $line =~ m/^#/; #discard comments
 	    if ($line =~ /^>/){
@@ -2701,7 +2728,7 @@ sub train_utr{
 	    }
 	}
 	close(FASTA) or die("Could not close file $genome!\n");
-	open (HINTS, $hintsfile) or die ("Could not open file $hintsfile!\n");
+	open (HINTS, "<", $hintsfile) or die ("Could not open file $hintsfile!\n");
 	my @gff;
 	my ($siteA, $siteB, $given, $lastCol);
 	my $splice = "ATAG";
@@ -2750,9 +2777,100 @@ sub train_utr{
 	    print LOG "\n$cmdString\n\n";
 	    system("$cmdString") or die ("Failed to execute: $cmdString!\n");
 	    print STDOUT "... bam files merged\n";
-	}
+	}else{
+	    print STDOUT "Creating softlink to bam file $bam[0]...\n";
+	    print LOG "\# ".(localtime).":  Creating softlink to bam file $bam[0]...\n";
+	    $cmdString = "ln -s $bam[0] merged.bam";
+	    print LOG "$cmdString\n";
+	    system($cmdString)==0 or die("failed to exectute: $cmdString!\n");
 	
+	}
+	print STDOUT "Creating wiggle file...\n";
+	print LOG "\# ".(localtime).": Creating wiggle file...\n";
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+	$cmdString .= "$bam2wigPath merged.bam >merged.wig 2> $otherfilesDir/bam2wig.err";
+	print LOG "\n".$cmdString."\n";
+	system("$cmdString")==0 or die ("Failed to execute: $cmdString!\n");
 	print STDOUT "... rnaseq.wig created.\n";
+    }
+    # call utrrnaseq
+    if(!uptodate(["$hintsfile"], ["utrs.gff"])){
+	print STDOUT "Creating utrs.gff...\n";
+	print LOG  "\# ".(localtime).": Creating utrs.gff\n";
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+	$cmdString .= "$rnaseq2utrPath -G $genome -O stops.and.starts.gff -I rnaseq.utr.hints -W rnaseq.wig --outFileName=utrs.gff $rnaseq2utr_args 2> $otherfilesDir/rnaseq2utr.err";
+	print LOG "\n$cmdString\n";
+	system("$cmdString")==0 or die ("Failed to execute: $cmdString!\n");
+	print STDOUT "... utrs.gff created.\n";
+    }
+    # create genbank file
+    if (!uptodate(["utrs.gff", "augustus.noUtr.gtf"], ["bothutr.lst", "bothutr.test.gb"])){
+	print LOG  "\# ".(localtime).": Creating gb file for UTR training\n";
+	print STDOUT "Creating gb file for UTR training...\n";
+	# extract subset of genes, where we have both UTRs
+	open(UTR, "<", "utrs.gff") or die ("Can not open utrs.gff!\n");
+	open(TRLST, ">", "tr.lst");
+	while(<UTR>){
+	    s/.*\t(\S+UTR)\t.*transcript_id \"(\S+)\".*/$2\t$1/;
+	    print TRLST;
+	}
+	close(UTR) or die ("Could not close file utrs.gff!\n");
+	close(TRLST) or die("Could not close file tr.lst!\n");
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+	$cmdString .= "cat tr.lst | sort -u > tr_temp.lst";
+	print LOG "\n$cmdString\n";
+	system($cmdString)==0 or die("Failed not execute $cmdString!\n");
+	print LOG "\nrm tr.lst\n";
+	unlink("tr.lst");
+	$cmdString = "mv tr_temp.lst tr.lst";
+	print LOG "\n$cmdString\n";
+        system($cmdString)==0 or die("Failed not execute $cmdString!\n");
+	open(TR, "tr.lst") or die ("Can not open tr.lst!\n");
+	open(BOTH, ">", "bothutr.lst");
+	my $Fld1;
+	my $prev;
+	while(<TR>){
+	    ($Fld1) = split('\t', $_, -1);
+	    if($Fld1 eq $prev){
+		print BOTH "$prev\n";
+	    }
+	}
+	close(TR) or die ("Could not close file tr.lst!\n");
+	close(BOTH) or die ("Could not close file bothutr.lst!\n");
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+	$cmdString .= "cat utrs.gff augustus.noUtr.gtf > genes.gtf_temp";
+	print LOG "\n$cmdString\n";
+	system($cmdString)==0 or die("Failed not execute $cmdString!\n");
+	open(GENES, "<", "genes.gtf_temp") or die ("Can not open the file genes.gtf_temp!\n");
+	open(WRITEGENES, ">", "genes.gtf_unsort");
+	while(<GENES>){
+	    if(/(CDS|UTR)\t/){print WRITEGENES}
+	}
+	close(GENES) or die ("Could not close file genes.gtf_temp!\n");
+	close(WRITEGENES) or die ("Could not close file genes.gtf_unsort!\n");
+	$cmdString = "";
+	if($nice){
+	    $cmdString .= "nice ";
+	}
+	$cmdString .= "cat genes.gtf_unsort | sort -n -k 4,4 | sort -s -k 10,10 | sort -s -k 1,1 > genes.gtf";
+	print LOG "\n$cmdString\n";
+	system($cmdString)==0 or die("Failed not execute $cmdString!\n");
+	$string = find("gff2gbSmallDNA.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	$perlCmdString="perl $string genes.gtf $genome $flanking_DNA bothutr.test.gb --good=bothutr.lst 1> $otherfilesDir/gff2gbSmallDNA.utr.stdout 2> $otherfilesDir/gff2gbSmallDNA.utr.stderr";
+	print LOG "\n$perlCmdString\n";
+	system("$perlCmdString")==0 or die ("Failed to execute: $perlCmdString!\n");
     }
     
     
