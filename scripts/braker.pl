@@ -70,7 +70,7 @@ OPTIONS
     --alternatives-from-evidence=true    Output alternative transcripts based on explicit evidence from 
                                          hints (default is true).
     --augustus-args="--some_arg=bla"     One or several command line arguments to be passed to AUGUSTUS,
-                                         if several arguments are given, separate by whitespace, i.e.
+                                         if several arguments are given, separated by whitespace, i.e.
                                          "--first_arg=sth --second_arg=sth". 
     --AUGUSTUS_CONFIG_PATH=/path/        Set path to config directory of AUGUSTUS (if not specified as 
                                          environment variable). BRAKER1 will assume that the directories
@@ -120,8 +120,8 @@ OPTIONS
                                          different source) 
     --skipOptimize                       Skip optimize parameter step (not recommended).
     --skipAllTraining                    Skip GeneMark-ET (training and prediction), skip AUGUSTUS training,
-                                         only runs AUGUSTUS with pre-trained parameters, already
-                                         existing parameters (not recommended).
+                                         only runs AUGUSTUS with pre-trained and already
+                                         existing parameters (not recommended). Hints from input are still generated.
                                          This option automatically sets --useexisting to true.
     --softmasking                        Softmasking option for soft masked genome files. Set to 'on' or '1'
     --species=sname                      Species name. Existing species will not be overwritten. 
@@ -2205,7 +2205,7 @@ sub check_upfront{ # see autoAug.pl
 
   # check whether bam2wig is executable
   $bam2wigPath = "$AUGUSTUS_BIN_PATH/../auxprogs/bam2wig/bam2wig";
-  if($UTR eq "on" && $skipAllTraining==0){
+  if($UTR eq "on" && $skipAllTraining==0){ # MIGHT WANT TO CHANGE THIS!
       if(not(-x $bam2wigPath)){
 	  if(! -f $bam2wigPath){
 	      print STDERR "ERROR: bam2wig executable not found at $bam2wigPath.\n";
@@ -2809,7 +2809,7 @@ sub train_utr{
 	system("$cmdString")==0 or die ("Failed to execute: $cmdString!\n");
 	print STDOUT "... utrs.gff created.\n";
     }
-    # create genbank file
+    # create genbank file with genes that have to utrs
     if (!uptodate(["utrs.gff", "augustus.noUtr.gtf"], ["bothutr.lst", "bothutr.test.gb"])){
 	print LOG  "\# ".(localtime).": Creating gb file for UTR training\n";
 	print STDOUT "Creating gb file for UTR training...\n";
@@ -2871,6 +2871,112 @@ sub train_utr{
 	$perlCmdString="perl $string genes.gtf $genome $flanking_DNA bothutr.test.gb --good=bothutr.lst 1> $otherfilesDir/gff2gbSmallDNA.utr.stdout 2> $otherfilesDir/gff2gbSmallDNA.utr.stderr";
 	print LOG "\n$perlCmdString\n";
 	system("$perlCmdString")==0 or die ("Failed to execute: $perlCmdString!\n");
+    }
+    # create train.gb and onlytrain.gb
+    # train.gb contains a small proportion of genes with utr and up to 150 genes with UTR
+    # onlytrain.gb contains all other genes (with and without utr)
+    if (!uptodate(["bothutr.test.gb", "../training.gb.train.test"] , ["train.gb", "onlytrain.gb"])){
+	# evaluate m: size of smaller set of utr examples
+	my $m;
+	# count the block number in bothutr.test.gb
+	my $count=0;
+	open(TEMP1, "<", "bothutr.test.gb") or die ("Can not open the file bothutr.test.gb! \n");
+	while(<TEMP1>){
+	    $count++ if($_=~m/LOCUS/);
+	}
+	close(TEMP1) or die("Could not close file bothutr.test.gb!\n");
+	if($count>=150){$m=150}else{$m=$count};
+	if($count<50){
+	    die( "ERROR: Number of UTR training examples is smaller than 50. Abort UTR training. If this is the only error message, the AUGUSTUS parameters for your species were optimized ok, but you are lacking UTR parameters. Do not attempt to predict genes with UTRs for this species using the current parameter set!\n");
+	    exit;
+	}
+	# evaluate n: size of smaller set of no utr examples
+	my $n; 
+	# count the block number in training.gb.train.test
+	$count=0;
+	open(TEMP2,"genbank.good.gb.test") or die ("Can not open the file genbank.good.gb.test!\n");
+	while(<TEMP2>){
+	    $count++ if($_=~m/LOCUS/);
+	}
+	close(TEMP2) or die("Could not close file genbank.good.gb.test!\n");
+	if($count>=50){$n=50}else{$n=$count};
+	# extract traininging set for UTR model
+	$string=find("randomSplit.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	print LOG "Found script $string.\n";
+	$perlCmdString="perl $string bothutr.test.gb $m";
+	print LOG "\nperlCmdString\n";
+	system("$perlCmdString")==0 or die ("Failed to execute: $perlCmdString!\n");
+	$perlCmdString="perl $string genbank.good.gb.test $n";
+	print LOG "\n$perlCmdString\n";
+	system("$perlCmdString")==0 or die ("Failed to execute: $perlCmdString!\n");
+	my $delete;
+	open(GB, "<", "genbank.good.gb.test.test") or die ("Can not open file genbank.good.gb.test.test!\n");
+	open(NOMRNA, ">", "nomrna.test.gb") or die("Could not open file nomrna.test.gb!\n");
+	while(<GB>){
+	    $delete=1 if /mRNA/;
+	    $delete=0 if /CDS/;
+	    print NOMRNA if (!$delete);
+	}
+	close(GB) or die("Could not close file genbank.good.gb.test.test!\n");
+	close(NOMRNA) or die("Could not close file nomrna.test.gb!\n");
+	$cmdString = "cat nomrna.test.gb bothutr.test.gb.test > train.gb";
+	print LOG "\n$cmdString\n";
+	system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
+	# count how many genes are contained in train.gb
+	my $counter_gen=0;
+	open(TS, "train.gb");
+	while(<TS>){
+	    $counter_gen++ if(/^     CDS             /);
+	}
+	close(TS) or die ("Could not close file train.gb!\n");
+	print LOG "Have constructed a training set train.gb for UTRs with $counter_gen genes\n";
+	print LOG "Deleting nomrna.test.gb, genbank.good.gb.test.test, genbank.good.gb.test.train\n";
+	unlink("nomrna.test.gb");
+	unlink("genbank.good.gb.test.test");
+	unlink("genbank.good.gb.test.train");
+        # create onlytrain training set only used for training #                                                           
+        open(ONLYTRAIN, "<", "genbank.good.gb.train") or die ("Could not open file genbank.good.gb.train!\n");
+        open(CDSONLY, ">", "cdsonly.gb") or die ("Could not open file cdsonly.gb!\n");
+        # delete the mRNA part up to the next CDS tag
+        my $delete=0;
+        while(<ONLYTRAIN>){
+            $delete=1 if /mRNA/;
+            $delete=0 if /CDS/;
+            print CDSONLY if (!$delete);
+        }
+        close(ONLYTRAIN) or die("Could not close file genbank.good.gb.train!\n");
+        close(CDSONLY) or die("Could not close file cdsonlyl.gb!\n");
+        # construct the disjoint sets: remove training UTR genes from onlytrain UTR gene set (train.utronly.gb)
+        open(TRAIN, "<", "train.gb") or die ("Could not open the file train.gb!\n");
+        open(REMOVE, ">", "remove.lst") or die ("Could not open file remove.lst!\n");
+        my $locustag = 0;
+        while(<TRAIN>){    
+            if(m/LOCUS\s+(\S+)_\d+-\d+/){
+		$locustag = 0; 
+		print REMOVE "$1_";
+	    }elsif(m/gene="(\S+)\.t\d+/){
+		if($locustag==0){
+		    print REMOVE $1."\n";
+		} 
+		$locustag = 1;
+		
+	    }	    
+        }
+        close(TRAIN) or die("Could not close file train.gb!\n");
+        close(REMOVE) or die ("Could not close file remove.lst!\n");
+        $string=find("filterGenes.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+        print LOG "Found script $string.\n";
+        $perlCmdString="perl $string remove.lst bothutr.test.gb > train.utronly.gb";
+	print LOG "\n$perlCmdString\n";
+        system("$perlCmdString")==0 or die ("Failed to execute: $perlCmdString!\n");
+	$cmdString = "cat cdsonly.gb train.utronly.gb > onlytrain.gb";
+	print LOG "\n$cmdString\n";
+        system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
+
+
+	
+
+
     }
     
     
