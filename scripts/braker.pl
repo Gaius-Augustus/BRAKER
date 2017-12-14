@@ -119,6 +119,7 @@ OPTIONS
     --skipGeneMark-ET                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
                                          different source) 
     --skipOptimize                       Skip optimize parameter step (not recommended).
+    --rounds                             the number of optimization rounds used in optimize_augustus.pl (default 5)
     --skipAllTraining                    Skip GeneMark-ET (training and prediction), skip AUGUSTUS training,
                                          only runs AUGUSTUS with pre-trained and already
                                          existing parameters (not recommended). Hints from input are still generated.
@@ -276,6 +277,7 @@ my @prot_aln_files;                   # variable to store protein alingment file
 my $ALIGNMENT_TOOL_PATH;              # stores path to binary of gth, spaln or exonerate for running protein alignments
 my %hintTypes;                        # stores hint types occuring over all generated and supplied hints for comparison
 my $rnaseq2utr_args;                # additional parameters to be passed to rnaseq2utr
+my $rounds=5;                         # rounds used by optimize_augustus.pl
 
 ############################################################
 # Variables for modification of template extrinsic.cfg file
@@ -375,6 +377,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
 	    'prot_aln=s'                    => \@prot_aln_files,
 	    'augustus_args=s'               => \$augustus_args,
 	    'rnaseq2utr_args=s'             => \$rnaseq2utr_args,
+	    'rounds=s'                      => \$rounds,
             'version!'                      => \$printVersion);
 
 if($help){
@@ -405,7 +408,7 @@ if(!defined $workDir){
   my $tmp_dir_name = abs_path($workDir);
   $workDir = $tmp_dir_name;
   if(not(-d $workDir)){
-      print STDOUT "Working directory $workDir das not exist yet, it will be created.\n";
+      print STDOUT "Working directory $workDir does not exist yet, it will be created.\n";
       mkdir $workDir;
      
   }
@@ -1758,15 +1761,15 @@ sub training{
 	            }
                 if($gb_good_size <= 1000){
 	                if($nice){
-	    	            $perlCmdString .= "perl $string --nice --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+	    	            $perlCmdString .= "perl $string --nice --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
     	            }else{
-	    	            $perlCmdString .= "perl $string --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+	    	            $perlCmdString .= "perl $string --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
 	                }
                 }else{
 	                if($nice){
-	    	            $perlCmdString .= "perl $string --nice --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+	    	            $perlCmdString .= "perl $string --nice --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
 	                }else{
-	    	            $perlCmdString .= "perl $string  --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+	    	            $perlCmdString .= "perl $string  --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
 	                }
                 }
                 print LOG "\# ".(localtime).": optimize AUGUSTUS parameter\n";
@@ -2938,7 +2941,7 @@ sub train_utr{
         open(ONLYTRAIN, "<", "genbank.good.gb.train") or die ("Could not open file genbank.good.gb.train!\n");
         open(CDSONLY, ">", "cdsonly.gb") or die ("Could not open file cdsonly.gb!\n");
         # delete the mRNA part up to the next CDS tag
-        my $delete=0;
+        $delete=0;
         while(<ONLYTRAIN>){
             $delete=1 if /mRNA/;
             $delete=0 if /CDS/;
@@ -2972,11 +2975,29 @@ sub train_utr{
 	$cmdString = "cat cdsonly.gb train.utronly.gb > onlytrain.gb";
 	print LOG "\n$cmdString\n";
         system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
-
-
-	
-
-
+	# changing UTR parameters in species config file to "on"
+	print STDOUT "NEXT STEP: Setting value of \"UTR\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
+	print LOG "\n\# ".(localtime).": Setting value of \"UTR\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
+	setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "UTR", "on");
+	setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "print_utr", "on");
+    }
+    if (!uptodate(["train.gb", "onlytrain.gb"], ["optimize.utr.out"])){
+	# prepare metaparameter file
+	my $metaUtrName= $species."_metapars.utr.cfg";
+	if(not(-e $AUGUSTUS_CONFIG_PATH."/species/$species/$metaUtrName")){
+	    # copy from generic as template
+	    $cmdString = "cp $AUGUSTUS_CONFIG_PATH"."/species/generic/generic_metapars.utr.cfg $AUGUSTUS_CONFIG_PATH"."/species/$species/$metaUtrName";
+	    print LOG "Copying utr metaparameter template file:\n$cmdString\n";
+	    system("$cmdString")==0 or die ("Failed to execute: $cmdString!\n");
+	}
+	$string=find("optimize_augustus.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	print LOG "Found script $string.\n";
+	$perlCmdString="perl $string --rounds=$rounds --species=$species --trainOnlyUtr=1 --onlytrain=onlytrain.gb  --metapars=$AUGUSTUS_CONFIG_PATH"."/species/$species/$metaUtrName train.gb --UTR=on > optimize.utr.out";
+	print LOG "Now optimizing meta parameters of AUGUSTUS for the UTR model:\n";
+	print LOG "Running \"$perlCmdString\"...";
+	system("$perlCmdString")==0 or die ("Failed to execute: $perlCmdString!\n");
+    } else {
+	print "Skipping UTR parameter optimization. Already up to date.\n";
     }
     
     
