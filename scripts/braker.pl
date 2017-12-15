@@ -684,6 +684,7 @@ if(! -f "$genome"){
     make_path($otherfilesDir);
     $bool_otherDir = "true";
   }
+  print STDOUT "Further logging information can be found in $logfile!\n";
   open (LOG, ">>".$logfile) or die("Cannot open file $logfile!\n");
   if($bool_rootDir eq "true"){
     print LOG "\# ".(localtime).": create working directory $rootDir.\n";
