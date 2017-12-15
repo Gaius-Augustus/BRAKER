@@ -119,8 +119,8 @@ OPTIONS
     --skipGeneMark-ET                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a
                                          different source) 
     --geneMarkGtf=file.gtf               If skipGeneMark-ET is used, braker will by default look in the 
-                                         working directory in folder GeneMarkET for an already existing gf
-                                         file. Instead, you may provide such a file from anohter location.
+                                         working directory in folder GeneMarkET for an already existing gtf
+                                         file. Instead, you may provide such a file from another location.
                                          If geneMarkGtf option is set, skipGeneMark-ET is automatically also set.
     --skipOptimize                       Skip optimize parameter step (not recommended).
     --rounds                             the number of optimization rounds used in optimize_augustus.pl (default 5)
