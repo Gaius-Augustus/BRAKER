@@ -402,22 +402,22 @@ if($skipAllTraining){ # if no training is performed, existing parameters must be
 
              ############ make some regular checks ##############
 
-
+my $wdGiven; # defines whether a working directory was given as input argument
 # if no working directory is set, use current directory
 if(!defined $workDir){
   $workDir = $currentDir;
 }else{
-  my $last_char = substr($workDir, -1);
-  if($last_char eq "\/"){
-    chop($workDir);
-  }
-  my $tmp_dir_name = abs_path($workDir);
-  $workDir = $tmp_dir_name;
-  if(not(-d $workDir)){
-      print STDOUT "Creating directory $workDir.\n";
-      mkdir $workDir;
-     
-  }
+    $wdGiven = 1;
+    my $last_char = substr($workDir, -1);
+    if($last_char eq "\/"){
+	chop($workDir);
+    }
+    my $tmp_dir_name = abs_path($workDir);
+    $workDir = $tmp_dir_name;
+    if(not(-d $workDir)){
+	print STDOUT "Creating directory $workDir.\n";
+	mkdir $workDir;	
+    }
 }
 
 
@@ -593,9 +593,14 @@ if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
 }
 
 # check whether $rootDir already exists
-my $rootDir = "$workDir/braker";
-if (-d "$rootDir/$species" && !$overwrite){
-  print STDOUT "WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite.\n";
+my $rootDir;
+if($wdGiven==1){
+    $rootDir = $workDir;
+}else
+    $rootDir = "$workDir/braker";
+}
+if (-d "$rootDir/$species" && !$overwrite && not(defined($wdGiven))){
+    print STDOUT "WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite.\n";
 }
 
 # set path and check whether assigned extrinsic file exists
@@ -669,15 +674,23 @@ if(! -f "$genome"){
   if(! -d $rootDir){
     make_path($rootDir);
     $bool_rootDir = "true";
-  }
+}
 
   # set other directories
-  $genemarkDir = "$rootDir/$species/GeneMark-ET";
-  $parameterDir = "$rootDir/$species/species";
-  $otherfilesDir = "$rootDir/$species";
-  $errorfilesDir = "$rootDir/$species/errors";
+if($wdGiven==1){
+    $genemarkDir = "$rootDir/GeneMark-ET";
+    $parameterDir = "$rootDir/species";
+    $otherfilesDir = "$rootDir";
+    $errorfilesDir = "$rootDir/errors";
 
-  $logfile = "$otherfilesDir/braker.log";
+}else{
+    $genemarkDir = "$rootDir/$species/GeneMark-ET";
+    $parameterDir = "$rootDir/$species/species";
+    $otherfilesDir = "$rootDir/$species";
+    $errorfilesDir = "$rootDir/$species/errors";
+}
+
+$logfile = "$otherfilesDir/braker.log";
   # create other directories if necessary
   my $bool_otherDir = "false";
   if(! -d $otherfilesDir){
