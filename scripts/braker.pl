@@ -596,7 +596,7 @@ if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
 my $rootDir;
 if($wdGiven==1){
     $rootDir = $workDir;
-}else
+}else{
     $rootDir = "$workDir/braker";
 }
 if (-d "$rootDir/$species" && !$overwrite && not(defined($wdGiven))){
@@ -669,189 +669,187 @@ if(! -f "$genome"){
   print STDERR "ERROR: Genome file $genome does not exist.\n";
   exit(1);
 }else{
-  # create $rootDir
-  my $bool_rootDir = "false";
-  if(! -d $rootDir){
-    make_path($rootDir);
-    $bool_rootDir = "true";
-}
-
-  # set other directories
-if($wdGiven==1){
-    $genemarkDir = "$rootDir/GeneMark-ET";
-    $parameterDir = "$rootDir/species";
-    $otherfilesDir = "$rootDir";
-    $errorfilesDir = "$rootDir/errors";
-
-}else{
-    $genemarkDir = "$rootDir/$species/GeneMark-ET";
-    $parameterDir = "$rootDir/$species/species";
-    $otherfilesDir = "$rootDir/$species";
-    $errorfilesDir = "$rootDir/$species/errors";
-}
-
-$logfile = "$otherfilesDir/braker.log";
-  # create other directories if necessary
-  my $bool_otherDir = "false";
-  if(! -d $otherfilesDir){
-    make_path($otherfilesDir);
-    $bool_otherDir = "true";
-  }
-  print STDOUT "Further logging information can be found in $logfile!\n";
-  open (LOG, ">>".$logfile) or die("Cannot open file $logfile!\n");
-  if($bool_rootDir eq "true"){
-    print LOG "\# ".(localtime).": create working directory $rootDir.\n";
-    print LOG "mkdir $rootDir\n\n";
-  }
-  if($bool_otherDir eq "true"){
-    print LOG "\# ".(localtime).": create working directory $otherfilesDir.\n";
-    print LOG "mkdir $otherfilesDir\n\n";
-  }
-  if(! -d $genemarkDir){
-    make_path($genemarkDir);
-    print LOG "\# ".(localtime).": create working directory $genemarkDir.\n";
-    print LOG "mkdir $genemarkDir\n\n";
-  }
-  if(defined($geneMarkGtf) and not($skipGeneMarkET)){ # set skipGeneMarkET if geneMarkGtf is a command line argument
-      $skipGeneMarkET=1;
-  }
-  
-  # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
-  if($skipGeneMarkET){ 
-    print LOG "REMARK: The GeneMark-ET step will be skipped.\n";
-    if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)){
-	print STDERR "ERROR: The --skipGeneMark-ET option was used, but there is no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... was specified.\n";
-	if(defined($geneMarkGtf)){
-	    print STDERR "       The specified geneMarkGtf=... file was $geneMarkGtf. This is not an accessible file.\n";
-	}
-      exit(1);
+    # create $rootDir
+    my $bool_rootDir = "false";
+    if(! -d $rootDir){
+	make_path($rootDir);
+	$bool_rootDir = "true";
     }
-  }
-  
-  if(defined($geneMarkGtf)){
-      print LOG "\#  ".(localtime).": creating softlink of $geneMarkGtf to $genemarkDir/genemark.gtf.\n";
-      $cmdString = "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
-      print LOG "$cmdString\n";
-      system($cmdString)==0 or die("failed to execute: $cmdString!\n");
-  }
-  
-  if(! -d $parameterDir){
-    make_path($parameterDir);
-    print LOG "\# ".(localtime).": create working directory $parameterDir\n";
-    print LOG "mkdir $parameterDir\n\n";
-  }
-
-  if(! -d $errorfilesDir){
-    make_path($errorfilesDir);
-    print LOG "\# ".(localtime).": create working directory $errorfilesDir\n";
-    print LOG "mkdir $errorfilesDir\n\n";
-  }
-
-  $genome = rel2abs($genome);
-  $cmdString = "cd $rootDir;";
-  print LOG "\# ".(localtime).": changing into working directory $rootDir\n";
-  print LOG "$cmdString\n\n";
-  chdir $rootDir or die ("Could not change into directory $rootDir.\n");
-
-  if($skipAllTraining==0){
-      new_species();  # create new species parameter files; we do this FIRST, before anything else, because if you start several processes in parallel, you might otherwise end up with those processes using the same species directory!
-  }else{
-      # if no training will be executed, check whether species parameter files exist
-      my $specPath = "$AUGUSTUS_CONFIG_PATH/species/$species/$species"."_";
-      my @confFiles = ("exon_probs.pbl", "igenic_probs.pbl", "intron_probs.pbl", "metapars.cfg", "parameters.cfg", "weightmatrix.txt");
-      foreach(@confFiles){
-	  if(not(-e "$specPath"."$_")){
-	      print LOG "ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
-	      print STDERR "Config file $specPath"."$_ for species $species does not exist!\n";
-	      exit(1);
-	  }
-      }
-      if($UTR eq "on"){
-	  @confFiles = ("metapars.utr.cfg", "utr_probs.pbl");
-	  foreach(@confFiles){
-	      if(not(-e "$specPath"."$_")){
-		  print LOG "ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
-		  print STDERR "Config file $specPath"."$_ for species $species does not exist!\n";
-		  exit(1);
-	      }
-	  }
-      }
-  }
-  
-  check_fasta_headers($genome); # check fasta headers
-  if(@prot_seq_files){
-      foreach(@prot_seq_files){
-	  check_fasta_headers($_);
-      }
-  }
-  # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS can also handle other hints types
-  $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
-  make_rna_seq_hints();         # make hints from RNA-Seq
-  if(@prot_seq_files or @prot_aln_files){
-      make_prot_hints();
-  }
-  if(@hints){
-      add_other_hints();
-  }
-  if(@prot_seq_files or @prot_aln_files or @hints){
-      separateHints();
-  }else{
-      print LOG "\# ".(localtime).":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
-      $cmdString = "ln -s $hintsfile $genemark_hintsfile";
-      print LOG "$cmdString\n";
-      system($cmdString)==0 or die("failed to execute: $cmdString!\n");
-  }
-
-  if($skipAllTraining==0){
-      if(not($skipGeneMarkET)){
-	  GeneMark_ET();            # run GeneMark-ET
-      }
-      training();                   # train species-specific parameters with optimize_augustus.pl and etraining
-  }
-
-  # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
-  if(!defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && $soft_mask)){
-    extrinsic(); # use default extrinsic file
-  }
-  # copy extrinsic file to species parameters directory
-  if(defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg") || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg")){
-    # using cfg files from AUGUSTUS_CONFIG_PATH has higher priority than from AUGUSTUS_BIN_PATH
-    if(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"){
-      $extrinsicCfgFile = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-    }elsif(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg"){
-      $extrinsicCfgFile = "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg";
+    # set other directories
+    if($wdGiven==1){
+	$genemarkDir = "$rootDir/GeneMark-ET";
+	$parameterDir = "$rootDir/species";
+	$otherfilesDir = "$rootDir";
+	$errorfilesDir = "$rootDir/errors";
+    }else{
+	$genemarkDir = "$rootDir/$species/GeneMark-ET";
+	$parameterDir = "$rootDir/$species/species";
+	$otherfilesDir = "$rootDir/$species";
+	$errorfilesDir = "$rootDir/$species/errors";
     }
-    @_ = split(/\//, $extrinsicCfgFile);
-    if(!uptodate([$extrinsicCfgFile],["$parameterDir/$species/".$_[-1]])  || $overwrite){	
-	$cmdString = "";
-	if($nice){
-	    $cmdString .= "nice ";
-	}
-	if(not(-d "$parameterDir/$species/")){
-	    mkdir "$parameterDir/$species/";
-	}
-	$cmdString .= "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
-	print LOG "\# ".(localtime).": copy extrinsic file to working directory\n";
-	print LOG "$cmdString\n\n";
-	system("$cmdString")==0 or die("Failed to execute: $cmdString!\n");
+
+    $logfile = "$otherfilesDir/braker.log";
+    # create other directories if necessary
+    my $bool_otherDir = "false";
+    if(! -d $otherfilesDir){
+	make_path($otherfilesDir);
+	$bool_otherDir = "true";
     }
-  }
+    print STDOUT "Further logging information can be found in $logfile!\n";
+    open (LOG, ">>".$logfile) or die("Cannot open file $logfile!\n");
+    if($bool_rootDir eq "true"){
+	print LOG "\# ".(localtime).": create working directory $rootDir.\n";
+	print LOG "mkdir $rootDir\n\n";
+    }
+    if($bool_otherDir eq "true"){
+	print LOG "\# ".(localtime).": create working directory $otherfilesDir.\n";
+	print LOG "mkdir $otherfilesDir\n\n";
+    }
+    if(! -d $genemarkDir){
+	make_path($genemarkDir);
+	print LOG "\# ".(localtime).": create working directory $genemarkDir.\n";
+	print LOG "mkdir $genemarkDir\n\n";
+    }
+    if(defined($geneMarkGtf) and not($skipGeneMarkET)){ # set skipGeneMarkET if geneMarkGtf is a command line argument
+	$skipGeneMarkET=1;
+    }
+  
+    # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
+    if($skipGeneMarkET){ 
+	print LOG "REMARK: The GeneMark-ET step will be skipped.\n";
+	if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)){
+	    print STDERR "ERROR: The --skipGeneMark-ET option was used, but there is no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... was specified.\n";
+	    if(defined($geneMarkGtf)){
+		print STDERR "       The specified geneMarkGtf=... file was $geneMarkGtf. This is not an accessible file.\n";
+	    }
+	    exit(1);
+	}
+    }
+    
+    if(defined($geneMarkGtf)){
+	print LOG "\#  ".(localtime).": creating softlink of $geneMarkGtf to $genemarkDir/genemark.gtf.\n";
+	$cmdString = "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
+	print LOG "$cmdString\n";
+	system($cmdString)==0 or die("failed to execute: $cmdString!\n");
+    }
+    
+    if(! -d $parameterDir){
+	make_path($parameterDir);
+	print LOG "\# ".(localtime).": create working directory $parameterDir\n";
+	print LOG "mkdir $parameterDir\n\n";
+    }
 
-  augustus("off"); # run augustus witout UTR
-  if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.aa"])  || $overwrite){
-    getAnnoFasta("$otherfilesDir/augustus.gff"); # create protein sequence file
-  }
-  if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.gtf"])  || $overwrite){
-    make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf and gff3 (if desired) format
-  }
+    if(! -d $errorfilesDir){
+	make_path($errorfilesDir);
+	print LOG "\# ".(localtime).": create working directory $errorfilesDir\n";
+	print LOG "mkdir $errorfilesDir\n\n";
+    }
 
-  if($UTR eq "on"){
-      train_utr();
-  }
+    $genome = rel2abs($genome);
+    $cmdString = "cd $rootDir;";
+    print LOG "\# ".(localtime).": changing into working directory $rootDir\n";
+    print LOG "$cmdString\n\n";
+    chdir $rootDir or die ("Could not change into directory $rootDir.\n");
 
-  clean_up(); # delete all empty files
+    if($skipAllTraining==0){
+	new_species();  # create new species parameter files; we do this FIRST, before anything else, because if you start several processes in parallel, you might otherwise end up with those processes using the same species directory!
+    }else{
+	# if no training will be executed, check whether species parameter files exist
+	my $specPath = "$AUGUSTUS_CONFIG_PATH/species/$species/$species"."_";
+	my @confFiles = ("exon_probs.pbl", "igenic_probs.pbl", "intron_probs.pbl", "metapars.cfg", "parameters.cfg", "weightmatrix.txt");
+	foreach(@confFiles){
+	    if(not(-e "$specPath"."$_")){
+		print LOG "ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
+		print STDERR "Config file $specPath"."$_ for species $species does not exist!\n";
+		exit(1);
+	    }
+	}
+	if($UTR eq "on"){
+	    @confFiles = ("metapars.utr.cfg", "utr_probs.pbl");
+	    foreach(@confFiles){
+		if(not(-e "$specPath"."$_")){
+		    print LOG "ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
+		    print STDERR "Config file $specPath"."$_ for species $species does not exist!\n";
+		    exit(1);
+		}
+	    }
+	}
+    }
+    
+    check_fasta_headers($genome); # check fasta headers
+    if(@prot_seq_files){
+	foreach(@prot_seq_files){
+	    check_fasta_headers($_);
+	}
+    }
+    # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS can also handle other hints types
+    $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
+    make_rna_seq_hints();         # make hints from RNA-Seq
+    if(@prot_seq_files or @prot_aln_files){
+	make_prot_hints();
+    }
+    if(@hints){
+	add_other_hints();
+    }
+    if(@prot_seq_files or @prot_aln_files or @hints){
+	separateHints();
+    }else{
+	print LOG "\# ".(localtime).":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
+	$cmdString = "ln -s $hintsfile $genemark_hintsfile";
+	print LOG "$cmdString\n";
+	system($cmdString)==0 or die("failed to execute: $cmdString!\n");
+    }
 
-  close(LOG) or die("Could not close log file $logfile!\n");
+    if($skipAllTraining==0){
+	if(not($skipGeneMarkET)){
+	    GeneMark_ET();            # run GeneMark-ET
+	}
+	training();                   # train species-specific parameters with optimize_augustus.pl and etraining
+    }
+    
+    # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking option is used
+    if(!defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && $soft_mask)){
+	extrinsic(); # use default extrinsic file
+    }
+    # copy extrinsic file to species parameters directory
+    if(defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg") || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg")){
+	# using cfg files from AUGUSTUS_CONFIG_PATH has higher priority than from AUGUSTUS_BIN_PATH
+	if(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"){
+	    $extrinsicCfgFile = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
+	}elsif(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg"){
+	    $extrinsicCfgFile = "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg";
+	}
+	@_ = split(/\//, $extrinsicCfgFile);
+	if(!uptodate([$extrinsicCfgFile],["$parameterDir/$species/".$_[-1]])  || $overwrite){	
+	    $cmdString = "";
+	    if($nice){
+		$cmdString .= "nice ";
+	    }
+	    if(not(-d "$parameterDir/$species/")){
+		mkdir "$parameterDir/$species/";
+	    }
+	    $cmdString .= "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
+	    print LOG "\# ".(localtime).": copy extrinsic file to working directory\n";
+	    print LOG "$cmdString\n\n";
+	    system("$cmdString")==0 or die("Failed to execute: $cmdString!\n");
+	}
+    }
+    
+    augustus("off"); # run augustus witout UTR
+    if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.aa"])  || $overwrite){
+	getAnnoFasta("$otherfilesDir/augustus.gff"); # create protein sequence file
+    }
+    if(!uptodate(["$otherfilesDir/augustus.gff"],["$otherfilesDir/augustus.gtf"])  || $overwrite){
+	make_gtf("$otherfilesDir/augustus.gff"); # convert output to gtf and gff3 (if desired) format
+    }
+    
+    if($UTR eq "on"){
+	train_utr();
+    }
+
+    clean_up(); # delete all empty files
+
+    close(LOG) or die("Could not close log file $logfile!\n");
 }
 
 
