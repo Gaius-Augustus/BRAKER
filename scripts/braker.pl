@@ -286,11 +286,11 @@ my $geneMarkGtf;                      # GeneMark output file (for skipGeneMark-E
 
 ############################################################
 # Variables for modification of template extrinsic.cfg file
-my @start_malus = (0.3, 0.8, 1);
+my @start_malus = (0.8, 0.8, 1);
 my @start_p_bonus = ("1e3");
 my $idx_start_p_malus = 0;
 my $idx_start_p_bonus = 0;
-my @stop_malus = (0.3, 0.8, 1);
+my @stop_malus = (0.8, 0.8, 1);
 my @stop_p_bonus = ("1e3");
 my $idx_stop_p_malus = 0;
 my $idx_stop_p_bonus = 0;
@@ -298,13 +298,13 @@ my @ass_malus = (0.1);
 my $idx_ass_malus = 0;
 my @ass_local_malus = (0.95);
 my $idx_ass_local_malus = 0;
-my @ass_p_bonus = (1);
+my @ass_p_bonus = (100);
 my $idx_ass_p_bonus = 0;
 my @dss_malus = (0.1);
 my $idx_dss_malus = 0;
 my @dss_local_malus = (0.95);
 my $idx_dss_local_malus = 0;
-my @dss_p_bonus = (1);
+my @dss_p_bonus = (100);
 my $idx_dss_p_bonus = 0;
 my @exonpart_local_malus = (0.992);
 my $idx_exonpart_local_malus = 0;
@@ -316,11 +316,11 @@ my @exon_malus = (0);
 my $idx_exon_malus = 0;
 my @exon_p_bonus = (1);
 my $idx_exon_p_bonus = 0;
-my @intron_malus = (0.34);
+my @intron_malus = (0.116);
 my $idx_intron_malus = 0;
 my @intron_e_bonus = ("1e6");
 my $idx_intron_e_bonus = 0;
-my @intron_p_bonus = (100);
+my @intron_p_bonus = ("1e6");
 my $idx_intron_p_bonus = 0;
 my @cdspart_malus = (0.985);
 my $idx_cdspart_malus = 0;
