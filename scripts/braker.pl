@@ -2015,9 +2015,9 @@ sub augustus{
 		print LOG "$cmdString\n";
 		system("$cmdString")==0 or die("Failed to execute $cmdString\n");
 	    }
-	    $cmdString = "";
+	    $perlCmdString = "";
 	    if($nice){
-		$cmdString .= "nice ";
+		$perlCmdString .= "nice ";
 	    }
 	    $perlCmdString .= "perl $string <$cat_file >$otherfilesDir/augustus.gff";
 	    print LOG "\# ".(localtime).": Joining AUGUSTUS output\n";
