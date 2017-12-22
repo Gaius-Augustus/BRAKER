@@ -2141,7 +2141,7 @@ sub augustus{
 	    $perlCmdString .= "perl $string <$cat_file >$otherfilesDir/augustus.gff";
 	    print LOG "\# ".(localtime).": Joining AUGUSTUS output\n";
 	    print LOG "$perlCmdString\n\n";
-	    system("perlCmdString")==0 or die("Failed to execute $perlCmdString\n");
+	    system("$perlCmdString")==0 or die("Failed to execute $perlCmdString\n");
 	    for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
 		unlink("$otherfilesDir/augustus.$idx.gff");
 		print LOG "\# ".(localtime).": Deleting $otherfilesDir/augustus.$idx.gff\n";
