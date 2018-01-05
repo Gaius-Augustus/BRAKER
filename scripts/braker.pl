@@ -405,6 +405,7 @@ if($skipAllTraining){ # if no training is performed, existing parameters must be
 my $wdGiven; # defines whether a working directory was given as input argument
 # if no working directory is set, use current directory
 if(!defined $workDir){
+    $wdGiven = 0;
   $workDir = $currentDir;
 }else{
     $wdGiven = 1;
@@ -599,7 +600,7 @@ if($wdGiven==1){
 }else{
     $rootDir = "$workDir/braker";
 }
-if (-d "$rootDir/$species" && !$overwrite && not(defined($wdGiven))){
+if (-d "$rootDir/$species" && !$overwrite && $wdGiven==0){
     print STDOUT "WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite.\n";
 }
 
