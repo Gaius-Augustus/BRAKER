@@ -174,6 +174,14 @@ OPTIONS
     --ALIGNMENT_TOOL_PATH=/path/to/tool  Set path to alignment tool (GenomeThreader, Spaln, or Exonerate) if not 
                                          specified as environment variable. Has higher priority than environment
                                          variable.
+### BRAKER-GTH START
+    --gth2traingenes                     Generate training gene structures for AUGUSTUS from GenomeThreader
+                                         alignments. (These genes can either be used for training AUGUSTUS
+						      alone with --trainFromGth; or in addition to 
+                                                      GeneMark-ET training genes if also a bam-file
+                                                      is supplied.)
+    --trainFromGth                       No GeneMark-Training, train AUGUSTUS from GenomeThreader alignments
+### BRAKER-GTH STOP
     --version                            print version number of braker.pl
 
 #### New command line arguments for utrrnaseq #####
@@ -283,6 +291,10 @@ my %hintTypes;                        # stores hint types occuring over all gene
 my $rnaseq2utr_args;                # additional parameters to be passed to rnaseq2utr
 my $rounds=5;                         # rounds used by optimize_augustus.pl
 my $geneMarkGtf;                      # GeneMark output file (for skipGeneMark-ET option if not in braker working directory)
+### BRAKER-GTH START
+my $gth2traingenes;                   # Generate training genestructures for AUGUSTUSfrom GenomeThreader
+my $trainFromGth;                     # No GeneMark-Training, train AUGUSTUS from GenomeThreader alignments
+### BRAKER-GTH STOP
 
 ############################################################
 # Variables for modification of template extrinsic.cfg file
@@ -384,7 +396,12 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
 	    'rnaseq2utr_args=s'             => \$rnaseq2utr_args,
 	    'rounds=s'                      => \$rounds,
 	    'geneMarkGtf=s'                 => \$geneMarkGtf,
+### BRAKER-GTH START
+	    'gth2traingenes!'               => \$gth2traingenes,
+            'trainFromGth!'                 => \$trainFromGth,
+### BRAKER-GTH STOP
             'version!'                      => \$printVersion);
+
 
 if($help){
   print $usage;
@@ -600,7 +617,7 @@ if($wdGiven==1){
 }else{
     $rootDir = "$workDir/braker";
 }
-if (-d "$rootDir/$species" && !$overwrite){
+if (-d "$rootDir/$species" && !$overwrite  && $wdGiven==0){
     print STDOUT "WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite.\n";
 }
 
@@ -664,6 +681,20 @@ if(defined($prg)){
     }
 }
 
+### BRAKER-GTH start
+# check whether trainFromGth option is valid
+if(defined($gth2traingenes) && not($prg eq "gth")){
+    print STDERR "ERROR: Option --gth2traingenes can only be specified with option --prg=gth!\n";
+    exit(1);
+}elsif(defined($trainFromGth) && not($prg eq "gth")){
+    print STDERR "ERROR: Option --trainFromGth can only be specified with option --prg=gth!\n";
+    exit(1);
+}elsif(defined($trainFromGth)){
+    # disable genemark training, be careful in the BRAKER EP version when merging, this might collide with EP enabeling
+    $skipGeneMarkET = 1;
+}
+my $gthTrainGeneFile; # set gth traingenes file name, this is just  variable, real actions are taken much later                                                                                         
+### BRAKER-GTH stop           
 
 # check whether genome file exist
 if(! -f "$genome"){
@@ -690,6 +721,7 @@ if(! -f "$genome"){
     }
 
     $logfile = "$otherfilesDir/braker.log";
+
     # create other directories if necessary
     my $bool_otherDir = "false";
     if(! -d $otherfilesDir){
@@ -714,16 +746,24 @@ if(! -f "$genome"){
     if(defined($geneMarkGtf) and not($skipGeneMarkET)){ # set skipGeneMarkET if geneMarkGtf is a command line argument
 	$skipGeneMarkET=1;
     }
+
+    ### BRAKER-GTH start
+    if($gth2traingenes){
+	$gthTrainGeneFile = "$otherfilesDir/gthTrainGenes.gtf";
+    }
+    ### BRAKER-GTH stop  
   
     # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
     if($skipGeneMarkET){ 
 	print LOG "REMARK: The GeneMark-ET step will be skipped.\n";
-	if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)){
-	    print STDERR "ERROR: The --skipGeneMark-ET option was used, but there is no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... was specified.\n";
-	    if(defined($geneMarkGtf)){
-		print STDERR "       The specified geneMarkGtf=... file was $geneMarkGtf. This is not an accessible file.\n";
+	if(not($trainFromGth)){
+	    if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)){
+		print STDERR "ERROR: The --skipGeneMark-ET option was used, but there is no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... was specified.\n";
+		if(defined($geneMarkGtf)){
+		    print STDERR "       The specified geneMarkGtf=... file was $geneMarkGtf. This is not an accessible file.\n";
+		}
+		exit(1);
 	    }
-	    exit(1);
 	}
     }
     
@@ -802,7 +842,7 @@ if(! -f "$genome"){
     }
 
     if($skipAllTraining==0){
-	if(not($skipGeneMarkET)){
+	if(not($trainFromGth)){
 	    GeneMark_ET();            # run GeneMark-ET
 	}
 	training();                   # train species-specific parameters with optimize_augustus.pl and etraining
@@ -999,6 +1039,7 @@ sub make_prot_hints{
     }
     # convert command line specified protein alignments to protein hints
     if(@prot_aln_files){
+	
 	for(my $i=0; $i<scalar(@prot_aln_files); $i++){
 	    if(!uptodate([$prot_aln_files[$i]], [$prot_hintsfile]) || $overwrite){
 		aln2hints($prot_aln_files[$i], $prot_hints_file_temp);
@@ -1041,6 +1082,19 @@ sub make_prot_hints{
 	print STDERR "ERROR: The hints file is empty. There were no protein alignments.\n";
 	exit(1);
     }
+    ### BRAKER-GTH start
+    if($gth2traingenes){
+	if(@prot_aln_files){
+	    foreach(@prot_aln_files){
+		$cmdString = "cat $_ >> $alignment_outfile";
+		print LOG "\n\# ".(localtime).": Concatenating protein alignment input file $_ to $alignment_outfile\n";
+		print LOG "$cmdString\n";
+		system($cmdString)==0 or die ("Failed to execute: $cmdString!\n");
+	    }
+	}
+	gth2train($alignment_outfile, $gthTrainGeneFile);
+    }
+    ### BRAKER-GTH stop
 }
 
 # adding externally created hints
@@ -1537,95 +1591,186 @@ sub printCfg{
          ####################### train AUGUSTUS #########################
 # create genbank file and train AUGUSTUS parameters for given species
 sub training{
-    # get average gene length for flanking region
-     print LOG "\# ".(localtime).": Computing flanking DNA size\n"; 
-  # compute average gene length from genemark.gtf                                                       
-  # The following code was introduced after Katharina observed a negative average gene length in the GeneMark-ET output file. However, this seems to be an artefact from an interrupted GeneMark-ET run. Therefore, we return to the original parsing of GeneMark-ET output file.
-  #    open (GENEMARKGTF, "<", "$genemarkDir/genemark.gtf") or die("Cannot open file: $genemarkDir/genemark.gtf\n");
-  #  my $cumulativeGeneMarkGeneLength = 0;
-  #  my $geneMarkGenesNo = 0;
-  #  my %geneMarkGeneHash;
-  #  while(<GENEMARKGTF>){
-  #      if(m/\tCDS\t/){
-  #	  @_ = split(/\t/);
-  #	  $cumulativeGeneMarkGeneLength += $_[4]-$_[3]+1;
-  #	  if(not(defined($geneMarkGeneHash{$_[8]}))){$geneMarkGeneHash{$_[8]} = 1;}
-  #      }
-  #  }
-  #  $geneMarkGenesNo = keys %geneMarkGeneHash;
-  #  my $average_length = $cumulativeGeneMarkGeneLength/$geneMarkGenesNo;
-  #  close (GENEMARKGTF) or die("Cannot close file: $genemarkDir/genemark.gtf\n");
-  open (GENELENGTH, "<$genemarkDir/genemark.average_gene_length.out") or die "Cannot open file: $genemarkDir/genemark.average_gene_length.out\n";
-    @_ = split(/\t/,<GENELENGTH>);
-    my $average_length = $_[0];
-    close(GENELENGTH) or die("Could not close file $genemarkDir/genemark.average_gene_length.out!\n");
-     if($average_length < 0){
-	 print LOG "\# ".(localtime)." ERROR: Average gene length of genes predicted by GeneMark-ET is negative. This indicates GeneMark-ET did not finish, properly. Please delete the GeneMark-ET folder and restart BRAKER1!\n";
-        die("Average gene length of genes predicted by GeneMark-ET is negative. This indicates GeneMark-ET did not finish, properly. Please delete the GeneMark-ET folder and restart BRAKER1!\n");
-    }
-    $flanking_DNA = min((floor($average_length/2), 10000));
-     if($flanking_DNA < 0){
-	 print LOG "\# ".(localtime)." WARNING: \$flanking_DNA has the value $flanking_DNA , which is smaller than 0. Something must have gone wrong, there. Replacing by value 500.\n"; # added by Katharina Hoff
-        $flanking_DNA = 500;
-    }
-    # create genbank file from fasta input and GeneMark-ET output
-    $string = find("gff2gbSmallDNA.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    $genbank = "$otherfilesDir/genbank.gb";
-    if(!uptodate([$genome,"$genemarkDir/genemark.c.gtf"],[$genbank])  || $overwrite){
-        $errorfile = "$errorfilesDir/gff2gbSmallDNA.stderr";
-        if(-z "$genemarkDir/genemark.c.gtf"){
-	    print LOG  "\# ".(localtime)." ERROR: The GeneMark-ET output file is empty!\n";
-            print STDERR "ERROR: The GeneMark-ET output file is empty!\n";
-            exit(1);
-        }
-        $perlCmdString = "";
-        if($nice){
-	        $perlCmdString .= "nice ";
-        }
-        $perlCmdString .= "perl $string $genemarkDir/genemark.c.gtf $genome $flanking_DNA $genbank 2>$errorfile";
-        print LOG "\# ".(localtime).": create genbank file\n";
-        print LOG "$perlCmdString\n\n";
-        system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
-    }
+    if(!$useexisting){
+	### BRAKER-GTH start
+	# determine which file is the source file for AUGUSTUS an create softlink
+	
+	my $geneMarkGb = "$otherfilesDir/genemark.gb";
+	my $gthGb = "$otherfilesDir/gth.gb";
+	
+	if(not($trainFromGth)){
+	    # make genemark gb, but this is not the final file because gth genes may be added later
+	    gtf2gb("$genemarkDir/genemark.f.good.gtf", $geneMarkGb);
+	}
 
-    # filter genbank file and only use the genes considered "good" (i.e. genes whose introns are represented in hints file) 
-     if(!uptodate([$genbank, "$genemarkDir/genemark.f.good.gtf"],["$otherfilesDir/genbank.good.gb"])  || $overwrite){
-	 print LOG "\# ".(localtime).": filtering genbank file\n";
-	 $string=find("filterGenesIn_mRNAname.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-	 $errorfile = "$errorfilesDir/filterGenesIn_mRNAname.stderr";
-	 if(-z "$genemarkDir/genemark.f.good.gtf"){
-	     print LOG "\# ".(localtime)." ERROR: The GeneMark-ET output file does not contain genes that are supported by the intron hints.\n";
-	     print STDERR "ERROR: The GeneMark-ET output file does not contain genes that are supported by the intron hints.\n";
-	     exit(1);
-	 }
-	 $perlCmdString = "";
-	 if($nice){
-	     $perlCmdString .= "nice ";
-	 }
-	 $perlCmdString .= "perl $string $genemarkDir/genemark.f.good.gtf $genbank 1>$otherfilesDir/genbank.good.gb 2>$errorfile";	 
-	 print LOG "$perlCmdString\n\n";
-	 system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");	 
-    }
+	if($gth2traingenes){
+	    if(not($trainFromGth)){
+		# find those genes in gth.gtf that overlap on genome level with genemark.gtf and print them                                                
+		# not the most elegant data structure, FIX LATER!                                                                                                                                          
+		my %gmGeneStarts;
+		my %gmGeneStops;
+		open(GMGTF, "<", "$genemarkDir/genemark.f.good.gtf") or die("Could not open file $genemarkDir/genemark.f.good.gtf!\n");
+		while(<GMGTF>){	       
+		    chomp;
+		    my @gtfLine = split(/\t/);
+		    if(scalar(@gtfLine)==9){
+			my @lastCol = split(/;/, $gtfLine[8]);
+			my @geneId = split(/"/, $lastCol[1]); # geneId[1]
+			if($gtfLine[2]=~m/start_codon/){
+			    if($gtfLine[6] eq "+"){
+				$gmGeneStarts{$geneId[1]} = $gtfLine[3];
+			    }else{
+				$gmGeneStops{$geneId[1]} = $gtfLine[4];
+			    }
+			}elsif($gtfLine[2]=~m/stop_codon/){
+			    if($gtfLine[6] eq "+"){
+				$gmGeneStops{$geneId[1]} = $gtfLine[4];
+			    }else{
+				$gmGeneStarts{$geneId[1]} = $gtfLine[3];
+			    }
+			}
+		    }
+		}
+		close(GMGTF) or die ("Could not close file $genemarkDir/genemark.f.good.gtf!\n");
+		open(PROTALN, "<", "$otherfilesDir/protein_alignment_$prg.gff3") or die ("Could not open file $otherfilesDir/protein_alignment_$prg.gff3!\n");
+		my %gthGeneStarts;
+		my %gthGeneStops;
+		my $gthGeneId;
+		while(<PROTALN>){
+		    chomp;
+		    my @gtfLine = split(/\t/);
+		    if(scalar(@gtfLine)==9){
+			my @lastCol = split(/;/, $gtfLine[8]);
+			my @geneId = split(/=/, $lastCol[0]); # geneId[1]
+			if(not(m/\#/)){
+			    if($gtfLine[2] eq "gene"){
+				$gthGeneId=$geneId[1];
+			    }elsif($gtfLine[2] eq "mRNA"){
+				$gthGeneStarts{"$gtfLine[0]"."_".$gthGeneId."_".$geneId[1]} = $gtfLine[3];
+				$gthGeneStops{"$gtfLine[0]"."_".$gthGeneId."_".$geneId[1]} = $gtfLine[4];
+			    }
+			}
+		    }
+		}
+		close(PROTALN) or die ("Could not close file $otherfilesDir/protein_alignment_$prg.gff3!\n");
+		open(BADOV, ">", "$otherfilesDir/badov.lst") or die("Could not open file $otherfilesDir/badov.lst!\n");
+		while(my($k, $v) = each %gthGeneStarts) {
+		    while(my($gmk, $gmv) = each %gmGeneStarts){
+			if((($v >= $gmv) && ($v <= $gmGeneStops{$gmk})) or (($gthGeneStops{$k} >= $gmv) && ($gthGeneStops{$k} <= $gmGeneStops{$gmk}))){
+			    print BADOV "\"$k\"\n";
+			}
+		    }
+		}
+		close(BADOV) or die("Could not close file $otherfilesDir/badov.lst!\n");
+		$cmdString = "grep -f $otherfilesDir/badov.lst $gthTrainGeneFile > $gthTrainGeneFile.f";
+		print LOG "Removing genes from $gthTrainGeneFile that overlap with GeneMark-ET genes:\n";
+		print LOG "$cmdString\n\n";
+		system("$cmdString")==0 or die("Failed to execute: $cmdString\n");	    
+	    }else{
+		$cmdString = "ln -s $gthTrainGeneFile $gthTrainGeneFile.f";
+		print LOG "$cmdString\n\n";
+		system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
+	    }
 
-    # split into training and test set
-     if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb.train"])  || $overwrite){
-	 print LOG "\# ".(localtime).": Splitting genbank file into train and test file\n";
-	 $string = find("randomSplit.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-	 $errorfile = "$errorfilesDir/randomSplit.stderr";
-	 if($nice){
-	     $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-	 }else{
-	     $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-	 }
-	 if($gb_good_size < 300){
-	     print LOG "\# ".(localtime)." WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
-        }
-	 if($gb_good_size == 0){
-	     print LOG "\# ".(localtime)." ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
-	     print STDERR "ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
-	     exit(1);
-        }
-        if($gb_good_size > 1000){
+	    # make gth gb
+	    gtf2gb("$gthTrainGeneFile.f", "$otherfilesDir/gth.initial.gb");
+	    # filter GthGb temporary file
+	    $augpath = "$AUGUSTUS_BIN_PATH/etraining";
+	    $errorfile = "$errorfilesDir/gthFilterEtraining.stderr";
+	    $stdoutfile = "$otherfilesDir/gthFilterEtraining.stdout";
+	    $cmdString = "";
+	    if($nice){
+		$cmdString .= "nice ";
+	    }
+	    # species is irrelevant! Use fly.
+	    $cmdString .= "$augpath --species=fly --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/gth.initial.gb 1>$stdoutfile 2>$errorfile";
+	    print LOG "Running etraining with fly parameters to catch gene structure inconsistencies in GenomeThreader training gene file:\n";
+	    print LOG "$cmdString\n\n";
+	    system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
+	    open(ERRS, "<", $errorfile) or die("Could not open file $errorfile!\n");
+	    open(BADS, ">", "$otherfilesDir/gth.bad.lst") or die ("Could not open file $otherfilesDir/gth.bad.lst!\n");
+	    while(<ERRS>){
+		if(m/n sequence (\S+):.*/){
+		    print BADS "$1\n";
+		}
+	    }
+	    close(BADS) or die ("Could not close file $otherfilesDir/gth.bad.lst!\n");
+	    close(ERRS) or die("Could not close file $errorfile!\n");	    	    
+	    $string = find("filterGenes.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+            $errorfile = "$errorfilesDir/gthFilterGenes.stderr";
+	    $perlCmdString = "";
+	    if($nice){
+		$perlCmdString .= "nice ";
+	    }
+	    $perlCmdString .= "perl $string $otherfilesDir/gth.bad.lst $otherfilesDir/gth.initial.gb 1> $gthGb 2>$errorfile";
+	    print LOG "Filtering GenomeThreader training file to remove inconsistent gehe structures:\n";
+	    print LOG "$perlCmdString\n\n";
+	    system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
+	}
+
+	if(not($trainFromGth) && not($gth2traingenes)){
+	    # make genemark gb final
+	    print LOG "\#  ".(localtime).": creating softlink of $geneMarkGb to $otherfilesDir/genbank.good.gb.\n";
+	    $cmdString = "ln -s $geneMarkGb $otherfilesDir/genbank.good.gb";
+	    print LOG "$cmdString\n";
+	    system($cmdString)==0 or die("failed to execute: $cmdString!\n");
+
+	}elsif($trainFromGth){
+	    # make gth gb final
+            print LOG "\#  ".(localtime).": creating softlink of $gthGb to $otherfilesDir/genbank.good.gb.\n";
+            $cmdString = "ln -s $gthGb $otherfilesDir/genbank.good.gb";
+            print LOG "$cmdString\n";
+            system($cmdString)==0 or die("failed to execute: $cmdString!\n");
+
+	}elsif(not($trainFromGth) && $gth2traingenes){
+	    # merge both genbank files, filter and prefer genemark genes, make result final
+	    $cmdString = "cat $geneMarkGb $gthGb > $otherfilesDir/genbank.initial.gb";
+            print LOG "\#  ".(localtime).": Merging files and $geneMarkGb $gthGb:\n";
+            print LOG "$cmdString\n";
+            system($cmdString)==0 or die("failed to execute: $cmdString!\n");
+
+	    open(GB, "<", "$otherfilesDir/genbank.initial.gb") or die ("Could not open file $otherfilesDir/genbank.initial.gb!\n");
+	    open(GBNEW, ">", "$otherfilesDir/genbank.good.gb") or die ("Could not open file $otherfilesDir/genbank.good.gb!\n");
+	    my %loci;
+	    my $pF = 1;
+	    while(<GB>){
+		if(m/LOCUS/){
+		    my @line = split(/\s+/);
+		    if(not(defined($loci{$line[1]}))){
+			$pF = 1;
+		    }else{
+			$pF = 0;
+		    }
+		    $loci{$line[1]} = 1;
+		}
+		if($pF==1){
+		    print GBNEW $_;
+		}
+	    }
+	    
+	    close(GBNEW) or die  ("Could not close file $otherfilesDir/genbank.good.gb!\n");
+	    close(GB) or die ("Could not open file $otherfilesDir/genbank.initial.gb!\n");
+	}
+
+	# split into training and test set
+	if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb.train"])  || $overwrite){
+	    print LOG "\# ".(localtime).": Splitting genbank file into train and test file\n";
+	    $string = find("randomSplit.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	    $errorfile = "$errorfilesDir/randomSplit.stderr";
+	    if($nice){
+		$gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+	    }else{
+		$gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+	    }
+	    if($gb_good_size < 300){
+		print LOG "\# ".(localtime)." WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
+	    }
+	    if($gb_good_size == 0){
+		print LOG "\# ".(localtime)." ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
+		print STDERR "ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
+		exit(1);
+	    }
+	    if($gb_good_size > 1000){
 	        $testsize = 1000;
 	        $perlCmdString = "";
 	        if($nice){
@@ -1634,10 +1779,10 @@ sub training{
 	        $perlCmdString .= "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
 	        print LOG "$perlCmdString\n\n";
 	        system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
-        }
-    }
+	    }            
+	}
 
-    if(!$useexisting){
+
         # train AUGUSTUS for the first time
         if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firstetraining.stdout"])){
             # set "stopCodonExcludedFromCDS" to true
@@ -1651,11 +1796,11 @@ sub training{
             if($nice){
                 $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
             }else{
-	            $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+		$gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
             }
             $cmdString = "";
             if($nice){
-	            $cmdString .= "nice ";
+		$cmdString .= "nice ";
             }
             if($gb_good_size <= 1000){
                 $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
@@ -2636,6 +2781,89 @@ sub accuracy_calculator{
     return $target;
 }
 
+### BRAKER-GTH start
+sub gth2train{
+    my $align = shift;
+    my $out = shift; # writes to $gthTrainGeneFile
+    open(GTH, "<", $align) or die ("Could not open file $align!\n");
+    open(GTHGTF, ">", $out) or die("Could not open file $out!\n");
+    my $geneId;
+    while(<GTH>){
+	chomp;
+	my @gtfLine = split(/\t/);
+	if(m/\tgene\t/){
+	    my @idCol = split(/=/, $gtfLine[8]);
+	    $geneId = $idCol[1];
+	}elsif(m/\tCDS\t/){
+	    my @gtfLineLastCol = split(/;/, $gtfLine[8]);
+	    my @gtfLineLastColField = split(/=/, $gtfLineLastCol[1]);
+	    print GTHGTF "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\ttranscript_id \"$gtfLine[0]"."_".$geneId."_".$gtfLineLastColField[1]."\"\n";
+	}
+    }
+    close(GTHGTF) or die ("Could not close file $out!\n");
+    close(GTH) or die ("Could not close file $align!\n");
+}
+
+sub computeFlankingRegion{
+    my $gtf = shift;
+    my $size = 0;
+    my %genes;
+    open(GTF, "<", $gtf) or die ("Could not open file $gtf!\n");
+    while(<GTF>){
+	if(m/\tCDS\t/){
+	    chomp;
+	    my @gtfLine = split(/\t/);
+	    if(not(defined($genes{$gtfLine[8]}))){
+		$genes{$gtfLine[8]}=$gtfLine[4]-$gtfLine[3]+1;
+	    }else{
+		$genes{$gtfLine[8]}+=$gtfLine[4]-$gtfLine[3]+1;
+	    }
+	}
+    }
+    close(GTF) or die("Could not close file $gtf!\n");
+    my $nGenes=0; 
+    my $totalLen=0; 
+    my $avLen=0;
+    foreach my $key (keys %genes){
+	$nGenes++; 
+	$totalLen+=$genes{$key};
+    } 
+    $avLen=$totalLen/$nGenes;
+    $size = min((floor($avLen/2), 10000));
+    if($size < 0){
+	print LOG "\# ".(localtime)." WARNING: \$flanking_DNA has the value $size , which is smaller than 0. Something must have gone wrong, there. Replacing by value 500.\n"; # added by Katharina Hoff
+	$size = 500;
+    }
+    return $size;
+}
+
+sub gtf2gb{
+    my $gtf = shift;
+    my $gb = shift;
+    $flanking_DNA = computeFlankingRegion($gtf);
+    $string = find("gff2gbSmallDNA.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+    if(!uptodate([$genome, $gtf],[$gb])  || $overwrite){
+	my @pathName = split(/\//, $gtf);
+        $errorfile = "$errorfilesDir/".$pathName[(scalar(@pathName)-1)]."_gff2gbSmallDNA.stderr";
+        if(-z $gtf){
+            print LOG  "\# ".(localtime)." ERROR: The training gene file $gtf file is empty!\n";
+            print STDERR "ERROR: The training gene file $gtf file is empty!\n";
+            exit(1);
+        }
+        $perlCmdString = "";
+        if($nice){
+	    $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string $gtf $genome $flanking_DNA $gb 2>$errorfile";
+        print LOG "\# ".(localtime).": create genbank file $gb\n";
+        print LOG "$perlCmdString\n\n";
+        system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
+    }
+}
+
+### BRAKER-GTH stop
+
+
 # UTR training from rnaseq2utr
 sub train_utr{
     print LOG "\# ".(localtime).": Move augustus predictions to *.noUTR.* files prior UTR training:\n";
@@ -2955,9 +3183,5 @@ sub train_utr{
     } else {
 	print "Skipping UTR parameter optimization. Already up to date.\n";
     }
-    
-    
-    
-    
-    
+        
 }
