@@ -600,7 +600,7 @@ if($wdGiven==1){
 }else{
     $rootDir = "$workDir/braker";
 }
-if (-d "$rootDir/$species" && !$overwrite && $wdGiven==0){
+if (-d "$rootDir/$species" && !$overwrite){
     print STDOUT "WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite.\n";
 }
 
@@ -2293,7 +2293,7 @@ sub check_upfront{ # see autoAug.pl
 # check whether hints file is in gff format
 sub check_gff{
     my $gfffile = shift;
-    print LOG "\# ".(localtime).": Checking if input file $gfffile is in gff format\n";
+    print STDOUT "\# ".(localtime).": Checking if input file $gfffile is in gff format\n";
     open (GFF, $gfffile) or die "Cannot open file: $gfffile\n";
     my $nIntrons = 0;
     my $printedAllowedHints = 0;
@@ -2301,13 +2301,13 @@ sub check_gff{
     while(<GFF>){
 	my @gff_line = split(/\t/, $_);
 	if(scalar(@gff_line) != 9){
-	    print LOG "\# ".(localtime)." ERROR: File $gfffile is not in gff format!\n";
+	    print STDOUT "\# ".(localtime)." ERROR: File $gfffile is not in gff format!\n";
 	    print STDERR "ERROR: File $gfffile is not in gff format!\n";
 	    close(GFF) or die("Could not close gff file $gfffile!\n");
 	    exit(1);
 	}else{
 	    if(!isint($gff_line[3]) || !isint($gff_line[4]) || $gff_line[5] =~ m/[^\d\.]/g || $gff_line[6] !~ m/[\+\-\.]/ || length($gff_line[6]) != 1 || $gff_line[7] !~ m/[0-2\.]{1}/ || length($gff_line[7]) != 1){
-		print LOG "\# ".(localtime)." ERROR:File $gfffile is not in gff format!\n";
+		print STDOUT "\# ".(localtime)." ERROR:File $gfffile is not in gff format!\n";
 		print STDERR "ERROR: File $gfffile is not in gff format!\n";
 		close(GFF) or die("Could not close gff file $gfffile!\n");
 		exit(1);
@@ -2330,14 +2330,14 @@ sub check_gff{
 	    }
 	    if($isAllowed != 1){
 		if(not(defined($foundFeatures{$gff_line[2]}))){	
-		    print LOG "\# ".(localtime)." WARNING: File $gfffile contains hints of a feature type $gff_line[2] that is currently not supported by BRAKER. Features of this type will be treated with neutral bonus/malus in the extrinsic.cfg file that will be used for running AUGUSTUS.\n";
+		    print STDOUT "\# ".(localtime)." WARNING: File $gfffile contains hints of a feature type $gff_line[2] that is currently not supported by BRAKER. Features of this type will be treated with neutral bonus/malus in the extrinsic.cfg file that will be used for running AUGUSTUS.\n";
 		    $foundFeatures{$gff_line[2]} = 1;
 		}
 		if($printedAllowedHints == 0){
-		    print LOG "Currently allowed hint types:\n";
+		    print STDOUT "Currently allowed hint types:\n";
 		    print STDERR "Currently allowed hint types:\n";
 		    foreach(@allowedHints){
-			print LOG $_."\n";
+			print STDOUT $_."\n";
 			print STDERR $_."\n";
 		    }
 		    $printedAllowedHints = 1;
@@ -2348,7 +2348,7 @@ sub check_gff{
     close(GFF) or die("Could not close gff file $gfffile!\n");
     if(!@bam){
 	if($nIntrons < 1000){
-	    print LOG "\# ".(localtime)." ERROR: Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
+	    print STDOUT "\# ".(localtime)." ERROR: Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
 	    print STDERR "ERROR: Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
 	    exit(1);
 	}
