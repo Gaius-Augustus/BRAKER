@@ -1633,12 +1633,6 @@ sub training{
 		    }
 		}
 		close(GMGTF) or die ("Could not close file $genemarkDir/genemark.f.good.gtf!\n");
-		# print genemark gene intervals
-		open(GMI, ">", "$otherfilesDir/genemark_gene.segs") or die("Could not open file $otherfilesDir/genemark_gene.segs!\n");
-		while(my($k, $v) = each %gmGeneStarts) {
-		    print GMI "$k\t$v\t$gmGeneStops{$k}\n";
-		}
-		close(GMI) or die ("Could not close file $otherfilesDir/genemark_gene.segs!\n");
 		open(PROTALN, "<", "$otherfilesDir/protein_alignment_$prg.gff3") or die ("Could not open file $otherfilesDir/protein_alignment_$prg.gff3!\n");
 		my %gthGeneStarts;
 		my %gthGeneStops;
@@ -1660,15 +1654,6 @@ sub training{
 		    }
 		}
                 close(PROTALN) or die ("Could not close file $otherfilesDir/protein_alignment_$prg.gff3!\n");
-		# print gth gene intervals
-		open(GTHI, ">", "$otherfilesDir/gth_gene.segs") or die("Could not open file $otherfilesDir/gth_gene.segs!\n");
-                while(my($k, $v) = each %gthGeneStarts) {
-                    print GTHI "$k\t$v\t$gthGeneStops{$k}\n";
-                }
-                close(GTHI) or die ("Could not close file $otherfilesDir/gth_gene.segs!\n");
-		# determine which gene segs only occur in 
-
-
 		# read gth gtf to be filtered later
 		open(GTHGTF, "<", $gthTrainGeneFile) or die ("Could not open file $gthTrainGeneFile!\n");
 		my %gthGtf;		
@@ -1683,17 +1668,19 @@ sub training{
 		    while(my($gmk, $gmv) = each %gmGeneStarts){
 			if((($v >= $gmv) && ($v <= $gmGeneStops{$gmk})) or (($gthGeneStops{$k} >= $gmv) && ($gthGeneStops{$k} <= $gmGeneStops{$gmk}))){
 			    $discard{$k} = 1;
-			    last;
+ 			    last;
 			}
 		    }
 		}
 		open(FILTEREDGTH, ">", "$gthTrainGeneFile.f") or die ("Could not open file $gthTrainGeneFile.f!\n");
 		while(my($k, $v) = each %gthGtf){
 		    if(not(defined($discard{$k}))){
-			print FILTEREDGTH $v;
+			foreach(@{$v}){			   
+			    print FILTEREDGTH $_;
+			}
 		    }
 		}
-		close(FILTERDGTH) or die ("Could not close file $gthTrainGeneFile.f!\n");
+		close(FILTEREDGTH) or die ("Could not close file $gthTrainGeneFile.f!\n");
 	    }else{
 		$cmdString = "ln -s $gthTrainGeneFile $gthTrainGeneFile.f";
 		print LOG "$cmdString\n\n";
