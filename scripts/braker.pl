@@ -1604,6 +1604,7 @@ sub training{
 	}
 
 	if($gth2traingenes){
+	    print LOG "# Creating training genbank file from gth\n";
 	    if(not($trainFromGth)){
 		# find those genes in gth.gtf that overlap on genome level with genemark.gtf and print them                                                
 		# not the most elegant data structure, FIX LATER!                                                                                                                                          
@@ -1632,6 +1633,12 @@ sub training{
 		    }
 		}
 		close(GMGTF) or die ("Could not close file $genemarkDir/genemark.f.good.gtf!\n");
+		# print genemark gene intervals
+		open(GMI, ">", "$otherfilesDir/genemark_gene.segs") or die("Could not open file $otherfilesDir/genemark_gene.segs!\n");
+		while(my($k, $v) = each %gmGeneStarts) {
+		    print GMI "$k\t$v\t$gmGeneStops{$k}\n";
+		}
+		close(GMI) or die ("Could not close file $otherfilesDir/genemark_gene.segs!\n");
 		open(PROTALN, "<", "$otherfilesDir/protein_alignment_$prg.gff3") or die ("Could not open file $otherfilesDir/protein_alignment_$prg.gff3!\n");
 		my %gthGeneStarts;
 		my %gthGeneStops;
@@ -1652,21 +1659,41 @@ sub training{
 			}
 		    }
 		}
-		close(PROTALN) or die ("Could not close file $otherfilesDir/protein_alignment_$prg.gff3!\n");
-		open(BADOV, ">", "$otherfilesDir/badov.lst") or die("Could not open file $otherfilesDir/badov.lst!\n");
+                close(PROTALN) or die ("Could not close file $otherfilesDir/protein_alignment_$prg.gff3!\n");
+		# print gth gene intervals
+		open(GTHI, ">", "$otherfilesDir/gth_gene.segs") or die("Could not open file $otherfilesDir/gth_gene.segs!\n");
+                while(my($k, $v) = each %gthGeneStarts) {
+                    print GTHI "$k\t$v\t$gthGeneStops{$k}\n";
+                }
+                close(GTHI) or die ("Could not close file $otherfilesDir/gth_gene.segs!\n");
+		# determine which gene segs only occur in 
+
+
+		# read gth gtf to be filtered later
+		open(GTHGTF, "<", $gthTrainGeneFile) or die ("Could not open file $gthTrainGeneFile!\n");
+		my %gthGtf;		
+		while(<GTHGTF>){
+		    my @gtfLine  = split(/"/);		    
+		    push(@{$gthGtf{$gtfLine[1]}}, $_);
+		}		
+		close(GTHGTF) or die ("Could not close file $gthTrainGeneFile!\n");		    		
+		my %discard;
 		while(my($k, $v) = each %gthGeneStarts) {
+		    # check whether gene overlaps with genemark genes
 		    while(my($gmk, $gmv) = each %gmGeneStarts){
 			if((($v >= $gmv) && ($v <= $gmGeneStops{$gmk})) or (($gthGeneStops{$k} >= $gmv) && ($gthGeneStops{$k} <= $gmGeneStops{$gmk}))){
-			    print BADOV "\"$k\"\n";
+			    $discard{$k} = 1;
 			    last;
 			}
 		    }
 		}
-		close(BADOV) or die("Could not close file $otherfilesDir/badov.lst!\n");
-		$cmdString = "grep -f $otherfilesDir/badov.lst $gthTrainGeneFile > $gthTrainGeneFile.f";
-		print LOG "Removing genes from $gthTrainGeneFile that overlap with GeneMark-ET genes:\n";
-		print LOG "$cmdString\n\n";
-		system("$cmdString")==0 or die("Failed to execute: $cmdString\n");	    
+		open(FILTEREDGTH, ">", "$gthTrainGeneFile.f") or die ("Could not open file $gthTrainGeneFile.f!\n");
+		while(my($k, $v) = each %gthGtf){
+		    if(not(defined($discard{$k}))){
+			print FILTEREDGTH $v;
+		    }
+		}
+		close(FILTERDGTH) or die ("Could not close file $gthTrainGeneFile.f!\n");
 	    }else{
 		$cmdString = "ln -s $gthTrainGeneFile $gthTrainGeneFile.f";
 		print LOG "$cmdString\n\n";
@@ -2789,6 +2816,8 @@ sub gth2train{
     open(GTH, "<", $align) or die ("Could not open file $align!\n");
     open(GTHGTF, ">", $out) or die("Could not open file $out!\n");
     my $geneId;
+    # GTH may output alternative transcripts; we don't want to have any alternatives in training gene set, only print the first of any occuring alternatives
+    my %seen;
     while(<GTH>){
 	chomp;
 	my @gtfLine = split(/\t/);
@@ -2798,7 +2827,12 @@ sub gth2train{
 	}elsif(m/\tCDS\t/){
 	    my @gtfLineLastCol = split(/;/, $gtfLine[8]);
 	    my @gtfLineLastColField = split(/=/, $gtfLineLastCol[1]);
-	    print GTHGTF "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\ttranscript_id \"$gtfLine[0]"."_".$geneId."_".$gtfLineLastColField[1]."\"\n";
+	    if(not(defined($seen{"$gtfLine[0]"."_".$geneId."_"}))){
+		$seen{"$gtfLine[0]"."_".$geneId."_"} = "$gtfLine[0]"."_".$geneId."_".$gtfLineLastColField[1];
+	    }
+	    if($seen{"$gtfLine[0]"."_".$geneId."_"} eq "$gtfLine[0]"."_".$geneId."_".$gtfLineLastColField[1]){
+		print GTHGTF "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\ttranscript_id \"$gtfLine[0]"."_".$geneId."_".$gtfLineLastColField[1]."\"\n";
+	    }
 	}
     }
     close(GTHGTF) or die ("Could not close file $out!\n");
