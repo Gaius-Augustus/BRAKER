@@ -874,10 +874,10 @@ if(! -f "$genome"){
     }
 
     if($skipAllTraining==0){
-	if(not($skipGeneMarkET) && $EPmode==0){
+	if($EPmode==0){
 	    GeneMark_ET();            # run GeneMark-ET
 	    filterGeneMark();
-	}elsif(not($skipGeneMarkEP) && $EPmode==1){
+	}elsif($EPmode==1){
 	    GeneMark_EP();
 	    filterGeneMark();
 	}

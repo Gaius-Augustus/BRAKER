@@ -1658,6 +1658,7 @@ sub training{
 		    while(my($gmk, $gmv) = each %gmGeneStarts){
 			if((($v >= $gmv) && ($v <= $gmGeneStops{$gmk})) or (($gthGeneStops{$k} >= $gmv) && ($gthGeneStops{$k} <= $gmGeneStops{$gmk}))){
 			    print BADOV "\"$k\"\n";
+			    last;
 			}
 		    }
 		}
