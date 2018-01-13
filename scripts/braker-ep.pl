@@ -5,17 +5,14 @@
 # braker.pl                                                                                        #
 # Pipeline for predicting genes with GeneMark-ET and AUGUSTUS with RNA-Seq                         #
 #                                                                                                  #
-# Authors: Simone Lange, Katharina Hoff, Mario Stanke                                              #
+# Authors: Katharina Hoff, Simone Lange, Mario Stanke                                              #
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: April 26th 2017                                                                    #
+# Release date: January 14th 2018                                                                  #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
-#                                                                                                  #
-# Usage:                                                                                           #
-# braker.pl [OPTIONS] --genome=genome.fa --bam=rnaseq.bam                                          #
 #                                                                                                  #
 ####################################################################################################
 

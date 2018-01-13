@@ -5,17 +5,14 @@
 # braker.pl                                                                                        #
 # Pipeline for predicting genes with GeneMark-ET and AUGUSTUS with RNA-Seq                         #
 #                                                                                                  #
-# Authors: Simone Lange, Katharina Hoff, Mario Stanke                                              #
+# Authors: Katharina Hoff, Simone Lange, Mario Stanke, Alexandre Lomsadze, Mark Borodovsky         #
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: April 26th 2017                                                                    #
+# Release date: January 14th 2018                                                                  #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
-#                                                                                                  #
-# Usage:                                                                                           #
-# braker.pl [OPTIONS] --genome=genome.fa --bam=rnaseq.bam                                          #
 #                                                                                                  #
 ####################################################################################################
 
@@ -174,37 +171,47 @@ OPTIONS
     --ALIGNMENT_TOOL_PATH=/path/to/tool  Set path to alignment tool (GenomeThreader, Spaln, or Exonerate) if not 
                                          specified as environment variable. Has higher priority than environment
                                          variable.
-### BRAKER-GTH START
     --gth2traingenes                     Generate training gene structures for AUGUSTUS from GenomeThreader
                                          alignments. (These genes can either be used for training AUGUSTUS
-						      alone with --trainFromGth; or in addition to 
-                                                      GeneMark-ET training genes if also a bam-file
-                                                      is supplied.)
+					 alone with --trainFromGth; or in addition to GeneMark-ET training genes if 
+					 also a bam-file is supplied.)
     --trainFromGth                       No GeneMark-Training, train AUGUSTUS from GenomeThreader alignments
-### BRAKER-GTH STOP
-    --version                            print version number of braker.pl
-
-#### New command line arguments for utrrnaseq #####
-
-    --UTR                                create UTR training examples from RNA-Seq coverage data; requires
-                                         options --bam=rnaseq.bam and --softmasking. Alternatively, if UTR
-                                         parameters already exist, training step will be skipped and those
-                                         pre-existing parameters are used.
- 
-    --rnaseq2utr_args=params             expert option: pass additional parameters to rnaseq2utr as string
-
-#### End of new command line arguments for utrrnaseq ####
-                           
+    --epmode=1                           Run GeneMark-EP with intron hints provided from --hints=proteinhints.gff
+    --skipGeneMark-EP                    Skip GeneMark-EP and use provided GeneMark-EP output (e.g. provided with
+                                         --geneMarkGtf=genemark.gtf.
+    --version                            print version number of braker.pl                          
 
 DESCRIPTION
       
   Example:
+    
+    To run with RNAseq data, only:
 
-    braker.pl [OPTIONS] --genome=genome.fa  --species=speciesname --bam=accepted_hits.bam
+       braker.pl [OPTIONS] --genome=genome.fa --species=speciesname --bam=accepted_hits.bam
+       braker.pl [OPTIONS] --genome=genome.fa --species=speciesname --hints=rnaseq.gff
 
+    To run with protein data from remote species and GeneMark-EP:
+
+       braker.pl [OPTIONS] --genome=genome.fa --hints=proteinintrons.gff --epmode=1
+
+    To run with protein data from a very closely related species:
+
+       braker.pl [OPTIONS] --genome=genome.fa --prot_seq=proteins.fa --prg=gth --gth2traingenes --trainFromGth
+    
 ENDUSAGE
 
-my $version = 2.1;                    # braker.pl version number
+#### New command line arguments for utrrnaseq #####
+#
+#    --UTR                                create UTR training examples from RNA-Seq coverage data; requires
+#                                         options --bam=rnaseq.bam and --softmasking. Alternatively, if UTR
+#                                         parameters already exist, training step will be skipped and those
+#                                         pre-existing parameters are used.
+# 
+#    --rnaseq2utr_args=params             expert option: pass additional parameters to rnaseq2utr as string
+#
+#### End of new command line arguments for utrrnaseq ####
+
+my $version = 2.2;                    # braker.pl version number
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;                          # path to augustus
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
@@ -235,7 +242,7 @@ my $gb_good_size;                     # number of LOCUS entries in 'genbank.good
 my $genbank;                          # genbank file name
 my $genemarkDir;                      # directory for GeneMark-ET output
 my $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script on system, environment variable
-my $GMET_path;                        # GeneMark-ET path, higher priority than $GENEMARK_PATH
+my $GMET_path;                        # GeneMark-ET path, higher priority than $GENEMARK_PATH; will use the same variable for GeneMark-EP path
 my $genome;                           # name of sequence file
 my $genome_length = 0;                # length of genome file
 my $gff3 = 0;                         # create output file in GFF3 format
@@ -257,8 +264,9 @@ my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'}; # samtools environment variable
 my $SAMTOOLS_PATH_OP;                 # path to samtools executable, higher priority than $SAMTOOLS_PATH on system
 my $scriptPath=dirname($0);           # path of directory where this script is located
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source)
+my $skipGeneMarkEP = 0;               # skip GeneMark-EP and use provided GeneMark-EP output (e.g. from a different source)
 my $skipoptimize = 0;                 # skip optimize parameter step
-my $skipAllTraining = 0;              # skip all training (including no GeneMark-ET run)
+my $skipAllTraining = 0;              # skip all training (including no GeneMark-ET or GeneMark-EP run)
 my $species;                          # species name
 my $soft_mask = 0;                    # soft-masked flag
 my $standard = 0;                     # index for standard malus/ bonus value (currently 0.1 and 1e1)optimize_augustus.pl
@@ -278,7 +286,7 @@ my $filterOutShort;		      # filterOutShort option (see help)
 # Hint type from input hintsfile will be checked; concers a) GeneMark-ET (requires
 # intron hints) and b) writing of extrinsic.cfg from BRAKER2: other hint types will be set to neutral.
 # If an extrinsic file is specified, this does not matter.
-my @allowedHints = ("intron", "start", "stop", "ass", "dss", "exonpart", "exon", "CDSpart", "UTRpart", "nonexonpart");
+my @allowedHints = ("Intron", "intron", "start", "stop", "ass", "dss", "exonpart", "exon", "CDSpart", "UTRpart", "nonexonpart"); # REMOVE Intron when GeneMark introns format has been fixed!
 my $crf;                              # flag that determines whether CRF training should be tried
 my $nice;                             # flag that determines whether system calls should be executed with bash nice 
                                       #(default nice value)
@@ -288,13 +296,12 @@ my @prot_seq_files;                   # variable to store protein sequence file 
 my @prot_aln_files;                   # variable to store protein alingment file name
 my $ALIGNMENT_TOOL_PATH;              # stores path to binary of gth, spaln or exonerate for running protein alignments
 my %hintTypes;                        # stores hint types occuring over all generated and supplied hints for comparison
-my $rnaseq2utr_args;                # additional parameters to be passed to rnaseq2utr
+my $rnaseq2utr_args;                  # additional parameters to be passed to rnaseq2utr
 my $rounds=5;                         # rounds used by optimize_augustus.pl
 my $geneMarkGtf;                      # GeneMark output file (for skipGeneMark-ET option if not in braker working directory)
-### BRAKER-GTH START
 my $gth2traingenes;                   # Generate training genestructures for AUGUSTUSfrom GenomeThreader
 my $trainFromGth;                     # No GeneMark-Training, train AUGUSTUS from GenomeThreader alignments
-### BRAKER-GTH STOP
+my $EPmode = 0;                       # flag for executing GeneMark-EP instead of GeneMark-ET
 
 ############################################################
 # Variables for modification of template extrinsic.cfg file
@@ -377,6 +384,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'overwrite!'                    => \$overwrite,
             'SAMTOOLS_PATH=s'               => \$SAMTOOLS_PATH_OP,
             'skipGeneMark-ET!'              => \$skipGeneMarkET,
+	    'skipGeneMark-EP!'              => \$skipGeneMarkEP,
             'skipOptimize!'                 => \$skipoptimize,
 	    'skipAllTraining!'              => \$skipAllTraining,
             'species=s'                     => \$species,
@@ -396,10 +404,9 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
 	    'rnaseq2utr_args=s'             => \$rnaseq2utr_args,
 	    'rounds=s'                      => \$rounds,
 	    'geneMarkGtf=s'                 => \$geneMarkGtf,
-### BRAKER-GTH START
 	    'gth2traingenes!'               => \$gth2traingenes,
             'trainFromGth!'                 => \$trainFromGth,
-### BRAKER-GTH STOP
+	    'epmode!'                       => \$EPmode,
             'version!'                      => \$printVersion);
 
 
@@ -560,6 +567,28 @@ if(@hints){
 }
 
 
+# if hints files specified and no bam, check what sources and types of hints they contain -> this will determine whether braker.pl switches into EPmode... this will work once that the ep introns.gff format in the last column has been fixed. For now, require users to specify EPmode as input argument and change the last column of introns.gff file according to braker requirements.
+if((!@bam && @hints) && $EPmode==0){
+    my $foundRNASeq = 0;
+    foreach(@hints){
+	$foundRNASeq += checkHints($_);
+    }
+    if($foundRNASeq == 0){
+	$EPmode = 1;
+    }
+}
+
+# check whether RNA-Seq files are specified
+if(!@bam && !@hints && $EPmode==0){
+    print STDERR "ERROR: No RNA-Seq or hints file(s) from RNA-Seq specified. Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq (must contain intron hints from src b2h in column 2) to run BRAKER in mode for training from RNA-Seq.\n$usage";
+    exit(1);
+}
+
+if($EPmode==1){
+    print STDOUT "BRAKER will be executed in GeneMark-EP mode, using protein information as sole extrinsic evidence source.\n";
+}
+
+
 # check whether species is specified
 if(defined($species)){
   if($species =~ /[\s]/){
@@ -629,7 +658,33 @@ if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile){
   print STDOUT "WARNING: Assigned extrinsic file $extrinsicCfgFile does not exist. Program will create extrinsic file instead.\n";
   $extrinsicCfgFile = undef;
 }
-
+											       
+if($EPmode==1 && not(defined($extrinsicCfgFile))){
+    $string = find("ep.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+    if(-e $string){
+	$extrinsicCfgFile=$string;
+    }else{
+        print STDERR "WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
+        $extrinsicCfgFile = undef;
+    }
+}elsif(($prg eq "gth" && not(defined($extrinsicCfgFile))) or ($prg eq "exonerate" && not(defined($extrinsicCfgFile))) or ($prg eq "spaln" && not(defined($extrinsicCfgFile)))){
+    $string = find("gth.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+    if(-e $string){
+	$extrinsicCfgFile=$string;
+    }else{
+	print STDERR "WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
+        $extrinsicCfgFile = undef;
+    }
+}elsif(not(defined($extrinsicCfgFile))){
+    $string = find("rnaseq.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+    if(-e $string){
+        $extrinsicCfgFile=$string;
+    }else{
+        print STDERR "WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
+	$extrinsicCfgFile = undef;
+    }
+}
+									   
 # check whether genome file is set
 if(!defined($genome)){
   print STDERR "ERROR: No genome file was specified.\n";
@@ -646,10 +701,15 @@ if(@prot_seq_files){
 	}
 	$prot_seq_files[$i] = rel2abs($prot_seq_files[$i]);
     }
-    if(!defined($prg)){
-        # if no alignment tools was specified, set Genome Threader as default
+    if(!defined($prg) && $EPmode==0){
+    # if no alignment tools was specified, set Genome Threader as default
 	print STDOUT "WARNING: No alignment tool was specified for aligning protein sequences against genome. Setting GenomeThreader as default alignment tool.\n";
 	$prg="gth";
+    }elsif(!defined($prg) && $EPmode==1){
+	$prg="prosplign";
+	print STDOUT "WARNING: No alignment tool was specified for aligning protein sequences against genome. Setting ProSplign as default alignment tool for running BRAKER in GeneMark-EP mode.\n";
+	print STDERR "ERROR: Running ProSplign from within BRAKER is currently not supported. Aborting braker.pl!\n";
+	exit(1);
     }
 }
 
@@ -671,8 +731,11 @@ if(@prot_aln_files){
 
 # check whether alignment program is given
 if(defined($prg)){
-    if(not($prg=~m/gth/) and not($prg=~m/exonerate/) and not($prg=~m/spaln/)){
-	print STDERR "ERROR: An alignment tool other than gth, exonerate, and spaln has been specified with option --prg=$prg. BRAKER currently only supports the options gth, exonerate and spaln.\n";
+    if(not($prg=~m/gth/) and not($prg=~m/exonerate/) and not($prg=~m/spaln/) and $EPmode==0){
+	print STDERR "ERROR: An alignment tool other than gth, exonerate and spaln has been specified with option --prg=$prg. BRAKER currently only supports the options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in GeneMark-ET mode.\n";
+	exit(1);
+    }elsif(not($prg=~m/prosplign/) and $EPmode==1){
+	print STDERR "ERROR: An alignment tool other than gth, exonerate and spaln has been specified with option --prg=$prg. BRAKER currently only supports the options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in GeneMark-EP mode.\n";
 	exit(1);
     }
     if(!@prot_seq_files and !@prot_aln_files){
@@ -681,7 +744,6 @@ if(defined($prg)){
     }
 }
 
-### BRAKER-GTH start
 # check whether trainFromGth option is valid
 if(defined($gth2traingenes) && not($prg eq "gth")){
     print STDERR "ERROR: Option --gth2traingenes can only be specified with option --prg=gth!\n";
@@ -690,11 +752,13 @@ if(defined($gth2traingenes) && not($prg eq "gth")){
     print STDERR "ERROR: Option --trainFromGth can only be specified with option --prg=gth!\n";
     exit(1);
 }elsif(defined($trainFromGth)){
-    # disable genemark training, be careful in the BRAKER EP version when merging, this might collide with EP enabeling
+    # disable genemark training
     $skipGeneMarkET = 1;
+    $skipGeneMarkEP = 1;
+    print STDOUT "GeneMark training has been disabled, will train AUGUSTUS from GenomeThreader alignments.\n";
 }
-my $gthTrainGeneFile; # set gth traingenes file name, this is just  variable, real actions are taken much later                                                                                         
-### BRAKER-GTH stop           
+my $gthTrainGeneFile; # introduce gth traingenes file name variable                                                                                         
+
 
 # check whether genome file exist
 if(! -f "$genome"){
@@ -709,12 +773,20 @@ if(! -f "$genome"){
     }
     # set other directories
     if($wdGiven==1){
-	$genemarkDir = "$rootDir/GeneMark-ET";
+	if($EPmode==0){
+	    $genemarkDir = "$rootDir/GeneMark-ET";
+	}else{
+	    $genemarkDir = "$rootDir/GeneMark-EP";
+	}
 	$parameterDir = "$rootDir/species";
 	$otherfilesDir = "$rootDir";
 	$errorfilesDir = "$rootDir/errors";
     }else{
-	$genemarkDir = "$rootDir/$species/GeneMark-ET";
+	if($EPmode==0){
+	    $genemarkDir = "$rootDir/$species/GeneMark-ET";
+	}else{
+	    $genemarkDir = "$rootDir/$species/GeneMark-EP";
+	}
 	$parameterDir = "$rootDir/$species/species";
 	$otherfilesDir = "$rootDir/$species";
 	$errorfilesDir = "$rootDir/$species/errors";
@@ -746,12 +818,9 @@ if(! -f "$genome"){
     if(defined($geneMarkGtf) and not($skipGeneMarkET)){ # set skipGeneMarkET if geneMarkGtf is a command line argument
 	$skipGeneMarkET=1;
     }
-
-    ### BRAKER-GTH start
     if($gth2traingenes){
 	$gthTrainGeneFile = "$otherfilesDir/gthTrainGenes.gtf";
     }
-    ### BRAKER-GTH stop  
   
     # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
     if($skipGeneMarkET){ 
@@ -765,6 +834,20 @@ if(! -f "$genome"){
 		exit(1);
 	    }
 	}
+    }
+
+    if($skipGeneMarkEP && $EPmode==1){
+        print LOG "REMARK: The GeneMark-EP step will be skipped.\n";
+        if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)){
+            print STDERR "ERROR: The --skipGeneMark-EP option was used, but there is no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... was specified.\n";
+            if(defined($geneMarkGtf)){
+                print STDERR "ERROR: The specified geneMarkGtf=... file was $geneMarkGtf. This is not an accessible file.\n";
+            }
+            exit(1);
+        }
+    }elsif($skipGeneMarkEP){
+	print STDERR "ERROR: Option --skipGeneMarkEP cannot be used when BRAKER is started in GeneMark-ET mode.\n";
+	exit(1);
     }
     
     if(defined($geneMarkGtf)){
@@ -825,7 +908,9 @@ if(! -f "$genome"){
     }
     # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS can also handle other hints types
     $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
-    make_rna_seq_hints();         # make hints from RNA-Seq
+    if($EPmode==0){
+	make_rna_seq_hints();         # make hints from RNA-Seq
+    }
     if(@prot_seq_files or @prot_aln_files){
 	make_prot_hints();
     }
@@ -843,7 +928,15 @@ if(! -f "$genome"){
 
     if($skipAllTraining==0){
 	if(not($trainFromGth)){
-	    GeneMark_ET();            # run GeneMark-ET
+	    if($EPmode==0){
+		GeneMark_ET();            # run GeneMark-ET
+		filterGeneMark();
+	    }elsif($EPmode==1){
+		# remove reformatting of hintsfile, later!
+		format_ep_hints();
+		GeneMark_EP();
+		filterGeneMark();
+	    }
 	}
 	training();                   # train species-specific parameters with optimize_augustus.pl and etraining
     }
@@ -973,7 +1066,7 @@ sub make_prot_hints{
     print LOG "$cmdString\n";
     chdir $otherfilesDir or die ("Failed to execute $cmdString!\n");
     # from fasta files
-    if(@prot_seq_files){
+    if(@prot_seq_files && $EPmode==0){
 	$string = find("startAlign.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
 	$errorfile = "$errorfilesDir/startAlign.stderr";
 	$logfile = "$errorfilesDir/startAlign.stdout";
@@ -1005,7 +1098,7 @@ sub make_prot_hints{
 		system("$perlCmdString")==0 or die ("failed to execute: $perlCmdString!\n");
 		print LOG "\# ".(localtime).": Alignments from file $prot_seq_files[$i] created.\n";
 		if(-s "$otherfilesDir/align_$prg/$prg.concat.aln"){
-		    $cmdString = "cat $otherfilesDir/align_$prg/$prg.concat.aln >> $alignment_outfile";	    
+		    $cmdString = "cat $otherfilesDir/align_$prg/$prg.concat.aln >> $alignment_outfile";    
 		    print LOG "\# ".(localtime).": concatenating alignment file to $alignment_outfile\n";
 		    print LOG "$cmdString\n\n";
 		    system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
@@ -1021,25 +1114,30 @@ sub make_prot_hints{
 		system("$cmdString")==0 or die("Failed to execute: $cmdString!\n");
 		$cmdString = "mv align_$prg align_$prg$i";
 		print LOG "$cmdString\n";
-		system("$cmdString")==0 or die("Failed to execute: $cmdString!\n\n");	  
+		system("$cmdString")==0 or die("Failed to execute: $cmdString!\n\n");  
 	    }else{
-		print STDOUT "Skipping running alignment tool because files $prot_seq_files[$i] and $prot_hintsfile were up to date.\n";		
+		print STDOUT "Skipping running alignment tool because files $prot_seq_files[$i] and $prot_hintsfile were up to date.\n";
 	    }  
 	}
+    }elsif(@prot_seq_files && $EPmode==1){
+	print STDERR "ERROR: Running ProSplign from within braker.pl is currently not supported. For running braker.pl with GeneMark-EP, please provide --hints=intronhints.gff file! Aborting braker.pl!\n";
+	exit(1);
     }
     # convert pipeline created protein alignments to protein hints
     if(@prot_seq_files && -e $alignment_outfile){
 	if(!uptodate([$alignment_outfile], [$prot_hintsfile]) || $overwrite){
-	    if(-s $alignment_outfile){		
+	    if(-s $alignment_outfile && $EPmode==0){
 		aln2hints($alignment_outfile, $prot_hints_file_temp);
+	    }elsif(-s $alignment_outfile && $EPmode==1){
+		print STDERR "Conversion of ProSplign alignments within braker.pl is currently not supported. To run braker.pl with GeneMark-EP, please provide --hints=intronhints.gff! Aborting braker.pl!\n";
+		exit(1);
 	    }else{
 		print LOG "\# ".(localtime).": Alignment out file $alignment_outfile with protein alignments is empty. Not producing any hints from protein input sequences.\n";
 	    }
 	}
     }
     # convert command line specified protein alignments to protein hints
-    if(@prot_aln_files){
-	
+    if(@prot_aln_files && $EPmode==0){
 	for(my $i=0; $i<scalar(@prot_aln_files); $i++){
 	    if(!uptodate([$prot_aln_files[$i]], [$prot_hintsfile]) || $overwrite){
 		aln2hints($prot_aln_files[$i], $prot_hints_file_temp);
@@ -1047,8 +1145,12 @@ sub make_prot_hints{
 		print "Skipped converting alignment file $prot_aln_files[$i] to hints because it was up to date with $prot_hintsfile\n";
 	    }
 	}
+    }elsif(@prot_aln_files && $EPmode==1){
+	print STDERR "Conversion of ProSplign alignments within braker.pl is currently not supported. To run braker.pl with GeneMark-EP, p\
+lease provide --hints=intronhints.gff! Aborting braker.pl!\n";
+	exit(1);
     }
-    # appending protein hints to $hintsfile (combined with RNA_Seq)
+    # appending protein hints to $hintsfile (combined with RNA_Seq if available)
     if(-f $prot_hints_file_temp || $overwrite){
 	if(!uptodate([$prot_hints_file_temp],[$prot_hintsfile])|| $overwrite){
 	    join_mult_hints($prot_hints_file_temp, "prot");
@@ -1082,19 +1184,17 @@ sub make_prot_hints{
 	print STDERR "ERROR: The hints file is empty. There were no protein alignments.\n";
 	exit(1);
     }
-    ### BRAKER-GTH start
     if($gth2traingenes){
-	if(@prot_aln_files){
-	    foreach(@prot_aln_files){
-		$cmdString = "cat $_ >> $alignment_outfile";
-		print LOG "\n\# ".(localtime).": Concatenating protein alignment input file $_ to $alignment_outfile\n";
-		print LOG "$cmdString\n";
-		system($cmdString)==0 or die ("Failed to execute: $cmdString!\n");
-	    }
-	}
-	gth2train($alignment_outfile, $gthTrainGeneFile);
+        if(@prot_aln_files){
+            foreach(@prot_aln_files){
+                $cmdString = "cat $_ >> $alignment_outfile";
+                print LOG "\n\# ".(localtime).": Concatenating protein alignment input file $_ to $alignment_outfile\n";
+                print LOG "$cmdString\n";
+                system($cmdString)==0 or die ("Failed to execute: $cmdString!\n");
+            }
+        }
+        gth2train($alignment_outfile, $gthTrainGeneFile);
     }
-    ### BRAKER-GTH stop
 }
 
 # adding externally created hints
@@ -1135,7 +1235,12 @@ sub separateHints{
     my @notIntron = `cut -f 3 $hintsfile | grep -m 1 -v intron`;
     if(not(scalar(@notIntron)==0)){
 	print LOG "\n\# ".(localtime).":  Hint types other than intron are contained in $hintsfile\nExtracting intron hints for GeneMark.\n";
-	$cmdString = "grep intron $hintsfile | grep b2h > $genemark_hintsfile";
+	if($EPmode==0){
+	    $cmdString = "grep intron $hintsfile | grep b2h > $genemark_hintsfile"; # if ET mode, take only RNA-Seq introns, src b2h
+	}else{
+	    # FIX THIS ONCE GENEMARK OUTPUTS CORRECT HINTS FORMAT: # FIX Intron to intron
+	    $cmdString = "grep Intron $hintsfile | grep ProSplign > $genemark_hintsfile"; # if in EP mode, take ProSplign intron hints
+	}
 	print LOG "$cmdString\n\n";
 	system($cmdString)==0 or die("Failed to execute: $cmdString\n");
     }else{
@@ -1204,66 +1309,96 @@ sub join_mult_hints{
     unlink($hintsfile_temp_sort);
 }
     
-
-
-
          ####################### GeneMark-ET #########################
 # start GeneMark-ET and convert its output to real gtf format
 sub GeneMark_ET{
-  if(!$skipGeneMarkET){
-    if(!uptodate([$genome,$genemark_hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
-      $cmdString = "cd $genemarkDir";
-      print LOG "\n\# ".(localtime).": changing into GeneMark-ET directory $genemarkDir\n";
-      print LOG "$cmdString\n\n";
-      chdir $genemarkDir or die ("Could not change into directory $genemarkDir.\n");
-      $string = "$GENEMARK_PATH/gmes_petap.pl";
-      $errorfile = "$errorfilesDir/GeneMark-ET.stderr";
-      $stdoutfile = "$otherfilesDir/GeneMark-ET.stdout";
-      $perlCmdString = "";
-      if($nice){
-	  $perlCmdString .= "nice ";
-      }
-      $perlCmdString .= "perl $string --verbose --sequence=$genome --ET=$genemark_hintsfile --cores=$CPU"; # consider removing --verbose, later
-      if($fungus){
-        $perlCmdString .= " --fungus";
-      }
-      if($soft_mask){
-      #  $perlCmdString .= " --soft_mask"; # version prior to 4.29
-        $perlCmdString .= " --soft 1000"; # version 4.29
-      }
-      $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
-      print LOG "\# ".(localtime).": Running GeneMark-ET\n";
-      print LOG "$perlCmdString\n\n";
-      system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
-      $cmdString = "cd $rootDir";
-      print LOG "\# ".(localtime).": change to working directory $rootDir\n";
-      print LOG "$cmdString\n\n";
-      chdir $rootDir or die ("Could not change to directory $rootDir.\n");
+    if(!$skipGeneMarkET){
+	if(!uptodate([$genome,$genemark_hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
+	    $cmdString = "cd $genemarkDir";
+	    print LOG "\n\# ".(localtime).": changing into GeneMark-ET directory $genemarkDir\n";
+	    print LOG "$cmdString\n\n";
+	    chdir $genemarkDir or die ("Could not change into directory $genemarkDir.\n");
+	    $string = "$GENEMARK_PATH/gmes_petap.pl";
+	    $errorfile = "$errorfilesDir/GeneMark-ET.stderr";
+	    $stdoutfile = "$otherfilesDir/GeneMark-ET.stdout";
+	    $perlCmdString = "";
+	    if($nice){
+		$perlCmdString .= "nice ";
+	    }
+	    $perlCmdString .= "perl $string --verbose --sequence=$genome --ET=$genemark_hintsfile --cores=$CPU"; # consider removing --verbose, later
+	    if($fungus){
+		$perlCmdString .= " --fungus";
+	    }
+	    if($soft_mask){
+		#  $perlCmdString .= " --soft_mask"; # version prior to 4.29
+		$perlCmdString .= " --soft 1000"; # version 4.29
+	    }
+	    $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
+	    print LOG "\# ".(localtime).": Running GeneMark-ET\n";
+	    print LOG "$perlCmdString\n\n";
+	    system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
+	    $cmdString = "cd $rootDir";
+	    print LOG "\# ".(localtime).": change to working directory $rootDir\n";
+	    print LOG "$cmdString\n\n";
+	    chdir $rootDir or die ("Could not change to directory $rootDir.\n");
+	}
     }
-  }
-
-  # convert GeneMark-ET output to gtf format with doublequotes (for older GeneMark-ET versions) and filter genes for training
-  if(!uptodate(["$genemarkDir/genemark.gtf", $hintsfile],["$genemarkDir/genemark.c.gtf","$genemarkDir/genemark.f.good.gtf", "$genemarkDir/genemark.average_gene_length.out"])  || $overwrite){
-    print LOG "\# ".(localtime).": converting GeneMark-ET output to gtf format\n"; 
-    $string=find("filterGenemark.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    $errorfile = "$errorfilesDir/filterGenemark.stderr";
-    $stdoutfile = "$otherfilesDir/filterGenemark.stdout";
-    $perlCmdString = "";
-    if($nice){
-	$perlCmdString .= "nice ";
-    }
-    if(!$filterOutShort){
-        $perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
-    }else{
-	print LOG "\# ".(localtime).": Option activated: Filtering out training genes from GeneMark that are too short (upstream intron)\n";
-	$perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --filterOutShort 1>$stdoutfile 2>$errorfile";
-    }
-    print LOG "$perlCmdString\n\n";
-    system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
-  }
 }
 
+sub GeneMark_EP{
+    if(!$skipGeneMarkEP){
+	if(!uptodate([$genome,$genemark_hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
+	    $cmdString = "cd $genemarkDir";
+	    print LOG "\n\# ".(localtime).": changing into GeneMark-EP directory $genemarkDir\n";
+	    print LOG "$cmdString\n\n";
+	    chdir $genemarkDir or die ("Could not change into directory $genemarkDir.\n");
+	    $string = "$GENEMARK_PATH/gmes_petap.pl";
+	    $errorfile = "$errorfilesDir/GeneMark-EP.stderr";
+	    $stdoutfile = "$otherfilesDir/GeneMark-EP.stdout";
+	    $perlCmdString = "";
+	    if($nice){
+		$perlCmdString .= "nice ";
+	    }
+	    $perlCmdString .= "perl $string --verbose --sequence $genome --max_intergenic 50000 --EP $genemark_hintsfile --cores=$CPU";
+	    if($fungus){
+		$perlCmdString .= " --fungus";
+	    }
+	    if($soft_mask){
+		$perlCmdString .= " --soft 1000";
+	    }
+	    $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
+	    print LOG "\# ".(localtime).": Running GeneMark-EP\n";
+	    print LOG "$perlCmdString\n\n";
+	    system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
+	    $cmdString = "cd $rootDir";
+	    print LOG "\# ".(localtime).": change to working directory $rootDir\n";
+	    print LOG "$cmdString\n\n";
+	    chdir $rootDir or die ("Could not change to directory $rootDir.\n");
+	}
+    }
+}
 
+sub filterGeneMark{
+    # convert GeneMark output to gtf format with doublequotes (for older GeneMark versions) and filter genes for training
+    if(!uptodate(["$genemarkDir/genemark.gtf", $hintsfile],["$genemarkDir/genemark.c.gtf","$genemarkDir/genemark.f.good.gtf", "$genemarkDir/genemark.average_gene_length.out"])  || $overwrite){
+	print LOG "\# ".(localtime).": converting GeneMark output to gtf format\n"; 
+	$string=find("filterGenemark.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	$errorfile = "$errorfilesDir/filterGenemark.stderr";
+	$stdoutfile = "$otherfilesDir/filterGenemark.stdout";
+	$perlCmdString = "";
+	if($nice){
+	    $perlCmdString .= "nice ";
+	}
+	if(!$filterOutShort){
+	    $perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
+	}else{
+	    print LOG "\# ".(localtime).": Option activated: Filtering out training genes from GeneMark that are too short (upstream intron)\n";
+	    $perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --filterOutShort 1>$stdoutfile 2>$errorfile";
+	}
+	print LOG "$perlCmdString\n\n";
+	system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
+    }
+}
 
          ####################### create a new species #########################
 # create a new species $species and extrinsic file from generic one 
@@ -2885,6 +3020,26 @@ sub gtf2gb{
 
 ### BRAKER-GTH stop
 
+sub format_ep_hints{
+    open(INTRONS, "<", $genemark_hintsfile) or die("Could not open file $genemark_hintsfile!\n");
+    open(OUT, ">", "$otherfilesDir/tmp.hints") or die ("Could not open file $otherfilesDir/tmp.hints!\n");
+    while(<INTRONS>){
+	$_=~s/Intron/intron/;
+	my @t = split(/\t/); 
+	print OUT "$t[0]\t$t[1]\t$t[2]\t$t[3]\t$t[4]\t$t[5]\t$t[6]\t$t[7]\t";
+	if($t[5]==1){
+	    print OUT "pri=4;src=E\n";
+	}else{
+	    print OUT "mult=$t[5];pri=4;src=P\n";
+	}
+    }
+    close(OUT) or die ("Could not close file $otherfilesDir/tmp.hints!\n");
+    close(INTRONS) or die ("Could not close file $genemark_hintsfile!\n");
+    $cmdString = "mv $otherfilesDir/tmp.hints $genemark_hintsfile";
+    print LOG "\# ".(localtime).": Reformatted hints file for GeneMark-EP and AUGUSTUS\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
+}
 
 # UTR training from rnaseq2utr
 sub train_utr{
