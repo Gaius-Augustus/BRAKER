@@ -667,7 +667,8 @@ if($EPmode==1 && not(defined($extrinsicCfgFile))){
         print STDERR "WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
         $extrinsicCfgFile = undef;
     }
-}elsif(($prg eq "gth" && not(defined($extrinsicCfgFile))) or ($prg eq "exonerate" && not(defined($extrinsicCfgFile))) or ($prg eq "spaln" && not(defined($extrinsicCfgFile)))){
+}elsif(defined($prg)){
+   if(($prg eq "gth" && not(defined($extrinsicCfgFile))) or ($prg eq "exonerate" && not(defined($extrinsicCfgFile))) or ($prg eq "spaln" && not(defined($extrinsicCfgFile)))){
     $string = find("gth.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     if(-e $string){
 	$extrinsicCfgFile=$string;
@@ -675,6 +676,7 @@ if($EPmode==1 && not(defined($extrinsicCfgFile))){
 	print STDERR "WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
         $extrinsicCfgFile = undef;
     }
+}
 }elsif(not(defined($extrinsicCfgFile))){
     $string = find("rnaseq.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     if(-e $string){
