@@ -176,7 +176,7 @@ OPTIONS
 					 alone with --trainFromGth; or in addition to GeneMark-ET training genes if 
 					 also a bam-file is supplied.)
     --trainFromGth                       No GeneMark-Training, train AUGUSTUS from GenomeThreader alignments
-    --epmode=1                           Run GeneMark-EP with intron hints provided from --hints=proteinhints.gff
+    --epmode                             Run GeneMark-EP with intron hints provided from --hints=proteinhints.gff
     --skipGeneMark-EP                    Skip GeneMark-EP and use provided GeneMark-EP output (e.g. provided with
                                          --geneMarkGtf=genemark.gtf.
     --version                            print version number of braker.pl                          
@@ -578,6 +578,7 @@ if((!@bam && @hints) && $EPmode==0){
     }
 }
 
+
 # check whether RNA-Seq files are specified
 if(!@bam && !@hints && $EPmode==0){
     print STDERR "ERROR: No RNA-Seq or hints file(s) from RNA-Seq specified. Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq (must contain intron hints from src b2h in column 2) to run BRAKER in mode for training from RNA-Seq.\n$usage";
@@ -909,6 +910,7 @@ if(! -f "$genome"){
 	}
     }
     # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS can also handle other hints types
+    $hintsfile = "$otherfilesDir/hintsfile.gff";
     $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
     if($EPmode==0){
 	make_rna_seq_hints();         # make hints from RNA-Seq
@@ -998,7 +1000,6 @@ if(! -f "$genome"){
 sub make_rna_seq_hints{
   my $bam_hints;
   my $hintsfile_temp = "$otherfilesDir/hintsfile.temp.gff";
-  $hintsfile = "$otherfilesDir/hintsfile.gff";
   # from RNA-Seq data in bam format
   if(@bam){
     my $bam_temp = "$otherfilesDir/bam2hints.temp.gff";
@@ -1227,6 +1228,17 @@ sub identifyHintTypes{
 	}
     }
     close(HINTS) or die ("Could not close hints file $hintsfile!\n");
+}
+
+# checks whether hints files contain RNA-Seq or protein hints; if file does contain RNA-Seq, it returns 1, otherwise 0.
+sub checkHints{
+    my $thisHintsFile = shift;
+    my @areb2h = `cut -f 2 $thisHintsFile | grep b2h`;
+    my $ret = 0;
+    if(scalar(@areb2h>0)){
+	$ret = 1;
+    }
+    return $ret;
 }
 
 # split into two hints files: one for GeneMark with intron hints, only, and one for AUGUSTUS with all hints
