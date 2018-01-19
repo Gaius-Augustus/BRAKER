@@ -10,8 +10,11 @@
 \setlength{\topmargin}{-30pt}
 \setlength{\textheight}{670pt}
 
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
 % Title Page
-\title{BRAKER2 Userguide}
+\title{BRAKER2 User Guide}
 \author{Katharina J.~Hoff}
 
 
@@ -28,7 +31,7 @@ The rapidly growing number of sequenced genomes requires fully automated methods
 
 However, the quality of RNA-Seq data that is available for annotating a novel genome is variable, and in some cases, RNA-Seq data is not available, at all.
 
-BRAKER2 is an extension of BRAKER1 which allows for \textbf{fully automated training} of the gene prediction tools GeneMark-EX \cite{GeneMark-EX} and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the \textbf{prediction}.
+BRAKER2 is an extension of BRAKER1 which allows for \textbf{fully automated training} of the gene prediction tools GeneMark-EX and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the \textbf{prediction}.
 
 In contrast to other available methods that rely on protein homology information, BRAKER2 reaches high gene prediction accuracy even in the absence of the annotation of very closely related species and in the absence of RNA-Seq data. 
 
@@ -170,7 +173,7 @@ BRAKER2 calls upon various bioinformatics software tools that are not part of BR
 Download GeneMark-EX from \url{http://exon.gatech.edu/GeneMark/license_download.cgi}.
  Unpack and install GeneMark-EX as described in GeneMark-EX's \texttt{README} file.
 
-BRAKER2 can find GeneMark-EX executables either by locating them in an environment variable \texttt{GENEMARK\_PATH}, or by taking a command line argument\\ (\texttt{--GENEMARK\_PATH=/your\_path\_to\_GeneMark-EX/gmes\_petap/}). In order to set the environment variable for your current Bash session, type: 
+If already contained in your \texttt{\$PATH} variable, BRAKER2 will guess the location of \texttt{gmes\_petap.pl}, automatically. Otherwise, BRAKER2 can find GeneMark-EX executables either by locating them in an environment variable \texttt{GENEMARK\_PATH}, or by taking a command line argument\\ (\texttt{--GENEMARK\_PATH=/your\_path\_to\_GeneMark-EX/gmes\_petap/}). In order to set the environment variable for your current Bash session, type: 
 
     \begin{verbatim}
     export GENEMARK_PATH=/your_path_to_GeneMark-ET/gmes_petap/
@@ -227,7 +230,7 @@ Download BAMTOOLS (e.g.~\texttt{git clone \url{https://github.com/pezmaster31/ba
    make
  \end{verbatim}
 
- BRAKER2 can locate the bamtools binary either by using an environment variable \texttt{\$BAMTOOLS\_PATH}, or by taking a command line argument (\texttt{--BAMTOOLS\_PATH=/your\_path\_to\_bamtools/bin/}). In order to set the environment variable e.g.~for your current bash session, type:
+ If already in your \texttt{\$PATH} variable, BRAKER2 will find bamtools, automatically. Otherwise, BRAKER2 can locate the bamtools binary either by using an environment variable \texttt{\$BAMTOOLS\_PATH}, or by taking a command line argument (\texttt{--BAMTOOLS\_PATH=/your\_path\_to\_bamtools/bin/}). In order to set the environment variable e.g.~for your current bash session, type:
 
     \begin{verbatim}
         export BAMTOOLS_PATH=/your_path_to_bamtools/bin/ 
@@ -250,7 +253,7 @@ Samtools is not required for running BRAKER2 if all your files are formatted, co
       Download and install Samtools (e.g. \texttt{git clone \url{git://github.com/samtools/samtools.git}}), 
       subsequently follow Samtools documentation for installation).    
 
-      BRAKER2 can find Samtools either by taking a command line argument\\ (\texttt{--SAMTOOLS\_PATH=/your\_path\_to\_samtools/}), or by using an environment variable \texttt{\$SAMTOOLS\_PATH}. For exporting the variable, e.g.~for your current bash session, type:
+      If already in your \texttt{\$PATH} variable, BRAKER2 will find samtools, automatically. Otherwise, BRAKER2 can find Samtools either by taking a command line argument\\ (\texttt{--SAMTOOLS\_PATH=/your\_path\_to\_samtools/}), or by using an environment variable \texttt{\$SAMTOOLS\_PATH}. For exporting the variable, e.g.~for your current bash session, type:
 
     \begin{verbatim}
       export SAMTOOLS_PATH=/your_path_to_samtools/
@@ -261,22 +264,29 @@ Samtools is not required for running BRAKER2 if all your files are formatted, co
 
 This tool is required, only, if you would like to run protein to genome alignments with BRAKER2 using GenomeThreader. This is a suitable approach if an annotated species of short evolutionary distance to your target genome is available. Download GenomeThreader from \url{http://genomethreader.org/}. Unpack and install according to \texttt{gth/README}.
 
+BRAKER2 will try to locate the GenomeThreader executable by using an environment variable\\\texttt{\$ALIGNMENT\_TOOL\_PATH}. Alternatively, this can be supplied as command line argument \\(\texttt{--ALIGNMENT\_TOOL\_PATH=/your/path/to/gth}).
+
 \subsubsection{Spaln}
 
 This tool is required, only, if you would like to run protein to genome alignments with BRAKER2 using Spaln. This is a suitable approach if an annotated species of short evolutionary distance to your target genome is available. (We recommend the usage of GenomeThreader instad of Spaln.) Download Spaln from \url{http://www.genome.ist.i.kyoto-u.ac.jp/~aln_user}. Unpack and install according to \texttt{spaln/doc/SpalnReadMe22.pdf}.
+
+BRAKER2 will try to locate the Spaln executable by using an environment variable \texttt{\$ALIGNMENT\_TOOL\_PATH}. Alternatively, this can be supplied as command line argument \\(\texttt{--ALIGNMENT\_TOOL\_PATH=/your/path/to/spaln}).
 
 \subsubsection{Exonerate}
 
 This tool is required, only, if you would like to run protein to genome alignments with BRAKER2 using Exonerate. This is a suitable approach if an annotated species of short evolutionary distance to your target genome is available. (We recommend the usage of GenomeThreader instad of Exonerate because Exonerate is comparably slower and has lower specificity than GenomeThreader.) Download Exonerate from \url{https://github.com/nathanweeks/exonerate}. Unpack and install according to \texttt{exonerate/README}. (On Ubuntu, download and install by typing  \texttt{sudo apt-get install exonerate}.)
 
+BRAKER2 will try to locate the Exonerate executable by using an environment variable \\\texttt{\$ALIGNMENT\_TOOL\_PATH}. Alternatively, this can be supplied as command line argument \\(\texttt{--ALIGNMENT\_TOOL\_PATH=/your/path/to/exonerate}).
+
 \chapter{Running BRAKER2}
 
+\section{Different BRAKER2 pipeline modes}
 
 \begin{itemize}
  \item genome and RNA-Seq file and proteins for short evolutionary distance (see figures \ref{braker2-sidetrack}C and \ref{braker2-sidetrack}E). In both cases, GeneMark-ET is trained supported by RNA-Seq data, and the resulting gene predictions are used for training AUGUSTUS. In approach C), protein alignment information is used in the gene prediction step with AUGUSTUS, only. In approach E), protein spliced alignment data is used to complement the training set for AUGUSTUS. The latter approach is in particular suitable if RNA-Seq data does not produce a sufficiently high number of training gene structures for AUGUSTUS, and if a very closely related and already annotated species is available.
 \end{itemize}
 
-\section{BRAKER2 with RNA-Seq data (only)}
+\subsection{BRAKER2 with RNA-Seq data (only)}\label{braker1}.
 
 This approach is suitable for genomes of species for which RNA-Seq libraries with a good coverage of the transcriptome are available. The pipeline is illustrated in figure \ref{braker-main}A) on page \pageref{braker-main}.
 
@@ -305,7 +315,7 @@ chrName	b2h	intron	6136	9084	11	+	.	mult=11;pri=4;src=E
 
 The source \texttt{b2h} in the second column and the source tag \texttt{src=E} in the last column are essential for BRAKER2 to determine whether a hint has been generated from RNA-Seq data. 
 
-\section{BRAKER2 with proteins of longer evolutionary distance}
+\subsection{BRAKER2 with proteins of longer evolutionary distance}
 
 This approach is suitable for genomes of species for which no RNA-Seq libraries are available and for which no closely related and well annotated genome is available. A database of proteins with longer evolutionary distance to the target species may be used in this case. The pipeline is illustrated in figure \ref{gatech} on page \pageref{gatech}.
 
@@ -336,7 +346,7 @@ chrName	ProSplign	intron	6136	9084	11	+	.	mult=11;pri=4;src=P
 
 The source \texttt{ProSplign} in the second column and the source tag \texttt{src=P} in the last column are essential for BRAKER2 to determine whether a hint has been generated from remote homology protein data. 
 
-\section{BRAKER2 with proteins of shorter evolutionary distance}
+\subsection{BRAKER2 with proteins of shorter evolutionary distance}\label{prot-in}
 
 This approach is suitable if RNA-Seq data for the species of the target genome is not available and if a well annotated and very closely related reference species is available. The pipeline is illustrated in figure \ref{braker2-sidetrack}D) on page \pageref{braker2-sidetrack}.
 
@@ -372,407 +382,311 @@ It is also possible to run BRAKER2 in this mode using an already prepared hints 
 Format of the hints file should look like this:
 
 \begin{verbatim}
- INSERT EXAMPLE!
+chrName   gth2h   CDSpart 105984  106633  .     -    .    src=P;grp=FBpp0285205;pri=4
+chrName   gth2h   start   106646  106648  .     -    .    src=P;grp=FBpp0285205;pri=4
 \end{verbatim}
 
+Supported features are intron, CDSpart, start, stop.
 
-\section{BRAKER2 with RNA-Seq and protein data}
+\subsection{BRAKER2 with RNA-Seq and protein data}
 
 BRAKER2 with RNA-Seq and protein data is currently still under development. BRAKER2 currently does not train GeneMark-EX from protein and RNA-Seq data, yet. However, if RNA-Seq data of the target species and protein data of a very closely related reference species are available, BRAKER2 already supports the following to modes.
 
-\subsection{Adding protein data of short evolutionary distance to gene prediction step}
+\subsubsection{Adding protein data of short evolutionary distance to gene prediction step}
 
-\subsection{Extending training gene set with proteins of short evolutionary distance}
+This pipeline is illustrated in figure \ref{braker2-sidetrack}C) on page \pageref{braker2-sidetrack}.
+
+In general, add the options
+
+\begin{verbatim}
+   --prot_seq=proteins.fa --prg=(gth|exonerate|spaln)
+\end{verbatim}
+
+to the BRAKER2 call that is described in section \ref{braker1}. Select one protein alignment tool from GenomeThreader (\texttt{gth}, recommended), Spaln (\texttt{spaln}) or Exonerate (\texttt{exonerate}). Of course, you may also specify the protein information as protein alignment files or hints files as described in section \ref{prot-in} on page \pageref{prot-in}). This may result in a call similar to:
+
+\begin{verbatim}
+   braker.pl --species=yourSpecies --genome=genome.fasta --bam=file1.bam,file2.bam \
+      --prot_seq=proteins.fa --prg=(gth|exonerate|spaln)
+\end{verbatim}
+
+\subsubsection{Extending training gene set with proteins of short evolutionary distance}
+
+If the number of training gene structures identified by RNA-Seq data, only, seems to be too small, you may add training gene structures generated by protein alignments with GenomeThreader to the training gene set. This pipeline is illustrated in \ref{braker2-sidetrack}E) on page \pageref{braker2-sidetrack}.
+
+In general, add the options
+
+\begin{verbatim}
+   --prot_seq=proteins.fa --prg=gth --gth2traingenes
+\end{verbatim}
+
+to the BRAKER2 call that is described in section \ref{braker1}. This may result in a call similar to:
+
+\begin{verbatim}
+   braker.pl --species=yourSpecies --genome=genome.fasta --bam=file1.bam,file2.bam \
+      --prot_seq=proteins.fa --prg=gth --gth2traingenes
+\end{verbatim}
+
+\section{Description of BRAKER2 command line options}\label{options}
+
+\subsection{\texttt{--help}}                               
+
+Print usage of braker.pl
+
+\subsection{\texttt{--nice}}
+
+Execute (almost) all system calls within braker.pl and its submodules with bash "nice" (default nice value).
+
+\subsection{\texttt{--alternatives-from-evidence=true}}    
+
+Output alternative transcripts based on explicit evidence from hints (default is true).
+
+\subsection{\texttt{--augustus-args=``--some\_arg=bla''}}     
+One or several command line arguments to be passed to AUGUSTUS, if several arguments are given, separated by whitespace, i.e.~\texttt{``--first\_arg=sth --second\_arg=sth''}. 
+    
+\subsection{\texttt{--AUGUSTUS\_CONFIG\_PATH=/path/}}
+Set path to config directory of AUGUSTUS (if not specified as 
+                                         environment variable). BRAKER1 will assume that the directories
+                                         ../bin and ../scripts of AUGUSTUS are located relative to
+                                         the \texttt{AUGUSTUS\_CONFIG\_PATH}. If this is not the case, please
+                                         specify \texttt{AUGUSTUS\_BIN\_PATH} (and \texttt{AUGUSTUS\_SCRIPTS\_PATH} if required).
+                                         The Perl commandline argument \texttt{--AUGUSTUS\_CONFIG\_PATH} has higher
+                                         priority than the environment variable with the same name.
+                                         
+\subsection{\texttt{--AUGUSTUS\_BIN\_PATH=/path/}}           Set path to the AUGUSTUS directory that contains binaries, i.e.~
+    					 augustus and etraining. This variable must only be set if 
+    					 \texttt{AUGUSTUS\_CONFIG\_PATH} does not have \texttt{../bin} and \texttt{../scripts} of
+    					 AUGUSTUS relative to its location i.e. for global AUGUSTUS 
+    					 installations. BRAKER1 will assume that the directory
+    					 \texttt{../scripts} of AUGUSTUS is located relative to the \texttt{AUGUSTUS\_BIN\_PATH}.
+If this is not the case, please specify \texttt{AUGUSTUS\_SCRIPTS\_PATH}.
+
+\subsection{\texttt{--AUGUSTUS\_SCRIPTS\_PATH=/path/}}       Set path to AUGUSTUS directory that contains scripts, i.e.~
+    				         \texttt{splitMfasta.pl}. This variable most only be set if
+    				         \texttt{AUGUSTUS\_CONFIG\_PATH} or \texttt{AUGUSTUS\_BIN\_PATH} do not contains the
+    				         \texttt{../scripts} directory of AUGUSTUS relative to their location, i.e.~
+    				         for special cases of a global AUGUSTUS installation.
+    				         
+\subsection{\texttt{--BAMTOOLS\_PATH=/path/to/bamtools}}
+Set path to bamtools (if not specified as environment 
+variable). Has higher priority than the environment variable.
+\subsection{\texttt{--cores}}                              Specifies the maximum number of cores that can be used during 
+                                         computation
+\subsection{\texttt{--extrinsicCfgFile=file}}              Optional. This file contains the list of used sources for the 
+                                         hints and their boni and mali. If not specified the file ``extrinsic.cfg'' 
+                                         in the config directory \texttt{\$AUGUSTUS\_CONFIG\_PATH} is copied and adjusted.
+\subsection{\texttt{--fungus}}                             GeneMark-EX option: run algorithm with branch point model (most 
+                                         useful for fungal genomes)
+\subsection{\texttt{--GENEMARK\_PATH=/path/to/gmes\_petap.pl/}}            Set path to GeneMark-EX (if not specified as environment 
+ variable). Has higher priority than environment variable.
+\subsection{\texttt{--gff3}}                               Output in GFF3 format.
+\subsection{\texttt{--hints=hints.gff}}                    Alternatively to calling braker.pl with a bam file, it is 
+                                         possible to call it with a file that contains introns extracted 
+                                         from RNA-Seq (or other data) in gff format. This flag also allows the usage
+                                         of hints from additional extrinsic sources for gene prediction 
+                                         with AUGUSTUS. To consider such additional extrinsic information,
+                                         you need to use the flag \texttt{--extrinsicCfgFile} to specify parameters for 
+                                         all sources in the hints file
+                                         (including the source ``E'' for intron hints from RNA-Seq).
+\subsection{\texttt{--optCfgFile=ppx.cfg}}                 Optional custom config file for AUGUSTUS (see \texttt{--hints}).
+\subsection{\texttt{--overwrite}}                          Overwrite existing files (except for species parameter files)
+\subsection{\texttt{--SAMTOOLS\_PATH=/path/to/samtools}}            Optionally set path to samtools (if not specified as environment 
+variable) to fix BAM files automatically, if necessary. Has higher     
+                                         priority than environment variable.
+\subsection{\texttt{--skipGeneMark-ET}}                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g.~from a
+                                         different source) 
+\subsection{\texttt{--geneMarkGtf=file.gtf}}               If \texttt{skipGeneMark-ET} is used, braker will by default look in the 
+                                         working directory in folder \texttt{GeneMarkET} for an already existing gtf
+                                         file. Instead, you may provide such a file from another location.
+                                         If \texttt{geneMarkGtf} option is set, skipGeneMark-ET is automatically also set.
+\subsection{\texttt{--skipOptimize}}                       Skip optimize parameter step for AUGUSTUS (not recommended).
+\subsection{\texttt{--rounds}}                             The number of optimization rounds used in \texttt{optimize\_augustus.pl} (default 5).
+
+\subsection{\texttt{--skipAllTraining}}                    Skip GeneMark-EX (training and prediction), skip AUGUSTUS training,
+                                         only runs AUGUSTUS with pre-trained and already
+                                         existing parameters (not recommended). Hints from input are still generated.
+                                         This option automatically sets \texttt{--useexisting} to true.
+    \subsection{\texttt{--softmasking}}                        Softmasking option for soft masked genome files. Set to 'on' or '1'. Recommended to use this option!
+    \subsection{\texttt{--species=sname}}                      Species name. Existing species will not be overwritten. 
+                                         Uses Sp\_1 etc., if no species is assigned.                          
+    \subsection{\texttt{--useexisting}}                        Use the present config and parameter files if they exist for 
+                                         'species'.
+    \subsection{\texttt{--workingdir=/path/to/wd/}}            Set path to working directory. In the working directory results
+                                         and temporary files are stored.
+    \subsection{\texttt{--filterOutShort}}                     It may happen that a ``good'' training gene, i.e.~one that has intron
+                                         support from RNA-Seq in all introns predicted by GeneMark, is in fact
+                                         too short. This flag will discard such genes that have supported introns
+                                         and a neighboring RNA-Seq supported intron upstream of the start codon 
+                                         within the range of the maximum CDS size of that gene and with a 
+                                         multiplicity that is at least as high as 20\% of the average intron 
+                                         multiplicity of that gene.
+    \subsection{\texttt{--crf}}                                Execute CRF training for AUGUSTUS; resulting parameters are only kept for
+                                         final predictions if they show higher accuracy than HMM parameters. This increases runtime!
+    \subsection{\texttt{--prot\_seq=prot.fa}}                   A protein sequence file in multiple fasta format. This file will be used
+                                         to generate protein hints for AUGUSTUS by running one of the three
+                                         alignment tools Exonerate (\texttt{--prg=exonerate}), Spaln (\texttt{--prg=spaln}) or 
+                                         GenomeThreader (\texttt{--prg=gth}). Default is GenomeThreader if the tool is not 
+                                         specified.
+                                         Currently, hints from proteins are only used in the prediction step with
+                                         AUGUSTUS. 
+    \subsection{\texttt{--prot\_aln=prot.aln}}                  Alignment file generated from aligning protein sequences against the 
+                                         genome with either Exonerate (\texttt{--prg=exonerate}), or Spaln (\texttt{--prg=spaln}), or
+                                         GenomeThreader (\texttt{--prg=gth}).
+                                         
+                                         To prepare alignment file, run Spaln2 with the following command:
+                                         
+                                         \begin{verbatim}
+   spaln -O0 ... > spalnfile
+                                            \end{verbatim}
+                                            
+                                         To prepare alignment file, run Exonerate with the following command:
+                                         
+                                         \begin{verbatim}
+   exonerate --model protein2genome --showtargetgff T ... > exfile
+                                            \end{verbatim}
+                                            
+                                         To prepare alignment file, run GenomeThreader with the following command:
+                                         
+                                         \begin{verbatim}
+   gth -genomic genome.fa  -protein protein.fa -gff3out -skipalignmentout ... -o gthfile
+                                         \end{verbatim}
+                                         
+                                         A valid option \texttt{prg=...} must be specified in combination with 
+                                         \texttt{--prot\_aln}. Generating tool will not be guessed.
+                                         Currently, hints from proteins are only used in the prediction step with
+                                         AUGUSTUS.
+    \subsection{\texttt{--prg=gth|exonerate|spaln}}            Alignment tool \texttt{gth} (GenomeThreader), \texttt{exonerate} (Exonerate) or Spaln2
+                                         (\texttt{spaln}) that will be used to generate protein alignments that will be the 
+                                         basis for hints generation for gene prediction with AUGUSTUS (if specified
+                                         in combination with \texttt{--prot\_seq}) or that was used to externally
+                                         generate an alignment file with the commands listed in description of 
+                                         \texttt{--prot\_aln} (if used in combination with \texttt{--prot\_aln}).
+    \subsection{\texttt{--ALIGNMENT\_TOOL\_PATH=/path/to/tool}}  Set path to alignment tool (GenomeThreader, Spaln, or Exonerate) if not 
+                                         specified as environment variable. Has higher priority than environment
+                                         variable.
+    \subsection{\texttt{--gth2traingenes}}                     Generate training gene structures for AUGUSTUS from GenomeThreader
+                                         alignments. (These genes can either be used for training AUGUSTUS
+					 alone with \texttt{--trainFromGth}; or in addition to GeneMark-ET training genes if 
+					 also a bam-file is supplied.)
+    \subsection{\texttt{--trainFromGth}}                       No GeneMark-Training, train AUGUSTUS from GenomeThreader alignments.
+    \subsection{\texttt{--epmode}}                             Run GeneMark-EP with intron hints provided from \texttt{--hints=proteinhints.gff}.
+    \subsection{\texttt{--skipGeneMark-EP}}                    Skip GeneMark-EP and use provided GeneMark-EP output (e.g.~provided with
+                                         \texttt{--geneMarkGtf=genemark.gtf}.
+    \subsection{\texttt{--version}}                            Print version number of \texttt{braker.pl}.                          
+
 
 \chapter{Output of BRAKER2}
+
+BRAKER2 produces three important output files in the working directory:
+
+\begin{verbatim}
+hintsfile.gff             - The introns extraced from RNAseq.bam. These introns are used for
+                            training GeneMark-ET and for predicting genes with AUGUSTUS. The file
+                            is in gff format (see section 3, input argument --hints).
+GeneMark-ET/genemark.gtf  - Genes predicted by GeneMark-ET in gtf format
+augustus.gff              - Genes predicted by AUGUSTUS in gtf format
+
+\end{verbatim}
+
+For details about gtf format, see \url{http://www.sanger.ac.uk/Software/formats/GFF/}. A gtf format file
+contains one line per predicted exon. Example:
+
+\begin{verbatim}
+HS04636   AUGUSTUS initial  966  1017  .    +    0       transcript_id "g1.1"; gene_id "g1";
+HS04636   AUGUSTUS internal 1818 1934  .    +    2       transcript_id "g1.1"; gene_id "g1";
+\end{verbatim}
+
+The columns (fields) contain: 
+
+\begin{verbatim}
+seqname   source  feature  start   end   score   strand   frame  transcript ID and gene ID
+\end{verbatim}
+
 
 \chapter{Example data}
 
 
-% 
-% 
-%               3. RUNNING BRAKER2
-%               ------------------
-% 
-% BRAKER2 has two mandatory arguments: a genome file in fasta format and one file containing 
-% information on RNA-Seq alignments to that genome file (either in bam format or in AUGUSTUS hints 
-% format).
-% 
-% The genome file contains the DNA input sequence and must be in uncompressed (multiple) fasta 
-% format, the file may look like this:
-% 
-% >name_of_sequence_1
-% agtgctgcatgctagctagct
-% >name_of_sequence_2
-% gtgctngcatgctagctagctggtgtnntgaaaaatt
-% 
-% Every letter other than a,c,g,t,A,C,G and T is interpreted as an unknown base. Digits and white 
-% spaces are ignored. The number of characters per line is not restricted.
-% 
-% For RNA-Seq information, you can either specify a bam-file or a hints file generated from RNA-Seq 
-% alignment information. The bam file contains unassembled RNA-Seq read alignments. Alternatively to
-% the bam file, spliced alignment information may be passed as "intron hints" in gff format using the
-%  argument --hints=gff-hintsfilename, the file may look like this:
-% 
-% contig_name	b2h	intron	2740	2888	25	+	.	.
-% 
-% Required values in the gff format file for GeneMark-ET (for more details, see 
-% http://www.sanger.ac.uk/resources/software/gff/spec.html):
-% 
-% Column <seqname>     value should match the corresponding definition line in the FASTA file with
-%                      sequence
-% Column <source>      in this case b2h
-% Column <feature>     value "intron" (obligatory!)
-% Columns <start><end> intron coordinates, <start> points to first nucleotide of intron and <end> to
-%                      the last one. Index starts from "1"
-% Column <score>       in case of TopHat2, score is the number of reads spanning this intron 
-%                      (reported by TopHat2)
-%                      in case of UnSplicer or TrueSight, score is the probability like estimate of 
-%                      intron quality, reported by these tools
-% Column <strand>     + or -
-% Values in other columns (frame and attribute) are not used in this program version.
-% 
-% 
-% IMPORTANT: the names of contigs in <seqname> column in gff must be found as sequence names in the 
-% corresponding FASTA file (in the usage example below: genome.fa)!
-% 
-% IMPORTANT: With BRAKER2, it is possible to specify a single hints file that contains hints from 
-% RNA-Seq data (for training GeneMark-ET and predicting genes with AUGUSTUS) and that contains hints
-% from proteins (for predicting genes with AUGUSTUS, only). If you are using protein and RNA-Seq 
-% evidence, the source tag must be "b2h" for RNA-Seq derived hints, and must be something else for 
-% protein derived hints (or nothing, if protein evidence is to be drived by BRAKER2 from alignments or 
-% fasta input file).
-% 
-% Usage:
-% 
-% perl braker.pl [OPTIONS] --genome=genome.fa --bam=RNAseq.bam
-% perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseq.gff
-% perl braker.pl [OPTIONS] --genome=genome.fa --bam=RNAseq.bam --prot_seq=protein.fa \
-%      --prg=gth|exonerate|spaln --ALIGNMENT_TOOL_PATH=/path/to/protaligner
-% perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseq.gff --prot_seq=protein.fa\
-%      --prg=gth|exonerate|spaln --ALIGNMENT_TOOL_PATH=/path/to/protaligner
-% perl braker.pl [OPTIONS] --genome=genome.fa --hints=RNAseqAndProtein.gff
-% 
-% 'genome.fa' is the filename (including relative path) to the file containing the query sequence(s) 
-%             in fasta format.
-% 'RNAseq.bam' is the filename (including relative path) to the file containing the RNA-seq alignment
-%              data in bam format.
-% 'RNAseq.gff' is the filename (including relative path) to the file containing introns extracted 
-%              from RNA-Seq information in gff format.
-% 'protein.fa' is the filename (including relative path) to the file containg protein sequence(s) in
-%              fasta format.
-% 'RNAseqAndProtein.gff' is the filename (including relative path) to the file containing introns 
-%                        extracted from RNA-Seq information and introns and other hints extracted 
-%                        from protein data in gff format.
-% 
-% Selected parameters:
-% 
-% --nice
-%   Executes (almost) all system calls by braker.pl with bash nice (default nice level)
-% 
-% --alternatives-from-evidence=true/false
-%   Report alternative transcripts when they are suggested by hints, default is true.
-% 
-% --AUGUSTUS_CONFIG_PATH=/my_path_to_AUGUSTUS/augustus/config/ 
-%   Path to AUGUSTUS config directory (if not specified as environment variable). Has higher priority 
-%   than the environment variable.
-% 
-% --AUGUSTUS_BIN_PATH=/my_path_to_AUGUSTUS_bin/
-%   Path to AUGUSTUS bin directory. If a local installation
-%   exists (i.e. AUGUSTUS_CONFIG_PATH/../ contains bin/ and scripts/), AUGUSTUS_BIN_PATH must not
-%   be specified.
-%   
-% --AUGUSTUS_SCRIPTS_PATH=/my_path_to_AUGUSTUS_scripts/
-%   Path to AUGUSTUS scripts directory. If a local installation exists (i.e. AUGUSTUS_CONFIG_PATH/../
-%   contains scripts/) or if AUGUSTUS_BIN_PATH/../ contains scripts/, this argument must not
-%   be specified.
-% 
-% --cores=n
-%   Specifies the maximum number of cores that can be used during computation
-% 
-% --fungus
-%   GeneMark-ET option: to run algorithm with branch point model (most useful for fungal genomes)
-% 
-% --GENEMARK_PATH=/my_path_to_GeneMark-ET/gmes_petap/
-%   Path to GeneMark-ET (if not specified as environment variable). Has higher priority than 
-%   environment variable.
-% 
-% --BAMTOOLS_PATH=/path/to/bamtools/
-%   Path to bamtools (if not specified as environment variable). Has higher priority than the
-%   environment variable.
-% 
-% --SAMTOOLS_PATH=/path/to/samtools/
-%   Optional: set path to samtools (if not specified as environment variable). In some cases, users
-%   of BRAKER2 reported that they "shortend" the headers of FASTA files after their first attempt to 
-%   run BRAKER2, but they forgot to fix the same sequence names in the BAM file. SAMTOOLS is used by
-%   BRAKER2 to automatically fix such issues. The command line flag has higher priority than 
-%   environment variable.
-% 
-% --hints=hints.gff            
-%   Additional hints files for gene predictions with AUGUSTUS in gff format (should only be used in 
-%   combination with --optCfgFile)
-% 
-% --prot_seq=prot.fa
-%   A protein sequence file in multiple fasta format. This file will be used to generate protein 
-%   hints for AUGUSTUS by running one of the three alignment tools Exonerate (--prg=exonerate), Spaln
-%   (--prg=spaln), or GenomeThreader (--prg=gth). Default is GenomeThreader if the tool is not 
-%   specified. Currently, hints from proteins are only used in the prediction step with AUGUSTUS. 
-% 
-% --prot_aln=prot.aln
-%   Alignment file generated from aligning protein sequences against the genome with either Exonerate
-%   (--prg=exonerate), or Spaln (--prg=spaln), or GenomeThreader (--prg=gth).
-%   To prepare alignment file, run Spaln2 with the following command:
-%      spaln -O0 ... > spalnfile
-%   To prepare alignment file, run Exonerate with the following command:
-%      exonerate --model protein2genome --showtargetgff T ... > exfile
-%   To prepare alignment file, run GenomeThreader with the following command:
-%      gth -genomic genome.fa  -protein protein.fa -gff3out -skipalignmentout ... -o gthfile
-%   A valid option prg=... must be specified in combination with --prot_aln. Generating tool will not 
-%   be guessed. Currently, hints from proteins are only used in the prediction step with AUGUSTUS.                                                                          
-% 
-% --prg=gth|exonerate|spaln
-%   Alignment tool gth (GenomeThreader), exonerate (Exonerate) or Spaln2 (spaln) that will be used to
-%   generate protein alignments that will be the basis for hints generation for gene prediction with
-%   AUGUSTUS (if specified in combination with --prot_seq) or that was used to externally generate an
-%   alignment file with the commands listed in description of --prot_aln (if used in combination with 
-%   --prot_aln).
-% 
-% --ALIGNMENT_TOOL_PATH=/path/to/tool
-%   Set path to alignment tool (GenomeThreader, Spaln, or Exonerate) if not specified as environment 
-%   variable ${ALIGNMENT_TOOL_PATH} (this will usually be the path to only one of the alignment 
-%   tools, the one that is specified with option --prg=..."). Has higher priority than environment
-%   variable .
-% 
-% --extrinsicCfgFile=file
-%   Optional config file for AUGUSTUS, should be used if --hints is used, and if you desire to use 
-%   extrinsic configuration parameters deviating from the BRAKER2 default values.
-% 
-% --optCfgFile=ppx.cfg
-%   Optional custom config file for AUGUSTUS 
-% 
-% --overwrite
-%   Overwrite existing files
-% 
-% --skipGeneMark-ET
-%   Skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source)
-%  
-% --skipOptimize
-%   Skip optimize parameter step (not recommended!)
-% 
-% --softmasking
-% 
-% --useexisting
-%   Use the present config and parameter files if they exist for 'speciesname'
-% 
-% --UTR=on/off
-%   Predict the untranslated regions in addition to the coding sequence. This currently works only 
-%   for the species human, galdieria, toxoplasma and caenorhabditis.
-% 
-% --crf
-%   Execute CRF training for AUGUSTUS; resulting parameters are only kept for final predictions if 
-%   they show higher accuracy than HMM parameters.
-% 
-% --workingdir=/path/to/wd/
-%   Path to working directory in which results and temporary files are stored (default: current 
-%   directory).
-% 
-% --species=speciesname
-%   speciesname is a directory in ${AUGUSTUS_CONFIG_PATH}/species, which is used to read AUGUSTUS 
-%   species parameters from, and write such parameter so. Usually, BRAKER2 is used to train AUGUSTUS
-%   for new species, i.e. the speciesname should be a species name that does not already exist in 
-%   ${AUGUSTUS_CONFIG_PATH}/species. Existing species files will not be overwritten. If the argument 
-%   --species is not used, BRAKER2 generates speciesnames of the type Sp_1 etc. For example you may 
-%   type
-% 
-% --augustus-args="--some_arg=bla"
-%   For expert AUGUSTUS users: One or several command line arguments to be passed to AUGUSTUS (in 
-%   addition to the arguments that are already passed by BRAKER2), if several arguments are given, 
-%   separate by whitespaces, i.e. "--first_arg=sth --second_arg=sth".
-% 										  
-% 
-% --nice
-%   execute all time consuming subprocesses of braker.pl with bash program "nice" (default nice 
-%   level)
-% 
-% --version
-%   Print version number of braker.pl
-% 
-%   perl braker --species=new_species  --genome=../examples/example.fa  --bam=../examples/example.bam
-% 
-%   to create a new species 'new_species'.
-% 
-%   Alternatively to training AUGUSTUS, it is possible run AUGUSTUS with already existing parameters.
-%   In that case, speciesname can be any of the species names contained in 
-%   ${AUGUSTUS_CONFIG_PATH}/species. In the following, you find a list of species identifiers that 
-%   may be used as speciesname (for use with --useexisting) and that are part of the current AUGUSTUS
-%   release:
-% 
-%    identifier                               | species
-%    -----------------------------------------|----------------------
-%    human                                    | Homo sapiens
-%    fly                                      | Drosophila melanogaster
-%    arabidopsis                              | Arabidopsis thaliana
-%    brugia                                   | Brugia malayi
-%    aedes                                    | Aedes aegypti
-%    tribolium                                | Tribolium castaneum
-%    schistosoma                              | Schistosoma mansoni
-%    tetrahymena                              | Tetrahymena thermophila
-%    galdieria                                | Galdieria sulphuraria
-%    maize                                    | Zea mays
-%    toxoplasma                               | Toxoplasma gondii
-%    caenorhabditis                           | Caenorhabditis elegans
-%    (elegans)                                | Caenorhabditis elegans 
-%    aspergillus_fumigatus                    | Aspergillus fumigatus
-%    aspergillus_nidulans                     | Aspergillus nidulans
-%    (anidulans)                              | Aspergillus nidulans
-%    aspergillus_oryzae                       | Aspergillus oryzae
-%    aspergillus_terreus                      | Aspergillus terreus
-%    botrytis_cinerea                         | Botrytis cinerea
-%    candida_albicans                         | Candida albicans
-%    candida_guilliermondii                   | Candida guilliermondii
-%    candida_tropicalis                       | Candida tropicalis
-%    chaetomium_globosum                      | Chaetomium globosum
-%    coccidioides_immitis                     | Coccidioides immitis
-%    coprinus                                 | Coprinus cinereus
-%    coprinus_cinereus                        | Coprinus cinereus
-%    coyote_tobacco                           | Nicotiana attenuata
-%    cryptococcus_neoformans_gattii           | Cryptococcus neoformans gattii
-%    cryptococcus_neoformans_neoformans_B     | Cryptococcus neoformans neoformans
-%    cryptococcus_neoformans_neoformans_JEC21 | Cryptococcus neoformans neoformans
-%    (cryptococcus)                           | Cryptococcus neoformans
-%    debaryomyces_hansenii                    | Debaryomyces hansenii
-%    encephalitozoon_cuniculi_GB              | Encephalitozoon cuniculi
-%    eremothecium_gossypii                    | Eremothecium gossypii
-%    fusarium_graminearum                     | Fusarium graminearum
-%    (fusarium)                               | Fusarium graminearium
-%    histoplasma_capsulatum                   | Histoplasma capsulatum
-%    (histoplasma)                            | Histoplasma capsulatum
-%    kluyveromyces_lactis                     | Kluyveromyces lactis
-%    laccaria_bicolor                         | Laccaria bicolor
-%    lamprey                                  | Petromyzon marinus
-%    leishmania_tarentolae                    | Leishmania tarentolae
-%    lodderomyces_elongisporus                | Lodderomyces elongisporus
-%    magnaporthe_grisea                       | Magnaporthe grisea
-%    neurospora_crassa                        | Neurospora crassa
-%    (neurospora)                             | Neurospora crassa
-%    phanerochaete_chrysosporium              | Phanerochaete chrysosporium
-%    (pchrysosporium)                         | Phanerochaete chrysosporium
-%    pichia_stipitis                          | Pichia stipitis
-%    rhizopus_oryzae                          | Rhizopus oryzae
-%    saccharomyces_cerevisiae_S288C           | Saccharomyces cerevisiae
-%    saccharomyces_cerevisiae_rm11-1a_1       | Saccharomyces cerevisiae
-%    (saccharomyces)                          | Saccharomyces cerevisiae
-%    schizosaccharomyces_pombe                | Schizosaccharomyces pombe
-%    thermoanaerobacter_tengcongensis         | Thermoanaerobacter tengcongensis
-%    trichinella                              | Trichinella spiralis
-%    ustilago_maydis                          | Ustilago maydis
-%    (ustilago)                               | Ustilago maydis
-%    yarrowia_lipolytica                      | Yarrowia lipolytica
-%    nasonia                                  | Nasonia vitripennis
-%    tomato                                   | Solanum lycopersicum
-%    chlamydomonas                            | Chlamydomonas reinhardtii
-%    amphimedon                               | Amphimedon queenslandica
-%    pneumocystis                             | Pneumocystis jirovecii
-%    wheat                                    | Triticum aestivum
-%    chicken                                  | Gallus gallus
-% 
-%    The identifiers in parentheses denote older versions for that species.
-% 
-%               4. OUTPUT OF BRAKER2
-%               --------------------
-% 
-% BRAKER2 produces three important output files in the working directory:
-% 
-% hintsfile.gff             - The introns extraced from RNAseq.bam. These introns are used for
-%                             training GeneMark-ET and for predicting genes with AUGUSTUS. The file
-%                             is in gff format (see section 3, input argument --hints).
-% GeneMark-ET/genemark.gtf  - Genes predicted by GeneMark-ET in gtf format
-% augustus.gff              - Genes predicted by AUGUSTUS in gtf format
-% 
-% For details about gtf format, see http://www.sanger.ac.uk/Software/formats/GFF/. A gtf format file
-% contains one line per predicted exon. Example:
-% 
-% HS04636   AUGUSTUS   initial    966     1017    .       +       0       transcript_id "g1.1"; gene_id "g1";
-% HS04636   AUGUSTUS   internal   1818    1934    .       +       2       transcript_id "g1.1"; gene_id "g1";
-% 
-% The columns (fields) contain: 
-% seqname   source     feature    start   end   score   strand   frame    transcript ID and gene ID
-% 
-% 
-%               5. EXAMPLE DATA
-%               ---------------
-% 
-% Due to file size, example data for testing BRAKER2 is separately available for download at 
-% http://bioinf.uni-greifswald.de/augustus/downloads/index.php and http://exon.gatech.edu/ as archive
-% BRAKER2examples.tar.gz.
-% 
-% After extraction, test BRAKER2 with the following commands:
-% 
-% 1) For usage with RNA-Seq, only (BRAKER1 functionality):
-% 
-% perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam
-% 
-% 2) For usage with RNA-Seq and proteins (BRAKER2 functionaliy, adapt command to aligner of your 
-%    choice):
-% 
-% perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam \
-%    --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALIGNMENT_TOOL_PATH=/path/to/aligner
-% 
-% The runtime of this example should be around 46 hours on a 2.27 GHz single CPU.
-% 
-%               6. BUG REPORTING
-%               ----------------
-% 
-% If you found a bug, please contact katharina.hoff@uni-greifswald.de .
-% 
-% Information worth mentioning in your bug report:
-% 
-% Check in braker/yourSpecies/braker.log at which step braker.pl crashed.
-% 
-% There are a number of other files that might be of interest, depending on where in the pipeline the
-% problem occured. Some of the following files will not be present if they did not contain any errors.
-% 
-%  \item  braker/yourSpecies/errors/bam2hints.*.stderr - will give details on a bam2hints crash (step for 
-%                                                   converting bam file to intron gff file)
-%  
-%  \item  braker/yourSpecies/hintsfile.gff - is this file empty? If yes, something went wrong during hints 
-%                                       generation
-%                                     - does this file contain hints from source "b2h" and of type 
-%                                       "intron"? If not: GeneMark-ET will not be able to execute 
-%                                       properly.
-%  
-%  \item  braker/yourSpecies/startAlign.stderr - if you provided a protein fasta file and this file is not
-%                                           empty, something went wrong during protein alignment
-%    braker/yourSpecies/startAlign.stdout - may give clues on at which point protein alignment went
-%                                           wrong
-% 
-%  \item  braker/yourSpecies/(align_gth|align_exonerate|align_spaln)/*err - errors reported by the 
-% 																																		 alignment tools 
-%                                                                      gth/exonerate/spaln
-% 
-%  \item  braker/yourSpecies/errors/GeneMark-ET.stderr - errors reported by GeneMark-ET
-%    braker/yourSpecies/errors/GeneMark-ET.stdout - may give clues about the point at which errors in
-%                                                   GeneMark-ET occured
-% 
-%  \item  braker/yourSpecies/GeneMark-ET/genemark.gtf - is this file empty? If yes, something went wrong 
-%                                                  during executing GeneMark-ET
-% 
-%  \item  braker/yourSpecies/GeneMark-ET/genemark.f.good.gtf - is this file empty? If yes, something went
-%                                                         wrong during filtering GeneMark-ET genes 
-%                                                         for training AUGUSTUS
-%  
-%  \item  braker/yourSpecies/genbank.good.gb - try a "grep -c LOCUS genbank.good.gb" to determine the 
-%                                         number of training genes for training AUGUSTUS, should not
-%                                         be low
-% 
-%  \item  braker/yourSpecies/errors/firstetraining.stderr - contains errors from first iteration of 
-%                                                      training AUGUSTUS
-%    braker/yourSpecies/errors/secondetraining.stderr - contains errors from second iteration of
-%                                                       training AUGUSTUS
-%    braker/yourSpecies/errors/optimize_augustus.stderr - contains errors optimize_augustus.pl 
-%                                                         (additional training set for AUGUSTUS)
-% 
-%  \item  braker/yourSpecies/errors/augustus*.stderr - contain AUGUSTUS execution errors
+Due to file size, example data for testing BRAKER2 is separately available for download at 
+\url{http://bioinf.uni-greifswald.de/augustus/downloads/index.php} and \url{http://exon.gatech.edu/} as archive
+\texttt{BRAKER2examples.tar.gz}.
 
+After extraction, test BRAKER2 with the following commands:
+
+1) For usage with RNA-Seq, only (BRAKER1 functionality):
+
+\begin{verbatim}
+   perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam
+\end{verbatim}
+
+2) For usage with RNA-Seq and proteins (BRAKER2 functionaliy, adapt command to aligner of your 
+   choice):
+   
+   
+\begin{verbatim}
+perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam \
+   --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALIGNMENT_TOOL_PATH=/path/to/aligner
+\end{verbatim}
+   
+The runtime of this example should be around 46 hours on a 2.27 GHz single CPU.
+
+\chapter{Bug reporting}
+
+
+If you found a bug, please contact katharina.hoff@uni-greifswald.de .
+
+Information worth mentioning in your bug report:
+
+Check in \texttt{braker/yourSpecies/braker.log} at which step \texttt{braker.pl} crashed.
+
+There are a number of other files that might be of interest, depending on where in the pipeline the
+problem occured. Some of the following files will not be present if they did not contain any errors.
+
+\begin{itemize}
+ \item  \texttt{braker/yourSpecies/errors/bam2hints.*.stderr} - will give details on a bam2hints crash (step for 
+                                                  converting bam file to intron gff file)
+ 
+ \item  \texttt{braker/yourSpecies/hintsfile.gff} - is this file empty? If yes, something went wrong during hints 
+                                      generation
+                                    - does this file contain hints from source ``b2h'' and of type 
+                                      ``intron''? If not: GeneMark-ET will not be able to execute 
+                                      properly.
+ 
+ \item  \texttt{braker/yourSpecies/startAlign.stderr} - if you provided a protein fasta file and this file is not
+                                          empty, something went wrong during protein alignment
+\item    \texttt{braker/yourSpecies/startAlign.stdout} - may give clues on at which point protein alignment went
+                                          wrong
+
+ \item  \texttt{braker/yourSpecies/(align\_gth|align\_exonerate|align\_spaln)/*err} - errors reported by the 
+																																		 alignment tools 
+                                                                     gth/exonerate/spaln
+
+ \item  \texttt{braker/yourSpecies/errors/GeneMark-ET.stderr} - errors reported by GeneMark-ET
+ \item  \texttt{braker/yourSpecies/errors/GeneMark-ET.stdout} - may give clues about the point at which errors in
+                                                  GeneMark-ET occured
+
+ \item  \texttt{braker/yourSpecies/GeneMark-ET/genemark.gtf} - is this file empty? If yes, something went wrong 
+                                                 during executing GeneMark-ET
+
+ \item  \texttt{braker/yourSpecies/GeneMark-ET/genemark.f.good.gtf} - is this file empty? If yes, something went
+                                                        wrong during filtering GeneMark-ET genes 
+                                                        for training AUGUSTUS
+ 
+ \item  \texttt{braker/yourSpecies/genbank.good.gb} - try a ``grep -c LOCUS genbank.good.gb'' to determine the 
+                                        number of training genes for training AUGUSTUS, should not
+                                        be low
+
+ \item  \texttt{braker/yourSpecies/errors/firstetraining.stderr} - contains errors from first iteration of 
+                                                     training AUGUSTUS
+ \item  \texttt{braker/yourSpecies/errors/secondetraining.stderr} - contains errors from second iteration of
+                                                      training AUGUSTUS
+   \item \texttt{braker/yourSpecies/errors/optimize\_augustus.stderr} - contains errors optimize\_augustus.pl 
+                                                        (additional training set for AUGUSTUS)
+
+ \item  \texttt{braker/yourSpecies/errors/augustus*.stderr} - contain AUGUSTUS execution errors
+
+\end{itemize}
+
+
+\bibliographystyle{apalike}
+\bibliography{refs}
 
 \end{document}          
