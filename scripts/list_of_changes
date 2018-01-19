@@ -1,4 +1,9 @@
 # ----------------------------------------------------------------------
+# | extended braker.pl to train    | braker.pl            | 19.1.2018  |
+# | AUGUSTUS from GenomeThreader   | (Hoff)               |            |
+# | alignments and from            |                      |            |
+# | GeneMark-EP specific protein   |                      |            |
+# | mapping pipeline output        |                      |            |
 # | run protein alignments with    | braker.pl,           | 08.11.2017 |
 # | GenomeThreader, Spaln or       | startAlign.pl        |            |
 # | Exonerate; convert alignments  | align2hints.pl       |            |
