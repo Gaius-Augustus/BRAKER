@@ -24,6 +24,10 @@ use Scalar::Util::Numeric qw(isint);
 use POSIX qw(floor);
 use List::Util qw(min);
 use Parallel::ForkManager;
+use FindBin;
+use lib "$FindBin::RealBin/.";
+use File::Which;                  # exports which()
+use File::Which qw(which where);  # exports which() and where()
 
 use Cwd;
 use Cwd 'abs_path';
@@ -32,11 +36,6 @@ use File::Spec::Functions qw(rel2abs);
 use File::Basename qw(dirname basename);
 use File::Copy;
 
-BEGIN{
-  $0 = rel2abs($0);
-  our $directory = dirname($0);
-} 
-use lib $directory;
 use helpMod qw(find checkFile formatDetector relToAbs setParInConfig uptodate);
 use Term::ANSIColor qw(:constants);
 
@@ -460,6 +459,19 @@ if(defined($augustus_cfg_path)){
     chop($augustus_cfg_path);
   }
   $AUGUSTUS_CONFIG_PATH = $augustus_cfg_path;
+}else{ # try to get path from environment variable
+  $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
+}
+
+# If no AUGUSTUS config given, try to guess from the "augustus" executable
+if(not(defined $AUGUSTUS_CONFIG_PATH) or length($AUGUSTUS_CONFIG_PATH) == 0){
+    my $epath = which 'augustus';
+    $AUGUSTUS_CONFIG_PATH = dirname(abs_path($epath))."/../config";
+    $augustus_cfg_path = $AUGUSTUS_CONFIG_PATH;
+    if(not(-d $AUGUSTUS_CONFIG_PATH)){
+	print STDERR "ERROR: Tried guessing \$AUGUSTUS_CONFIG_PATH from system augustus path, but $AUGUSTUS_CONFIG_PATH is not a directory.\n";
+	exit(1);
+    }
 }
 
 # check early on whether AUGUSTUS_CONFIG_PATH is writable
@@ -476,17 +488,32 @@ if(defined($augustus_bin_path)){
   }
   $AUGUSTUS_BIN_PATH = $augustus_bin_path;
 }else{
-  $AUGUSTUS_BIN_PATH = "$AUGUSTUS_CONFIG_PATH/../bin";
+    # first try to get path from environment variable
+    $AUGUSTUS_BIN_PATH = $ENV{'AUGUSTUS_BIN_PATH'};
+    if(not(-d  $AUGUSTUS_BIN_PATH)){
+	$AUGUSTUS_BIN_PATH = "$AUGUSTUS_CONFIG_PATH/../bin";
+	if(not(-d  $AUGUSTUS_BIN_PATH)){
+	    print STDERR "Tried guessing \$AUGUSTUS_BIN_PATH from location of \$AUGUSTUS_CONFIG_PATH, but $AUGUSTUS_BIN_PATH is not a directory.\n";
+	}
+    }
+    
 }
 
 if(defined($augustus_scripts_path)){
-  my $last_char = substr($augustus_scripts_path, -1);
-  if($last_char eq "\/"){
-    chop($augustus_scripts_path);
-  }
-  $AUGUSTUS_SCRIPTS_PATH = $augustus_scripts_path;
+    my $last_char = substr($augustus_scripts_path, -1);
+    if($last_char eq "\/"){
+	chop($augustus_scripts_path);
+    }
+    $AUGUSTUS_SCRIPTS_PATH = $augustus_scripts_path;
 }else{
-  $AUGUSTUS_SCRIPTS_PATH = "$AUGUSTUS_BIN_PATH/../scripts";
+    $AUGUSTUS_SCRIPTS_PATH = $ENV{'AUGUSTUS_SCRIPTS_PATH'};
+    if(not(-d $AUGUSTUS_SCRIPTS_PATH)){
+	$AUGUSTUS_SCRIPTS_PATH = "$AUGUSTUS_BIN_PATH/../scripts";
+	if(not(-d $AUGUSTUS_SCRIPTS_PATH)){
+	    print STDERR "Tried guessing \$AUGUSTUS_SCRIPTS_PATH from location of \$AUGUSTUS_CONFIG_PATH, but $AUGUSTUS_SCRIPTS_PATH is not a directory.\n";
+	    exit(1);
+	}	
+    }
 }
 
 
@@ -497,15 +524,34 @@ if(defined($GMET_path)){
     chop($GMET_path);
   }
   $GENEMARK_PATH = $GMET_path;
+}else{
+    $GENEMARK_PATH = $ENV{'GENEMARK_PATH'};
+    if(not(-d $GENEMARK_PATH)){
+	$GENEMARK_PATH = dirname(which 'gmes_petap.pl');
+	if(not(-d $GENEMARK_PATH)){
+	    print STDERR "Tried guessing \$GENEMARK_PATH from location of gmes_petap.pl, but $GENEMARK_PATH is not a directory.\n";
+	    exit(1);
+	}	
+    }    
 }
 
 # set path to bamtools
 if(defined($bamtools_path)){
-  my $last_char = substr($bamtools_path, -1);
-  if($last_char eq "\/"){
-    chop($bamtools_path);
-  }
-  $BAMTOOLS_BIN_PATH = $bamtools_path;
+    my $last_char = substr($bamtools_path, -1);
+    if($last_char eq "\/"){
+	chop($bamtools_path);
+    }
+    $BAMTOOLS_BIN_PATH = $bamtools_path;
+}else{
+    $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'};
+    if(not(-d $BAMTOOLS_BIN_PATH)){
+	my $epath = which 'bamtools';
+	$BAMTOOLS_BIN_PATH = dirname($epath);
+	if(not(-d $BAMTOOLS_BIN_PATH)){
+	    print STDERR "Tried guessing \$BAMTOOLS_BIN_PATH from location of bamtools, but $BAMTOOLS_BIN_PATH is not a directory.\n";
+	    exit(1);
+	}
+    }
 }
 
 # set path to samtools (optional)
@@ -515,6 +561,13 @@ if(defined($SAMTOOLS_PATH_OP)){
     chop($SAMTOOLS_PATH_OP);
   }
   $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
+}else{
+    $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'};
+    if(not(-d $SAMTOOLS_PATH)){
+	my $epath = which 'samtools';
+	$SAMTOOLS_PATH = dirname($epath);
+    }
+    
 }
 
 # set path to alignment tool (gth, spaln or exonerate, optional)
