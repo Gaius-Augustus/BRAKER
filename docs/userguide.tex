@@ -35,7 +35,7 @@ BRAKER2 is an extension of BRAKER1 which allows for \textbf{fully automated trai
 
 In contrast to other available methods that rely on protein homology information, BRAKER2 reaches high gene prediction accuracy even in the absence of the annotation of very closely related species and in the absence of RNA-Seq data. 
 
-BRAKER2 can also combine RNA-Seq and protein homology information.
+BRAKER2 can also combine RNA-Seq and protein homology information. This is in an early stage of implementation, though, and will improve with future releases.
 
 \section{Keys to successful gene prediction}
 
@@ -43,6 +43,8 @@ BRAKER2 can also combine RNA-Seq and protein homology information.
  \item In order to predict genes accurately in a novel genome, the genome should be masked for repeats. This will avoid the prediction of false positive gene structures in repetitive and low complexitiy regions. Repeat masking is also essential for mapping RNA-Seq data to a genome. In case of GeneMark-EX and AUGUSTUS, softmasking (i.e.~putting repeat regions into lower case letters and all other regions into upper case letters) leads to better results than hardmasking (i.e.~replacing letters in repetitive regions by the letter \texttt{N} for unknown nucleotide).
  
  \item Many genomes have gene structures that will be predicted accurately with standard parameters of GeneMark-ET and AUGUSTUS within BRAKER2. However, some genomes have clade-specific features, i.e.~special branch point model in fungi, or non-standard splice-site patterns. Please read the options section \ref{options} in order to determine whether any of the custom options may improve gene prediction accuracy in the genome of your target species.
+ 
+ \item Always check gene prediction results before further usage! You can e.g.~use a genome browser for visual inspection of gene models in context with extrinsic evidence data.
 \end{itemize}
 
 \section{Overview of modes for running BRAKER2}
@@ -114,7 +116,7 @@ BRAKER2 is implemented in Perl. Running BRAKER2 requires a Linux-system with \te
    	On Ubuntu, for example, install the modules with CPANminus: \texttt{cpanm [Module::Name]}.
 
    BRAKER2 also uses a Perl module \texttt{helpMod.pm} that is not available on CPAN. This module is 
-   part of the BRAKER2 relase and does not require separate installation.  
+   part of the BRAKER2 release and does not require separate installation.  
 
 \subsection{BRAKER2 components} \label{Executability}
 
@@ -282,9 +284,7 @@ BRAKER2 will try to locate the Exonerate executable by using an environment vari
 
 \section{Different BRAKER2 pipeline modes}
 
-\begin{itemize}
- \item genome and RNA-Seq file and proteins for short evolutionary distance (see figures \ref{braker2-sidetrack}C and \ref{braker2-sidetrack}E). In both cases, GeneMark-ET is trained supported by RNA-Seq data, and the resulting gene predictions are used for training AUGUSTUS. In approach C), protein alignment information is used in the gene prediction step with AUGUSTUS, only. In approach E), protein spliced alignment data is used to complement the training set for AUGUSTUS. The latter approach is in particular suitable if RNA-Seq data does not produce a sufficiently high number of training gene structures for AUGUSTUS, and if a very closely related and already annotated species is available.
-\end{itemize}
+In the following, we describe ``typical'' BRAKER2 calls for different input data types.
 
 \subsection{BRAKER2 with RNA-Seq data (only)}\label{braker1}.
 
@@ -579,10 +579,12 @@ variable) to fix BAM files automatically, if necessary. Has higher
 BRAKER2 produces three important output files in the working directory:
 
 \begin{verbatim}
-hintsfile.gff             - The introns extraced from RNAseq.bam. These introns are used for
-                            training GeneMark-ET and for predicting genes with AUGUSTUS. The file
-                            is in gff format (see section 3, input argument --hints).
-GeneMark-ET/genemark.gtf  - Genes predicted by GeneMark-ET in gtf format
+hintsfile.gff             - The extrinsic evidence data extraced from RNAseq.bam and/or protein
+                            data. The introns are used for training GeneMark-EX, all features
+                            are used for predicting genes with AUGUSTUS. The file
+                            is in gff format.
+GeneMark-ET/genemark.gtf  - Genes predicted by GeneMark-EX in gtf format (RNA-Seq trained)
+GeneMark-EP/genemark.gtf  - Genes predicted by GeneMark-EX in gtf format (Protein trained)
 augustus.gff              - Genes predicted by AUGUSTUS in gtf format
 
 \end{verbatim}
