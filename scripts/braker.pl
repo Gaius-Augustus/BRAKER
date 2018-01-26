@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: January 14th 2018                                                                  #
+# Release date: January 26th 2018                                                                  #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -210,21 +210,71 @@ ENDUSAGE
 #
 #### End of new command line arguments for utrrnaseq ####
 
-my $version = 2.0.2;                    # braker.pl version number
+
+
+my $version = 2.0.3;                    # braker.pl version number
+my $logString;                          # stores log messages produced before opening log file
+my $printString;
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
 my $augpath;                          # path to augustus
 my $augustus_cfg_path;                # augustus config path, higher priority than $AUGUSTUS_CONFIG_PATH on system
 my $augustus_bin_path;                # path to augustus folder binaries folder
 my $augustus_scripts_path;	      # path to augustus scripts folder
 my $AUGUSTUS_CONFIG_PATH;
-if(-e $ENV{'AUGUSTUS_CONFIG_PATH'}){
-  $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
+if(defined($ENV{'AUGUSTUS_CONFIG_PATH'})){
+    if(-e $ENV{'AUGUSTUS_CONFIG_PATH'}){
+	$printString = "\# ".(localtime).": Found environment variable \$AUGUSTUS_CONFIG_PATH.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
+    }
+}else{
+    $printString = "\# ".(localtime).": Did not find environment variable \$AUGUSTUS_CONFIG_PATH (either variable does not exist, or the path given in variable does not exist). Will try to set this variable in a different way, later.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
 }
 my $AUGUSTUS_BIN_PATH;
+if(defined($ENV{'AUGUSTUS_BIN_PATH'})){
+    if(-e $ENV{'AUGUSTUS_BIN_PATH'}){
+	$printString = "\# ".(localtime).": Found environment variable \$AUGUSTUS_BIN_PATH.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$AUGUSTUS_BIN_PATH = $ENV{'AUGUSTUS_BIN_PATH'};
+    }
+}else{
+    $printString = "\# ".(localtime).": Did not find environment variable \$AUGUSTUS_BIN_PATH (either variable does not exist, or the path given in variable does not exist). Will try to set this variable in a different way, later.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+}
+
 my $AUGUSTUS_SCRIPTS_PATH;
+if(defined($ENV{'$AUGUSTUS_SCRIPTS_PATH'})){
+    if(-e $ENV{'$AUGUSTUS_SCRIPTS_PATH'}){
+	$printString = "\# ".(localtime).": Found environment variable \$AUGUSTUS_SCRIPTS_PATH.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$AUGUSTUS_SCRIPTS_PATH = $ENV{'AUGUSTUS_SCRIPTS_PATH'};
+    }
+}else{
+    $printString = "\# ".(localtime).": Did not find environment variable \$AUGUSTUS_SCRIPTS_PATH (either variable does not exist, or the path given in variable does not exist). Will try to set this variable in a different way, later.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+}
 my @bam;                              # bam file names
-my $bamtools_path;                    # path to bamtools executable, higher priority than $BAMTOOLS_BIN_PATH on system
-my $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'}; # bamtools environment variable
+my $bamtools_path; 
+my $BAMTOOLS_BIN_PATH;
+if(defined($ENV{'BAMTOOLS_PATH'})){
+    if(-e $ENV{'BAMTOOLS_PATH'}){         # path to bamtools executable, higher priority than $BAMTOOLS_BIN_PATH on system
+	$printString = "\# ".(localtime).": Found environment variable \$BAMTOOLS_PATH.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'}; # bamtools environment variable
+    }
+}else{
+    $printString =  "\# ".(localtime).": Did not find environment variable \$BAMTOOLS_PATH  (either variable does not exist, or the path given in variable does not exist). Will try to set this variable in a different way, later.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+}
 my @bonus;                            # array of bonus values for extrinsic file
 my $bool_species = "true";            # false, if $species contains forbidden words (e.g. chmod)
 my $cmdString;                        # to store shell commands
@@ -240,7 +290,19 @@ my $fungus = 0;                       # option for GeneMark-ET
 my $gb_good_size;                     # number of LOCUS entries in 'genbank.good.gb'                         
 my $genbank;                          # genbank file name
 my $genemarkDir;                      # directory for GeneMark-ET output
-my $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script on system, environment variable
+my $GENEMARK_PATH;
+if(defined($ENV{'GENEMARK_PATH'})){
+    if(-e $ENV{'GENEMARK_PATH'}){
+	$printString = "\# ".(localtime).": Found environment variable \$GENEMARK_PATH.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script on system, environment variable
+    }
+}else{
+    $printString = "\# ".(localtime).": Did not find environment variable \$GENEMARK_PATH  (either variable does not exist, or the path given in variable does not exist). Will try to set this variable in a different way, later.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+}
 my $GMET_path;                        # GeneMark-ET path, higher priority than $GENEMARK_PATH; will use the same variable for GeneMark-EP path
 my $genome;                           # name of sequence file
 my $genome_length = 0;                # length of genome file
@@ -259,7 +321,19 @@ my $overwrite = 0;                    # overwrite existing files (except for spe
 my $parameterDir;                     # directory of parameter files for species
 my $perlCmdString;                    # stores perl commands
 my $printVersion = 0;                 # print version number, if set
-my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'}; # samtools environment variable
+my $SAMTOOLS_PATH;
+if(defined($ENV{'SAMTOOLS_PATH'})){
+    if(-e $ENV{'SAMTOOLS_PATH'}){
+	$printString = "\# ".(localtime).": Found environment variable \$SAMTOOLS_PATH.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'}; # samtools environment variable
+    }
+}else{
+    $printString = "\# ".(localtime).": Did not find environment variable \$SAMTOOLS_PATH  (either variable does not exist, or the path given in variable does not exist). Will try to set this variable in a different way, later.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+}
 my $SAMTOOLS_PATH_OP;                 # path to samtools executable, higher priority than $SAMTOOLS_PATH on system
 my $scriptPath=dirname($0);           # path of directory where this script is located
 my $skipGeneMarkET = 0;               # skip GeneMark-ET and use provided GeneMark-ET output (e.g. from a different source)
@@ -294,6 +368,19 @@ my $prg;                              # variable to store protein alignment tool
 my @prot_seq_files;                   # variable to store protein sequence file name
 my @prot_aln_files;                   # variable to store protein alingment file name
 my $ALIGNMENT_TOOL_PATH;              # stores path to binary of gth, spaln or exonerate for running protein alignments
+if(defined($ENV{'ALIGNMENT_TOOL_PATH'})){
+    if(-e $ENV{'ALIGNMENT_TOOL_PATH'}){
+	$printString = "\# ".(localtime).": Found environment variable \$ALIGNMENT_TOOL_PATH.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$ALIGNMENT_TOOL_PATH = $ENV{'ALIGNMENT_TOOL_PATH'};
+    }
+}else{
+    $printString = "\# ".(localtime).": Did not find environment variable \$ALIGNMENT_TOOL_PATH  (either variable does not exist, or the path given in variable does not exist). Will try to set this variable in a different way, later.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+}
+my $ALIGNMENT_TOOL_PATH_OP;           # higher priority than environment variable
 my %hintTypes;                        # stores hint types occuring over all generated and supplied hints for comparison
 my $rnaseq2utr_args;                  # additional parameters to be passed to rnaseq2utr
 my $rounds=5;                         # rounds used by optimize_augustus.pl
@@ -369,7 +456,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
             'AUGUSTUS_CONFIG_PATH=s'        => \$augustus_cfg_path,
             'AUGUSTUS_BIN_PATH=s'           => \$augustus_bin_path,
             'AUGUSTUS_SCRIPTS_PATH=s'       => \$augustus_scripts_path,
-	    'ALIGNMENT_TOOL_PATH=s'         => \$ALIGNMENT_TOOL_PATH,
+	    'ALIGNMENT_TOOL_PATH'           => \$ALIGNMENT_TOOL_PATH_OP,
             'bam=s'                         => \@bam,
             'BAMTOOLS_PATH=s'               => \$bamtools_path,
             'cores=i'                       => \$CPU,
@@ -439,7 +526,9 @@ if(!defined $workDir){
     my $tmp_dir_name = abs_path($workDir);
     $workDir = $tmp_dir_name;
     if(not(-d $workDir)){
-	print STDOUT "Creating directory $workDir.\n";
+	$printString = "\# ".(localtime).": Creating directory $workDir.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
 	mkdir $workDir;	
     }
 }
@@ -448,19 +537,28 @@ if(!defined $workDir){
 
 # check the write permission of $workDir before building of the work directory
 if(! -w $workDir){
-  print STDERR "ERROR: Do not have write permission for $workDir.\nPlease use command 'chmod' to reset permissions, or specify another working directory with option --workingdir=...\n"; 
-  exit(1);
+    $printString = "\# ".(localtime).":ERROR: Do not have write permission for $workDir.\nPlease use command 'chmod' to reset permissions, or specify another working directory with option --workingdir=...\n";
+    print STDERR $printString;
+    $logString .= $printString;
+    exit(1);
 }
 
 # set path to augustus config folder
 if(defined($augustus_cfg_path)){
-  my $last_char = substr($augustus_cfg_path, -1);
-  if($last_char eq "\/"){
-    chop($augustus_cfg_path);
-  }
-  $AUGUSTUS_CONFIG_PATH = $augustus_cfg_path;
-}else{ # try to get path from environment variable
-  $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
+    my $last_char = substr($augustus_cfg_path, -1);
+    if($last_char eq "\/"){
+	chop($augustus_cfg_path);
+    }
+    if(-d $augustus_cfg_path){
+	$printString = "\# ".(localtime).": Command line flag --AUGUSTUS_CONFIG_PATH was provided. Setting \$AUGUSTUS_CONFIG_PATH in braker.pl to $augustus_cfg_path.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$AUGUSTUS_CONFIG_PATH = $augustus_cfg_path;
+    }else{
+	$printString = "\# ".(localtime).": WARNING: Command line flag --AUGUSTUS_CONFIG_PATH was provided. The given path $augustus_cfg_path is not a directory. Cannot use this as variable \$AUGUSTUS_CONFIG_PATH in braker.pl!\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+    }
 }
 
 # If no AUGUSTUS config given, try to guess from the "augustus" executable
@@ -469,14 +567,48 @@ if(not(defined $AUGUSTUS_CONFIG_PATH) or length($AUGUSTUS_CONFIG_PATH) == 0){
     $AUGUSTUS_CONFIG_PATH = dirname(abs_path($epath))."/../config";
     $augustus_cfg_path = $AUGUSTUS_CONFIG_PATH;
     if(not(-d $AUGUSTUS_CONFIG_PATH)){
-	print STDERR "ERROR: Tried guessing \$AUGUSTUS_CONFIG_PATH from system augustus path, but $AUGUSTUS_CONFIG_PATH is not a directory.\n";
-	exit(1);
+	$printString =  "\# ".(localtime).": ERROR: Tried guessing \$AUGUSTUS_CONFIG_PATH from system augustus path, but $AUGUSTUS_CONFIG_PATH is not a directory.\n";
+	print STDERR $printString;
+	$logString .= $printString;
     }
 }
 
+my $augustus_config_error_string;
+$augustus_config_error_string .= "There are 3 alternative ways to set this variable for braker.pl:\n";
+$augustus_config_error_string .= "   a) provide command-line argument --AUGUSTUS_CONFIG_PATH=/your/path\n";
+$augustus_config_error_string .= "   b) use an existing environment variable \$AUGUSTUS_CONFIG_PATH\n";
+$augustus_config_error_string .= "      for setting the environment variable, run\n";
+$augustus_config_error_string .= "           export AUGUSTUS_CONFIG_PATH=/your/path\n";
+$augustus_config_error_string .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
+$augustus_config_error_string .= "      order to make the variable available to all your bash sessions.\n";
+$augustus_config_error_string .= "   c) braker.pl can try guessing the location of \$AUGUSTUS_CONFIG_PATH from an\n";
+$augustus_config_error_string .= "      augustus executable that is available in your \$PATH variable.\n";
+$augustus_config_error_string .= "      If you try to rely on this option, you can check by typing\n";
+$augustus_config_error_string .= "           which augustus\n";
+$augustus_config_error_string .= "      in your shell, whether there is an augustus executable in your \$PATH\n";
+$augustus_config_error_string .= "      Be aware: the \$AUGUSTUS_CONFIG_PATH must be writable for braker.pl\n";
+$augustus_config_error_string .= "                because braker.pl is a pipeline that optimizes parameters that\n";
+$augustus_config_error_string .= "                reside in that directory! This might be problmatic in case you\n";
+$augustus_config_error_string .= "                are using a system-wide installed augustus installation that\n";
+$augustus_config_error_string .= "                resides in a directory that is not writable to you as a user.\n";
+
+
+# Give user installation instructions
+if(not(defined $AUGUSTUS_CONFIG_PATH) or length($AUGUSTUS_CONFIG_PATH) == 0){
+    $printString = "\# ".(localtime).": ERROR: \$AUGUSTUS_CONFIG_PATH is not defined!\n";
+    print STDERR $printString;
+    $logString .= $printString;
+    $logString .= $augustus_config_error_string;
+    print STDERR $augustus_config_error_string;
+    exit(1);
+}
 # check early on whether AUGUSTUS_CONFIG_PATH is writable
-if(not(-w "$AUGUSTUS_CONFIG_PATH/species")){
-    print STDERR "ERROR: AUGUSTUS_CONFIG_PATH/species (in this case $AUGUSTUS_CONFIG_PATH/species) is not writeable.\n";
+elsif(not(-w "$AUGUSTUS_CONFIG_PATH/species")){
+    $printString = "\# ".(localtime).": ERROR: AUGUSTUS_CONFIG_PATH/species (in this case $AUGUSTUS_CONFIG_PATH/$species) is not writeable.\n";
+    print STDERR $printString;
+    $logString .= $printString;
+    $logString .= $augustus_config_error_string;
+    print STDERR $augustus_config_error_string;
     exit(1)
 }
 
@@ -486,17 +618,52 @@ if(defined($augustus_bin_path)){
   if($last_char eq "\/"){
     chop($augustus_bin_path);
   }
-  $AUGUSTUS_BIN_PATH = $augustus_bin_path;
-}else{
-    # first try to get path from environment variable
-    $AUGUSTUS_BIN_PATH = $ENV{'AUGUSTUS_BIN_PATH'};
-    if(not(-d  $AUGUSTUS_BIN_PATH)){
+  if(-d $augustus_bin_path){
+      $printString = "\# ".(localtime).": Setting \$AUGUSTUS_BIN_PATH to command line argument --AUGUSTUS_BIN_PATH value $augustus_bin_path.\n";
+      print STDOUT $printString;
+      $logString .= $printString;
+      $AUGUSTUS_BIN_PATH = $augustus_bin_path;
+  }else{
+      $printString = "\# ".(localtime).": WARNING: Command line argument --AUGUSTUS_BIN_PATH was supplied but value $augustus_bin_path is not a directory. Will not set \$AUGUSTUS_BIN_PATH to $augustus_bin_path!\n";
+      print STDOUT $printString;
+      $logString .= $printString;
+  }
+}
+
+if(not(defined($AUGUSTUS_BIN_PATH)) || length($AUGUSTUS_BIN_PATH) == 0){
+    $printString = "\# ".(localtime).": Trying to guess \$AUGUSTUS_BIN_PATH from \$AUGUSTUS_CONFIG_PATH.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+    if(-d "$AUGUSTUS_CONFIG_PATH/../bin"){
+	$printString = "\# ".(localtime).": Setting \$AUGUSTUS_BIN_PATH to $AUGUSTUS_CONFIG_PATH/../bin\n";
+	print STDOUT $printString;
+	$logString .= $printString;
 	$AUGUSTUS_BIN_PATH = "$AUGUSTUS_CONFIG_PATH/../bin";
-	if(not(-d  $AUGUSTUS_BIN_PATH)){
-	    print STDERR "Tried guessing \$AUGUSTUS_BIN_PATH from location of \$AUGUSTUS_CONFIG_PATH, but $AUGUSTUS_BIN_PATH is not a directory.\n";
-	}
+    }else{
+	$printString = "\# ".(localtime)." WARNING: Guessing the location of \$AUGUSTUS_BIN_PATH failed. $AUGUSTUS_CONFIG_PATH/../bin is not a directory!\n";
+	print STDOUT $printString;
+	$logString .= $printString;
     }
-    
+}
+
+my $augustus_bin_error_string;
+$augustus_bin_error_string .= "There are 3 alternative ways to set this variable for braker.pl:\n";
+$augustus_bin_error_string .= "   a) provide command-line argument --AUGUSTUS_BIN_PATH=/your/path\n";
+$augustus_bin_error_string .= "   b) use an existing environment variable \$AUGUSTUS_BIN_PATH\n";
+$augustus_bin_error_string .= "      for setting the environment variable, run\n";
+$augustus_bin_error_string .= "           export AUGUSTUS_BIN_PATH=/your/path\n";
+$augustus_bin_error_string .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
+$augustus_bin_error_string .= "      order to make the variable available to all your bash sessions.\n";
+$augustus_bin_error_string .= "   c) braker.pl can try guessing the location of \$AUGUSTUS_BIN_PATH from the\n";
+$augustus_bin_error_string .= "      location of \$AUGUSTUS_CONFIG_PATH (in this case $AUGUSTUS_CONFIG_PATH/../bin\n";
+
+if(not(defined($AUGUSTUS_BIN_PATH))){
+    $printString = "\# ".(localtime).": ERROR: \$AUGUSTUS_BIN_PATH not set!\n";
+    print STDERR $printString;
+    $logString .= $printString;
+    $logString .= $augustus_bin_error_string;
+    print STDERR $augustus_bin_error_string;
+    exit(1);    
 }
 
 if(defined($augustus_scripts_path)){
@@ -504,81 +671,330 @@ if(defined($augustus_scripts_path)){
     if($last_char eq "\/"){
 	chop($augustus_scripts_path);
     }
-    $AUGUSTUS_SCRIPTS_PATH = $augustus_scripts_path;
-}else{
-    $AUGUSTUS_SCRIPTS_PATH = $ENV{'AUGUSTUS_SCRIPTS_PATH'};
-    if(not(-d $AUGUSTUS_SCRIPTS_PATH)){
-	$AUGUSTUS_SCRIPTS_PATH = "$AUGUSTUS_BIN_PATH/../scripts";
-	if(not(-d $AUGUSTUS_SCRIPTS_PATH)){
-	    print STDERR "Tried guessing \$AUGUSTUS_SCRIPTS_PATH from location of \$AUGUSTUS_CONFIG_PATH, but $AUGUSTUS_SCRIPTS_PATH is not a directory.\n";
-	    exit(1);
-	}	
+    if(-d $augustus_scripts_path){
+	$AUGUSTUS_SCRIPTS_PATH = $augustus_scripts_path;
+	$printString = "\# ".(localtime).": Setting \$AUGUSTUS_SCRIPTS_PATH to command line argument --AUGUSTUS_SCRIPTS_PATH value $augustus_scripts_path.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+    }else{
+	$printString = "\# ".(localtime).": WARNING: Command line argument --AUGUSTUS_SCRIPTS_PATH was supplied but value $augustus_scripts_path is not a directory. Will not set \$AUGUSTUS_SCRIPTS_PATH to $augustus_scripts_path!\n";
+	print STDOUT $printString;
+	$logString .= $printString;
     }
 }
 
+if(not(defined($AUGUSTUS_SCRIPTS_PATH)) || length($AUGUSTUS_SCRIPTS_PATH) == 0){
+    $printString = "\# ".(localtime).": Trying to guess \$AUGUSTUS_SCRIPTS_PATH from \$AUGUSTUS_CONFIG_PATH.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+    if(-d "$AUGUSTUS_CONFIG_PATH/../scripts"){
+	$printString = "\# ".(localtime).": Setting \$AUGUSTUS_SCRIPTS_PATH to $AUGUSTUS_CONFIG_PATH/../scripts\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$AUGUSTUS_SCRIPTS_PATH = "$AUGUSTUS_CONFIG_PATH/../scripts";
+    }else{
+	$printString = "\# ".(localtime).": WARNING: Guessing the location of \$AUGUSTUS_SCRIPTS_PATH failed. $AUGUSTUS_CONFIG_PATH/../scripts is not a directory!\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+    }
+}
+   
+my $augustus_scripts_error_string;
+$augustus_scripts_error_string .= "There are 3 alternative ways to set this variable for braker.pl:\n";
+$augustus_scripts_error_string .= "   a) provide command-line argument --AUGUSTUS_SCRIPTS_PATH=/your/path\n";
+$augustus_scripts_error_string .= "   b) use an existing environment variable \$AUGUSTUS_SCRIPTS_PATH\n";
+$augustus_scripts_error_string .= "      for setting the environment variable, run\n";
+$augustus_scripts_error_string .= "           export AUGUSTUS_SCRIPTS_PATH=/your/path\n";
+$augustus_scripts_error_string .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
+$augustus_scripts_error_string .= "      order to make the variable available to all your bash sessions.\n";
+$augustus_scripts_error_string .= "   c) braker.pl can try guessing the location of \$AUGUSTUS_SCRIPTS_PATH from the\n";
+$augustus_scripts_error_string .= "      location of \$AUGUSTUS_CONFIG_PATH (in this case $AUGUSTUS_CONFIG_PATH/../scripts\n";
+
+if(not(defined($AUGUSTUS_SCRIPTS_PATH))){
+    $printString = "\# ".(localtime).": ERROR: \$AUGUSTUS_SCRIPTS_PATH not set!\n";
+    print STDERR $printString;
+    $logString .= $printString;
+    $logString .= $augustus_scripts_error_string;
+    print STDERR $augustus_scripts_error_string;
+    exit(1);
+}
 
 # set path to GeneMark-ETs gmes_petap.pl script
 if(defined($GMET_path)){
-  my $last_char = substr($GMET_path, -1);
-  if($last_char eq "\/"){
-    chop($GMET_path);
-  }
-  $GENEMARK_PATH = $GMET_path;
-}else{
-    $GENEMARK_PATH = $ENV{'GENEMARK_PATH'};
-    if(not(-d $GENEMARK_PATH)){
-	$GENEMARK_PATH = dirname(which 'gmes_petap.pl');
-	if(not(-d $GENEMARK_PATH)){
-	    print STDERR "Tried guessing \$GENEMARK_PATH from location of gmes_petap.pl, but $GENEMARK_PATH is not a directory.\n";
-	    exit(1);
-	}	
-    }    
+    my $last_char = substr($GMET_path, -1);
+    if($last_char eq "\/"){
+	chop($GMET_path);
+    }
+    if(-d $GMET_path){
+	$printString = "\# ".(localtime).": Setting \$GENEMARK_PATH to command line argument --GENEMARK_PATH value $GMET_path.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$GENEMARK_PATH = $GMET_path;	
+    }else{
+	$printString = "\# ".(localtime).": WARNING: Command line argument --GENEMARK_PATH was supplied but value $GMET_path is not a directory. Will not set \$GENEMARK_PATH to $GMET_path!\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+    }
 }
 
+if(not(defined($GENEMARK_PATH)) || length($GENEMARK_PATH) == 0){
+    $printString = "\# ".(localtime).": Trying to guess \$GENEMARK_PATH from location of gmes_petap.pl executable that is available in your \$PATH.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+    my $epath = which 'gmes_petap.pl';
+    if(-d dirname($epath)){
+	$printString = "\# ".(localtime).": Setting \$GENEMARK_PATH to ".dirname($epath)."\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$GENEMARK_PATH = dirname($epath);
+    }else{
+	$printString = "\# ".(localtime).": WARNING: Guessing the location of \$GENEMARK_PATH failed. ".dirname($epath)." is not a directory!\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+    }
+}
+
+my $genemark_error_string;
+$genemark_error_string .= "There are 3 alternative ways to set this variable for braker.pl:\n";
+$genemark_error_string .= "   a) provide command-line argument --GENEMARK_PATH=/your/path\n";
+$genemark_error_string .= "   b) use an existing environment variable \$GENEMARK_PATH\n";
+$genemark_error_string .= "      for setting the environment variable, run\n";
+$genemark_error_string .= "           export GENEMARK_PATH=/your/path\n";
+$genemark_error_string .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
+$genemark_error_string .= "      order to make the variable available to all your bash sessions.\n";
+$genemark_error_string .= "   c) braker.pl can try guessing the location of \$GENEMARK_PATH from the\n";
+$genemark_error_string .= "      location of a gmes_petap.pl executable that is available in your \$PATH variable.\n";
+$genemark_error_string .= "      If you try to rely on this option, you can check by typing\n";
+$genemark_error_string .= "           which gmes_petap.pl\n";
+$genemark_error_string .= "      in your shell, whether there is a bamtools executable in your \$PATH\n";
+
+if(not(defined($GENEMARK_PATH))){
+    $printString = "\# ".(localtime).": ERROR: \$GENEMARK_PATH not set!\n";
+    print STDERR $printString;
+    $logString .= $printString;
+    $logString .= $genemark_error_string;
+    print $genemark_error_string;
+    exit(1);
+}
+ 
 # set path to bamtools
 if(defined($bamtools_path)){
     my $last_char = substr($bamtools_path, -1);
     if($last_char eq "\/"){
 	chop($bamtools_path);
     }
-    $BAMTOOLS_BIN_PATH = $bamtools_path;
-}else{
-    $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'};
-    if(not(-d $BAMTOOLS_BIN_PATH)){
-	my $epath = which 'bamtools';
-	$BAMTOOLS_BIN_PATH = dirname($epath);
-	if(not(-d $BAMTOOLS_BIN_PATH)){
-	    print STDERR "Tried guessing \$BAMTOOLS_BIN_PATH from location of bamtools, but $BAMTOOLS_BIN_PATH is not a directory.\n";
-	    exit(1);
-	}
+    if(-d $bamtools_path){
+	$printString = "\# ".(localtime).": Setting \$BAMTOOLS_BIN_PATH to command line argument --BAMTOOLS_PATH value $bamtools_path.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$BAMTOOLS_BIN_PATH = $bamtools_path;
+    }else{
+	$printString = "\# ".(localtime).": WARNING: Command line argument --BAMTOOLS_PATH was supplied but value $bamtools_path is not a directory. Will not set \$BAMTOOLS_BIN_PATH to $bamtools_path!\n";
+	print STDOUT $printString;
+	$logString .= $printString;
     }
 }
 
+if(not(defined($BAMTOOLS_BIN_PATH)) || length($BAMTOOLS_BIN_PATH) == 0){
+    $printString = "\# ".(localtime).": Trying to guess \$BAMTOOLS_BIN_PATH from location of bamtools executable that is available in your \$PATH.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+    my $epath = which 'bamtools';
+    if(-d dirname($epath)){
+	$printString = "\# ".(localtime).": Setting \$BAMTOOLS_BIN_PATH to ".dirname($epath)."\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$BAMTOOLS_BIN_PATH = dirname($epath);
+    }else{
+	$printString = "\# ".(localtime).": WARNING: Guessing the location of \$BAMTOOLS_BIN_PATH failed. ".dirname($epath)." is not a directory!\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+    }
+}
+
+my $bamtools_error_string;
+$bamtools_error_string .= "There are 3 alternative ways to set this variable for braker.pl:\n";
+$bamtools_error_string .= "   a) provide command-line argument --BAMTOOLS_PATH=/your/path\n";
+$bamtools_error_string .= "   b) use an existing environment variable \$BAMTOOLS_PATH\n";
+$bamtools_error_string .= "      for setting the environment variable, run\n";
+$bamtools_error_string .= "           export BAMTOOLS_PATH=/your/path\n";
+$bamtools_error_string .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
+$bamtools_error_string .= "      order to make the variable available to all your bash sessions.\n";
+$bamtools_error_string .= "   c) braker.pl can try guessing the location of \$BAMTOOLS_BIN_PATH from the\n";
+$bamtools_error_string .= "      location of a bamtools executable that is available in your \$PATH variable.\n";
+$bamtools_error_string .= "      If you try to rely on this option, you can check by typing\n";
+$bamtools_error_string .= "           which bamtools\n";
+$bamtools_error_string .= "      in your shell, whether there is a bamtools executable in your \$PATH\n";
+
+if(not(defined($BAMTOOLS_BIN_PATH))){
+    $printString = "\# ".(localtime)." ERROR: \$BAMTOOLS_BIN_PATH not set!\n";
+    print STDERR $printString;
+    $logString .= $printString;
+    $logString .= $bamtools_error_string;
+    print STDERR $bamtools_error_string;
+    exit(1);
+}
+   
 # set path to samtools (optional)
 if(defined($SAMTOOLS_PATH_OP)){
   my $last_char = substr($SAMTOOLS_PATH_OP, -1);
   if($last_char eq "\/"){
     chop($SAMTOOLS_PATH_OP);
   }
-  $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
-}else{
-    $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'};
-    if(not(-d $SAMTOOLS_PATH)){
-	my $epath = which 'samtools';
+  if(-d $SAMTOOLS_PATH_OP){
+      $printString = "\# ".(localtime).": Setting \$SAMTOOLS_PATH to command line argument --SAMTOOLS_PATH value $SAMTOOLS_PATH_OP.\n";
+      print STDOUT $printString;
+      $logString .= $printString;      
+      $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
+  }else{
+      $printString = "\# ".(localtime)." WARNING: Command line argument --SAMTOOLS_PATH was supplied but value $SAMTOOLS_PATH_OP is not a directory. Will not set \$SAMTOOLS_PATH to $SAMTOOLS_PATH_OP!\n";
+      print STDOUT $printString;
+      $logString .= $printString;
+  }
+}
+
+if(not(defined($SAMTOOLS_PATH)) || length($SAMTOOLS_PATH) == 0){
+    $printString = "\# ".(localtime).": Trying to guess \$SAMTOOLS_PATH from location of samtools executable in your \$PATH.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+    my $epath = which 'samtools';
+    if(-d dirname($epath)){
+	$printString = "\# ".(localtime).": Setting \$SAMTOOLS_PATH to ".dirname($epath)."\n";
+	print STDOUT $printString;
+	$logString .= $printString;
 	$SAMTOOLS_PATH = dirname($epath);
+    }else{
+	$printString = "\# ".(localtime).": WARNING: Guessing the location of \$SAMTOOLS_PATH failed. ".dirname($epath)." is not a directory!\n";
+	print STDOUT $printString;
+	$logString .= $printString;
     }
-    
+}
+
+my $SAMTOOLS_error_string;
+$SAMTOOLS_error_string .= "Samtools is not strictly required for running braker.pl. It is a optional tool.\n";
+$SAMTOOLS_error_string .= "In case bam files are not formatted entirely correctly, braker.pl can try fixing\n";
+$SAMTOOLS_error_string .= "certain issues, automatically, if samtools are available.\n";
+$SAMTOOLS_error_string .= "There are 3 alternative ways to set this variable for braker.pl:\n";
+$SAMTOOLS_error_string .= "   a) provide command-line argument --SAMTOOLS_PATH=/your/path\n";
+$SAMTOOLS_error_string .= "   b) use an existing environment variable \$SAMTOOLS_PATH\n";
+$SAMTOOLS_error_string .= "      for setting the environment variable, run\n";
+$SAMTOOLS_error_string .= "           export SAMTOOLS_PATH=/your/path\n";
+$SAMTOOLS_error_string .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
+$SAMTOOLS_error_string .= "      order to make the variable available to all your bash sessions.\n";
+$SAMTOOLS_error_string .= "   c) braker.pl can try guessing the location of \$SAMTOOLS_PATH from the\n";
+$SAMTOOLS_error_string .= "      location a samtools executable that is available in your \$PATH variable.\n";
+$SAMTOOLS_error_string .= "      If you try to rely on this option, you can check by typing\n";
+$SAMTOOLS_error_string .= "           which samtools\n";
+$SAMTOOLS_error_string .= "      in your shell, whether there is a samtools executable in your \$PATH\n";
+
+if(not(defined($SAMTOOLS_PATH))){
+    $printString = "\# ".(localtime).": WARNING: \$SAMTOOLS_PATH not set!\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+    $logString .= $SAMTOOLS_error_string;
+    print STDOUT $SAMTOOLS_error_string;
 }
 
 # set path to alignment tool (gth, spaln or exonerate, optional)
-if(defined($ALIGNMENT_TOOL_PATH)){
-    my $last_char = substr($ALIGNMENT_TOOL_PATH, -1);
-    if($last_char eq "\/"){
-	chop($ALIGNMENT_TOOL_PATH);
+if(@prot_seq_files){
+    if(defined($ALIGNMENT_TOOL_PATH_OP)){
+	my $last_char = substr($ALIGNMENT_TOOL_PATH_OP, -1);
+	if($last_char eq "\/"){
+	    chop($ALIGNMENT_TOOL_PATH_OP);
+	}
+	if(-d $ALIGNMENT_TOOL_PATH_OP){
+	    $printString = "\# ".(localtime).": Setting \$ALIGNMENT_TOOL_PATH to command line argument --ALIGNMENT_TOOL_PATH value $ALIGNMENT_TOOL_PATH_OP.\n";
+	    print STDOUT $printString;
+	    $logString .= $printString;
+	    $ALIGNMENT_TOOL_PATH = $ALIGNMENT_TOOL_PATH_OP;
+	}
     }
-}elsif($ENV{'ALIGNMENT_TOOL_PATH'} && @prot_seq_files){
-    $ALIGNMENT_TOOL_PATH=$ENV{'ALIGNMENT_TOOL_PATH'};
+    if(not(defined($ALIGNMENT_TOOL_PATH)) || length($ALIGNMENT_TOOL_PATH) == 0){
+	if(defined($prg)){
+	    if($prg eq "gth"){
+		$printString = "\# ".(localtime).": Trying to guess \$ALIGNMENT_TOOL_PATH from location of GenomeThreader executable in your \$PATH.\n";
+		print STDOUT $printString;
+		$logString .= $printString;
+		my $epath = which 'gth';
+		if(-d dirname($epath)){
+		    $printString = "\# ".(localtime).": Setting \$ALIGNMENT_TOOL_PATH to ".dirname($epath)."\n";
+		    print STDOUT $printString;
+		    $logString .= $printString;
+		    $ALIGNMENT_TOOL_PATH = dirname($epath);
+		}else{
+		    $printString = "\# ".(localtime).": WARNING: Guessing the location of \$ALIGNMENT_TOOL_PATH failed. ".dirname($epath)." is not a directory!\n";
+		    print STDOUT $printString;
+		    $logString .= $printString;
+		}
+	    }elsif($prg eq "exonerate"){
+	        $printString = "\# ".(localtime).": Trying to guess \$ALIGNMENT_TOOL_PATH from location of Exonerate executable in your \$PATH.\n";
+		print STDOUT $printString;
+		$logString .= $printString;
+		my $epath = which 'exonerate';
+		if(-d dirname($epath)){
+		    $printString = "\# ".(localtime).": Setting \$ALIGNMENT_TOOL_PATH to ".dirname($epath)."\n";
+		    print STDOUT $printString;
+		    $logString .= $printString;
+		    $ALIGNMENT_TOOL_PATH = dirname($epath);
+		}else{
+		    print $printString = "\# ".(localtime).": WARNING: Guessing the location of \$ALIGNMENT_TOOL_PATH failed. ".dirname($epath)." is not a directory!\n";
+		    print STDOUT $printString;
+		    $logString .= $printString;
+		}		
+	    }elsif($prg eq "spaln"){		
+		$printString = "\# ".(localtime).": Trying to guess \$ALIGNMENT_TOOL_PATH from location of Spaln executable in your \$PATH.\n";
+		print STDOUT $printString;
+		$logString .= $printString;
+		my $epath = which 'spaln';
+		if(-d dirname($epath)){
+		    $printString = "\# ".(localtime).": Setting \$ALIGNMENT_TOOL_PATH to ".dirname($epath)."\n";
+		    print STDOUT $printString;
+		    $logString .= $printString;
+		    $ALIGNMENT_TOOL_PATH = dirname($epath);
+		}else{		    
+		    $printString = "\# ".(localtime)." WARNING: Guessing the location of \$ALIGNMENT_TOOL_PATH failed. ".dirname($epath)." is not a directory!\n";
+		    print STDOUT $printString;
+		    $logString .= $printString;
+		}		
+	    }
+	}
+    }
+    my $ALIGNMENT_TOOL_error_string;
+    $ALIGNMENT_TOOL_error_string .= "There are 3 alternative ways to set this variable for braker.pl:\n";
+    $ALIGNMENT_TOOL_error_string .= "   a) provide command-line argument --ALIGNMENT_TOOL_PATH=/your/path\n";
+    $ALIGNMENT_TOOL_error_string .= "   b) use an existing environment variable \$ALIGNMENT_TOOL_PATH\n";
+    $ALIGNMENT_TOOL_error_string .= "      for setting the environment variable, run\n";
+    $ALIGNMENT_TOOL_error_string .= "           export ALIGNMENT_TOOL_PATH=/your/path\n";
+    $ALIGNMENT_TOOL_error_string .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
+    $ALIGNMENT_TOOL_error_string .= "      order to make the variable available to all your bash sessions.\n";
+    $ALIGNMENT_TOOL_error_string .= "   c) braker.pl can try guessing the location of \$ALIGNMENT_TOOL_PATH from the\n";
+    $ALIGNMENT_TOOL_error_string .= "      location an alignment tool executable (corresponding to the alignment tool \n";
+    $ALIGNMENT_TOOL_error_string .= "      given by command line argument --prg=yourTool (in this case $prg) that is \n";
+    $ALIGNMENT_TOOL_error_string .= "      available in your \$PATH variable.\n";
+    $ALIGNMENT_TOOL_error_string .= "      If you try to rely on this option, you can check by typing\n";
+    $ALIGNMENT_TOOL_error_string .= "           which gth\n";
+    $ALIGNMENT_TOOL_error_string .= "               or\n";
+    $ALIGNMENT_TOOL_error_string .= "           which exonerate\n";
+    $ALIGNMENT_TOOL_error_string .= "               or\n";
+    $ALIGNMENT_TOOL_error_string .= "           which spaln\n";
+    $ALIGNMENT_TOOL_error_string .= "      in your shell, whether there is an alignment tool executable in your \$PATH\n";
+    
+    if(not(defined($ALIGNMENT_TOOL_PATH))){
+	$printString = "\# ".(localtime).": ERROR: \$ALIGNMENT_TOOL_PATH not set!\n";
+	print STDERR $printString;
+	$logString .= $printString;
+	$printString = "This is an obligatory argument if you provided protein sequence file(s).\n";
+	print STDERR $printString;
+	$logString .= $printString;
+	$logString .= $ALIGNMENT_TOOL_error_string;
+	print STDERR $ALIGNMENT_TOOL_error_string;
+	exit(1);
+       }
 }
+
+
+
+
 
 # check upfront whether any common problems will occur later # see autoAug.pl
 # print STDOUT "NEXT STEP: check files and settings\n"; 
@@ -588,35 +1004,41 @@ check_options();
 
 # check whether RNA-Seq files are specified
 if(!@bam && !@hints){
-  print STDERR "ERROR: No RNA-Seq or hints file(s) specified. Please set at least one RNAseq BAM file or at least one hints file.\n$usage";
-  exit(1);
+    $printString = "\# ".(localtime).": ERROR: No RNA-Seq or hints file(s) specified. Please set at least one RNAseq BAM file or at least one hints file.\n$usage";
+    print STDERR $printString;
+    $logString .= $printString;
+    exit(1);
 }
 
 
 # check whether bam files exist
 if(@bam){
-  @bam = split(/[\s,]/, join(',',@bam));
-  for(my $i=0; $i<scalar(@bam); $i++){
-    if(! -e $bam[$i]){
-      print STDERR "ERROR: BAM file $bam[$i] does not exist.\n";
-      exit(1);
+    @bam = split(/[\s,]/, join(',',@bam));
+    for(my $i=0; $i<scalar(@bam); $i++){
+	if(! -e $bam[$i]){
+	    $printString = "\# ".(localtime).": ERROR: BAM file $bam[$i] does not exist.\n";
+	    print STDERR $printString;
+	    $logString .= $printString;	
+	    exit(1);
+	}
+	$bam[$i] = rel2abs($bam[$i]);
     }
-    $bam[$i] = rel2abs($bam[$i]);
-  }
 }
 
 
 # check whether hints files exists
 if(@hints){
-  @hints = split(/[\s,]/, join(',',@hints));
-  for(my $i=0; $i<scalar(@hints); $i++){
-    if(! -e "$hints[$i]"){
-      print STDERR "ERROR: Hints file $hints[$i] does not exist.\n";
-      exit(1);
+    @hints = split(/[\s,]/, join(',',@hints));
+    for(my $i=0; $i<scalar(@hints); $i++){
+	if(! -e "$hints[$i]"){
+	    $printString = "\# ".(localtime).": ERROR: Hints file $hints[$i] does not exist.\n";
+	    print STDERR $printString;
+	    $logString .= $printString;	  
+	    exit(1);
+	}
+	$hints[$i] = rel2abs($hints[$i]);
+	check_gff($hints[$i]);
     }
-    $hints[$i] = rel2abs($hints[$i]);
-    check_gff($hints[$i]);
-  }
 }
 
 
@@ -627,6 +1049,9 @@ if((!@bam && @hints) && $EPmode==0){
 	$foundRNASeq += checkHints($_);
     }
     if($foundRNASeq == 0){
+	$printString = "\# ".(localtime).": GeneMark-EP mode is enabled automatically due to hints file contents!\n";
+        print STDOUT $printString;
+	$logString .= $printString;
 	$EPmode = 1;
     }
 }
@@ -634,63 +1059,80 @@ if((!@bam && @hints) && $EPmode==0){
 
 # check whether RNA-Seq files are specified
 if(!@bam && !@hints && $EPmode==0){
-    print STDERR "ERROR: No RNA-Seq or hints file(s) from RNA-Seq specified. Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq (must contain intron hints from src b2h in column 2) to run BRAKER in mode for training from RNA-Seq.\n$usage";
+    $printString = "\# ".(localtime).": ERROR: No RNA-Seq or hints file(s) from RNA-Seq specified. Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq (must contain intron hints from src b2h in column 2) to run BRAKER in mode for training from RNA-Seq.\n$usage";
+    print STDERR $printString;
+    $logString .= $printString;
     exit(1);
 }
 
 if($EPmode==1){
-    print STDOUT "BRAKER will be executed in GeneMark-EP mode, using protein information as sole extrinsic evidence source.\n";
+    $printString =  "\# ".(localtime).": BRAKER will be execute GeneMark-EP for training GeneMark and generating a training gene set for AUGUSTUS, using protein information as sole extrinsic evidence source.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
 }
 
 
 # check whether species is specified
 if(defined($species)){
-  if($species =~ /[\s]/){
-    print STDOUT "WARNING: Species name contains invalid white space characters. Will replace white spaces with underline character '_'.\n";
-    $species =~ s/\s/\_/g;
-  }
-
-  foreach my $word (@forbidden_words){
-    if($species eq $word){
-      print STDOUT "WARNING: $species is not allowed as a species name.\n";
-      $bool_species = "false";
+    if($species =~ /[\s]/){
+	$printString = "\# ".(localtime).": WARNING: Species name contains invalid white space characters. Will replace white spaces with underline character '_'.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+	$species =~ s/\s/\_/g;
+    }    
+    foreach my $word (@forbidden_words){
+	if($species eq $word){	    
+	    $printString = "\# ".(localtime).": WARNING: $species is not allowed as a species name.\n";
+	    print STDOUT $printString;
+	    $logString .= $printString;	    
+	    $bool_species = "false";
+	}
     }
-  }
 }
 
 # use standard name when no name is assigned or when it contains invalid parts
 if(!defined($species) || $bool_species eq "false"){
-  my $no = 1;
-  $species = "Sp_$no";
-  while($no <= $limit){
+    my $no = 1;
     $species = "Sp_$no";
-    if((! -d "$AUGUSTUS_CONFIG_PATH/species/$species")){
-      last;
-    }else{
-      $no++;
+    while($no <= $limit){
+	$species = "Sp_$no";
+	if((! -d "$AUGUSTUS_CONFIG_PATH/species/$species")){
+	    last;
+	}else{
+	    $no++;
+	}
     }
-  }
-  if($no > $limit){
-    print STDERR "ERROR: There are already $limit species folders under $AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move some of those folders or assign a valid species identifier with --species=name.\n";
-    exit(1);
-  }
-  if($bool_species eq "false"){
-    print STDOUT "Program will use $species instead.\n";
-  }else{
-    print STDOUT "No species was set. Program will use $species.\n";
-  }
+    if($no > $limit){
+	$printString = "\# ".(localtime).": ERROR: There are already $limit species folders under $AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move some of those folders or assign a valid species identifier with --species=name.\n";
+	print STDERR $printString;
+	$logString .= $printString;
+	exit(1);
+    }
+    if($bool_species eq "false"){
+	$printString = "\# ".(localtime).": Program will use $species instead.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
+    }else{
+	$printString = "\# ".(localtime).": No species was set. Program will use $species.\n";
+	print STDOUT $printString;
+	$logString .= $printString;      
+    }
 }
     
 
 # check species directory
 if(-d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting){
-  print STDERR "ERROR: $AUGUSTUS_CONFIG_PATH/species/$species already exists. Choose another species name, delete this directory or use the existing species with the option --useexisting. Be aware that existing parameters will then be overwritten during training.\n";
-  exit(1);
+    $printString = "\# ".(localtime).": ERROR: $AUGUSTUS_CONFIG_PATH/species/$species already exists. Choose another species name, delete this directory or use the existing species with the option --useexisting. Be aware that existing parameters will then be overwritten during training.\n";
+    print STDERR $printString;
+    $logString .= $printString;
+    exit(1);
 }
 
 if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
-  print STDOUT "WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not exist. Braker will create the necessary files for species $species.\n";
-  $useexisting = 0;
+    $printString =  "\# ".(localtime).": WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not exist. Braker will create the necessary files for species $species.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+    $useexisting = 0;
 }
 
 # check whether $rootDir already exists
@@ -701,16 +1143,20 @@ if($wdGiven==1){
     $rootDir = "$workDir/braker";
 }
 if (-d "$rootDir/$species" && !$overwrite  && $wdGiven==0){
-    print STDOUT "WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite.\n";
+    $printString = "\# ".(localtime).": WARNING: $rootDir/$species already exists. Braker will use existing files, if they are newer than the input files. You can choose another working directory with --workingdir=dir or overwrite it with --overwrite.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
 }
 
 # set path and check whether assigned extrinsic file exists
 if(defined($extrinsicCfgFile)){
-  $extrinsicCfgFile = rel2abs($extrinsicCfgFile);
+    $extrinsicCfgFile = rel2abs($extrinsicCfgFile);
 }
-if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile){
-  print STDOUT "WARNING: Assigned extrinsic file $extrinsicCfgFile does not exist. Program will create extrinsic file instead.\n";
-  $extrinsicCfgFile = undef;
+if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile){    
+    $printString = "\# ".(localtime).": WARNING: Assigned extrinsic file $extrinsicCfgFile does not exist. Program will create extrinsic file instead.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
+    $extrinsicCfgFile = undef;
 }
 											       
 if($EPmode==1 && not(defined($extrinsicCfgFile))){
@@ -718,33 +1164,41 @@ if($EPmode==1 && not(defined($extrinsicCfgFile))){
     if(-e $string){
 	$extrinsicCfgFile=$string;
     }else{
-        print STDERR "WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
+        $printString = "\# ".(localtime)." WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
         $extrinsicCfgFile = undef;
     }
 }elsif(defined($prg)){
-   if(($prg eq "gth" && not(defined($extrinsicCfgFile))) or ($prg eq "exonerate" && not(defined($extrinsicCfgFile))) or ($prg eq "spaln" && not(defined($extrinsicCfgFile)))){
-    $string = find("gth.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    if(-e $string){
-	$extrinsicCfgFile=$string;
-    }else{
-	print STDERR "WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
-        $extrinsicCfgFile = undef;
+    if(($prg eq "gth" && not(defined($extrinsicCfgFile))) or ($prg eq "exonerate" && not(defined($extrinsicCfgFile))) or ($prg eq "spaln" && not(defined($extrinsicCfgFile)))){
+	$string = find("gth.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	if(-e $string){
+	    $extrinsicCfgFile=$string;
+	}else{
+	    $printString = "\# ".(localtime).": WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
+	    print STDOUT $printString;
+	    $logString .= $printString;
+	    $extrinsicCfgFile = undef;
+	}
     }
-}
 }elsif(not(defined($extrinsicCfgFile))){
     $string = find("rnaseq.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     if(-e $string){
         $extrinsicCfgFile=$string;
     }else{
-        print STDERR "WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
+        $printString = "\# ".(localtime).": WARNING: tried to assign extrinsicCfgFile ep.cfg as $string but this file does not seem to exist.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
 	$extrinsicCfgFile = undef;
     }
 }
 									   
 # check whether genome file is set
-if(!defined($genome)){
-  print STDERR "ERROR: No genome file was specified.\n";
-  exit(1);
+if(!defined($genome)){    
+    $printString = "\# ".(localtime).": ERROR: No genome file was specified.\n";
+    print STDERR $printString;
+    $logString .= $printString;
+    exit(1);
 }
 
 # check whether protein sequence file is given
@@ -752,19 +1206,27 @@ if(@prot_seq_files){
     @prot_seq_files = split(/[\s,]/, join(',',@prot_seq_files));
     for(my $i=0; $i<scalar(@prot_seq_files); $i++){
 	if(! -f $prot_seq_files[$i]){
-	    print STDERR "ERROR: protein sequence file $prot_seq_files[$i] does not exist.\n";
+	    $printString = "\# ".(localtime).": ERROR: protein sequence file $prot_seq_files[$i] does not exist.\n";
+	    print STDERR $printString;
+	    $logString .= $printString;
 	    exit(1);
 	}
 	$prot_seq_files[$i] = rel2abs($prot_seq_files[$i]);
     }
     if(!defined($prg) && $EPmode==0){
     # if no alignment tools was specified, set Genome Threader as default
-	print STDOUT "WARNING: No alignment tool was specified for aligning protein sequences against genome. Setting GenomeThreader as default alignment tool.\n";
+	$printString = "\# ".(localtime).": WARNING: No alignment tool was specified for aligning protein sequences against genome. Setting GenomeThreader as default alignment tool.\n";
+	print STDERR $printString;
+	$logString .= $printString;	
 	$prg="gth";
     }elsif(!defined($prg) && $EPmode==1){
 	$prg="prosplign";
-	print STDOUT "WARNING: No alignment tool was specified for aligning protein sequences against genome. Setting ProSplign as default alignment tool for running BRAKER in GeneMark-EP mode.\n";
-	print STDERR "ERROR: Running ProSplign from within BRAKER is currently not supported. Aborting braker.pl!\n";
+	$printString = "\# ".(localtime).": WARNING: No alignment tool was specified for aligning protein sequences against genome. Setting ProSplign as default alignment tool for running BRAKER in GeneMark-EP mode.\n";
+	print STDOUT $printString;
+	$logString .= $printString;	
+	$printString = "\# ".(localtime).": ERROR:  Running ProSplign from within BRAKER is currently not supported. Aborting braker.pl!\n";
+	print STDERR $printString;
+	$logString .= $printString;	
 	exit(1);
     }
 }
@@ -774,13 +1236,17 @@ if(@prot_aln_files){
     @prot_aln_files = split(/[\s,]/, join(',',@prot_aln_files));
     for(my $i=0; $i<scalar(@prot_aln_files); $i++){
 	if(! -f $prot_aln_files[$i]){
-	    print STDERR "ERROR: protein alignment file $prot_aln_files[$i] does not exist.\n";
+	    $printString = "\# ".(localtime).": ERROR: protein alignment file $prot_aln_files[$i] does not exist.\n";
+	    print STDERR $printString;
+	    $logString .= $printString;
 	    exit(1);
 	}
 	$prot_aln_files[$i] = rel2abs($prot_aln_files[$i]);
     }
     if(!defined($prg)){
-	print STDERR "ERROR: if protein alignment file is specified, you must specify the source tool that was used to create that alignment file, i.e. --prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for Exonerate.\n";
+	$printString = "\# ".(localtime).": ERROR: if protein alignment file is specified, you must specify the source tool that was used to create that alignment file, i.e. --prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for Exonerate.\n";
+	print STDERR $printString;
+	$logString .= $printString;	
 	exit(1);
     }
 }
@@ -788,37 +1254,51 @@ if(@prot_aln_files){
 # check whether alignment program is given
 if(defined($prg)){
     if(not($prg=~m/gth/) and not($prg=~m/exonerate/) and not($prg=~m/spaln/) and $EPmode==0){
-	print STDERR "ERROR: An alignment tool other than gth, exonerate and spaln has been specified with option --prg=$prg. BRAKER currently only supports the options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in GeneMark-ET mode.\n";
+	$printString = "\# ".(localtime).": ERROR: An alignment tool other than gth, exonerate and spaln has been specified with option --prg=$prg. BRAKER currently only supports the options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in GeneMark-ET mode.\n";
+	print STDERR $printString;
+	$logString .= $printString;	
 	exit(1);
     }elsif(not($prg=~m/prosplign/) and $EPmode==1){
-	print STDERR "ERROR: An alignment tool other than gth, exonerate and spaln has been specified with option --prg=$prg. BRAKER currently only supports the options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in GeneMark-EP mode.\n";
+	$printString = "\# ".(localtime).": ERROR: An alignment tool other than gth, exonerate and spaln has been specified with option --prg=$prg. BRAKER currently only supports the options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in GeneMark-EP mode.\n";
+	print STDERR $printString;
+	$logString .= $printString;	
 	exit(1);
     }
     if(!@prot_seq_files and !@prot_aln_files){
-	print STDERR "ERROR: a protein alignment tool ($prg) has been given, but neither a protein sequence file, nor a protein alignment file generated by such a tool have been specified.\n";
+	$printString = "\# ".(localtime).": ERROR: a protein alignment tool ($prg) has been given, but neither a protein sequence file, nor a protein alignment file generated by such a tool have been specified.\n";
+	print STDERR $printString;
+	$logString .= $printString;	
 	exit(1);
     }
 }
 
 # check whether trainFromGth option is valid
 if(defined($gth2traingenes) && not($prg eq "gth")){
-    print STDERR "ERROR: Option --gth2traingenes can only be specified with option --prg=gth!\n";
+    $printString = "\# ".(localtime).": ERROR: Option --gth2traingenes can only be specified with option --prg=gth!\n";
+    print STDERR $printString;
+    $logString .= $printString;    
     exit(1);
 }elsif(defined($trainFromGth) && not($prg eq "gth")){
-    print STDERR "ERROR: Option --trainFromGth can only be specified with option --prg=gth!\n";
+    $printString = "\# ".(localtime).": ERROR: Option --trainFromGth can only be specified with option --prg=gth!\n";
+    print STDERR $printString;
+    $logString .= $printString;
     exit(1);
 }elsif(defined($trainFromGth)){
     # disable genemark training
     $skipGeneMarkET = 1;
     $skipGeneMarkEP = 1;
-    print STDOUT "GeneMark training has been disabled, will train AUGUSTUS from GenomeThreader alignments.\n";
+    $printString =  "\# ".(localtime).": GeneMark training has been disabled, will train AUGUSTUS from GenomeThreader alignments.\n";
+    print STDOUT $printString;
+    $logString .= $printString;
 }
 my $gthTrainGeneFile; # introduce gth traingenes file name variable                                                                                         
 
 
 # check whether genome file exist
 if(! -f "$genome"){
-  print STDERR "ERROR: Genome file $genome does not exist.\n";
+    $printString = "\# ".(localtime).": ERROR: Genome file $genome does not exist.\n";
+    print STDERR $printString;
+    $logString .= $printString;    
   exit(1);
 }else{
     # create $rootDir
@@ -856,8 +1336,10 @@ if(! -f "$genome"){
 	make_path($otherfilesDir);
 	$bool_otherDir = "true";
     }
-    print STDOUT "Further logging information can be found in $logfile!\n";
+    $printString = "\# ".(localtime).": Further logging information can be found in $logfile!\n";
+    print STDOUT $printString;
     open (LOG, ">>".$logfile) or die("Cannot open file $logfile!\n");
+    print LOG $logString;
     if($bool_rootDir eq "true"){
 	print LOG "\# ".(localtime).": create working directory $rootDir.\n";
 	print LOG "mkdir $rootDir\n\n";
@@ -880,12 +1362,16 @@ if(! -f "$genome"){
   
     # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
     if($skipGeneMarkET){ 
-	print LOG "REMARK: The GeneMark-ET step will be skipped.\n";
+	print LOG "\# ".(localtime)..": REMARK: The GeneMark-ET step will be skipped.\n";
 	if(not($trainFromGth)){
 	    if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)){
-		print STDERR "ERROR: The --skipGeneMark-ET option was used, but there is no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... was specified.\n";
+		$printString = "\# ".(localtime).": ERROR: The --skipGeneMark-ET option was used, but there is no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... was specified.\n";
+		print LOG $printString;
+		print STDERR $printString;
 		if(defined($geneMarkGtf)){
-		    print STDERR "       The specified geneMarkGtf=... file was $geneMarkGtf. This is not an accessible file.\n";
+		    $printString = "       The specified geneMarkGtf=... file was $geneMarkGtf. This is not an accessible file.\n";
+		    print LOG $printString;
+		    print STDERR $printString;
 		}
 		exit(1);
 	    }
@@ -895,14 +1381,20 @@ if(! -f "$genome"){
     if($skipGeneMarkEP && $EPmode==1){
         print LOG "REMARK: The GeneMark-EP step will be skipped.\n";
         if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)){
-            print STDERR "ERROR: The --skipGeneMark-EP option was used, but there is no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... was specified.\n";
+            $printString = "\# ".(localtime).": ERROR: The --skipGeneMark-EP option was used, but there is no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... was specified.\n";
+	    print LOG $printString;
+	    print STDERR $printString;
             if(defined($geneMarkGtf)){
-                print STDERR "ERROR: The specified geneMarkGtf=... file was $geneMarkGtf. This is not an accessible file.\n";
+		$printString = "\# ".(localtime).": ERROR: The specified geneMarkGtf=... file was $geneMarkGtf. This is not an accessible file.\n";
+		print LOG $printString;
+		print STDERR $printString;
             }
             exit(1);
         }
     }elsif($skipGeneMarkEP){
-	print STDERR "ERROR: Option --skipGeneMarkEP cannot be used when BRAKER is started in GeneMark-ET mode.\n";
+	$printString = "\# ".(localtime).": ERROR: Option --skipGeneMarkEP cannot be used when BRAKER is started in GeneMark-ET mode.\n";
+	print LOG $printString;
+	print STDERR $printString;
 	exit(1);
     }
     
@@ -938,9 +1430,10 @@ if(! -f "$genome"){
 	my $specPath = "$AUGUSTUS_CONFIG_PATH/species/$species/$species"."_";
 	my @confFiles = ("exon_probs.pbl", "igenic_probs.pbl", "intron_probs.pbl", "metapars.cfg", "parameters.cfg", "weightmatrix.txt");
 	foreach(@confFiles){
-	    if(not(-e "$specPath"."$_")){
-		print LOG "ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
-		print STDERR "Config file $specPath"."$_ for species $species does not exist!\n";
+	    if(not(-e "$specPath"."$_")){		
+		$printString = "\# ".(localtime).": ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
+		print LOG $printString;
+		print STDERR $printString;
 		exit(1);
 	    }
 	}
@@ -948,8 +1441,9 @@ if(! -f "$genome"){
 	    @confFiles = ("metapars.utr.cfg", "utr_probs.pbl");
 	    foreach(@confFiles){
 		if(not(-e "$specPath"."$_")){
-		    print LOG "ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
-		    print STDERR "Config file $specPath"."$_ for species $species does not exist!\n";
+		    $printString = "\# ".(localtime).": ERROR: Config file $specPath"."$_ for species $species does not exist!\n";
+		    print LOG $printString;
+		    print STDERR $printString;
 		    exit(1);
 		}
 	    }
@@ -1104,8 +1598,9 @@ sub make_rna_seq_hints{
       unlink($hintsfile_temp);
     }
     if(-z $hintsfile){
-	print LOG "\# ".(localtime)." ERROR: The hints file is empty. Maybe the genome and the RNA-seq file do not belong together.\n";
-	print STDERR "ERROR: The hints file is empty. Maybe the genome and the RNA-seq file do not belong together.\n";
+	$printString = "\# ".(localtime).": ERROR: The hints file is empty. Maybe the genome and the RNA-seq file do not belong together.\n";
+	print LOG $printString;
+	print STDERR $printString;
 	exit(1);
     } 
   }
@@ -1172,11 +1667,14 @@ sub make_prot_hints{
 		print LOG "$cmdString\n";
 		system("$cmdString")==0 or die("Failed to execute: $cmdString!\n\n");  
 	    }else{
-		print STDOUT "Skipping running alignment tool because files $prot_seq_files[$i] and $prot_hintsfile were up to date.\n";
+		$printString = "\# ".(localtime).": Skipping running alignment tool because files $prot_seq_files[$i] and $prot_hintsfile were up to date.\n";
+		print LOG $printString;
 	    }  
 	}
     }elsif(@prot_seq_files && $EPmode==1){
-	print STDERR "ERROR: Running ProSplign from within braker.pl is currently not supported. For running braker.pl with GeneMark-EP, please provide --hints=intronhints.gff file! Aborting braker.pl!\n";
+	$printString = "\# ".(localtime).": ERROR: Running ProSplign from within braker.pl is currently not supported. For running braker.pl with GeneMark-EP, please provide --hints=intronhints.gff file! Aborting braker.pl!\n";
+	print LOG $printString;
+	print STDERR $printString;
 	exit(1);
     }
     # convert pipeline created protein alignments to protein hints
@@ -1185,9 +1683,11 @@ sub make_prot_hints{
 	    if(-s $alignment_outfile && $EPmode==0){
 		aln2hints($alignment_outfile, $prot_hints_file_temp);
 	    }elsif(-s $alignment_outfile && $EPmode==1){
-		print STDERR "Conversion of ProSplign alignments within braker.pl is currently not supported. To run braker.pl with GeneMark-EP, please provide --hints=intronhints.gff! Aborting braker.pl!\n";
+		$printString = "\# ".(localtime).": ERROR: Conversion of ProSplign alignments within braker.pl is currently not supported. To run braker.pl with GeneMark-EP, please provide --hints=intronhints.gff! Aborting braker.pl!\n";
+		print LOG $printString;
+		print STDERR $printString;		
 		exit(1);
-	    }else{
+	    }else{		
 		print LOG "\# ".(localtime).": Alignment out file $alignment_outfile with protein alignments is empty. Not producing any hints from protein input sequences.\n";
 	    }
 	}
@@ -1198,12 +1698,13 @@ sub make_prot_hints{
 	    if(!uptodate([$prot_aln_files[$i]], [$prot_hintsfile]) || $overwrite){
 		aln2hints($prot_aln_files[$i], $prot_hints_file_temp);
 	    }else{
-		print "Skipped converting alignment file $prot_aln_files[$i] to hints because it was up to date with $prot_hintsfile\n";
+		print LOG "\# ".(localtime).": Skipped converting alignment file $prot_aln_files[$i] to hints because it was up to date with $prot_hintsfile\n";
 	    }
 	}
     }elsif(@prot_aln_files && $EPmode==1){
-	print STDERR "Conversion of ProSplign alignments within braker.pl is currently not supported. To run braker.pl with GeneMark-EP, p\
-lease provide --hints=intronhints.gff! Aborting braker.pl!\n";
+	$printString = "\# ".(localtime).": ERROR: Conversion of ProSplign alignments within braker.pl is currently not supported. To run braker.pl with GeneMark-EP, please provide --hints=intronhints.gff! Aborting braker.pl!\n";
+	print LOG $printString;
+	print STDERR $printString;	
 	exit(1);
     }
     # appending protein hints to $hintsfile (combined with RNA_Seq if available)
@@ -1236,8 +1737,9 @@ lease provide --hints=intronhints.gff! Aborting braker.pl!\n";
 	}
     }
     if(-z $prot_hintsfile){
-	print LOG "\n\# ".(localtime)." ERROR: The hints file is empty. There were no protein alignments.\n";
-	print STDERR "ERROR: The hints file is empty. There were no protein alignments.\n";
+	$printString = "\n\# ".(localtime)." ERROR: The hints file is empty. There were no protein alignments.\n";
+	print LOG $printString;
+	print STDERR $printString;
 	exit(1);
     }
     if($gth2traingenes){
@@ -1485,10 +1987,16 @@ sub new_species{
 	      print LOG "$perlCmdString\n\n";
 	      system("$perlCmdString")==0 or die("Failed to create new species with new_species.pl, check write permissions in $AUGUSTUS_CONFIG_PATH/species directory! Command was $perlCmdString\n");
 	  }else{
-	      print STDERR "Directory $AUGUSTUS_CONFIG_PATH/species is not writable! You must make the directory AUGUSTUS_CONFIG_PATH/species writable or specify another AUGUSTUS_CONFIG_PATH!\n";
+	      $printString = "\# ".(localtime).": ERROR: Directory $AUGUSTUS_CONFIG_PATH/species is not writable! You must make the directory AUGUSTUS_CONFIG_PATH/species writable or specify another AUGUSTUS_CONFIG_PATH!\n";
+	      print LOG $printString;
+	      print STDERR $printString;
+	      exit(1);
 	  }
       }else{
-	  print STDERR "Directory $AUGUSTUS_CONFIG_PATH/species does not exist. Please check that AUGUSTUS_CONFIG_PATH is set, correctly!\n";
+	  $printString = "\# ".(localtime).": Directory $AUGUSTUS_CONFIG_PATH/species does not exist. Please check that AUGUSTUS_CONFIG_PATH is set, correctly!\n";
+	  print LOG $printString;
+	  print STDERR $printString;
+	  exit(1);
       }
   }
 }
@@ -1541,11 +2049,11 @@ sub extrinsic{
 		    }
 		    foreach my $key (keys(%hintTypes)) {
 			if(not(defined($typesInCfgHash{$key}))){
-			    print LOG "\# ".(localtime)." ERROR: Hints file contains hints from type $key. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
-			    print STDERR "Hints file contains hints from type $key. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
+			    $printString = "\# ".(localtime)." ERROR: Hints file contains hints from type $key. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
+			    print LOG $printString;
+			    print STDERR $printString;
 			    exit(1);
-			}
-			
+			}			
 		    }
 		    $sourcesSeen=0;
 		    print OUT $_."\n";
@@ -1557,14 +2065,16 @@ sub extrinsic{
 		    # check whether order and number of columns in template extrinsic file are compatible with braker.pl of this version
 		    if(scalar(@line)==18){ # no local malus present
 			if(not(($line[3]=~m/^M$/) and ($line[6]=~m/RM/) and ($line[9]=~m/E/) and ($line[12]=~m/W/) and ($line[15]=~m/P/))){
-			    print LOG "\# ".(localtime)." ERROR: In extrinsic template file $extrinsic, column 4 does not contain M, and/or column 7 does not contain RM, and/or column 11 does not contain E and/or column 13 does not contain W and/or column 16 does not contain P. Aborting braker! (line without local malus)\n";
-			    print STDERR "In extrinsic template file $extrinsic, column 4 does not contain M, and/or column 7 does not contain RM, and/or column 11 does not contain E and/or column 13 does not contain W and/or column 16 does not contain P. Aborting braker! (line without local malus)\n";
+			    $printString = "\# ".(localtime)." ERROR: In extrinsic template file $extrinsic, column 4 does not contain M, and/or column 7 does not contain RM, and/or column 11 does not contain E and/or column 13 does not contain W and/or column 16 does not contain P. Aborting braker! (line without local malus)\n";
+			    print LOG $printString;
+			    print STDERR $printString;
 			    exit(1);
 			}
 		    }else{ # local malus present, 19 columns
 			if(not(($line[4]=~m/^M$/) and ($line[7]=~m/RM/) and ($line[10]=~m/E/) and ($line[13]=~m/W/) and ($line[16]=~m/P/))){
-			    print LOG "\# ".(localtime)." ERROR:In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 111 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line with local malus)\n"; 
-			    print STDERR "In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 111 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line with local malus)\n";
+			    $printString = "\# ".(localtime)." ERROR:In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 111 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line with local malus)\n"; 
+			    print LOG $printString;
+			    print STDERR $printString;
 			    exit(1);
 			}
 		    }
@@ -1781,7 +2291,7 @@ sub printCfg{
     my $length = shift;
     my $nSpaces = $length - length($field);
     if($nSpaces < 0){
-	print LOG "\# ".(localtime)." WARNING: Format error in extrinsic.cfg file. File will still be functional, but may look messy to human reader!\n";
+	print LOG "\# ".(localtime).": WARNING: Format error in extrinsic.cfg file. File will still be functional, but may look messy to human reader!\n";
 	$nSpaces = 1;
     }
     my $returnString = " " x $nSpaces;
@@ -1901,7 +2411,7 @@ sub training{
 	    }
 	    # species is irrelevant! Use fly.
 	    $cmdString .= "$augpath --species=fly --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/gth.initial.gb 1>$stdoutfile 2>$errorfile";
-	    print LOG "Running etraining with fly parameters to catch gene structure inconsistencies in GenomeThreader training gene file:\n";
+	    print LOG "\# ".(localtime).": Running etraining with fly parameters to catch gene structure inconsistencies in GenomeThreader training gene file:\n";
 	    print LOG "$cmdString\n\n";
 	    system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
 	    open(ERRS, "<", $errorfile) or die("Could not open file $errorfile!\n");
@@ -1920,7 +2430,7 @@ sub training{
 		$perlCmdString .= "nice ";
 	    }
 	    $perlCmdString .= "perl $string $otherfilesDir/gth.bad.lst $otherfilesDir/gth.initial.gb 1> $gthGb 2>$errorfile";
-	    print LOG "Filtering GenomeThreader training file to remove inconsistent gehe structures:\n";
+	    print LOG "\# ".(localtime).": Filtering GenomeThreader training file to remove inconsistent gehe structures:\n";
 	    print LOG "$perlCmdString\n\n";
 	    system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
 	}
@@ -1983,8 +2493,9 @@ sub training{
 		print LOG "\# ".(localtime)." WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
 	    }
 	    if($gb_good_size == 0){
-		print LOG "\# ".(localtime)." ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
-		print STDERR "ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
+		$printString = "\# ".(localtime)." ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
+		print LOG $printString;
+		print STDERR $printString;
 		exit(1);
 	    }
 	    if($gb_good_size > 1000){
@@ -2111,7 +2622,7 @@ sub training{
 		    print LOG "\# ".(localtime).": nice grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
 		    $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
 		}else{
-		    print LOG  "\# ".(localtime).": grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
+		    print LOG "\# ".(localtime).": grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
                     $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
 		}
 		$perlCmdString = "";
@@ -2224,11 +2735,11 @@ sub training{
                 if($nice){
                     $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
                 }else{
-	                $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+		    $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
                 }
                 $cmdString = "";
                 if($nice){
-	                $cmdString .= "nice ";
+		    $cmdString .= "nice ";
                 }
                 if($gb_good_size <= 1000){
                     $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
@@ -2496,52 +3007,32 @@ sub check_upfront{ # see autoAug.pl
     foreach my $module (@module_list){  
 	$pmodule = check_install(module => $module);
 	if(!$pmodule){
-	    print STDOUT "WARNING: Perl module '$module' is required but not installed yet.\n";
+	    $printString = "\# ".(localtime).": WARNING: Perl module '$module' is required but not installed yet.\n";
+	    print LOG $printString;
+	    print STDERR $printString;
 	}
     }
     
-    # check whether environmental variables are set or other path variables are defined
-    if(!$ENV{'AUGUSTUS_CONFIG_PATH'} && !defined($augustus_cfg_path)){ # see autoAug.pl
-	print STDERR "ERROR: The environment variable AUGUSTUS_CONFIG_PATH is not defined. Please export an environment variable for AUGUSTUS or use --AUGUSTUS_CONFIG_PATH=path/to/augustus/config .\n"; # see autoAug.pl
-	exit(1);
-    }
-
-    if(!defined($augustus_bin_path)){
-	print STDOUT "WARNING: The command line option --AUGUSTUS_BIN_PATH was not used. This is ok if binaries of augustus reside in ../bin relative to AUGUSTUS_CONFIG_PATH. Otherwise, please specify --AUGUSTUS_BIN_PATH\n";
-    }
-    
-    if(!defined($augustus_scripts_path)){
-	print STDOUT "WARNING: The command line option --AUGUSTUS_SCRIPTS_PATH was not used. This is ok if scripts of augustus reside in ../scripts relative to AUGUSTUS_CONFIG_PATH or AUGUSTUS_BIN_PATH (will first look for them in AUGUSTUS_BIN_PATH). Otherwise, please specify --AUGUSTUS_SCRIPTS_PATH\n";
-    }
-  
-    if(!$ENV{'GENEMARK_PATH'} && !defined($GMET_path)){
-	print STDERR "ERROR: The environment variable GENEMARK_PATH to the 'gmes_petap.pl' script is not defined. Please export an environment variable or use --GENEMARK_PATH=path/to/gmes_petap.pl.\n"; 
-	exit(1);
-    }
-
-    if(!$ENV{'ALIGNMENT_TOOL_PATH'} && !defined($ALIGNMENT_TOOL_PATH) && @prot_seq_files){
-	print STDERR "ERROR: The environment variable  ALIGNMENT_TOOL_PATH to either the exectuable of GenomeThreader, Exonerate or Spaln is not defined. Please export an environment variable or use --ALIGNMENT_TOOL_PATH=path/to/aligner.\n";
-    }
-
-    if(!$ENV{'BAMTOOLS_PATH'} && !defined($bamtools_path)){ # see autoAug.pl
-	print STDERR "ERROR: The environment variable BAMTOOLS_PATH is not defined. Please export an environment variable for bamtools or use --BAMTOOLS_PATH=path/to/bamtools.\n"; # see autoAug.pl
-	exit(1);
-    }
-
     # check for augustus executable
     $augpath = "$AUGUSTUS_BIN_PATH/augustus";
     if(system("$augpath > /dev/null 2> /dev/null") != 0){                   # see autoAug.pl
 	if(! -f $augpath){                                                    # see autoAug.pl
-	    print STDERR "ERROR: augustus executable not found at $augpath.\n"; # see autoAug.pl
+	    $printString = "\# ".(localtime).": ERROR: augustus executable not found at $augpath.\n"; # see autoAug.pl
+	    print LOG $printString;
+	    print STDERR $printString;	    
 	}else{
-	    print STDERR "ERROR: $augpath not executable on this machine.\n";   # see autoAug.pl
+	    $printString = "\# ".(localtime).": ERROR: $augpath not executable on this machine.\n";   # see autoAug.pl
+	    print LOG $printString;
+	    print STDERR $printString;	    
 	}
 	exit(1);
     }
   
     # check whether bamtools is installed
     if(system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0){
-	print STDERR "Error: bamtools not installed. Please install it first.\n";
+	$printString = "\# ".(localtime).": ERROR: bamtools not installed. Please install it first.\n";
+	print LOG $printString;
+	print STDERR $printString;	
 	exit (1);
     }
     
@@ -2550,9 +3041,13 @@ sub check_upfront{ # see autoAug.pl
     $etrainpath = "$AUGUSTUS_BIN_PATH/etraining";
     if(system("$etrainpath > /dev/null 2> /dev/null") != 0){                   
 	if(! -f $etrainpath){                                                    
-	    print STDERR "ERROR: etraining executable not found at $etrainpath.\n";
+	    $printString = "\# ".(localtime).": ERROR: etraining executable not found at $etrainpath.\n";
+	    print LOG $printString;
+	    print STDERR $printString;	    
 	}else{
-	    print STDERR "ERROR: $etrainpath not executable on this machine.\n";
+	    $printString = "\# ".(localtime).": ERROR: $etrainpath not executable on this machine.\n";
+	    print LOG $printString;
+	    print STDERR $printString;	    
 	}
 	exit(1);
     }
@@ -2562,11 +3057,17 @@ sub check_upfront{ # see autoAug.pl
     if($UTR eq "on" && $skipAllTraining==0){ # MIGHT WANT TO CHANGE THIS!
 	if(not(-x $bam2wigPath)){
 	    if(! -f $bam2wigPath){
-		print STDERR "ERROR: bam2wig executable not found at $bam2wigPath.\n";
+		$printString = "\# ".(localtime).": ERROR: bam2wig executable not found at $bam2wigPath.\n";
+		print LOG $printString;
+		print STDERR $printString;		
 	    }else{
-		print STDERR "ERROR: $bam2wigPath not executable on this machine.\n";
+		$printString = "\# ".(localtime).": ERROR: $bam2wigPath not executable on this machine.\n";
+		print LOG $printString;
+		print STDERR $printString;		
 	    }
-	    print STDERR "       UTR training from RNA-Seq is enabled. This requires bam2wig. Please check README.TXT of AUGUSTUS to compile bam2wig correctly.\n";
+	    $printString = "       UTR training from RNA-Seq is enabled. This requires bam2wig. Please check README.TXT of AUGUSTUS to compile bam2wig correctly.\n";
+	    print LOG $printString;
+	    print STDERR $printString;	    
 	    exit(1);
 	}
     }
@@ -2576,11 +3077,17 @@ sub check_upfront{ # see autoAug.pl
     if($UTR eq "on" && $skipAllTraining==0){
 	if(not(-x $rnaseq2utrPath)){
 	    if(! -f $rnaseq2utrPath){
-		print STDERR "ERROR: rnaseq2utr executable not found at $rnaseq2utrPath.\n";
+		$printString = "\# ".(localtime).": ERROR: rnaseq2utr executable not found at $rnaseq2utrPath.\n";
+		print LOG $printString;
+		print STDERR $printString;		
 	    }else{
-		print STDERR "ERROR: $rnaseq2utrPath not executable on this machine.\n";
+		$printString = "\# ".(localtime).": ERROR: $rnaseq2utrPath not executable on this machine.\n";
+		print LOG $printString;
+		print STDERR $printString;		
 	    }
-	    print STDERR "       UTR training from RNA-Seq is enabled. This requires rnaseq2utr. Please check README.TXT of AUGUSTUS to compile rnaseq2utr correctly.\n";
+	    $printString = "       UTR training from RNA-Seq is enabled. This requires rnaseq2utr. Please check README.TXT of AUGUSTUS to compile rnaseq2utr correctly.\n";
+	    print LOG $printString;
+	    print STDERR $printString;
 	    exit(1);
 	}
     }
@@ -2592,40 +3099,54 @@ sub check_upfront{ # see autoAug.pl
 	if($prg eq 'gth'){
 	    $prot_aligner = "$ALIGNMENT_TOOL_PATH/gth";
 	    if(! -f $prot_aligner){
-		print STDERR "ERROR: GenomeThreader executable not found at $prot_aligner.\n";
+		$printString = "\# ".(localtime).": ERROR: GenomeThreader executable not found at $prot_aligner.\n";
+		print LOG $printString;
+		print STDERR $printString;		
 		exit(1);
 	    }elsif(! -x $prot_aligner){
-		print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
+		$printString = "\# ".(localtime).": ERROR: $prot_aligner not executable on this machine.\n";
+		print LOG $printString;
+		print STDERR $printString;
 		exit(1);
 	    }
 	}elsif($prg eq 'spaln'){
 	    $prot_aligner = "$ALIGNMENT_TOOL_PATH/spaln";
 	    if(! -f $prot_aligner){
-		print STDERR "ERROR: Spaln executable not found at $prot_aligner.\n";
+		$printString = "\# ".(localtime).": ERROR: Spaln executable not found at $prot_aligner.\n";
+		print LOG $printString;
+		print STDERR $printString;
 		exit(1);
 	    }elsif(! -x $prot_aligner){
-		print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
+		$printString = "\# ".(localtime).": ERROR: $prot_aligner not executable on this machine.\n";
+		print LOG $printString;
+		print STDERR $printString;		
 		exit(1);
 	    }
 	    # check whether spaln environment variables are configured
 	    if(!$ENV{'ALN_DBS'} or !$ENV{'ALN_TAB'}){
 		if(!$ENV{'ALN_DBS'}){
-		    print STDERR "ERROR: The environment variable ALN_DBS for spaln is not defined. Please export an\
- environment variable with:' export ALN_DBS=/path/to/spaln/seqdb'\n";
+		    $printString = "\# ".(localtime).": ERROR: The environment variable ALN_DBS for spaln is not defined. Please export an environment variable with:' export ALN_DBS=/path/to/spaln/seqdb'\n";
+		    print LOG $printString;
+		    print STDERR $printString;
 		}
 		if(!$ENV{'ALN_TAB'}){
-		    print STDERR "ERROR: The environment variable ALN_TAB for spaln is not defined. Please export an\
- environment variable with:' export ALN_TAB=/path/to/spaln/table'\n";
+		    $printString = "\# ".(localtime).": ERROR: The environment variable ALN_TAB for spaln is not defined. Please export an environment variable with:' export ALN_TAB=/path/to/spaln/table'\n";
+		    print LOG $printString;
+		    print STDERR $printString;
 		}
 		exit(1);
 	    }
 	}elsif($prg eq 'exonerate'){
 	    $prot_aligner = "$ALIGNMENT_TOOL_PATH/exonerate";
 	    if(! -f $prot_aligner){
-		print STDERR "ERROR: Exonerate executable not found at $prot_aligner.\n";
+		$printString = "\# ".(localtime).": ERROR: Exonerate executable not found at $prot_aligner.\n";
+		print LOG $printString;
+		print STDERR $printString;		
 		exit(1);
 	    }elsif(! -x $prot_aligner){
-		print STDERR "ERROR: $prot_aligner not executable on this machine.\n";
+		$printString = "\# ".(localtime).": ERROR: $prot_aligner not executable on this machine.\n";
+		print LOG $printString;
+		print STDERR $printString;		
 		exit(1);
 	    }
 	    
@@ -2655,7 +3176,9 @@ sub check_upfront{ # see autoAug.pl
 # check whether hints file is in gff format
 sub check_gff{
     my $gfffile = shift;
-    print STDOUT "\# ".(localtime).": Checking if input file $gfffile is in gff format\n";
+    $printString = "\# ".(localtime).": Checking if input file $gfffile is in gff format\n";
+    print STDOUT $printString;
+    $logString .= $printString;
     open (GFF, $gfffile) or die "Cannot open file: $gfffile\n";
     my $nIntrons = 0;
     my $printedAllowedHints = 0;
@@ -2663,14 +3186,16 @@ sub check_gff{
     while(<GFF>){
 	my @gff_line = split(/\t/, $_);
 	if(scalar(@gff_line) != 9){
-	    print STDOUT "\# ".(localtime)." ERROR: File $gfffile is not in gff format!\n";
-	    print STDERR "ERROR: File $gfffile is not in gff format!\n";
+	    $printString = "\# ".(localtime)." ERROR: File $gfffile is not in gff format!\n";
+	    print STDERR $printString;
+	    $logString .= $printString;
 	    close(GFF) or die("Could not close gff file $gfffile!\n");
 	    exit(1);
 	}else{
 	    if(!isint($gff_line[3]) || !isint($gff_line[4]) || $gff_line[5] =~ m/[^\d\.]/g || $gff_line[6] !~ m/[\+\-\.]/ || length($gff_line[6]) != 1 || $gff_line[7] !~ m/[0-2\.]{1}/ || length($gff_line[7]) != 1){
-		print STDOUT "\# ".(localtime)." ERROR:File $gfffile is not in gff format!\n";
-		print STDERR "ERROR: File $gfffile is not in gff format!\n";
+		$printString = "\# ".(localtime)." ERROR:File $gfffile is not in gff format!\n";
+		print STDERR $printString;
+		$logString .= $printString;
 		close(GFF) or die("Could not close gff file $gfffile!\n");
 		exit(1);
 	    }
@@ -2692,15 +3217,19 @@ sub check_gff{
 	    }
 	    if($isAllowed != 1){
 		if(not(defined($foundFeatures{$gff_line[2]}))){	
-		    print STDOUT "\# ".(localtime)." WARNING: File $gfffile contains hints of a feature type $gff_line[2] that is currently not supported by BRAKER. Features of this type will be treated with neutral bonus/malus in the extrinsic.cfg file that will be used for running AUGUSTUS.\n";
+		    $printString = "\# ".(localtime)." WARNING: File $gfffile contains hints of a feature type $gff_line[2] that is currently not supported by BRAKER. Features of this type will be treated with neutral bonus/malus in the extrinsic.cfg file that will be used for running AUGUSTUS.\n";
+		    print STDOUT $printString;
+		    $logString .= $printString;
 		    $foundFeatures{$gff_line[2]} = 1;
 		}
 		if($printedAllowedHints == 0){
-		    print STDOUT "Currently allowed hint types:\n";
-		    print STDERR "Currently allowed hint types:\n";
+		    $printString = "Currently allowed hint types:\n";
+		    print STDERR $printString;
+		    $logString .= $printString;
 		    foreach(@allowedHints){
-			print STDOUT $_."\n";
-			print STDERR $_."\n";
+			$printString = $_."\n";
+			print STDERR $printString;
+			$logString .= $printString;			
 		    }
 		    $printedAllowedHints = 1;
 		}
@@ -2710,8 +3239,9 @@ sub check_gff{
     close(GFF) or die("Could not close gff file $gfffile!\n");
     if(!@bam){
 	if($nIntrons < 1000){
-	    print STDOUT "\# ".(localtime)." ERROR: Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
-	    print STDERR "ERROR: Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
+	    $printString = "\# ".(localtime)." ERROR: Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
+	    print STDERR $printString;
+	    $logString .= $printString;	    
 	    exit(1);
 	}
     }
@@ -2720,17 +3250,23 @@ sub check_gff{
 # check whether all options are set correctly
 sub check_options{
     if($alternatives_from_evidence ne "true" && $alternatives_from_evidence ne "false"){
-	print STDERR "ERROR: \"$alternatives_from_evidence\" is not a valid option for --alternatives-from-evidence. Please use either 'true' or 'false'.\n";
+	$printString = "\# ".(localtime).": ERROR: \"$alternatives_from_evidence\" is not a valid option for --alternatives-from-evidence. Please use either 'true' or 'false'.\n";
+	print STDERR $printString;
+	$logString .= $printString;	
 	exit(1);
     } 
     
     if($UTR ne "on" && $UTR ne "off"){
-	print STDERR "ERROR: \"$UTR\" is not a valid option for --UTR. Please use either 'on' or 'off'.\n";
+	$printString = "\# ".(localtime).": ERROR: \"$UTR\" is not a valid option for --UTR. Please use either 'on' or 'off'.\n";
+	print STDERR $printString;
+	$logString .= $printString;	
 	exit(1);
     }
     
     if(($UTR eq "on" && $soft_mask==0) or ($UTR eq "on" && not(@bam))){
-	print STDERR "ERROR: --UTR=on has been set but --softmasking has not been enabled. A softmasked genome file and the option --softmasking and a bam file must be provided in order to run --UTR=on.\n";
+	$printString = "\# ".(localtime).": ERROR: --UTR=on has been set but --softmasking has not been enabled. A softmasked genome file and the option --softmasking and a bam file must be provided in order to run --UTR=on.\n";
+	print STDERR $printString;
+	$logString .= $printString;	
 	exit(1)
     }
 
@@ -2743,7 +3279,9 @@ sub check_options{
     }
 
     if($cpus_available < $CPU){
-	print STDOUT "WARNING: Your system does not have $CPU cores available, only $cpus_available. Braker will use the $cpus_available available instead of the chosen $CPU.\n";
+	$printString = "\# ".(localtime).": WARNING: Your system does not have $CPU cores available, only $cpus_available. Braker will use the $cpus_available available instead of the chosen $CPU.\n";
+	print STDOUT $printString;
+	$logString .= $printString;
     }
 }
 
@@ -3070,8 +3608,9 @@ sub gtf2gb{
 	my @pathName = split(/\//, $gtf);
         $errorfile = "$errorfilesDir/".$pathName[(scalar(@pathName)-1)]."_gff2gbSmallDNA.stderr";
         if(-z $gtf){
-            print LOG  "\# ".(localtime)." ERROR: The training gene file $gtf file is empty!\n";
-            print STDERR "ERROR: The training gene file $gtf file is empty!\n";
+	    $printString = "\# ".(localtime)." ERROR: The training gene file $gtf file is empty!\n";
+	    print LOG $printString;
+	    print STDERR $printString;
             exit(1);
         }
         $perlCmdString = "";
