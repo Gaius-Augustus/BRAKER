@@ -51,7 +51,7 @@ OPTIONS
     --maxintronlen=n         Alignments with longer gaps are discarded (default 350000).
     --minintronlen=n         Alignments with gaps shorter than this and longer than maxgaplen are discarded (default 41).
     --priority=n             Priority of hint group (default 4).
-    --prg=s                  Alignment program of input file, either 'gth', 'spaln', 'exonerate', or 'scipio'.
+    --prg=s                  Alignment program of input file, either 'gth', 'spaln', 'exonerate', 'scipio', or 'gemoma'.
     --source=s               Source identifier (default 'P')
     --genome_file=s          if prg is exonerate and start hints shall be created, the genome file from which the 
                              alignments were generated, must be specified.
@@ -137,8 +137,8 @@ if (!defined($prgsrc)){
 }
 
 # check program source option
-if ($prgsrc ne "exonerate" && $prgsrc ne "spaln" && $prgsrc ne "gth" && $prgsrc ne "scipio"){
-    print STDERR "ERROR: Invalid value '$prgsrc' for option --prg. Possible Options are 'exonerate', 'spaln', 'gth' or 'scipio'. Please check.\n";
+if ($prgsrc ne "exonerate" && $prgsrc ne "spaln" && $prgsrc ne "gth" && $prgsrc ne "scipio" && $prgsrc ne "gemoma"){
+    print STDERR "ERROR: Invalid value '$prgsrc' for option --prg. Possible Options are 'exonerate', 'spaln', 'gth', 'scipio', or 'gemoma'.\n";
     exit(1);
 }
 
@@ -161,7 +161,11 @@ if ($prgsrc eq "scipio"){
     $prgsrc = "scipio2h";
 }
 
-if(not($prgsrc eq "xnt2h") && defined($genome_file)){
+if ($prgsrc eq "gemoma"){
+    $prgsrc = "gemoma2h";
+}
+
+if(not(($prgsrc eq "xnt2h")||($prgsrc eq "gemoma2h")) && defined($genome_file)){
    print STDERR "ERROR: program name is $prgsrc and a genome file was specified. Will ignore genome file.\n";
 }elsif($prgsrc eq "xnt2h" && defined($genome_file)){
    open(GENOME, "<", $genome_file) or die("Could not open genome fasta file $genome_file!\n");
@@ -221,8 +225,14 @@ while(<ALN>) {
         $qstart = $2; # start of alignment in query protein
         $qend = $3; # start of alignment in query protein
     }
+    # get target protein for gemoma
+    if ($type eq "prediction" && $prgsrc eq "gemoma2h"){
+        my @info = split(/;/, $f[8]);
+        @info = split(/=/, $info[0]);
+        $parent = $info[1];        
+    }
     # create start and stop hints from exonerate
-    if($type eq "gene" && $prgsrc eq "xnt2h" && defined($genome_file)){
+    if(($type eq "gene" && $prgsrc eq "xnt2h" && defined($genome_file))){# || ($type eq "gene" && $prgsrc eq "gemoma2h" && defined($genome_file))){
         my $pot_start;
         if($strand eq "+"){
            $pot_start = substr($genome{$seqname}, $start-1, 3);
@@ -266,6 +276,8 @@ while(<ALN>) {
         print HINTS "$seqname\t$prgsrc\t$CDSpartid\t$start\t$end\t$score\t$strand\t.\tsrc=$source;grp=$parent;pri=$priority\n";
         if ($prgsrc eq "spn2h" || $prgsrc eq "scipio2h"){
             get_intron(\@f);
+        }elsif($prgsrc eq "gemoma2h"){
+            get_gemoma_intron(\@f);
         }
     }
 
@@ -322,6 +334,33 @@ sub get_intron{
     $prevScore = @{$line}[5] / 2;
     $prevParent = $parent;
     $prevQend = $qend if (defined($qend));
+}
+
+sub get_gemoma_intron{
+    my $line = shift;    
+    if ($prevParent ne $parent){
+            $intron_start = @{$line}[4] + 1;
+    } else {
+        if (@{$line}[6] eq "-"){
+            $intron_start = @{$line}[4] + 1;
+        } else{
+            $intron_end = @{$line}[3] - 1;
+        }
+        if ($intron_end < $intron_start){
+            my $tmp = $intron_start;
+            $intron_start = $intron_end;
+            $intron_end = $tmp;
+        }
+        if ($intron_end - $intron_start + 1 >= $minintronlen && $intron_end - $intron_start + 1 <= $maxintronlen){
+                print HINTS "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+        }
+        if (@{$line}[6] eq "-"){
+            $intron_end = @{$line}[3] - 1;
+        } else {
+            $intron_start = @{$line}[4] + 1;
+        }
+    }
+    $prevParent = $parent;
 }
 
 sub print_start{
