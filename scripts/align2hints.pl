@@ -5,11 +5,11 @@
 # align2hints.pl - generate hints from spaln [O0 (=gff3)], exonerate, genomeThreader (gth)         #
 #                  or scipio output                                                                #
 #                                                                                                  #
-# Authors: Simone Lange, Mario Stanke                                                              #
+# Authors: Katharina Hoff, Simone Lange, Mario Stanke                                              #
 #                                                                                                  #
-# Contact: mario.stanke@uni-greifswald.de                                                          #
+# Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: November 12th 2015                                                                 #
+# Release date: February xx 2018                                                                   #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
