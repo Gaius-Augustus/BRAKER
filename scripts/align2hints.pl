@@ -27,8 +27,8 @@ use Cwd;
 
 my $usage = <<'ENDUSAGE';
 
-align2hints.pl   generate hints from spaln [O0 (=gff3)], exonerate, genomeThreader (gth) or scipio
-                 output.
+align2hints.pl   generate hints from spaln [O0 (=gff3)], exonerate, GenomeThreader (gth), scipio
+                 or GEMOMA output.
                  Spaln2 run like this: spaln -O0 ... > spalnfile
                  Exonerate run like this: exonerate --model protein2genome --showtargetgff T ... > exfile
                  GenomeThreader run like this: gth -genomic genome.fa  -protein protein.fa -gff3out 
@@ -53,6 +53,7 @@ OPTIONS
     --priority=n             Priority of hint group (default 4).
     --prg=s                  Alignment program of input file, either 'gth', 'spaln', 'exonerate', 'scipio', or 'gemoma'.
     --source=s               Source identifier (default 'P')
+    --CDS                    Do not output CDSpart hints, but complete CDS hints.
     --genome_file=s          if prg is exonerate and start hints shall be created, the genome file from which the 
                              alignments were generated, must be specified.
 
@@ -91,11 +92,11 @@ my $priority = 4;                 # priority for hints
 my $source = "P";                 # source for extrinsic file
 my $genome_file;                  # genome file name
 my %genome;                       # hash to store genome sequence
+my $CDS;                          # output CDS instead of CDSpart hints (may be useful for aligners with high specificity)
+my $help;
 
-
-
-if($#ARGV < 1){
-  print "$usage";
+if($#ARGV < 1 || $help){
+  print $usage;
   exit;
 }
 
@@ -108,7 +109,10 @@ GetOptions('in=s'             => \$alignfile,
            'priority:i'       => \$priority,
            'prg=s'            => \$prgsrc,
            'genome_file=s'    => \$genome_file,
+           'CDS!'             => \$CDS,
+           'help!'            => \$help,
            'source:s'         => \$source);
+
 
 # mainly for usage within BRAKER2
 if(!defined($dir)){
@@ -182,6 +186,9 @@ if(not(($prgsrc eq "xnt2h")||($prgsrc eq "gemoma2h")) && defined($genome_file)){
    close(GENOME) or die("Could not close genome fasta file $genome_file!\n");
 }
 
+if($CDS){
+   $CDSpartid = "CDS";
+}
 
 open (ALN, "<$alignfile") or die("Cannot open file: $alignfile\n");
 open (HINTS, ">$hintsfilename") or die("Cannot open file: $hintsfilename");
@@ -264,12 +271,21 @@ while(<ALN>) {
              print_stop($seqname, $strand, $start, $end);
           }
        }
+    }elsif($prgsrc eq "gemoma2h" && $f[8] =~ m/start=(\w);stop=(.);/){
+          if($1 eq "M"){
+              print_start($seqname, $strand, $start, $end);
+          }
+          if($2 eq "*"){
+              print_stop($seqname, $strand, $start, $end);
+          }
     }
 
     if ($type eq "CDS" || $type eq "cds" || $type eq "protein_match"){
-        # CDSpart hint
-        $start += $CDSpart_cutoff;
-        $end -= $CDSpart_cutoff;
+        if(!$CDS){
+           # CDSpart hint
+           $start += $CDSpart_cutoff;
+           $end -= $CDSpart_cutoff;
+        }
         if ($start > $end){
             $start = $end = int(($start+$end)/2);
         }
