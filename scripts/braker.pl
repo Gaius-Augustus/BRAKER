@@ -212,7 +212,7 @@ ENDUSAGE
 
 
 
-my $version = 2.0.3;                    # braker.pl version number
+my $version = 2.0.4;                    # braker.pl version number
 my $logString;                          # stores log messages produced before opening log file
 my $printString;
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence from hints
@@ -2872,7 +2872,7 @@ sub augustus{
 	    if($nice){
 		$cmdString .= "nice ";
 	    }
-	    $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsic --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$localUTR";
+	    $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsic --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$localUTR --exonnames=on --codingseq=on";
 	    if(defined($optCfgFile)){
 		$cmdString .= " --optCfgFile=$optCfgFile"; 
 	    }
@@ -2942,7 +2942,7 @@ sub getAnnoFasta{
     if($nice){
 	$perlCmdString .= "nice ";
     }
-    my $perlCmdString .= "perl $string $AUG_pred 2>$errorfile";
+    my $perlCmdString .= "perl $string $AUG_pred --seqfile=$genome 2>$errorfile";
     print LOG "\# ".(localtime).": Making a fasta file with protein sequences of $AUG_pred\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
