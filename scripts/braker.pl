@@ -388,6 +388,7 @@ my $geneMarkGtf;                      # GeneMark output file (for skipGeneMark-E
 my $gth2traingenes;                   # Generate training genestructures for AUGUSTUSfrom GenomeThreader
 my $trainFromGth;                     # No GeneMark-Training, train AUGUSTUS from GenomeThreader alignments
 my $EPmode = 0;                       # flag for executing GeneMark-EP instead of GeneMark-ET
+my $GeneMarkIntronThreshold = 4;      # use this value to screen hintsfile for GeneMark-EX. If few hints with multiplicity higher than this value are contained, braker will be aborted.
 
 ############################################################
 # Variables for modification of template extrinsic.cfg file
@@ -1480,11 +1481,13 @@ if(! -f "$genome"){
     if($skipAllTraining==0){
 	if(not($trainFromGth)){
 	    if($EPmode==0){
+		checkGeneMarkHints();
 		GeneMark_ET();            # run GeneMark-ET
 		filterGeneMark();
 	    }elsif($EPmode==1){
 		# remove reformatting of hintsfile, later!
 		format_ep_hints();
+		checkGeneMarkHints();
 		GeneMark_EP();
 		filterGeneMark();
 	    }
@@ -1894,6 +1897,32 @@ sub join_mult_hints{
 }
     
          ####################### GeneMark-ET #########################
+# check whether hints have multiplicity for GeneMark
+sub checkGeneMarkHints{
+    my $nIntrons = 0;
+    my $nIntronsAboveThreshold = 0;
+    print LOG "\n\# ".(localtime).": Checking whether file $genemark_hintsfile contains sufficient multiplicity information...\n";
+    open(GH, "<", $genemark_hintsfile) or die ("Could not open file $genemark_hintsfile!\n");
+    while(<GH>){
+	my @line = split(/\t/);
+	if(scalar(@line)==9){
+	    $nIntrons++;
+	    if($line[5] =~ m/(\d+)/){
+		if($1 >= $GeneMarkIntronThreshold){
+		    $nIntronsAboveThreshold++;
+		}
+	    }
+	}
+    }
+    close(GH) or die ("Could not close file $genemark_hintsfile!\n");
+    if($nIntronsAboveThreshold < 1000){
+	$printString = "\# ".(localtime).": ERROR: The file $genemark_hintsfile contains less than 1000 introns with multiplicity >= $GeneMarkIntronThreshold! (In total, $nIntrons unique introns are contained.) Possibly, you are trying to run braker.pl on data that does not supply multiplicity information. This will e.g. happen if you try to use introns generated from assembled RNA-Seq transcripts; or if you try to run braker.pl in epmode with mappings from proteins without sufficient hits per locus.\n";
+	print LOG $printString;
+	print STDERR $printString;
+	exit(1);
+    }
+}
+
 # start GeneMark-ET and convert its output to real gtf format
 sub GeneMark_ET{
     if(!$skipGeneMarkET){
@@ -3649,7 +3678,7 @@ sub format_ep_hints{
 	my @t = split(/\t/); 
 	print OUT "$t[0]\t$t[1]\t$t[2]\t$t[3]\t$t[4]\t$t[5]\t$t[6]\t$t[7]\t";
 	if($t[5]==1){
-	    print OUT "pri=4;src=E\n";
+	    print OUT "pri=4;src=P\n";
 	}else{
 	    print OUT "mult=$t[5];pri=4;src=P\n";
 	}
