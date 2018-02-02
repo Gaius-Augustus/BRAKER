@@ -216,8 +216,10 @@ while(<ALN>) {
     # get target protein for gth
     if($type eq "mRNA" && $prgsrc eq "gth2h"){
         my @info = split(/\=/, $f[8]);
+        my @rnaid = split(/;/, $info[1]); # $rnaid[0]                                             
+        my @geneid = split(/;/, $info[2]); # $geneid[0]
         @info = split(/\s/, $info[-1]);
-        $parent = $info[0];
+        $parent = $info[0]."_".$seqname."_".$rnaid[0]."_".$geneid[0];
     }
     # get target protein for spaln
     if ($prgsrc eq "spn2h" && ($type eq "CDS" || $type eq "cds")){
