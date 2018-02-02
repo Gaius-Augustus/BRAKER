@@ -1,5 +1,9 @@
 # ----------------------------------------------------------------------
-# | changed AUGUSTUS output to     | braker.pl            | 
+# | issue error message if users   | braker.pl            | 2.2.2018   |
+# | try to run braker.pl on        | (Hoff)               |            |
+# | assembled transcripts instead  |                      |            |
+# | of raw read data               |                      |            |
+# | changed AUGUSTUS output to     | braker.pl            |            |
 # | codingseq=on, changed          | (Hoff)               |            |
 # | getAnnoFasta.pl to use         |                      |            |
 # | genome file, changed that      |                      |            |

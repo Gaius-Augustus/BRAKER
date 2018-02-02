@@ -1764,7 +1764,7 @@ sub add_other_hints{
 	# have "uptodate" issues at this point, removed it... maybe fix later
 	for(my $i=0; $i<scalar(@hints); $i++){
 	    # find Strand, set multiplicity for GeneMark
-	    my $filteredHintsFile = "$otherfilesDir/tmp.hints";
+	    my $filteredHintsFile = "$otherfilesDir/filtered_hints_$i.gff";
 	    $string = find("filterIntronsFindStrand.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
 	    $errorfile = "$errorfilesDir/filterIntronsFindStrand_userHints_$i.stderr";
 	    $perlCmdString = "";
@@ -1775,15 +1775,12 @@ sub add_other_hints{
 	    print LOG "\# ".(localtime).": filter introns, find strand and change score to \'mult\' entry\n";
 	    print LOG "$perlCmdString\n\n";
 	    system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
-	    $cmdString = "mv $filteredHintsFile $hints[$i]";
-	    print LOG "\# ".(localtime).": $cmdString\n";
-	    system("$cmdString")==0 or die("Failed to execute: $cmdString!\n");
 	    $cmdString = "";
 	    if($nice){
 		$cmdString .= "nice ";
 	    }
-	    $cmdString .= "cat $hints[$i] >> $hintsfile";
-	    print LOG "\n\# ".(localtime).": adding hints from file $hints[$i] to $hintsfile\n";
+	    $cmdString .= "cat $filteredHintsFile >> $hintsfile";
+	    print LOG "\n\# ".(localtime).": adding hints from file $filteredHintsFile to $hintsfile\n";
 	    print LOG "$cmdString\n\n";
 	    system("$cmdString")==0 or die("Failed to execute: $cmdString!\n");
 	}
