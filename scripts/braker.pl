@@ -1760,6 +1760,21 @@ sub add_other_hints{
     if(@hints){
 	# have "uptodate" issues at this point, removed it... maybe fix later
 	for(my $i=0; $i<scalar(@hints); $i++){
+	    # find Strand, set multiplicity for GeneMark
+	    my $filteredHintsFile = "$otherfilesDir/tmp.hints";
+	    $string = find("filterIntronsFindStrand.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+	    $errorfile = "$errorfilesDir/filterIntronsFindStrand_userHints_$i.stderr";
+	    $perlCmdString = "";
+	    if($nice){
+		$perlCmdString .= "nice ";
+	    }
+	    $perlCmdString .= "perl $string $genome $hints[$i] --score 1> $filteredHintsFile 2>$errorfile";
+	    print LOG "\# ".(localtime).": filter introns, find strand and change score to \'mult\' entry\n";
+	    print LOG "$perlCmdString\n\n";
+	    system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
+	    $cmdString = "mv $filteredHintsFile $hints[$i]";
+	    print LOG "\# ".(localtime).": $cmdString\n";
+	    system("$cmdString")==0 or die("Failed to execute: $cmdString!\n");
 	    $cmdString = "";
 	    if($nice){
 		$cmdString .= "nice ";
@@ -1899,8 +1914,8 @@ sub GeneMark_ET{
 		$perlCmdString .= " --fungus";
 	    }
 	    if($soft_mask){
-		#  $perlCmdString .= " --soft_mask"; # version prior to 4.29
-		$perlCmdString .= " --soft 1000"; # version 4.29
+		$perlCmdString .= " --soft_mask 1000"; # version prior to 4.29, apparently also in version 4.33
+#		$perlCmdString .= " --soft 1000"; # version 4.29
 	    }
 	    $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
 	    print LOG "\# ".(localtime).": Running GeneMark-ET\n";
