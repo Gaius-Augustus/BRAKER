@@ -1,4 +1,15 @@
 # ----------------------------------------------------------------------
+# | changed AUGUSTUS output to     | braker.pl            | 
+# | codingseq=on, changed          | (Hoff)               |            |
+# | getAnnoFasta.pl to use         |                      |            |
+# | genome file, changed that      |                      |            |
+# | user supplied hints file       |                      |            |
+# | is run through                 |                      |            |
+# | filterIntronsFindStrand.pl     |                      |            |
+# | convert                        | align2hints.pl       | 2.2.2018   |
+# | GEMOMA output (gff3, output    | (Hoff)               |            |
+# | of complete genes, only)       |                      |            |
+# | to hints file for AUGUSTUS     |                      |            |
 # | improved installation checks   | braker.pl (Hoff)     | 27.1.2018  |
 # | extended braker.pl to train    | braker.pl            | 19.1.2018  |
 # | AUGUSTUS from GenomeThreader   | (Hoff)               |            |
