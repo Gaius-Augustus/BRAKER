@@ -356,21 +356,40 @@ sub get_intron{
 
 sub get_gemoma_intron{
     my $line = shift;    
-    if ($prevParent ne $parent || not(defined($prevParent))){
+    if(@{$line}[6] eq "+"){
+	if ($prevParent ne $parent || not(defined($prevParent))){
             $intron_start = @{$line}[4] + 1;
 	    print "Setting intron_start to $intron_start, no predecessor\n";
-    } else {            
-	$intron_end = @{$line}[3] - 1;	
-	print "Potential intron: $intron_start\t$intron_end length is ".($intron_start - $intron_end + 1)."\n";
-	if ($intron_end < $intron_start){
-            my $tmp = $intron_start;
-            $intron_start = $intron_end;
-            $intron_end = $tmp;
+	} else {            
+	    $intron_end = @{$line}[3] - 1;	
+#	    print "Potential intron: $intron_start\t$intron_end length is ".($intron_start - $intron_end + 1)."\n";
+	    if ($intron_end < $intron_start){
+		my $tmp = $intron_start;
+		$intron_start = $intron_end;
+		$intron_end = $tmp;
+	    }
+	    if ($intron_end - $intron_start + 1 >= $minintronlen && $intron_end - $intron_start + 1 <= $maxintronlen){
+		print HINTS "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+	    }	
+	    $intron_start = @{$line}[4] + 1;
 	}
-	if ($intron_end - $intron_start + 1 >= $minintronlen && $intron_end - $intron_start + 1 <= $maxintronlen){
-	    print HINTS "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
-	}	
-	$intron_start = @{$line}[4] + 1;
+    }else{
+	if ($prevParent ne $parent || not(defined($prevParent))){
+            $intron_end = @{$line}[3] - 1;
+            print "Setting intron_end to $intron_end, no predecessor\n";
+        } else {
+            $intron_start = @{$line}[4] + 1;
+#            print "Potential intron: $intron_end\t$intron_start length is ".($intron_start - $intron_end + 1)."\n";
+            if ($intron_start > $intron_end){
+                my $tmp = $intron_end;
+                $intron_end = $intron_start;
+                $intron_start = $tmp;
+            }
+            if ($intron_end - $intron_start + 1 >= $minintronlen && $intron_end - $intron_start + 1 <= $maxintronlen){
+                print HINTS "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+            }
+            $intron_end = @{$line}[3] - 1;
+	}
     }
     $prevParent = $parent;
 }
