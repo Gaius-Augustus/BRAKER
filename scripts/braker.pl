@@ -3920,7 +3920,7 @@ sub set_AUGUSTUS_BIN_PATH{
     }
 }
 
-sub AUGUSTUS_SCRIPTS_PATH_from_ENV{
+sub set_AUGUSTUS_SCRIPTS_PATH{
     # first try to get path from ENV
     if(defined($ENV{'$AUGUSTUS_SCRIPTS_PATH'})){
         if(-e $ENV{'$AUGUSTUS_SCRIPTS_PATH'}){
