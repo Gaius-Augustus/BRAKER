@@ -203,6 +203,7 @@ while(<ALN>) {
     my $end = $f[4];
     my $score = $f[5];
     my $strand = $f[6];
+    my $frame = $f[7];
     if ($end < $start){
         my $tmp = $start;
         $start = $end;
@@ -291,7 +292,7 @@ while(<ALN>) {
         if ($start > $end){
             $start = $end = int(($start+$end)/2);
         }
-        print HINTS "$seqname\t$prgsrc\t$CDSpartid\t$start\t$end\t$score\t$strand\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+        print HINTS "$seqname\t$prgsrc\t$CDSpartid\t$start\t$end\t$score\t$strand\t$frame\tsrc=$source;grp=$parent;pri=$priority\n";
         if ($prgsrc eq "spn2h" || $prgsrc eq "scipio2h"){
             get_intron(\@f);
         }elsif($prgsrc eq "gemoma2h"){
@@ -359,10 +360,8 @@ sub get_gemoma_intron{
     if(@{$line}[6] eq "+"){
 	if ($prevParent ne $parent || not(defined($prevParent))){
             $intron_start = @{$line}[4] + 1;
-	    print "Setting intron_start to $intron_start, no predecessor\n";
 	} else {            
 	    $intron_end = @{$line}[3] - 1;	
-#	    print "Potential intron: $intron_start\t$intron_end length is ".($intron_start - $intron_end + 1)."\n";
 	    if ($intron_end < $intron_start){
 		my $tmp = $intron_start;
 		$intron_start = $intron_end;
@@ -376,10 +375,8 @@ sub get_gemoma_intron{
     }else{
 	if ($prevParent ne $parent || not(defined($prevParent))){
             $intron_end = @{$line}[3] - 1;
-            print "Setting intron_end to $intron_end, no predecessor\n";
         } else {
             $intron_start = @{$line}[4] + 1;
-#            print "Potential intron: $intron_end\t$intron_start length is ".($intron_start - $intron_end + 1)."\n";
             if ($intron_start > $intron_end){
                 my $tmp = $intron_end;
                 $intron_end = $intron_start;
@@ -405,7 +402,7 @@ sub print_start{
     }else{
 	print HINTS ($end-2)."\t$end";
     }
-    print HINTS "\t.\t$strand\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+    print HINTS "\t.\t$strand\t0\tsrc=$source;grp=$parent;pri=$priority\n";
 }
 
 sub print_stop{
@@ -419,5 +416,5 @@ sub print_stop{
     }else{
 	print HINTS "$start\t".($start+2);
     }
-    print HINTS "\t.\t$strand\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+    print HINTS "\t.\t$strand\t0\tsrc=$source;grp=$parent;pri=$priority\n";
 }
