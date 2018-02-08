@@ -440,6 +440,10 @@ Execute (almost) all system calls within braker.pl and its submodules with bash 
 
 Output alternative transcripts based on explicit evidence from hints (default is true).
 
+\subsection{\texttt{--ab\_initio}}
+
+Compute AUGUSTUS \textit{ab initio} predictions in addition to AUGUSTUS predictions with hints (additional output files: \texttt{augustus.ab\_initio.*}.
+
 \subsection{\texttt{--augustus-args=``--some\_arg=bla''}}     
 One or several command line arguments to be passed to AUGUSTUS, if several arguments are given, separated by whitespace, i.e.~\texttt{``--first\_arg=sth --second\_arg=sth''}. 
     
@@ -585,7 +589,8 @@ hintsfile.gff             - The extrinsic evidence data extraced from RNAseq.bam
                             is in gff format.
 GeneMark-ET/genemark.gtf  - Genes predicted by GeneMark-EX in gtf format (RNA-Seq trained)
 GeneMark-EP/genemark.gtf  - Genes predicted by GeneMark-EX in gtf format (Protein trained)
-augustus.gff              - Genes predicted by AUGUSTUS in gtf format
+augustus.hints.gff        - Genes predicted by AUGUSTUS with hints from given extrinsic evidence
+                            in gtf format
 
 \end{verbatim}
 
