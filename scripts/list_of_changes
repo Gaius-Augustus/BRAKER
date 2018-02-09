@@ -1,4 +1,13 @@
 # ----------------------------------------------------------------------
+# | added ab initio predictions    | braker.pl            | 9.2.2018   |
+# | fixed usage bugs with gth      | (Hoff)               |            |
+# | changed code arrangement for   |                      |            |
+# | configuration of braker.pl with|                      |            |
+# | other tools, removed ex.cfg    |                      |            |
+# | from augustus()                |                      |            |
+# | added frame information to     | align2hints.pl       | 9.2.2018   |
+# | CDS/CDSpart/start/stop hints   | (Hoff)               |            |
+# | also fixed intron bug          |                      |            |
 # | issue error message if users   | braker.pl            | 2.2.2018   |
 # | try to run braker.pl on        | (Hoff)               |            |
 # | assembled transcripts instead  |                      |            |

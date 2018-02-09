@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: February xx 2018                                                                   #
+# Release date: February 9th 2018                                                                   #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -56,6 +56,7 @@ OPTIONS
     --CDS                    Do not output CDSpart hints, but complete CDS hints.
     --genome_file=s          if prg is exonerate and start hints shall be created, the genome file from which the 
                              alignments were generated, must be specified.
+    --version                print version of align2hints.pl
 
 Format:
   seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB> strand <TAB> frame <TAB> src=source;grp=target_protein;pri=priority
@@ -69,7 +70,8 @@ DESCRIPTION
 
 ENDUSAGE
 
-
+my $version = 1.0;                 # version of align2hints.pl
+my $printVersion;
 my $alignfile;                    # alignment input file
 my $CDSpart_cutoff = 15;          # cutoff for CDSpart hints
 my $CDSpartid = "CDSpart";        # abbreviate to decrease file size
@@ -111,7 +113,13 @@ GetOptions('in=s'             => \$alignfile,
            'genome_file=s'    => \$genome_file,
            'CDS!'             => \$CDS,
            'help!'            => \$help,
-           'source:s'         => \$source);
+           'source:s'         => \$source,
+           'version!'         => \$printVersion);
+
+if($printVersion){
+    print "align2hints.pl version $version\n";
+    exit(0);
+}
 
 
 # mainly for usage within BRAKER2

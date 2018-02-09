@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: February 2nd 2018                                                                  #
+# Release date: February 9th 2018                                                                  #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -307,7 +307,7 @@ ENDUSAGE
 
 
 
-my $version = 2.0.4;                    # braker.pl version number
+my $version = 2.0.5;                    # braker.pl version number
 my $logString;                          # stores log messages produced before opening log file
 my $prtStr;
 my $alternatives_from_evidence = "true"; # output alternative transcripts based on explicit evidence
