@@ -1234,7 +1234,7 @@ sub make_rna_seq_hints{
                 if(-e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints"){
                     $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
                 }else{
-                    $augpath = "$AUGUSTUS_BIN_PATH/bin/bam2hints";
+                    $augpath = "$AUGUSTUS_BIN_PATH/bam2hints";
                 }
                 $cmdString = "";
                 if($nice){
