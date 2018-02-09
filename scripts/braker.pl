@@ -411,10 +411,11 @@ my $rnaseq2utr_args;                  # additional parameters to be passed to rn
 my $rounds=5;                         # rounds used by optimize_augustus.pl
 my $geneMarkGtf;                      # GeneMark output file (for skipGeneMark-ET option if not in 
                                       # braker working directory)
-my $gth2traingenes;                   # Generate training genestructures for AUGUSTUSfrom 
-                                      # GenomeThreader
+my $gth2traingenes;                   # Generate training genestructures for AUGUSTUS from 
+                                      # GenomeThreader (can be used in addition to RNA-Seq 
+                                      # generated training gene structures)
 my $trainFromGth;                     # No GeneMark-Training, train AUGUSTUS from GenomeThreader 
-                                      # alignments
+                                      # alignments, automatically sets --gth2traingenes
 my $gthTrainGeneFile;                 # gobally accessible file name variable
 my $EPmode = 0;                       # flag for executing GeneMark-EP instead of GeneMark-ET
 my $GeneMarkIntronThreshold = 4;      # use this value to screen hintsfile for GeneMark-EX. If few 
@@ -586,7 +587,11 @@ $logString .= $prtStr;
 set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
-set_GENEMARK_PATH();
+if(not($trainFromGth)){
+    set_GENEMARK_PATH(); # skip setting GeneMark path if no GeneMark training will be performed
+}else{
+    $gth2traingenes = 1; # enable if no genemark training is performed
+}
 set_BAMTOOLS_PATH();
 set_SAMTOOLS_PATH();
 set_ALIGNMENT_TOOL_PATH();
@@ -598,10 +603,14 @@ $logString .= $prtStr;
 check_upfront();
 check_options();
 
-# check whether RNA-Seq files are specified
-if(!@bam && !@hints){
-    $prtStr = "\# ".(localtime).": ERROR: No RNA-Seq or hints file(s) specified. Please set at ";
-    $prtStr .= "least one RNAseq BAM file or at least one hints file.\n$usage";
+# check whether a valid set of input files is provided
+if((!@bam && !@hints) || (!$trainFromGth && !@hints) || (!$trainFromGth && !@prot_seq_files) || (!$trainFromGth && !@prot_aln_files)){
+    $prtStr = "\# ".(localtime).": ERROR: in addition to a genome file, braker.pl requires at ";
+    $prtStr = "least one of the following files/flags as input:\n";
+    $prtStr = "    --bam=file.bam\n";
+    $prtStr = "    --hints=file.hints\n";
+    $prtStr = "    --prot_seq=file.fa --trainFromGth\n";
+    $prtStr = "    --prot_aln=file.aln --trainFromGth\n$usage";
     print STDERR $prtStr;
     $logString .= $prtStr;
     exit(1);
