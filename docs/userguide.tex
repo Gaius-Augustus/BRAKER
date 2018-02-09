@@ -209,6 +209,21 @@ AUGUSTUS consists of \texttt{augustus}, the gene prediction tool, additional C++
     \end{verbatim}
 
 In order to make the variable available to all Bash sessions, add the above line to a startup script, e.g.~\texttt{$\sim$/.bashrc}.
+
+\paragraph{Important: } BRAKER2 expects the entire \texttt{config} directory of AUGUSTUS at \texttt{\$AUGUSTUS\_CONFIG\_PATH}, i.e.~the subfolders \texttt{species} with its contents (at least \texttt{generic}) and \texttt{extrinsic}! Providing an writable but empty folder at \texttt{\$AUGUSTUS\_CONFIG\_PATH} will not work for BRAKER. If you need to separate augustus binary and \texttt{\$AUGUSTUS\_CONFIG\_PATH}, we recommend that you recursively copy the un-writable config contents to a writable location.
+
+\noindent \underline{Example:}\\
+
+You have a system-wide installation of AUGUSTUS at \texttt{/usr/bin/augustus}, an unwritable copy of \texttt{config} sits at \texttt{/usr/bin/augustus\_config/}. The folder \texttt{/home/yours/} is writable to you. Copy with the following command (and additionally set the then required variables):\\
+
+\begin{verbatim}
+cp -r \texttt{/usr/bin/augustus_config/ /home/yours/
+export AUGUSTUS_CONFIG_PATH=/home/yours/augustus_config
+export AUGUSTUS_BIN_PATH=/usr/bin
+export AUGUSTUS_SCRIPTS_PATH=/usr/bin/augustus_scripts
+\end{verbatim}
+
+
    
    \paragraph{Modification of \texttt{\$PATH}.} Adding adding directories of AUGUSTUS binaries and scripts to your \texttt{\$PATH} variable enables your system to locate these tools, automatically. It is not a requirement for running BRAKER2 to do this, because BRAKER2 will try to guess them from the location of another environment variable (\texttt{\$AUGUSTUS\_CONFIG\_PATH}), or both directories can be supplied as command line arguments to \texttt{braker.pl}, but we recommend to add them to your \texttt{\$PATH} variable. For your current bash session, type:
 
