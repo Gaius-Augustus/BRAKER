@@ -181,7 +181,8 @@ If already contained in your \texttt{\$PATH} variable, BRAKER2 will guess the lo
     export GENEMARK_PATH=/your_path_to_GeneMark-ET/gmes_petap/
 \end{verbatim}
 
-Add the above lines to a startup script (e.g.~\texttt{$\sim$/.bashrc}) in order to make it available to all bash sessions.
+Add the above lines to a startup script (e.g.~\texttt{$\sim$/.bashrc}) in order to make it available to all bash sessions.\footnote{GeneMark-EX is not a mandatory tool if AUGUSTUS is to be trained from GenomeThreader aligments with the option \texttt{--trainFromGth}.}
+
 
 \subsubsection{AUGUSTUS}
 
@@ -355,7 +356,7 @@ For running BRAKER2 in this mode, type:
 \begin{verbatim}
    braker.pl --species=yourSpecies --genome=genome.fasta \
       --prot_seq=proteins.fa --prg=gth --ALIGNMENT_TOOL_PATH=/path/to/gth/binary \
-      --gth2traingenes --trainFromGth
+      --trainFromGth
 \end{verbatim}
 
 It is possible to generate protein alignments externally, prior running BRAKER2, itself. The compatible command for running GenomeThreader prior running BRAKER2, is:
@@ -369,14 +370,14 @@ In order to use such externally created alignment files, run:
 
 \begin{verbatim}
    braker.pl --species=yourSpecies --genome=genome.fasta \
-      --prot_aln=proteins.aln --prg=gth --gth2traingenes --trainFromGth
+      --prot_aln=proteins.aln --prg=gth --trainFromGth
 \end{verbatim}
 
 It is also possible to run BRAKER2 in this mode using an already prepared hints file. In this case, run:
 
 \begin{verbatim}
    braker.pl --species=yourSpecies --genome=genome.fasta \
-      --hints=hints.gff --prg=gth --gth2traingenes --trainFromGth
+      --hints=hints.gff --prg=gth --trainFromGth
 \end{verbatim}
 
 Format of the hints file should look like this:
@@ -480,8 +481,9 @@ variable). Has higher priority than the environment variable.
                                          in the config directory \texttt{\$AUGUSTUS\_CONFIG\_PATH} is copied and adjusted.
 \subsection{\texttt{--fungus}}                             GeneMark-EX option: run algorithm with branch point model (most 
                                          useful for fungal genomes)
-\subsection{\texttt{--GENEMARK\_PATH=/path/to/gmes\_petap.pl/}}            Set path to GeneMark-EX (if not specified as environment 
- variable). Has higher priority than environment variable.
+\subsection{\texttt{--GENEMARK\_PATH=/path/to/gmes\_petap.pl/}}            
+
+Set path to GeneMark-EX (if not specified as environment variable). Has higher priority than environment variable.
 \subsection{\texttt{--gff3}}                               Output in GFF3 format.
 \subsection{\texttt{--hints=hints.gff}}                    Alternatively to calling braker.pl with a bam file, it is 
                                          possible to call it with a file that contains introns extracted 
