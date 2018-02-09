@@ -27,39 +27,52 @@ use Cwd;
 
 my $usage = <<'ENDUSAGE';
 
-align2hints.pl   generate hints from spaln [O0 (=gff3)], exonerate, GenomeThreader (gth), scipio
-                 or GEMOMA output.
-                 Spaln2 run like this: spaln -O0 ... > spalnfile
-                 Exonerate run like this: exonerate --model protein2genome --showtargetgff T ... > exfile
-                 GenomeThreader run like this: gth -genomic genome.fa  -protein protein.fa -gff3out 
-                                               -skipalignmentout ... -o gthfile
+align2hints.pl    generate hints from spaln [O0 (=gff3)], exonerate, 
+                  GenomeThreader (gth), scipio
+                  or GEMOMA output.
+                  Spaln2 run like this: spaln -O0 ... > spalnfile
+                  Exonerate run like this: exonerate --model protein2genome \
+                      --showtargetgff T ... > exfile
+                  GenomeThreader run like this: gth -genomic genome.fa  \
+                      -protein protein.fa -gff3out -skipalignmentout ... \
+                      -o gthfile
                  scipio run like this:
-                 scipio.1.4.1.pl genome.fa prot.fa | yaml2gff.1.4.pl > scipio.gff
+                 scipio.1.4.1.pl genome.fa prot.fa | yaml2gff.1.4.pl \
+                      > scipio.gff
 
 SYNOPSIS
 
-align2hints.pl [OPTIONS] --in=align.gff3 --out=hintsfile.gff --prg=gth|exonerate|spaln|scipio
+align2hints.pl [OPTIONS] --in=align.gff3 --out=hintsfile.gff \
+                         --prg=gth|exonerate|spaln|scipio
 
-  --in                 input file from gth (gff3), spaln (gff3) or exonerate output  
+  --in                 input file from gth (gff3), spaln (gff3) or exonerate 
+                       output  
   --out                contains CDSpart, CDS and intron hints
 
 
 OPTIONS
 
     --help                   Print this help message.
-    --CDSpart_cutoff=n       This many bp are cut off of each CDSpart hint w.r.t. the cds (default 15).
-    --maxintronlen=n         Alignments with longer gaps are discarded (default 350000).
-    --minintronlen=n         Alignments with gaps shorter than this and longer than maxgaplen are discarded (default 41).
+    --CDSpart_cutoff=n       This many bp are cut off of each CDSpart hint 
+                             w.r.t. the cds (default 15).
+    --maxintronlen=n         Alignments with longer gaps are discarded 
+                             (default 350000).
+    --minintronlen=n         Alignments with gaps shorter than this and longer
+                             than maxgaplen are discarded (default 41).
     --priority=n             Priority of hint group (default 4).
-    --prg=s                  Alignment program of input file, either 'gth', 'spaln', 'exonerate', 'scipio', or 'gemoma'.
+    --prg=s                  Alignment program of input file, either 'gth', 
+                             'spaln', 'exonerate', 'scipio', or 'gemoma'.
     --source=s               Source identifier (default 'P')
-    --CDS                    Do not output CDSpart hints, but complete CDS hints.
-    --genome_file=s          if prg is exonerate and start hints shall be created, the genome file from which the 
+    --CDS                    Do not output CDSpart hints, but complete CDS 
+                             hints.
+    --genome_file=s          if prg is exonerate and start hints shall be 
+                             created, the genome file from which the 
                              alignments were generated, must be specified.
     --version                print version of align2hints.pl
 
 Format:
-  seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB> strand <TAB> frame <TAB> src=source;grp=target_protein;pri=priority
+  seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB> 
+     strand <TAB> frame <TAB> src=source;grp=target_protein;pri=priority
 
 
 DESCRIPTION
@@ -178,20 +191,20 @@ if ($prgsrc eq "gemoma"){
 }
 
 if(not(($prgsrc eq "xnt2h")||($prgsrc eq "gemoma2h")) && defined($genome_file)){
-   print STDERR "ERROR: program name is $prgsrc and a genome file was specified. Will ignore genome file.\n";
+    print STDERR "ERROR: program name is $prgsrc and a genome file was specified. Will ignore genome file.\n";
 }elsif($prgsrc eq "xnt2h" && defined($genome_file)){
-   open(GENOME, "<", $genome_file) or die("Could not open genome fasta file $genome_file!\n");
-   my $header;
-   while(<GENOME>){
-      chomp;
-      if(m/^>(.*)/){
-         $genome{$1} = "";
-         $header = $1;
-      }else{
-         $genome{$header} .= $_;
-      }
-   }
-   close(GENOME) or die("Could not close genome fasta file $genome_file!\n");
+    open(GENOME, "<", $genome_file) or die("Could not open genome fasta file $genome_file!\n");
+    my $header;
+    while(<GENOME>){
+        chomp;
+        if(m/^>(.*)/){
+            $genome{$1} = "";
+            $header = $1;
+        }else{
+            $genome{$header} .= $_;
+        }
+    }
+    close(GENOME) or die("Could not close genome fasta file $genome_file!\n");
 }
 
 if($CDS){
@@ -253,49 +266,49 @@ while(<ALN>) {
     if(($type eq "gene" && $prgsrc eq "xnt2h" && defined($genome_file))){# || ($type eq "gene" && $prgsrc eq "gemoma2h" && defined($genome_file))){
         my $pot_start;
         if($strand eq "+"){
-           $pot_start = substr($genome{$seqname}, $start-1, 3);
+            $pot_start = substr($genome{$seqname}, $start-1, 3);
         }elsif($strand eq "-"){
-           $pot_start = substr($genome{$seqname}, $end-3, 3);
-           $pot_start =~ tr/acgtACGT/tgcaTGCA/;
-           $pot_start = reverse($pot_start);
+            $pot_start = substr($genome{$seqname}, $end-3, 3);
+            $pot_start =~ tr/acgtACGT/tgcaTGCA/;
+            $pot_start = reverse($pot_start);
         }
         if(defined($pot_start)){
-           if($pot_start =~ m/(ATG)|(TTG)|(GTG)|(CTG)/i){
-              print_start($seqname, $strand, $start, $end);
-           }
+            if($pot_start =~ m/(ATG)|(TTG)|(GTG)|(CTG)/i){
+                print_start($seqname, $strand, $start, $end);
+            }
         }
         my $pot_stop;
         if($strand eq "+"){
-           $pot_stop = substr($genome{$seqname}, $end-3, 3);
+            $pot_stop = substr($genome{$seqname}, $end-3, 3);
         }else{
-           $pot_stop = substr($genome{$seqname}, $start-1,3);
-           $pot_stop =~ tr/acgtACGT/tgcaTGCA/;
-           $pot_stop = reverse($pot_stop);
+            $pot_stop = substr($genome{$seqname}, $start-1,3);
+            $pot_stop =~ tr/acgtACGT/tgcaTGCA/;
+            $pot_stop = reverse($pot_stop);
         }
         if($pot_stop =~ m/(TAA)|(TGA)|(TAG)/i){
-           print_stop($seqname, $strand, $start, $end);
+            print_stop($seqname, $strand, $start, $end);
         }
     }elsif($prgsrc eq "spn2h" || $prgsrc eq "gth2h"){
-       if(($type eq "cds" && $f[8] =~ m/Target=.* (\d+) \d+ (\+|-)/ && $prgsrc eq "spn2h") || ($type eq "mRNA" && $f[8] =~ m/Target=.* (\d+) \d+ (\+|-)/ && $prgsrc eq "gth2h")){
-          if($1 == 1){
-             print_start($seqname, $strand, $start, $end);
-             print_stop($seqname, $strand, $start, $end);
-          }
-       }
+        if(($type eq "cds" && $f[8] =~ m/Target=.* (\d+) \d+ (\+|-)/ && $prgsrc eq "spn2h") || ($type eq "mRNA" && $f[8] =~ m/Target=.* (\d+) \d+ (\+|-)/ && $prgsrc eq "gth2h")){
+            if($1 == 1){
+                print_start($seqname, $strand, $start, $end);
+                print_stop($seqname, $strand, $start, $end);
+            }
+        }
     }elsif($prgsrc eq "gemoma2h" && $f[8] =~ m/start=(\w);stop=(.);/){
-          if($1 eq "M"){
-              print_start($seqname, $strand, $start, $end);
-          }
-          if($2 eq "*"){
-              print_stop($seqname, $strand, $start, $end);
-          }
+        if($1 eq "M"){
+            print_start($seqname, $strand, $start, $end);
+        }
+        if($2 eq "*"){
+            print_stop($seqname, $strand, $start, $end);
+        }
     }
 
     if ($type eq "CDS" || $type eq "cds" || $type eq "protein_match"){
         if(!$CDS){
-           # CDSpart hint
-           $start += $CDSpart_cutoff;
-           $end -= $CDSpart_cutoff;
+            # CDSpart hint
+            $start += $CDSpart_cutoff;
+            $end -= $CDSpart_cutoff;
         }
         if ($start > $end){
             $start = $end = int(($start+$end)/2);
@@ -366,22 +379,22 @@ sub get_intron{
 sub get_gemoma_intron{
     my $line = shift;    
     if(@{$line}[6] eq "+"){
-	if ($prevParent ne $parent){
+        if ($prevParent ne $parent){
             $intron_start = @{$line}[4] + 1;
-	} else {            
-	    $intron_end = @{$line}[3] - 1;	
-	    if ($intron_end < $intron_start){
-		my $tmp = $intron_start;
-		$intron_start = $intron_end;
-		$intron_end = $tmp;
-	    }
-	    if ($intron_end - $intron_start + 1 >= $minintronlen && $intron_end - $intron_start + 1 <= $maxintronlen){
-		print HINTS "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
-	    }	
-	    $intron_start = @{$line}[4] + 1;
-	}
+        } else {            
+            $intron_end = @{$line}[3] - 1;	
+            if ($intron_end < $intron_start){
+                my $tmp = $intron_start;
+                $intron_start = $intron_end;
+                $intron_end = $tmp;
+            }
+            if ($intron_end - $intron_start + 1 >= $minintronlen && $intron_end - $intron_start + 1 <= $maxintronlen){
+                print HINTS "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+            }	
+            $intron_start = @{$line}[4] + 1;
+        }
     }else{
-	if ($prevParent ne $parent || not(defined($prevParent))){
+        if ($prevParent ne $parent || not(defined($prevParent))){
             $intron_end = @{$line}[3] - 1;
         } else {
             $intron_start = @{$line}[4] + 1;
@@ -394,7 +407,7 @@ sub get_gemoma_intron{
                 print HINTS "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
             }
             $intron_end = @{$line}[3] - 1;
-	}
+        }
     }
     $prevParent = $parent;
 }
@@ -406,9 +419,9 @@ sub print_start{
     my $end = shift;
     print HINTS "$seqname\t$prgsrc\tstart\t";
     if($strand eq "+"){
-	print HINTS "$start\t".($start+2);
+	   print HINTS "$start\t".($start+2);
     }else{
-	print HINTS ($end-2)."\t$end";
+	   print HINTS ($end-2)."\t$end";
     }
     print HINTS "\t.\t$strand\t0\tsrc=$source;grp=$parent;pri=$priority\n";
 }
@@ -420,9 +433,9 @@ sub print_stop{
     my $end = shift;
     print HINTS"$seqname\t$prgsrc\tstop\t";
     if($strand eq "+"){
-	print HINTS ($end-2)."\t$end";
+	   print HINTS ($end-2)."\t$end";
     }else{
-	print HINTS "$start\t".($start+2);
+	   print HINTS "$start\t".($start+2);
     }
     print HINTS "\t.\t$strand\t0\tsrc=$source;grp=$parent;pri=$priority\n";
 }
