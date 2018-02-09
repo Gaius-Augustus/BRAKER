@@ -366,7 +366,7 @@ sub get_intron{
 sub get_gemoma_intron{
     my $line = shift;    
     if(@{$line}[6] eq "+"){
-	if ($prevParent ne $parent || not(defined($prevParent))){
+	if ($prevParent ne $parent){
             $intron_start = @{$line}[4] + 1;
 	} else {            
 	    $intron_end = @{$line}[3] - 1;	
