@@ -668,7 +668,7 @@ if((!@bam && @hints) && $EPmode==0){
 
 
 # check whether RNA-Seq files are specified
-if(!@bam && !@hints && $EPmode==0){
+if(!@bam && !@hints && $EPmode==0 && !$trainFromGth){
     $prtStr = "\# ".(localtime).": ERROR: No RNA-Seq or hints file(s) from RNA-Seq specified. ";
     $prtStr .= "Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq ";
     $prtStr .= "(must contain intron hints from src b2h in column 2) to run BRAKER in mode for ";
