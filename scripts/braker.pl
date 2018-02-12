@@ -482,7 +482,7 @@ my $rnaseq2utrPath; # make tool variable global
 @malus = ("0.1", "0.2", "0.4", "1.0"); 
 
 
-if(@ARGV==0){
+if(@ARGV==0) {
     print "$usage\n"; 
     exit(0);
 }
@@ -491,7 +491,7 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
     'AUGUSTUS_CONFIG_PATH=s'        => \$augustus_cfg_path,
     'AUGUSTUS_BIN_PATH=s'           => \$augustus_bin_path,
     'AUGUSTUS_SCRIPTS_PATH=s'       => \$augustus_scripts_path,
-    'ALIGNMENT_TOOL_PATH'           => \$ALIGNMENT_TOOL_PATH_OP,
+    'ALIGNMENT_TOOL_PATH=s'         => \$ALIGNMENT_TOOL_PATH_OP,
     'bam=s'                         => \@bam,
     'BAMTOOLS_PATH=s'               => \$bamtools_path,
     'cores=i'                       => \$CPU,
@@ -532,17 +532,17 @@ GetOptions( 'alternatives-from-evidence=s'  => \$alternatives_from_evidence,
     'version!'                      => \$printVersion);
 
 
-if($help){
+if($help) {
     print $usage;
     exit(0);
 }
 
-if($printVersion){
+if($printVersion) {
     print "braker.pl version $version\n";
     exit(0);
 }
 
-if($skipAllTraining){ # if no training is performed, existing parameters must be used
+if($skipAllTraining) { # if no training is performed, existing parameters must be used
     $useexisting=1;
 }
 
@@ -550,18 +550,18 @@ if($skipAllTraining){ # if no training is performed, existing parameters must be
 
 my $wdGiven; # defines whether a working directory was given as input argument
 # if no working directory is set, use current directory
-if(!defined $workDir){
+if(!defined $workDir) {
     $wdGiven = 0;
     $workDir = $currentDir;
-}else{
+} else {
     $wdGiven = 1;
     my $last_char = substr($workDir, -1);
-    if($last_char eq "\/"){
+    if($last_char eq "\/") {
         chop($workDir);
     }
     my $tmp_dir_name = abs_path($workDir);
     $workDir = $tmp_dir_name;
-    if(not(-d $workDir)){
+    if(not(-d $workDir)) {
         $prtStr = "\# ".(localtime).": Creating directory $workDir.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
@@ -570,10 +570,25 @@ if(!defined $workDir){
 }
 
 # check the write permission of $workDir before building of the work directory
-if(! -w $workDir){
+if(! -w $workDir) {
     $prtStr = "\# ".(localtime).": ERROR: Do not have write permission for $workDir.\nPlease";
     $prtStr .= " use command 'chmod' to reset permissions, or specify another working ";
     $prtStr .= "directory with option --workingdir=...\n";
+    print STDERR $prtStr;
+    $logString .= $prtStr;
+    exit(1);
+}
+
+
+
+# check whether a valid set of input files is provided
+if((!@bam && !@hints) && (!$trainFromGth && !@hints) && (!$trainFromGth && !@prot_seq_files) && (!$trainFromGth && !@prot_aln_files)) {
+    $prtStr = "\# ".(localtime).": ERROR: in addition to a genome file, braker.pl requires at ";
+    $prtStr = "least one of the following files/flags as input:\n";
+    $prtStr = "    --bam=file.bam\n";
+    $prtStr = "    --hints=file.hints\n";
+    $prtStr = "    --prot_seq=file.fa --trainFromGth\n";
+    $prtStr = "    --prot_aln=file.aln --trainFromGth\n$usage";
     print STDERR $prtStr;
     $logString .= $prtStr;
     exit(1);
@@ -587,9 +602,9 @@ $logString .= $prtStr;
 set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
-if(not($trainFromGth)){
+if(not($trainFromGth)) {
     set_GENEMARK_PATH(); # skip setting GeneMark path if no GeneMark training will be performed
-}else{
+} else {
     $gth2traingenes = 1; # enable if no genemark training is performed
 }
 set_BAMTOOLS_PATH();
@@ -603,25 +618,11 @@ $logString .= $prtStr;
 check_upfront();
 check_options();
 
-# check whether a valid set of input files is provided
-if((!@bam && !@hints) || (!$trainFromGth && !@hints) || (!$trainFromGth && !@prot_seq_files) || (!$trainFromGth && !@prot_aln_files)){
-    $prtStr = "\# ".(localtime).": ERROR: in addition to a genome file, braker.pl requires at ";
-    $prtStr = "least one of the following files/flags as input:\n";
-    $prtStr = "    --bam=file.bam\n";
-    $prtStr = "    --hints=file.hints\n";
-    $prtStr = "    --prot_seq=file.fa --trainFromGth\n";
-    $prtStr = "    --prot_aln=file.aln --trainFromGth\n$usage";
-    print STDERR $prtStr;
-    $logString .= $prtStr;
-    exit(1);
-}
-
-
 # check whether bam files exist
-if(@bam){
+if(@bam) {
     @bam = split(/[\s,]/, join(',',@bam));
-    for(my $i=0; $i<scalar(@bam); $i++){
-       if(! -e $bam[$i]){
+    for(my $i=0; $i<scalar(@bam); $i++) {
+       if(! -e $bam[$i]) {
            $prtStr = "\# ".(localtime).": ERROR: BAM file $bam[$i] does not exist.\n";
            print STDERR $prtStr;
            $logString .= $prtStr;	
@@ -633,10 +634,10 @@ if(@bam){
 
 
 # check whether hints files exists
-if(@hints){
+if(@hints) {
     @hints = split(/[\s,]/, join(',',@hints));
-    for(my $i=0; $i<scalar(@hints); $i++){
-       if(! -e "$hints[$i]"){
+    for(my $i=0; $i<scalar(@hints); $i++) {
+       if(! -e "$hints[$i]") {
            $prtStr = "\# ".(localtime).": ERROR: Hints file $hints[$i] does not exist.\n";
            print STDERR $prtStr;
            $logString .= $prtStr;	  
@@ -652,12 +653,12 @@ if(@hints){
 # -> this will determine whether braker.pl switches into EPmode... this will work once that the ep 
 # introns.gff format in the last column has been fixed. For now, require users to specify EPmode as
 #  input argument and change the last column of introns.gff file according to braker requirements.
-if((!@bam && @hints) && $EPmode==0){
+if((!@bam && @hints) && $EPmode==0) {
     my $foundRNASeq = 0;
-    foreach(@hints){
+    foreach(@hints) {
         $foundRNASeq += checkHints($_);
     }
-    if($foundRNASeq == 0){
+    if($foundRNASeq == 0) {
         $prtStr = "\# ".(localtime).": GeneMark-EP mode is enabled automatically due to hints ";
         $prtStr .= "file contents!\n";
         print STDOUT $prtStr;
@@ -668,7 +669,7 @@ if((!@bam && @hints) && $EPmode==0){
 
 
 # check whether RNA-Seq files are specified
-if(!@bam && !@hints && $EPmode==0 && !$trainFromGth){
+if(!@bam && !@hints && $EPmode==0 && !$trainFromGth) {
     $prtStr = "\# ".(localtime).": ERROR: No RNA-Seq or hints file(s) from RNA-Seq specified. ";
     $prtStr .= "Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq ";
     $prtStr .= "(must contain intron hints from src b2h in column 2) to run BRAKER in mode for ";
@@ -678,7 +679,7 @@ if(!@bam && !@hints && $EPmode==0 && !$trainFromGth){
     exit(1);
 }
 
-if($EPmode==1){
+if($EPmode==1) {
     $prtStr =  "\# ".(localtime).": BRAKER will be execute GeneMark-EP for training GeneMark and ";
     $prtStr .= "generating a training gene set for AUGUSTUS, using protein information as sole ";
     $prtStr .= "extrinsic evidence source.\n";
@@ -688,16 +689,16 @@ if($EPmode==1){
 
 
 # check whether species is specified
-if(defined($species)){
-    if($species =~ /[\s]/){
+if(defined($species)) {
+    if($species =~ /[\s]/) {
         $prtStr = "\# ".(localtime).": WARNING: Species name contains invalid white space ";
         $prtStr .= "characters. Will replace white spaces with underline character '_'.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         $species =~ s/\s/\_/g;
     }    
-    foreach my $word (@forbidden_words){
-        if($species eq $word){	    
+    foreach my $word (@forbidden_words) {
+        if($species eq $word) {	    
         $prtStr = "\# ".(localtime).": WARNING: $species is not allowed as a species name.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;	    
@@ -707,18 +708,18 @@ if(defined($species)){
 }
 
 # use standard name when no name is assigned or when it contains invalid parts
-if(!defined($species) || $bool_species eq "false"){
+if( !defined($species) || $bool_species eq "false" ) {
     my $no = 1;
     $species = "Sp_$no";
-    while($no <= $limit){
+    while($no <= $limit) {
         $species = "Sp_$no";
-        if((! -d "$AUGUSTUS_CONFIG_PATH/species/$species")){
+        if((! -d "$AUGUSTUS_CONFIG_PATH/species/$species")) {
             last;
-        }else{
+        } else {
             $no++;
         }
     }
-    if($no > $limit){
+    if( $no > $limit ) {
         $prtStr = "\# ".(localtime).": ERROR: There are already $limit species folders under ";
         $prtStr .= "$AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move ";
         $prtStr .= "some of those folders or assign a valid species identifier with ";
@@ -727,11 +728,11 @@ if(!defined($species) || $bool_species eq "false"){
         $logString .= $prtStr;
         exit(1);
     }
-    if($bool_species eq "false"){
+    if($bool_species eq "false") {
         $prtStr = "\# ".(localtime).": Program will use $species instead.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
-    }else{
+    } else {
         $prtStr = "\# ".(localtime).": No species was set. Program will use $species.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;      
@@ -740,7 +741,7 @@ if(!defined($species) || $bool_species eq "false"){
 
 
 # check species directory
-if(-d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting){
+if(-d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting) {
     $prtStr = "\# ".(localtime).": ERROR: $AUGUSTUS_CONFIG_PATH/species/$species already exists. ";
     $prtStr .= "Choose another species name, delete this directory or use the existing species ";
     $prtStr .= "with the option --useexisting. Be aware that existing parameters will then be ";
@@ -750,7 +751,7 @@ if(-d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting){
     exit(1);
 }
 
-if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
+if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting) {
     $prtStr =  "\# ".(localtime).": WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not ";
     $prtStr .= "exist. Braker will create the necessary files for species $species.\n";
     print STDOUT $prtStr;
@@ -760,12 +761,12 @@ if(! -d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting){
 
 # check whether $rootDir already exists
 my $rootDir;
-if($wdGiven==1){
+if($wdGiven==1) {
     $rootDir = $workDir;
-    }else{
+    } else {
         $rootDir = "$workDir/braker";
     }
-    if (-d "$rootDir/$species" && !$overwrite  && $wdGiven==0){
+    if (-d "$rootDir/$species" && !$overwrite  && $wdGiven==0) {
         $prtStr = "\# ".(localtime).": WARNING: $rootDir/$species already exists. Braker will use";
         $prtStr .= " existing files, if they are newer than the input files. You can choose ";
         $prtStr .= "another working directory with --workingdir=dir or overwrite it with ";
@@ -775,10 +776,10 @@ if($wdGiven==1){
     }
 
 # set path and check whether assigned extrinsic file exists
-if(defined($extrinsicCfgFile)){
+if(defined($extrinsicCfgFile)) {
     $extrinsicCfgFile = rel2abs($extrinsicCfgFile);
 }
-if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile){    
+if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile) {    
     $prtStr = "\# ".(localtime).": WARNING: Assigned extrinsic file $extrinsicCfgFile does not ";
     $prtStr .= "exist. Program will create extrinsic file instead.\n";
     print STDOUT $prtStr;
@@ -786,23 +787,23 @@ if(defined($extrinsicCfgFile) && ! -f $extrinsicCfgFile){
     $extrinsicCfgFile = undef;
 }
 
-if($EPmode==1 && not(defined($extrinsicCfgFile))){
+if($EPmode==1 && not(defined($extrinsicCfgFile))) {
     $string = find("ep.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    if(-e $string){
+    if(-e $string) {
         $extrinsicCfgFile=$string;
-    }else{
+    } else {
         $prtStr = "\# ".(localtime)." WARNING: tried to assign extrinsicCfgFile ep.cfg as ";
         $prtStr .= "$string but this file does not seem to exist.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         $extrinsicCfgFile = undef;
     }
-}elsif(defined($prg)){
-    if(($prg eq "gth" && not(defined($extrinsicCfgFile))) or ($prg eq "exonerate" && not(defined($extrinsicCfgFile))) or ($prg eq "spaln" && not(defined($extrinsicCfgFile)))){
+}elsif(defined($prg)) {
+    if(($prg eq "gth" && not(defined($extrinsicCfgFile))) or ($prg eq "exonerate" && not(defined($extrinsicCfgFile))) or ($prg eq "spaln" && not(defined($extrinsicCfgFile)))) {
         $string = find("gth.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-        if(-e $string){
+        if(-e $string) {
             $extrinsicCfgFile=$string;
-        }else{
+        } else {
         $prtStr = "\# ".(localtime).": WARNING: tried to assign extrinsicCfgFile ";
         $prtStr .= "ep.cfg as $string but this file does not seem to exist.\n";
         print STDOUT $prtStr;
@@ -810,11 +811,11 @@ if($EPmode==1 && not(defined($extrinsicCfgFile))){
         $extrinsicCfgFile = undef;
         }
     }
-}elsif(not(defined($extrinsicCfgFile))){
+}elsif(not(defined($extrinsicCfgFile))) {
     $string = find("rnaseq.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    if(-e $string){
+    if(-e $string) {
         $extrinsicCfgFile=$string;
-    }else{
+    } else {
         $prtStr = "\# ".(localtime).": WARNING: tried to assign extrinsicCfgFile ";
         $prtStr .= "ep.cfg as $string but this file does not seem to exist.\n";
         print STDOUT $prtStr;
@@ -824,7 +825,7 @@ if($EPmode==1 && not(defined($extrinsicCfgFile))){
 }
 
 # check whether genome file is set
-if(!defined($genome)){    
+if(!defined($genome)) {    
     $prtStr = "\# ".(localtime).": ERROR: No genome file was specified.\n";
     print STDERR $prtStr;
     $logString .= $prtStr;
@@ -832,10 +833,10 @@ if(!defined($genome)){
 }
 
 # check whether protein sequence file is given
-if(@prot_seq_files){
+if(@prot_seq_files) {
     @prot_seq_files = split(/[\s,]/, join(',',@prot_seq_files));
-    for(my $i=0; $i<scalar(@prot_seq_files); $i++){
-        if(! -f $prot_seq_files[$i]){
+    for(my $i=0; $i<scalar(@prot_seq_files); $i++) {
+        if(! -f $prot_seq_files[$i]) {
             $prtStr = "\# ".(localtime).": ERROR: protein sequence file $prot_seq_files[$i] does ";
             $prtStr .= "not exist.\n";
             print STDERR $prtStr;
@@ -844,14 +845,14 @@ if(@prot_seq_files){
         }
         $prot_seq_files[$i] = rel2abs($prot_seq_files[$i]);
     }
-    if(!defined($prg) && $EPmode==0){
+    if(!defined($prg) && $EPmode==0) {
         # if no alignment tools was specified, set Genome Threader as default
         $prtStr = "\# ".(localtime).": WARNING: No alignment tool was specified for aligning protein";
         $prtStr .= " sequences against genome. Setting GenomeThreader as default alignment tool.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;	
         $prg="gth";
-    }elsif(!defined($prg) && $EPmode==1){
+    }elsif(!defined($prg) && $EPmode==1) {
         $prg="prosplign";
         $prtStr = "\# ".(localtime).": WARNING: No alignment tool was specified for aligning ";
         $prtStr .= "protein sequences against genome. Setting ProSplign as default alignment tool ";
@@ -867,10 +868,10 @@ if(@prot_seq_files){
 }
 
 # check whether protein alignment file is given
-if(@prot_aln_files){
+if(@prot_aln_files) {
     @prot_aln_files = split(/[\s,]/, join(',',@prot_aln_files));
-    for(my $i=0; $i<scalar(@prot_aln_files); $i++){
-        if(! -f $prot_aln_files[$i]){
+    for(my $i=0; $i<scalar(@prot_aln_files); $i++) {
+        if(! -f $prot_aln_files[$i]) {
             $prtStr = "\# ".(localtime).": ERROR: protein alignment file $prot_aln_files[$i] does";
             $prtStr .= " not exist.\n";
             print STDERR $prtStr;
@@ -879,7 +880,7 @@ if(@prot_aln_files){
         }
         $prot_aln_files[$i] = rel2abs($prot_aln_files[$i]);
     }
-    if(!defined($prg)){
+    if(!defined($prg)) {
         $prtStr = "\# ".(localtime).": ERROR: if protein alignment file is specified, you must ";
         $prtStr .= "specify the source tool that was used to create that alignment file, i.e. ";
         $prtStr .= "--prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for";
@@ -891,8 +892,8 @@ if(@prot_aln_files){
 }
 
 # check whether alignment program is given
-if(defined($prg)){
-    if(not($prg=~m/gth/) and not($prg=~m/exonerate/) and not($prg=~m/spaln/) and $EPmode==0){
+if(defined($prg)) {
+    if(not($prg=~m/gth/) and not($prg=~m/exonerate/) and not($prg=~m/spaln/) and $EPmode==0) {
         $prtStr = "\# ".(localtime).": ERROR: An alignment tool other than gth, exonerate and spaln";
         $prtStr .= " has been specified with option --prg=$prg. BRAKER currently only supports the ";
         $prtStr .= "options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and ";
@@ -901,7 +902,7 @@ if(defined($prg)){
         print STDERR $prtStr;
         $logString .= $prtStr;	
         exit(1);
-    }elsif(not($prg=~m/prosplign/) and $EPmode==1){
+    }elsif(not($prg=~m/prosplign/) and $EPmode==1) {
         $prtStr = "\# ".(localtime).": ERROR: An alignment tool other than gth, exonerate and ";
         $prtStr .= "spaln has been specified with option --prg=$prg. BRAKER currently only ";
         $prtStr .= "supports the options gth, exonerate and spaln for running BRAKER in ";
@@ -911,7 +912,7 @@ if(defined($prg)){
         $logString .= $prtStr;	
         exit(1);
     }
-    if(!@prot_seq_files and !@prot_aln_files){
+    if(!@prot_seq_files and !@prot_aln_files) {
         $prtStr = "\# ".(localtime).": ERROR: a protein alignment tool ($prg) has been given, ";
         $prtStr .= "but neither a protein sequence file, nor a protein alignment file ";
         $prtStr .= "generated by such a tool have been specified.\n";
@@ -922,19 +923,19 @@ if(defined($prg)){
 }
 
 # check whether trainFromGth option is valid
-if(defined($gth2traingenes) && not($prg eq "gth")){
+if(defined($gth2traingenes) && not($prg eq "gth")) {
     $prtStr = "\# ".(localtime).": ERROR: Option --gth2traingenes can only be specified with ";
     $prtStr .= "option --prg=gth!\n";
     print STDERR $prtStr;
     $logString .= $prtStr;    
     exit(1);
-}elsif(defined($trainFromGth) && not($prg eq "gth")){
+}elsif(defined($trainFromGth) && not($prg eq "gth")) {
     $prtStr = "\# ".(localtime).": ERROR: Option --trainFromGth can only be specified with ";
     $prtStr .= "option --prg=gth!\n";
     print STDERR $prtStr;
     $logString .= $prtStr;
     exit(1);
-}elsif(defined($trainFromGth)){
+}elsif(defined($trainFromGth)) {
     # disable genemark training
     $skipGeneMarkET = 1;
     $skipGeneMarkEP = 1;
@@ -946,32 +947,32 @@ if(defined($gth2traingenes) && not($prg eq "gth")){
 
 
 # check whether genome file exist
-if(! -f "$genome"){
+if(! -f "$genome") {
     $prtStr = "\# ".(localtime).": ERROR: Genome file $genome does not exist.\n";
     print STDERR $prtStr;
     $logString .= $prtStr;    
     exit(1);
-}else{
+} else {
     # create $rootDir
     my $bool_rootDir = "false";
-    if(! -d $rootDir){
+    if(! -d $rootDir) {
         make_path($rootDir);
         $bool_rootDir = "true";
     }
     # set other directories
-    if($wdGiven==1){
-        if($EPmode==0){
+    if($wdGiven==1) {
+        if($EPmode==0) {
             $genemarkDir = "$rootDir/GeneMark-ET";
-        }else{
+        } else {
             $genemarkDir = "$rootDir/GeneMark-EP";
         }       
         $parameterDir = "$rootDir/species";
         $otherfilesDir = "$rootDir";
         $errorfilesDir = "$rootDir/errors";
-    }else{
-        if($EPmode==0){
+    } else {
+        if($EPmode==0) {
             $genemarkDir = "$rootDir/$species/GeneMark-ET";
-        }else{
+        } else {
             $genemarkDir = "$rootDir/$species/GeneMark-EP";
         }
         $parameterDir = "$rootDir/$species/species";
@@ -983,7 +984,7 @@ if(! -f "$genome"){
 
     # create other directories if necessary
     my $bool_otherDir = "false";
-    if(! -d $otherfilesDir){
+    if(! -d $otherfilesDir) {
         make_path($otherfilesDir);
         $bool_otherDir = "true";
     }
@@ -991,38 +992,38 @@ if(! -f "$genome"){
     print STDOUT $prtStr;
     open (LOG, ">>".$logfile) or die("Cannot open file $logfile!\n");
     print LOG $logString;
-    if($bool_rootDir eq "true"){
+    if($bool_rootDir eq "true") {
         print LOG "\# ".(localtime).": create working directory $rootDir.\n";
         print LOG "mkdir $rootDir\n\n";
     }   
-    if($bool_otherDir eq "true"){
+    if($bool_otherDir eq "true") {
         print LOG "\# ".(localtime).": create working directory $otherfilesDir.\n";
         print LOG "mkdir $otherfilesDir\n\n";
     }
-    if(! -d $genemarkDir){
+    if(! -d $genemarkDir) {
         make_path($genemarkDir);
         print LOG "\# ".(localtime).": create working directory $genemarkDir.\n";
         print LOG "mkdir $genemarkDir\n\n";
     }
-    if(defined($geneMarkGtf) and not($skipGeneMarkET)){ # set skipGeneMarkET if geneMarkGtf is a 
+    if(defined($geneMarkGtf) and not($skipGeneMarkET)) { # set skipGeneMarkET if geneMarkGtf is a 
     #command line argument
         $skipGeneMarkET=1;
     }
-    if($gth2traingenes){
+    if($gth2traingenes) {
         $gthTrainGeneFile = "$otherfilesDir/gthTrainGenes.gtf";
     }
 
     # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
-    if($skipGeneMarkET){ 
+    if($skipGeneMarkET) { 
         print LOG "\# ".(localtime)..": REMARK: The GeneMark-ET step will be skipped.\n";
-        if(not($trainFromGth)){
-            if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)){
+        if(not($trainFromGth)) {
+            if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)) {
                 $prtStr = "\# ".(localtime).": ERROR: The --skipGeneMark-ET option was used, but ";
                 $prtStr .= "there is no genemark.gtf file under $genemarkDir and no valid file ";
                 $prtStr .= "--geneMarkGtf=... was specified.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
-                if(defined($geneMarkGtf)){
+                if(defined($geneMarkGtf)) {
                     $prtStr = "       The specified geneMarkGtf=... file was $geneMarkGtf. This is ";
                     $prtStr .= "not an accessible file.\n";
                     print LOG $prtStr;  
@@ -1033,15 +1034,15 @@ if(! -f "$genome"){
         }
     }
 
-    if($skipGeneMarkEP && $EPmode==1){
+    if($skipGeneMarkEP && $EPmode==1) {
         print LOG "REMARK: The GeneMark-EP step will be skipped.\n";
-        if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)){
+        if(not(-f "$genemarkDir/genemark.gtf") and not(-f $geneMarkGtf)) {
             $prtStr = "\# ".(localtime).": ERROR: The --skipGeneMark-EP option was used, but there is ";
             $prtStr .= "no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... ";
             $prtStr .= "was specified.\n";
             print LOG $prtStr;
             print STDERR $prtStr;
-            if(defined($geneMarkGtf)){
+            if(defined($geneMarkGtf)) {
                 $prtStr = "\# ".(localtime).": ERROR: The specified geneMarkGtf=... file was ";
                 $prtStr .= "$geneMarkGtf. This is not an accessible file.\n";
                 print LOG $prtStr;
@@ -1049,7 +1050,7 @@ if(! -f "$genome"){
             }
             exit(1);
         }
-    }elsif($skipGeneMarkEP){
+    }elsif($skipGeneMarkEP) {
         $prtStr = "\# ".(localtime).": ERROR: Option --skipGeneMarkEP cannot be used when BRAKER is ";
         $prtStr .= "started in GeneMark-ET mode.\n";
         print LOG $prtStr;
@@ -1057,7 +1058,7 @@ if(! -f "$genome"){
         exit(1);
     }
 
-    if(defined($geneMarkGtf)){
+    if(defined($geneMarkGtf)) {
 	   print LOG "\#  ".(localtime).": creating softlink of $geneMarkGtf to ";
         print LOG "$genemarkDir/genemark.gtf.\n";
 	   $cmdString = "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
@@ -1065,13 +1066,13 @@ if(! -f "$genome"){
 	   system($cmdString)==0 or die("failed to execute: $cmdString!\n");
     }
 
-    if(! -d $parameterDir){
+    if(! -d $parameterDir) {
     	make_path($parameterDir);
 	   print LOG "\# ".(localtime).": create working directory $parameterDir\n";
 	   print LOG "mkdir $parameterDir\n\n";
     }
 
-    if(! -d $errorfilesDir){
+    if(! -d $errorfilesDir) {
 	   make_path($errorfilesDir);
 	   print LOG "\# ".(localtime).": create working directory $errorfilesDir\n";
 	   print LOG "mkdir $errorfilesDir\n\n";
@@ -1083,16 +1084,16 @@ if(! -f "$genome"){
     print LOG "$cmdString\n\n";
     chdir $rootDir or die ("Could not change into directory $rootDir.\n");
 
-    if($skipAllTraining==0){
+    if($skipAllTraining==0) {
         new_species();  # create new species parameter files; we do this FIRST, before anything else, 
                         # because if you start several processes in parallel, you might otherwise end 
                         # up with those processes using the same species directory!
-    }else{
+    } else {
         # if no training will be executed, check whether species parameter files exist
         my $specPath = "$AUGUSTUS_CONFIG_PATH/species/$species/$species"."_";
         my @confFiles = ("exon_probs.pbl", "igenic_probs.pbl", "intron_probs.pbl", "metapars.cfg", "parameters.cfg", "weightmatrix.txt");
-        foreach(@confFiles){
-            if(not(-e "$specPath"."$_")){		
+        foreach(@confFiles) {
+            if(not(-e "$specPath"."$_")) {		
                 $prtStr = "\# ".(localtime).": ERROR: Config file $specPath"."$_ for species $species ";
                 $prtStr .= "does not exist!\n";
                 print LOG $prtStr;
@@ -1100,10 +1101,10 @@ if(! -f "$genome"){
                 exit(1);
             }
         }
-        if($UTR eq "on"){
+        if($UTR eq "on") {
             @confFiles = ("metapars.utr.cfg", "utr_probs.pbl");
-            foreach(@confFiles){
-                if(not(-e "$specPath"."$_")){
+            foreach(@confFiles) {
+                if(not(-e "$specPath"."$_")) {
                     $prtStr = "\# ".(localtime).": ERROR: Config file $specPath"."$_ for species $species ";
                     $prtStr .= "does not exist!\n";
                     print LOG $prtStr;
@@ -1115,8 +1116,8 @@ if(! -f "$genome"){
     }
 
     check_fasta_headers($genome); # check fasta headers
-    if(@prot_seq_files){
-        foreach(@prot_seq_files){
+    if(@prot_seq_files) {
+        foreach(@prot_seq_files) {
             check_fasta_headers($_);
         }
     }
@@ -1124,31 +1125,31 @@ if(! -f "$genome"){
     # can also handle other hints types
     $hintsfile = "$otherfilesDir/hintsfile.gff";
     $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
-    if($EPmode==0){
+    if($EPmode==0) {
         make_rna_seq_hints();         # make hints from RNA-Seq
     }
-    if(@prot_seq_files or @prot_aln_files){
+    if(@prot_seq_files or @prot_aln_files) {
         make_prot_hints();
     }
-    if(@hints){
+    if(@hints) {
         add_other_hints();
     }
-    if(@prot_seq_files or @prot_aln_files or @hints){
+    if(@prot_seq_files or @prot_aln_files or @hints) {
         separateHints();
-    }else{
+    } else {
         print LOG "\# ".(localtime).":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
         $cmdString = "ln -s $hintsfile $genemark_hintsfile";
         print LOG "$cmdString\n";
         system($cmdString)==0 or die("failed to execute: $cmdString!\n");
     }
 
-    if($skipAllTraining==0){
-        if(not($trainFromGth)){
-            if($EPmode==0){
+    if($skipAllTraining==0) {
+        if(not($trainFromGth)) {
+            if($EPmode==0) {
                 checkGeneMarkHints();
                 GeneMark_ET();            # run GeneMark-ET
                 filterGeneMark();
-            }elsif($EPmode==1){
+            }elsif($EPmode==1) {
                 # remove reformatting of hintsfile, later!
                 format_ep_hints();
                 checkGeneMarkHints();
@@ -1162,24 +1163,24 @@ if(! -f "$genome"){
 
     # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking 
     # option is used
-    if(!defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && $soft_mask)){
+    if(!defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && $soft_mask)) {
         extrinsic(); # use default extrinsic file
     }
     # copy extrinsic file to species parameters directory
-    if(defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg") || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg")){
+    if(defined($extrinsicCfgFile) || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg") || (!defined($extrinsicCfgFile) && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg")) {
         # using cfg files from AUGUSTUS_CONFIG_PATH has higher priority than from set_AUGUSTUS_BIN_PATH
-        if(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"){
+        if(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg") {
             $extrinsicCfgFile = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-        }elsif(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg"){
+        }elsif(!defined($extrinsicCfgFile) && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg") {
             $extrinsicCfgFile = "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg";
         }
         @_ = split(/\//, $extrinsicCfgFile);
-        if(!uptodate([$extrinsicCfgFile],["$parameterDir/$species/".$_[-1]])  || $overwrite){	
+        if(!uptodate([$extrinsicCfgFile],["$parameterDir/$species/".$_[-1]])  || $overwrite) {	
             $cmdString = "";
-            if($nice){
+            if($nice) {
                $cmdString .= "nice ";
             }
-            if(not(-d "$parameterDir/$species/")){
+            if(not(-d "$parameterDir/$species/")) {
                 mkdir "$parameterDir/$species/";
             }   
             $cmdString .= "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
@@ -1190,22 +1191,22 @@ if(! -f "$genome"){
     }
 
     augustus("off"); # run augustus witout UTR
-    if($ab_initio){
-        if(!uptodate(["$otherfilesDir/augustus.ab_initio.gff"],["$otherfilesDir/augustus.ab_initio.aa"])  || $overwrite){
+    if($ab_initio) {
+        if(!uptodate(["$otherfilesDir/augustus.ab_initio.gff"],["$otherfilesDir/augustus.ab_initio.aa"])  || $overwrite) {
             getAnnoFasta("$otherfilesDir/augustus.ab_initio.gff"); # create protein sequence file
         }
-        if(!uptodate(["$otherfilesDir/augustus.ab_initio.gff"],["$otherfilesDir/augustus.ab_initio.gtf"])  || $overwrite){
+        if(!uptodate(["$otherfilesDir/augustus.ab_initio.gff"],["$otherfilesDir/augustus.ab_initio.gtf"])  || $overwrite) {
             make_gtf("$otherfilesDir/augustus.ab_initio.gff"); # convert output to gtf and gff3 (if desired) format
         }
     }
-    if(!uptodate(["$otherfilesDir/augustus.hints.gff"],["$otherfilesDir/augustus.hints.aa"])  || $overwrite){
+    if(!uptodate(["$otherfilesDir/augustus.hints.gff"],["$otherfilesDir/augustus.hints.aa"])  || $overwrite) {
         getAnnoFasta("$otherfilesDir/augustus.hints.gff"); # create protein sequence file
     }
-    if(!uptodate(["$otherfilesDir/augustus.hints.gff"],["$otherfilesDir/augustus.hints.gtf"])  || $overwrite){
+    if(!uptodate(["$otherfilesDir/augustus.hints.gff"],["$otherfilesDir/augustus.hints.gtf"])  || $overwrite) {
         make_gtf("$otherfilesDir/augustus.hints.gff"); # convert output to gtf and gff3 (if desired) format
     }
 
-    if($UTR eq "on"){
+    if($UTR eq "on") {
         train_utr();
     }
 
@@ -1225,19 +1226,19 @@ sub make_rna_seq_hints{
     my $bam_hints;
     my $hintsfile_temp = "$otherfilesDir/hintsfile.temp.gff";
     # from RNA-Seq data in bam format
-    if(@bam){
+    if(@bam) {
         my $bam_temp = "$otherfilesDir/bam2hints.temp.gff";
-        for(my $i=0; $i<scalar(@bam); $i++){
+        for(my $i=0; $i<scalar(@bam); $i++) {
             $errorfile = "$errorfilesDir/bam2hints.$i.stderr";
-            if(!uptodate([$bam[$i]],[$hintsfile])  || $overwrite){
+            if(!uptodate([$bam[$i]],[$hintsfile])  || $overwrite) {
                 $bam[$i] = check_bam_headers($bam[$i]);
-                if(-e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints"){
+                if(-e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints") {
                     $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
-                }else{
+                } else {
                     $augpath = "$AUGUSTUS_BIN_PATH/bam2hints";
                 }
                 $cmdString = "";
-                if($nice){
+                if($nice) {
                     $cmdString .= "nice ";
                 }
                 $cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
@@ -1245,7 +1246,7 @@ sub make_rna_seq_hints{
                 print LOG "$cmdString\n\n";
                 system("$cmdString")==0 or die("Failed to execute: $cmdString!\n");
                 $cmdString = "";
-                if($nice){
+                if($nice) {
                     $cmdString .= "nice ";
                 }
                 $cmdString .= "cat $bam_temp >>$hintsfile_temp";
@@ -1256,15 +1257,15 @@ sub make_rna_seq_hints{
         }
         unlink($bam_temp);
     }
-    if(-f $hintsfile_temp || $overwrite){
-        if(!uptodate([$hintsfile_temp],[$hintsfile]) || $overwrite){
+    if(-f $hintsfile_temp || $overwrite) {
+        if(!uptodate([$hintsfile_temp],[$hintsfile]) || $overwrite) {
             join_mult_hints($hintsfile_temp, "rnaseq");
         }
-        if(!uptodate([$hintsfile_temp],[$hintsfile]) || $overwrite){
+        if(!uptodate([$hintsfile_temp],[$hintsfile]) || $overwrite) {
             $string = find("filterIntronsFindStrand.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
             $errorfile = "$errorfilesDir/filterIntronsFindStrand.stderr";
             $perlCmdString = "";
-            if($nice){
+            if($nice) {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string $genome $hintsfile_temp --score 1>$hintsfile 2>$errorfile";
@@ -1274,7 +1275,7 @@ sub make_rna_seq_hints{
             print LOG "\# ".(localtime).": rm $hintsfile_temp\n";
             unlink($hintsfile_temp);
         }
-        if(-z $hintsfile){
+        if(-z $hintsfile) {
             $prtStr = "\# ".(localtime).": ERROR: The hints file is empty. Maybe the genome and the ";
             $prtStr .= "RNA-seq file do not belong together.\n";
             print LOG $prtStr;
@@ -1295,46 +1296,46 @@ sub make_prot_hints{
     print LOG "$cmdString\n";
     chdir $otherfilesDir or die ("Failed to execute $cmdString!\n");
     # from fasta files
-    if(@prot_seq_files && $EPmode==0){
+    if(@prot_seq_files && $EPmode==0) {
         $string = find("startAlign.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         $errorfile = "$errorfilesDir/startAlign.stderr";
         $logfile = "$errorfilesDir/startAlign.stdout";
-        for(my $i=0; $i<scalar(@prot_seq_files); $i++){
-            if(!uptodate([$prot_seq_files[$i]],[$prot_hintsfile])  || $overwrite){
+        for(my $i=0; $i<scalar(@prot_seq_files); $i++) {
+            if(!uptodate([$prot_seq_files[$i]],[$prot_hintsfile])  || $overwrite) {
                 $perlCmdString = "";
-                if($nice){
+                if($nice) {
                     $perlCmdString .= "nice ";
                 }
                 $perlCmdString .= "perl $string --genome=$genome --prot=$prot_seq_files[$i] --ALIGNMENT_TOOL_PATH=$ALIGNMENT_TOOL_PATH ";
-                if($prg eq "gth"){
+                if($prg eq "gth") {
                     $perlCmdString .= "--prg=gth ";
                     print LOG "\n\# ".(localtime).": running Genome Threader to produce protein to ";
                     print LOG "genome alignments\n";
-                }elsif($prg eq "exonerate"){
+                }elsif($prg eq "exonerate") {
                     $perlCmdString .= "--prg=exonerate ";
                     print LOG "\n\# ".(localtime).": running Exonerate to produce protein to ";
                     print LOG "genome alignments\n";
-                }elsif($prg eq "spaln"){
+                }elsif($prg eq "spaln") {
                     $perlCmdString .= "--prg=spaln ";
                     print LOG "\n\# ".(localtime).": running Spaln to produce protein to ";
                     print LOG "genome alignments\n";
                 }
-                if($CPU>1){
+                if($CPU>1) {
                     $perlCmdString .= "--CPU=$CPU ";
                 }
-                if($nice){
+                if($nice) {
                     $perlCmdString .= "--nice ";
                 }
                 $perlCmdString .= ">> $logfile 2>>$errorfile";
                 print LOG "$perlCmdString\n\n";
                 system("$perlCmdString")==0 or die ("failed to execute: $perlCmdString!\n");
                 print LOG "\# ".(localtime).": Alignments from file $prot_seq_files[$i] created.\n";
-                if(-s "$otherfilesDir/align_$prg/$prg.concat.aln"){
+                if(-s "$otherfilesDir/align_$prg/$prg.concat.aln") {
                     $cmdString = "cat $otherfilesDir/align_$prg/$prg.concat.aln >> $alignment_outfile";    
                     print LOG "\# ".(localtime).": concatenating alignment file to $alignment_outfile\n";
                     print LOG "$cmdString\n\n";
                     system("$cmdString")==0 or die("Failed to execute $cmdString!\n");
-                }else{
+                } else {
                     print LOG "\# ".(localtime).": alignment file ";
                     print LOG "$otherfilesDir/align_$prg/$prg.concat.aln in round $i ";
                     print LOG "was empty.\n";
@@ -1349,14 +1350,14 @@ sub make_prot_hints{
                 $cmdString = "mv align_$prg align_$prg$i";
                 print LOG "$cmdString\n";
                 system("$cmdString")==0 or die("Failed to execute: $cmdString!\n\n");  
-            }else{
+            } else {
                 $prtStr = "\# ".(localtime).": Skipping running alignment tool ";
                 $prtStr .= "because files $prot_seq_files[$i] and $prot_hintsfile ";
                 $prtStr .= "were up to date.\n";
                 print LOG $prtStr;
             }  
         }
-    }elsif(@prot_seq_files && $EPmode==1){
+    }elsif(@prot_seq_files && $EPmode==1) {
         $prtStr = "\# ".(localtime).": ERROR: Running ProSplign from within ";
         $prtStr .= "braker.pl is currently not supported. For running braker.pl ";
         $prtStr .= "with GeneMark-EP, please provide --hints=intronhints.gff file!";
@@ -1366,11 +1367,11 @@ sub make_prot_hints{
         exit(1);
     }
     # convert pipeline created protein alignments to protein hints
-    if(@prot_seq_files && -e $alignment_outfile){
-        if(!uptodate([$alignment_outfile], [$prot_hintsfile]) || $overwrite){
-            if(-s $alignment_outfile && $EPmode==0){
+    if(@prot_seq_files && -e $alignment_outfile) {
+        if(!uptodate([$alignment_outfile], [$prot_hintsfile]) || $overwrite) {
+            if(-s $alignment_outfile && $EPmode==0) {
                 aln2hints($alignment_outfile, $prot_hints_file_temp);
-            }elsif(-s $alignment_outfile && $EPmode==1){
+            }elsif(-s $alignment_outfile && $EPmode==1) {
                 $prtStr = "\# ".(localtime).": ERROR: Conversion of ProSplign alignments within ";
                 $prtStr .= "braker.pl is currently not supported. To run braker.pl with ";
                 $prtStr .= "GeneMark-EP, please provide --hints=intronhints.gff! Aborting ";
@@ -1378,7 +1379,7 @@ sub make_prot_hints{
                 print LOG $prtStr;
                 print STDERR $prtStr;		
                 exit(1);
-            }else{		
+            } else {		
                 print LOG "\# ".(localtime).": Alignment out file $alignment_outfile with ";
                 print LOG "protein alignments is empty. Not producing any hints from protein";
                 print LOG " input sequences.\n";
@@ -1386,17 +1387,17 @@ sub make_prot_hints{
         }
     }
     # convert command line specified protein alignments to protein hints
-    if(@prot_aln_files && $EPmode==0){
-        for(my $i=0; $i<scalar(@prot_aln_files); $i++){
-            if(!uptodate([$prot_aln_files[$i]], [$prot_hintsfile]) || $overwrite){
+    if(@prot_aln_files && $EPmode==0) {
+        for(my $i=0; $i<scalar(@prot_aln_files); $i++) {
+            if(!uptodate([$prot_aln_files[$i]], [$prot_hintsfile]) || $overwrite) {
                 aln2hints($prot_aln_files[$i], $prot_hints_file_temp);
-            }else{
+            } else {
             print LOG "\# ".(localtime).": Skipped converting alignment file ";
             print LOG "$prot_aln_files[$i] to hints because it was up to date with ";
             print LOG "$prot_hintsfile\n";
             }
         }
-    }elsif(@prot_aln_files && $EPmode==1){
+    }elsif(@prot_aln_files && $EPmode==1) {
         $prtStr = "\# ".(localtime).": ERROR: Conversion of ProSplign alignments within ";
         $prtStr .= "braker.pl is currently not supported. To run braker.pl with GeneMark-EP, ";
         $prtStr .= "please provide --hints=intronhints.gff! Aborting braker.pl!\n";
@@ -1405,8 +1406,8 @@ sub make_prot_hints{
         exit(1);
     }
     # appending protein hints to $hintsfile (combined with RNA_Seq if available)
-    if(-f $prot_hints_file_temp || $overwrite){
-        if(!uptodate([$prot_hints_file_temp],[$prot_hintsfile])|| $overwrite){
+    if(-f $prot_hints_file_temp || $overwrite) {
+        if(!uptodate([$prot_hints_file_temp],[$prot_hintsfile])|| $overwrite) {
             join_mult_hints($prot_hints_file_temp, "prot");
             print LOG "\# ".(localtime).": moving $prot_hints_file_temp to $prot_hintsfile\n";
             $cmdString = "mv $prot_hints_file_temp $prot_hintsfile";
@@ -1436,16 +1437,16 @@ sub make_prot_hints{
             unlink($toBeSortedHintsFile);
         }
     }
-    if(-z $prot_hintsfile){
+    if(-z $prot_hintsfile) {
         $prtStr = "\n\# ".(localtime)." ERROR: The hints file is empty. There were no protein ";
         $prtStr .= "alignments.\n";
         print LOG $prtStr;
         print STDERR $prtStr;
         exit(1);
     }
-    if($gth2traingenes){
-        if(@prot_aln_files){
-            foreach(@prot_aln_files){
+    if($gth2traingenes) {
+        if(@prot_aln_files) {
+            foreach(@prot_aln_files) {
                 $cmdString = "cat $_ >> $alignment_outfile";
                 print LOG "\n\# ".(localtime).": Concatenating protein alignment input file $_ to ";
                 print LOG "$alignment_outfile\n";
@@ -1459,15 +1460,15 @@ sub make_prot_hints{
 
 # adding externally created hints
 sub add_other_hints{
-    if(@hints){
+    if(@hints) {
         # have "uptodate" issues at this point, removed it... maybe fix later
-        for(my $i=0; $i<scalar(@hints); $i++){
+        for(my $i=0; $i<scalar(@hints); $i++) {
             # find Strand, set multiplicity for GeneMark
             my $filteredHintsFile = "$otherfilesDir/filtered_hints_$i.gff";
             $string = find("filterIntronsFindStrand.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
             $errorfile = "$errorfilesDir/filterIntronsFindStrand_userHints_$i.stderr";
             $perlCmdString = "";
-            if($nice){
+            if($nice) {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string $genome $hints[$i] --score 1> $filteredHintsFile 2>$errorfile";
@@ -1476,7 +1477,7 @@ sub add_other_hints{
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString")==0 or die("failed to execute: $perlCmdString!\n");
             $cmdString = "";
-            if($nice){
+            if($nice) {
                 $cmdString .= "nice ";
             }
             $cmdString .= "cat $filteredHintsFile >> $hintsfile";
@@ -1491,9 +1492,9 @@ sub add_other_hints{
 # checks which hint types are present in the hintsfile that will be used for running AUGUSTUS
 sub identifyHintTypes{
     open(HINTS, "<", $hintsfile) or die ("Could not open hints file $hintsfile!\n");
-    while(<HINTS>){
+    while(<HINTS>) {
         $_=~m/src=(\w)/;
-        if(not(defined($hintTypes{$1}))){
+        if(not(defined($hintTypes{$1}))) {
             $hintTypes{$1} = 1;
         }
     }
@@ -1506,7 +1507,7 @@ sub checkHints{
     my $thisHintsFile = shift;
     my @areb2h = `cut -f 2 $thisHintsFile | grep b2h`;
     my $ret = 0;
-    if(scalar(@areb2h>0)){
+    if(scalar(@areb2h>0)) {
         $ret = 1;
     }
     return $ret;
@@ -1520,20 +1521,20 @@ sub separateHints{
     print LOG "intron\n";
     print LOG "cut -f 3 $hintsfile | grep -m 1 -v intron\n";
     my @notIntron = `cut -f 3 $hintsfile | grep -m 1 -v intron`;
-    if(not(scalar(@notIntron)==0)){
+    if(not(scalar(@notIntron)==0)) {
         print LOG "\n\# ".(localtime).":  Hint types other than intron are contained in ";
         print LOG "$hintsfile\nExtracting intron hints for GeneMark.\n";
         # if ET mode, take only RNA-Seq introns, src b2h
-        if($EPmode==0){
+        if($EPmode==0) {
             $cmdString = "grep intron $hintsfile | grep b2h > $genemark_hintsfile";
-        }else{
+        } else {
             # FIX THIS ONCE GENEMARK OUTPUTS CORRECT HINTS FORMAT: # FIX Intron to intron
             # if in EP mode, take ProSplign intron hints
             $cmdString = "grep Intron $hintsfile | grep ProSplign > $genemark_hintsfile"; 
         }
         print LOG "$cmdString\n\n";
         system($cmdString)==0 or die("Failed to execute: $cmdString\n");
-    }else{
+    } else {
         print LOG "\n\# ".(localtime).":  No other hint types found. Creating softlink from ";
         print LOG "$genemark_hintsfile to $hintsfile\n";
         $cmdString = "ln -s $hintsfile $genemark_hintsfile";
@@ -1546,22 +1547,22 @@ sub separateHints{
 
 sub aln2hints{
     my $aln_file = shift;
-    if(! (-z $aln_file)){
+    if(! (-z $aln_file)) {
         my $out_file_name = "$otherfilesDir/prot_hintsfile.aln2hints.temp.gff";
         my $final_out_file = shift;
         print LOG "\n\# ".(localtime).": Converting protein alignment file $aln_file to hints for ";
         print LOG "AUGUSTUS\n";
         $perlCmdString = "perl ";
-        if($nice){
+        if($nice) {
             $perlCmdString .= "nice ";
         }
         $string = find("align2hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         $perlCmdString .= "$string --in=$aln_file --out=$out_file_name ";
-        if($prg eq "spaln"){
+        if($prg eq "spaln") {
             $perlCmdString .= "--prg=spaln";
-        }elsif($prg eq "gth"){
+        }elsif($prg eq "gth") {
             $perlCmdString .= "--prg=gth";
-        }elsif($prg eq "exonerate"){
+        }elsif($prg eq "exonerate") {
             $perlCmdString .= "--prg=exonerate --genome_file=$genome";
         }
         print LOG "$perlCmdString\n";
@@ -1570,7 +1571,7 @@ sub aln2hints{
         print LOG "\n\# ".(localtime).": concatenating protein hints from $out_file_name to $final_out_file\n";
         print LOG $cmdString."\n";
         system("$cmdString")==0 or die ("Failed to execute: $cmdString\n");
-    }else{
+    } else {
         print "Alignment file $aln_file was empty!\n";
         print LOG "\# ".(localtime).": Alignment file $aln_file was empty!\n";
     }
@@ -1581,7 +1582,7 @@ sub join_mult_hints{
     my $type = shift; # rnaseq or prot or whatever will follow
     my $hintsfile_temp_sort = "$otherfilesDir/hints.$type.temp.sort.gff";
     $cmdString = "";
-    if($nice){
+    if($nice) {
         $cmdString .= "nice ";
     }
     $cmdString .= "cat $hints_file_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
@@ -1591,7 +1592,7 @@ sub join_mult_hints{
     $string = find("join_mult_hints.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     $errorfile = "$errorfilesDir/join_mult_hints.$type.stderr";
     $perlCmdString = "";
-    if($nice){
+    if($nice) {
         $perlCmdString .= "nice ";
     }
     $perlCmdString .= "perl $string <$hintsfile_temp_sort >$hints_file_temp 2>$errorfile";
@@ -1609,19 +1610,19 @@ sub checkGeneMarkHints{
     print LOG "\n\# ".(localtime).": Checking whether file $genemark_hintsfile contains ";
     print LOG "sufficient multiplicity information...\n";
     open(GH, "<", $genemark_hintsfile) or die ("Could not open file $genemark_hintsfile!\n");
-    while(<GH>){
+    while(<GH>) {
         my @line = split(/\t/);
-        if(scalar(@line)==9){
+        if(scalar(@line)==9) {
             $nIntrons++;
-            if($line[5] =~ m/(\d+)/){
-                if($1 >= $GeneMarkIntronThreshold){
+            if($line[5] =~ m/(\d+)/) {
+                if($1 >= $GeneMarkIntronThreshold) {
                     $nIntronsAboveThreshold++;
                 }
             }
         }
     }
     close(GH) or die ("Could not close file $genemark_hintsfile!\n");
-    if($nIntronsAboveThreshold < 1000){
+    if($nIntronsAboveThreshold < 1000) {
        $prtStr = "\# ".(localtime).": ERROR: The file $genemark_hintsfile contains less than 1000 ";
         $prtStr .= "introns with multiplicity >= $GeneMarkIntronThreshold! (In total, $nIntrons unique ";
         $prtStr .= "introns are contained.) Possibly, you are trying to run braker.pl on data that ";
@@ -1637,8 +1638,8 @@ sub checkGeneMarkHints{
 
 # start GeneMark-ET and convert its output to real gtf format
 sub GeneMark_ET{
-    if(!$skipGeneMarkET){
-        if(!uptodate([$genome,$genemark_hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
+    if(!$skipGeneMarkET) {
+        if(!uptodate([$genome,$genemark_hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite) {
             $cmdString = "cd $genemarkDir";
             print LOG "\n\# ".(localtime).": changing into GeneMark-ET directory $genemarkDir\n";
             print LOG "$cmdString\n\n";
@@ -1647,15 +1648,15 @@ sub GeneMark_ET{
             $errorfile = "$errorfilesDir/GeneMark-ET.stderr";
             $stdoutfile = "$otherfilesDir/GeneMark-ET.stdout";
             $perlCmdString = "";
-            if($nice){
+            if($nice) {
                 $perlCmdString .= "nice ";
             }
             # consider removing --verbose, later
             $perlCmdString .= "perl $string --verbose --sequence=$genome --ET=$genemark_hintsfile --cores=$CPU"; 
-            if($fungus){
+            if($fungus) {
                 $perlCmdString .= " --fungus";
             }
-            if($soft_mask){
+            if($soft_mask) {
             $perlCmdString .= " --soft_mask 1000"; # version prior to 4.29, apparently also in version 4.33
             #		$perlCmdString .= " --soft 1000"; # version 4.29
             }
@@ -1672,8 +1673,8 @@ sub GeneMark_ET{
 }
 
 sub GeneMark_EP{
-    if(!$skipGeneMarkEP){
-        if(!uptodate([$genome,$genemark_hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite){
+    if(!$skipGeneMarkEP) {
+        if(!uptodate([$genome,$genemark_hintsfile],["$genemarkDir/genemark.gtf"])  || $overwrite) {
             $cmdString = "cd $genemarkDir";
             print LOG "\n\# ".(localtime).": changing into GeneMark-EP directory $genemarkDir\n";
             print LOG "$cmdString\n\n";
@@ -1682,14 +1683,14 @@ sub GeneMark_EP{
             $errorfile = "$errorfilesDir/GeneMark-EP.stderr";
             $stdoutfile = "$otherfilesDir/GeneMark-EP.stdout";
             $perlCmdString = "";
-            if($nice){
+            if($nice) {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string --verbose --sequence $genome --max_intergenic 50000 --EP $genemark_hintsfile --cores=$CPU";
-            if($fungus){
+            if($fungus) {
                 $perlCmdString .= " --fungus";
             }
-            if($soft_mask){
+            if($soft_mask) {
                 $perlCmdString .= " --soft 1000";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
@@ -1706,18 +1707,18 @@ sub GeneMark_EP{
 
 sub filterGeneMark{
     # convert GeneMark output to gtf format with doublequotes (for older GeneMark versions) and filter genes for training
-    if(!uptodate(["$genemarkDir/genemark.gtf", $hintsfile],["$genemarkDir/genemark.c.gtf","$genemarkDir/genemark.f.good.gtf", "$genemarkDir/genemark.average_gene_length.out"])  || $overwrite){
+    if(!uptodate(["$genemarkDir/genemark.gtf", $hintsfile],["$genemarkDir/genemark.c.gtf","$genemarkDir/genemark.f.good.gtf", "$genemarkDir/genemark.average_gene_length.out"])  || $overwrite) {
         print LOG "\# ".(localtime).": converting GeneMark output to gtf format\n"; 
         $string=find("filterGenemark.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         $errorfile = "$errorfilesDir/filterGenemark.stderr";
         $stdoutfile = "$otherfilesDir/filterGenemark.stdout";
         $perlCmdString = "";
-        if($nice){
+        if($nice) {
             $perlCmdString .= "nice ";
         }
-        if(!$filterOutShort){
+        if(!$filterOutShort) {
             $perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
-        }else{
+        } else {
             print LOG "\# ".(localtime).": Option activated: Filtering out training genes from GeneMark that are too short (upstream intron)\n";
             $perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --filterOutShort 1>$stdoutfile 2>$errorfile";
         }
@@ -1730,26 +1731,26 @@ sub filterGeneMark{
 # create a new species $species and extrinsic file from generic one 
 sub new_species{
     $augpath = "$AUGUSTUS_CONFIG_PATH/species/$species";
-    if((!uptodate([$augpath."/$species\_metapars.cfg"],[$augpath."/$species\_parameters.cfg", $augpath."/$species\_exon_probs.pbl"]) && !$useexisting) || ! -d "$AUGUSTUS_CONFIG_PATH/species/$species"){
-        if(-d "$AUGUSTUS_CONFIG_PATH/species"){
-            if(-w "$AUGUSTUS_CONFIG_PATH/species"){
+    if((!uptodate([$augpath."/$species\_metapars.cfg"],[$augpath."/$species\_parameters.cfg", $augpath."/$species\_exon_probs.pbl"]) && !$useexisting) || ! -d "$AUGUSTUS_CONFIG_PATH/species/$species") {
+        if(-d "$AUGUSTUS_CONFIG_PATH/species") {
+            if(-w "$AUGUSTUS_CONFIG_PATH/species") {
                 $string=find("new_species.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
                 $errorfile = "$errorfilesDir/new_species.stderr";
                 $perlCmdString = "";
-                if($nice){
+                if($nice) {
                     $perlCmdString .= "nice ";
                 }
                 $perlCmdString .= "perl $string --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH 1> /dev/null 2>$errorfile";
                 print LOG "\# ".(localtime).": create new species $species in $AUGUSTUS_CONFIG_PATH/species\n";
                 print LOG "$perlCmdString\n\n";
                 system("$perlCmdString")==0 or die("Failed to create new species with new_species.pl, check write permissions in $AUGUSTUS_CONFIG_PATH/species directory! Command was $perlCmdString\n");
-            }else{
+            } else {
                 $prtStr = "\# ".(localtime).": ERROR: Directory $AUGUSTUS_CONFIG_PATH/species is not writable! You must make the directory AUGUSTUS_CONFIG_PATH/species writable or specify another AUGUSTUS_CONFIG_PATH!\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
             }
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": Directory $AUGUSTUS_CONFIG_PATH/species does not exist. Please check that AUGUSTUS_CONFIG_PATH is set, correctly!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
@@ -1764,20 +1765,20 @@ sub new_species{
 sub extrinsic{
     my $extrinsic;
     my $string = find("extrinsic.M.RM.E.W.P.cfg", $AUGUSTUS_BIN_PATH, "$AUGUSTUS_CONFIG_PATH/extrinsic" , $AUGUSTUS_CONFIG_PATH);
-    if(-e $string){
+    if(-e $string) {
         $extrinsic = $string;
         print LOG "\# ".(localtime).": Will use $string as template for this project's extrinsic.cfg\n";
-    }else{
+    } else {
         print LOG "\# ".(localtime)." ERROR: Cannot find extrinsic template file extrinsic.M.RM.E.W.P.cfg in BRAKER2 directory or $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg.\n";
         die "Cannot find extrinsic template file extrinsic.M.RM.E.W.P.cfg in BRAKER2 directory or $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg.\n";
     }
     my $extrinsic_cp = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-    if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -e $extrinsicCfgFile) ){
-        if(!defined($extrinsicCfgFile)){
+    if(!defined($extrinsicCfgFile) || (defined($extrinsicCfgFile) && ! -e $extrinsicCfgFile) ) {
+        if(!defined($extrinsicCfgFile)) {
             print LOG "\# ".(localtime).": No extrinsic file assigned. Program will create one.\n";
             identifyHintTypes(); # checks which hint types occur in the hintsfile for AUGUSTUS $hintsfile, stores in %hintTypes
         }
-        if(! -e $extrinsic_cp){
+        if(! -e $extrinsic_cp) {
             # braker.pl heavily depends on the correct format of the template extrinsic.cfg file (e.g. order of columns,
             # number of bonus per source, etc.
             print LOG "\# ".(localtime).": create extrinsic file\n";
@@ -1787,25 +1788,25 @@ sub extrinsic{
             my $bonus_idx = $standard; # 0 => 1e1  (currently standard)
             my $malus_idx = $standard; # 0 => 0.1  (currently standard)
             my $sourcesSeen = 0;
-            while(<EXTRINSIC>){
-                if(($_=~m/^\#/) or ($_=~m/^\n$/)){
+            while(<EXTRINSIC>) {
+                if(($_=~m/^\#/) or ($_=~m/^\n$/)) {
                     print OUT $_;
-                }elsif($_=~m/^\[SOURCES\]/){
+                }elsif($_=~m/^\[SOURCES\]/) {
                     $sourcesSeen = 1;
                     print OUT $_;
-                }elsif($sourcesSeen==1){
+                }elsif($sourcesSeen==1) {
                     chomp;
                     # checking whether all hint types (e.g. E, W, P) that are present in the hints file to be used are also present in the config template file. Currently, braker.pl supports hints of type E, W, and P (and M). 
                     my @typesInCfg = split(" ", $_);
                     my %typesInCfgHash;
-                    foreach(@typesInCfg){
+                    foreach(@typesInCfg) {
                         chomp;
-                        if(not(defined($typesInCfgHash{$_}))){
+                        if(not(defined($typesInCfgHash{$_}))) {
                             $typesInCfgHash{$_} = 1;
                         }
                     }
                     foreach my $key (keys(%hintTypes)) {
-                        if(not(defined($typesInCfgHash{$key}))){
+                        if(not(defined($typesInCfgHash{$key}))) {
                             $prtStr = "\# ".(localtime)." ERROR: Hints file contains hints from type $key. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
                             print LOG $prtStr;
                             print STDERR $prtStr;
@@ -1814,21 +1815,21 @@ sub extrinsic{
                     }
                     $sourcesSeen=0;
                     print OUT $_."\n";
-                }elsif(($_=~m/^\[SOURCE-PARAMETERS\]/)or($_ =~ m/^\[GENERAL\]/)){
+                }elsif(($_=~m/^\[SOURCE-PARAMETERS\]/)or($_ =~ m/^\[GENERAL\]/)) {
                     print OUT $_;
-                }else{ # actual parameter lines
+                } else { # actual parameter lines
                     $_ =~ s/^\s+//; # remove whitespace before first field
                     my @line = split(/\s+/, $_);
                     # check whether order and number of columns in template extrinsic file are compatible with braker.pl of this version
-                    if(scalar(@line)==18){ # no local malus present
-                        if(not(($line[3]=~m/^M$/) and ($line[6]=~m/RM/) and ($line[9]=~m/E/) and ($line[12]=~m/W/) and ($line[15]=~m/P/))){
+                    if(scalar(@line)==18) { # no local malus present
+                        if(not(($line[3]=~m/^M$/) and ($line[6]=~m/RM/) and ($line[9]=~m/E/) and ($line[12]=~m/W/) and ($line[15]=~m/P/))) {
                             $prtStr = "\# ".(localtime)." ERROR: In extrinsic template file $extrinsic, column 4 does not contain M, and/or column 7 does not contain RM, and/or column 11 does not contain E and/or column 13 does not contain W and/or column 16 does not contain P. Aborting braker! (line without local malus)\n";
                             print LOG $prtStr;
                             print STDERR $prtStr;
                             exit(1);
                         }
-                    }else{ # local malus present, 19 columns
-                        if(not(($line[4]=~m/^M$/) and ($line[7]=~m/RM/) and ($line[10]=~m/E/) and ($line[13]=~m/W/) and ($line[16]=~m/P/))){
+                    } else { # local malus present, 19 columns
+                        if(not(($line[4]=~m/^M$/) and ($line[7]=~m/RM/) and ($line[10]=~m/E/) and ($line[13]=~m/W/) and ($line[16]=~m/P/))) {
                             $prtStr = "\# ".(localtime)." ERROR:In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 111 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line with local malus)\n"; 
                             print LOG $prtStr;
                             print STDERR $prtStr;
@@ -1836,194 +1837,194 @@ sub extrinsic{
                         }
                     }
                     # print template based parameter lines depending on combination of input hint types
-                    if($line[0] =~ m/start/){
-                        if(defined($hintTypes{P})){ # protein hints
+                    if($line[0] =~ m/start/) {
+                        if(defined($hintTypes{P})) { # protein hints
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($start_malus[$idx_start_p_malus],12);
-                            for (my $i=3; $i <= 16; $i++){
+                            for (my $i=3; $i <= 16; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg($start_p_bonus[$idx_start_p_bonus],8);
                             print OUT "\n";
-                        }else{ # no protein hints
+                        } else { # no protein hints
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,12);
-                            for (my $i=3; $i <= 16; $i++){
+                            for (my $i=3; $i <= 16; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg(1,8);
                             print OUT "\n";
                         }
-                    }elsif($line[0]=~m/stop/){
-                        if(defined($hintTypes{P})){ # protein hints
+                    }elsif($line[0]=~m/stop/) {
+                        if(defined($hintTypes{P})) { # protein hints
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($stop_malus[$idx_stop_p_malus],12);
-                            for (my $i=3; $i <= 16; $i++){
+                            for (my $i=3; $i <= 16; $i++) {
                             print OUT printCfg($line[$i], 8);
                         }
                         print OUT printCfg($stop_p_bonus[$idx_stop_p_bonus],8);
                         print OUT "\n";
-                    }else{ # no protein hints
+                    } else { # no protein hints
                         print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,12);
-                        for (my $i=3; $i <= 16; $i++){
+                        for (my $i=3; $i <= 16; $i++) {
                             print OUT printCfg($line[$i], 8);
                         }
                         print OUT printCfg(1,8);
                         print OUT "\n";
                     }
-                }elsif($line[0]=~m/ass/){
-                    if(defined($hintTypes{P})){
+                }elsif($line[0]=~m/ass/) {
+                    if(defined($hintTypes{P})) {
                         print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($ass_local_malus[$idx_ass_local_malus],6).printCfg($ass_malus[$idx_ass_malus], 6);
-                        for (my $i=4; $i <= 17; $i++){
+                        for (my $i=4; $i <= 17; $i++) {
                             print OUT printCfg($line[$i], 8);
                         }
                         print OUT printCfg($ass_p_bonus[$idx_ass_p_bonus],8);
                         print OUT "\n";
-                    }else{
+                    } else {
                         print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,6).printCfg(1,6);
-                        for (my $i=4; $i <= 17; $i++){
+                        for (my $i=4; $i <= 17; $i++) {
                             print OUT printCfg($line[$i], 8);
                         }
                         print OUT printCfg(1,8);
                         print OUT "\n";
                     }
-                }elsif($line[0]=~m/dss/){
-                    if(defined($hintTypes{P})){
+                }elsif($line[0]=~m/dss/) {
+                    if(defined($hintTypes{P})) {
                         print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($dss_local_malus[$idx_dss_local_malus],6).printCfg($dss_malus[$idx_dss_malus],6);
-                        for (my $i=4; $i <= 17; $i++){
+                        for (my $i=4; $i <= 17; $i++) {
                             print OUT printCfg($line[$i], 8);
                         }
                         print OUT printCfg($dss_p_bonus[$idx_dss_p_bonus],8);
                         print OUT "\n";
-                    }else{
+                    } else {
                         print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,6).printCfg(1,6);
-                        for (my $i=4; $i <= 17; $i++){
+                        for (my $i=4; $i <= 17; $i++) {
                             print OUT printCfg($line[$i], 8);
                         }
                         print OUT printCfg(1,8);
                         print OUT "\n"; 
                     }
-                }elsif($line[0]=~m/^exonpart$/){
-                    if(defined($hintTypes{W})){
+                }elsif($line[0]=~m/^exonpart$/) {
+                    if(defined($hintTypes{W})) {
                         print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($exonpart_local_malus[$idx_exonpart_local_malus],6).printCfg($exonpart_malus[$idx_exonpart_malus],6);
-                        for (my $i=4; $i <= 14; $i++){
+                        for (my $i=4; $i <= 14; $i++) {
                             print OUT printCfg($line[$i], 8);
                         }
                         print OUT printCfg($exonpart_w_bonus[$idx_exonpart_w_bonus],8);
-                        for (my $i=16; $i <= 18; $i++){
+                        for (my $i=16; $i <= 18; $i++) {
                             print OUT printCfg($line[$i], 8);
                         }
                         print OUT "\n";
-                        }else{
+                        } else {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,6).printCfg(1,6);
-                            for (my $i=4; $i <= 14; $i++){
+                            for (my $i=4; $i <= 14; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg(1,8);
-                            for (my $i=16; $i <= 18; $i++){
+                            for (my $i=16; $i <= 18; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT "\n";
                         }
-                    }elsif($line[0]=~m/^exon$/){
-                        if(defined($hintTypes{P})){
+                    }elsif($line[0]=~m/^exon$/) {
+                        if(defined($hintTypes{P})) {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($exon_malus[$idx_exon_malus],12);
-                            for (my $i=3; $i <= 16; $i++){
+                            for (my $i=3; $i <= 16; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg($exon_p_bonus[$idx_exon_p_bonus],8);
                             print OUT "\n";
-                        }else{
+                        } else {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg(1,12);
-                            for (my $i=3; $i <= 16; $i++){
+                            for (my $i=3; $i <= 16; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg(1,8);
                             print OUT "\n";
                         }
-                    }elsif($line[0]=~m/^intron$/){
-                        if(defined($hintTypes{E}) && defined($hintTypes{P})){
+                    }elsif($line[0]=~m/^intron$/) {
+                        if(defined($hintTypes{E}) && defined($hintTypes{P})) {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($intron_malus[$idx_intron_malus],12);
-                            for (my $i=3; $i <= 10; $i++){
+                            for (my $i=3; $i <= 10; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg($intron_e_bonus[$idx_intron_e_bonus],8);
-                            for (my $i=12; $i <= 16; $i++){
+                            for (my $i=12; $i <= 16; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg($intron_p_bonus[$idx_intron_p_bonus],8);
                             print OUT "\n";
-                        }elsif(defined($hintTypes{P})){
+                        }elsif(defined($hintTypes{P})) {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($intron_malus[$idx_intron_malus],12);
-                            for (my $i=3; $i <= 10; $i++){
+                            for (my $i=3; $i <= 10; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg(1,8);
-                            for (my $i=12; $i <= 16; $i++){
+                            for (my $i=12; $i <= 16; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg($intron_p_bonus[$idx_intron_p_bonus],8);
                             print OUT "\n";
-                        }else{ # only hintTypes{E}
+                        } else { # only hintTypes{E}
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($intron_malus[$idx_intron_malus],12);
-                            for (my $i=3; $i <= 10; $i++){
+                            for (my $i=3; $i <= 10; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg($intron_e_bonus[$idx_intron_e_bonus],8);
-                            for (my $i=12; $i <= 16; $i++){
+                            for (my $i=12; $i <= 16; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg(1,8);
                             print OUT "\n";
                         }
-                    }elsif($line[0]=~m/CDSpart/){
-                        if(defined($hintTypes{P})){
+                    }elsif($line[0]=~m/CDSpart/) {
+                        if(defined($hintTypes{P})) {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg($cdspart_malus[$idx_cdspart_malus],6);
-                            for (my $i=4; $i <= 17; $i++){
+                            for (my $i=4; $i <= 17; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg($cdspart_p_bonus[$idx_cdspart_p_bonus],8);
                             print OUT "\n";
-                        }else{
+                        } else {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg(1,6);
-                            for (my $i=4; $i <= 17; $i++){
+                            for (my $i=4; $i <= 17; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg(1,8);
                             print OUT "\n";
                         }
-                    }elsif($line[0]=~m/UTRpart/){
-                        if(defined($hintTypes{W})){
+                    }elsif($line[0]=~m/UTRpart/) {
+                        if(defined($hintTypes{W})) {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg($utrpart_malus[$idx_utrpart_malus],6);
-                            for (my $i=4; $i <= 14; $i++){
+                            for (my $i=4; $i <= 14; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg($utrpart_w_bonus[$idx_utrpart_w_bonus],8);
-                            for (my $i=16; $i <= 18; $i++){
+                            for (my $i=16; $i <= 18; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT "\n";
-                        }else{
+                        } else {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg(1,6);
-                            for (my $i=4; $i <= 14; $i++){
+                            for (my $i=4; $i <= 14; $i++) {
                                 print OUT printCfg($line[$i], 8);
                             }
                             print OUT printCfg(1,8);
-                            for (my $i=16; $i <= 18; $i++){
+                            for (my $i=16; $i <= 18; $i++) {
                               print OUT printCfg($line[$i], 8);
                             }
                             print OUT "\n";
                         }
-                    }else{
-                        if(scalar(@line)==18){
+                    } else {
+                        if(scalar(@line)==18) {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],12);
-                        }else{
+                        } else {
                             print OUT printCfg($line[0], 11).printCfg($line[1], 7).printCfg($line[2],6).printCfg($line[3],6);
                         }
                         my $from;
-                        if(scalar(@line)==18){
+                        if(scalar(@line)==18) {
                             $from = 3;
-                        }else{
+                        } else {
                             $from = 4;
                         }
-                        for (my $i=$from; $i <= ($from+14); $i++){
+                        for (my $i=$from; $i <= ($from+14); $i++) {
                             print OUT printCfg($line[$i], 8);
                         }
                         print OUT "\n";
@@ -2033,11 +2034,11 @@ sub extrinsic{
             close(OUT) or die("Could not close extrinsic file $extrinsic_cp!\n");
             close(EXTRINSIC) or die("Could not close extrinsic file $extrinsic!\n");
             $extrinsicCfgFile = $extrinsic_cp;
-        }else{
+        } else {
             $extrinsicCfgFile = $extrinsic_cp;  
             print LOG "\# ".(localtime).": Found extrinsic.cfg $extrinsic_cp, will use this file!\n";
         }
-    }else{	    
+    } else {	    
         print LOG "\# ".(localtime).": No extrinsic file was created. Program uses assigned extrinsic file: $extrinsicCfgFile\n";
     }
 }
@@ -2047,7 +2048,7 @@ sub printCfg{
     my $field = shift;
     my $length = shift;
     my $nSpaces = $length - length($field);
-    if($nSpaces < 0){
+    if($nSpaces < 0) {
         print LOG "\# ".(localtime).": WARNING: Format error in extrinsic.cfg file. File will still be functional, but may look messy to human reader!\n";
         $nSpaces = 1;
     }
@@ -2060,38 +2061,38 @@ sub printCfg{
          ####################### train AUGUSTUS #########################
 # create genbank file and train AUGUSTUS parameters for given species
 sub training{
-    if(!$useexisting){
+    if(!$useexisting) {
         my $geneMarkGb = "$otherfilesDir/genemark.gb";
         my $gthGb = "$otherfilesDir/gth.gb";
-        if(not($trainFromGth)){
+        if(not($trainFromGth)) {
             # make genemark gb, but this is not the final file because gth genes may be added later
             gtf2gb("$genemarkDir/genemark.f.good.gtf", $geneMarkGb);
         }
 
-        if($gth2traingenes){
+        if($gth2traingenes) {
         print LOG "# Creating training genbank file from gth\n";
-        if(not($trainFromGth)){
+        if(not($trainFromGth)) {
             # find those genes in gth.gtf that overlap on genome level with genemark.gtf and print them                                                
             # not the most elegant data structure, FIX LATER!                                                                                                                                          
             my %gmGeneStarts;
             my %gmGeneStops;
             open(GMGTF, "<", "$genemarkDir/genemark.f.good.gtf") or die("Could not open file $genemarkDir/genemark.f.good.gtf!\n");
-            while(<GMGTF>){	       
+            while(<GMGTF>) {	       
                 chomp;
                 my @gtfLine = split(/\t/);
-                if(scalar(@gtfLine)==9){
+                if(scalar(@gtfLine)==9) {
                     my @lastCol = split(/;/, $gtfLine[8]);
                     my @geneId = split(/"/, $lastCol[1]); # geneId[1]
-                    if($gtfLine[2]=~m/start_codon/){
-                        if($gtfLine[6] eq "+"){
+                    if($gtfLine[2]=~m/start_codon/) {
+                        if($gtfLine[6] eq "+") {
                             $gmGeneStarts{$geneId[1]} = $gtfLine[3];
-                        }else{
+                        } else {
                             $gmGeneStops{$geneId[1]} = $gtfLine[4];
                         }
-                    }elsif($gtfLine[2]=~m/stop_codon/){
-                        if($gtfLine[6] eq "+"){
+                    }elsif($gtfLine[2]=~m/stop_codon/) {
+                        if($gtfLine[6] eq "+") {
                             $gmGeneStops{$geneId[1]} = $gtfLine[4];
-                        }else{
+                        } else {
                             $gmGeneStarts{$geneId[1]} = $gtfLine[3];
                         }
                     }
@@ -2102,16 +2103,16 @@ sub training{
             my %gthGeneStarts;
             my %gthGeneStops;
             my $gthGeneId;
-            while(<PROTALN>){
+            while(<PROTALN>) {
                 chomp;
                 my @gtfLine = split(/\t/);
-                if(scalar(@gtfLine)==9){
+                if(scalar(@gtfLine)==9) {
                     my @lastCol = split(/;/, $gtfLine[8]);
                     my @geneId = split(/=/, $lastCol[0]); # geneId[1]
-                    if(not(m/\#/)){
-                        if($gtfLine[2] eq "gene"){
+                    if(not(m/\#/)) {
+                        if($gtfLine[2] eq "gene") {
                             $gthGeneId=$geneId[1];
-                        }elsif($gtfLine[2] eq "mRNA"){
+                        }elsif($gtfLine[2] eq "mRNA") {
                             $gthGeneStarts{"$gtfLine[0]"."_".$gthGeneId."_".$geneId[1]} = $gtfLine[3];
                             $gthGeneStops{"$gtfLine[0]"."_".$gthGeneId."_".$geneId[1]} = $gtfLine[4];
                         }           
@@ -2122,7 +2123,7 @@ sub training{
             # read gth gtf to be filtered later
             open(GTHGTF, "<", $gthTrainGeneFile) or die ("Could not open file $gthTrainGeneFile!\n");
             my %gthGtf;		
-            while(<GTHGTF>){
+            while(<GTHGTF>) {
                 my @gtfLine  = split(/"/);		    
                 push(@{$gthGtf{$gtfLine[1]}}, $_);
             }		
@@ -2130,23 +2131,23 @@ sub training{
             my %discard;
             while(my($k, $v) = each %gthGeneStarts) {
                 # check whether gene overlaps with genemark genes
-                while(my($gmk, $gmv) = each %gmGeneStarts){
-                    if((($v >= $gmv) && ($v <= $gmGeneStops{$gmk})) or (($gthGeneStops{$k} >= $gmv) && ($gthGeneStops{$k} <= $gmGeneStops{$gmk}))){
+                while(my($gmk, $gmv) = each %gmGeneStarts) {
+                    if((($v >= $gmv) && ($v <= $gmGeneStops{$gmk})) or (($gthGeneStops{$k} >= $gmv) && ($gthGeneStops{$k} <= $gmGeneStops{$gmk}))) {
                         $discard{$k} = 1;
                         last;
                     }
                 }   
             }
             open(FILTEREDGTH, ">", "$gthTrainGeneFile.f") or die ("Could not open file $gthTrainGeneFile.f!\n");
-            while(my($k, $v) = each %gthGtf){
-                if(not(defined($discard{$k}))){
-                    foreach(@{$v}){			   
+            while(my($k, $v) = each %gthGtf) {
+                if(not(defined($discard{$k}))) {
+                    foreach(@{$v}) {			   
                         print FILTEREDGTH $_;
                     }
                 }
             }
             close(FILTEREDGTH) or die ("Could not close file $gthTrainGeneFile.f!\n");
-        }else{
+        } else {
             $cmdString = "ln -s $gthTrainGeneFile $gthTrainGeneFile.f";
             print LOG "$cmdString\n\n";
             system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
@@ -2159,7 +2160,7 @@ sub training{
         $errorfile = "$errorfilesDir/gthFilterEtraining.stderr";
         $stdoutfile = "$otherfilesDir/gthFilterEtraining.stdout";
         $cmdString = "";
-        if($nice){
+        if($nice) {
             $cmdString .= "nice ";
         }
         # species is irrelevant! Use fly.
@@ -2169,8 +2170,8 @@ sub training{
         system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
         open(ERRS, "<", $errorfile) or die("Could not open file $errorfile!\n");
         open(BADS, ">", "$otherfilesDir/gth.bad.lst") or die ("Could not open file $otherfilesDir/gth.bad.lst!\n");
-        while(<ERRS>){
-            if(m/n sequence (\S+):.*/){
+        while(<ERRS>) {
+            if(m/n sequence (\S+):.*/) {
                 print BADS "$1\n";
             }
         }   
@@ -2179,7 +2180,7 @@ sub training{
         $string = find("filterGenes.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         $errorfile = "$errorfilesDir/gthFilterGenes.stderr";
         $perlCmdString = "";
-        if($nice){
+        if($nice) {
             $perlCmdString .= "nice ";
         }
         $perlCmdString .= "perl $string $otherfilesDir/gth.bad.lst $otherfilesDir/gth.initial.gb 1> $gthGb 2>$errorfile";
@@ -2188,19 +2189,19 @@ sub training{
         system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
     }
 
-    if(not($trainFromGth) && not($gth2traingenes)){
+    if(not($trainFromGth) && not($gth2traingenes)) {
         # make genemark gb final
         print LOG "\#  ".(localtime).": creating softlink of $geneMarkGb to $otherfilesDir/genbank.good.gb.\n";
         $cmdString = "ln -s $geneMarkGb $otherfilesDir/genbank.good.gb";
         print LOG "$cmdString\n";
         system($cmdString)==0 or die("failed to execute: $cmdString!\n");
-    }elsif($trainFromGth){
+    }elsif($trainFromGth) {
         # make gth gb final
         print LOG "\#  ".(localtime).": creating softlink of $gthGb to $otherfilesDir/genbank.good.gb.\n";
         $cmdString = "ln -s $gthGb $otherfilesDir/genbank.good.gb";
         print LOG "$cmdString\n";
         system($cmdString)==0 or die("failed to execute: $cmdString!\n");
-    }elsif(not($trainFromGth) && $gth2traingenes){
+    }elsif(not($trainFromGth) && $gth2traingenes) {
         # merge both genbank files, filter and prefer genemark genes, make result final
         $cmdString = "cat $geneMarkGb $gthGb > $otherfilesDir/genbank.initial.gb";
         print LOG "\#  ".(localtime).": Merging files and $geneMarkGb $gthGb:\n";
@@ -2210,17 +2211,17 @@ sub training{
         open(GBNEW, ">", "$otherfilesDir/genbank.good.gb") or die ("Could not open file $otherfilesDir/genbank.good.gb!\n");
         my %loci;
         my $pF = 1;
-        while(<GB>){
-            if(m/LOCUS/){
+        while(<GB>) {
+            if(m/LOCUS/) {
                 my @line = split(/\s+/);
-                if(not(defined($loci{$line[1]}))){
+                if(not(defined($loci{$line[1]}))) {
                     $pF = 1;
-                }else{
+                } else {
                     $pF = 0;
                 }
                 $loci{$line[1]} = 1;
             }
-            if($pF==1){
+            if($pF==1) {
                 print GBNEW $_;
             }
         }
@@ -2229,28 +2230,28 @@ sub training{
     }
 
 # split into training and test set
-if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb.train"])  || $overwrite){
+if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb.train"])  || $overwrite) {
     print LOG "\# ".(localtime).": Splitting genbank file into train and test file\n";
     $string = find("randomSplit.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     $errorfile = "$errorfilesDir/randomSplit.stderr";
-    if($nice){
+    if($nice) {
         $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-        }else{
+        } else {
             $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
         }
-        if($gb_good_size < 300){
+        if($gb_good_size < 300) {
             print LOG "\# ".(localtime)." WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
         }
-        if($gb_good_size == 0){
+        if($gb_good_size == 0) {
             $prtStr = "\# ".(localtime)." ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
             print LOG $prtStr;
             print STDERR $prtStr;
             exit(1);
         }
-        if($gb_good_size > 1000){
+        if($gb_good_size > 1000) {
             $testsize = 1000;
             $perlCmdString = "";
-            if($nice){
+            if($nice) {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
@@ -2260,7 +2261,7 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
     }
 
     # train AUGUSTUS for the first time
-    if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firstetraining.stdout"])){
+    if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firstetraining.stdout"])) {
         # set "stopCodonExcludedFromCDS" to true
         print LOG "\n\# ".(localtime).": Setting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"true\"\n";
         setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "true"); # see autoAugTrain.pl
@@ -2269,19 +2270,19 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
         $augpath = "$AUGUSTUS_BIN_PATH/etraining";
         $errorfile = "$errorfilesDir/firstetraining.stderr";
         $stdoutfile = "$otherfilesDir/firstetraining.stdout";
-        if($nice){
+        if($nice) {
             $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-        }else{
+        } else {
            $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
         }
         $cmdString = "";
-        if($nice){
+        if($nice) {
             $cmdString .= "nice ";
         }
-        if($gb_good_size <= 1000){
+        if($gb_good_size <= 1000) {
             $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
             $testsize = $gb_good_size - 1;
-        }else{
+        } else {
             $testsize = 1000;
             $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
         }
@@ -2292,16 +2293,16 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
         # set "stopCodonExcludedFromCDS" to false and run etraining again if necessary
         my $t_b_t = $gb_good_size - $testsize;
         my $err_stopCodonExcludedFromCDS;
-        if($nice){
+        if($nice) {
             print LOG "nice grep -c \"exon doesn't end in stop codon\" $errorfile\n";
             $err_stopCodonExcludedFromCDS = `nice grep -c "exon doesn't end in stop codon" $errorfile`;
-        }else{
+        } else {
             print LOG "grep -c \"exon doesn't end in stop codon\" $errorfile\n";
             $err_stopCodonExcludedFromCDS = `grep -c "exon doesn't end in stop codon" $errorfile`;
         }
         my $err_rate =  $err_stopCodonExcludedFromCDS / $t_b_t;  # see autoAugTrain.pl
         print LOG "\# ".(localtime).": Error rate of missing stop codon is $err_rate\n"; # see autoAugTrain.pl
-        if($err_rate >= 0.5){ # see autoAugTrain.pl
+        if($err_rate >= 0.5) { # see autoAugTrain.pl
             print LOG "\n\# ".(localtime)."The appropriate value for \"stopCodonExcludedFromCDS\" seems to be \"false\".\n"; # see autoAugTrain.pl
             print LOG "\n\# ".(localtime). "Setting value of \"stopCodonExcludedFromCDS\" in $AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg to \"false\"\n"; # see autoAugTrain.pl
             setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "stopCodonExcludedFromCDS", "false");  # see autoAugTrain.pl
@@ -2316,12 +2317,12 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
         my $freqOfTaa;              
         my $freqOfTga;          
         open(TRAIN, "$stdoutfile") or die ("Can not open file $stdoutfile!\n"); 
-        while(<TRAIN>){                 
-            if(/tag:\s*.*\((.*)\)/){    
+        while(<TRAIN>) {                 
+            if(/tag:\s*.*\((.*)\)/) {    
                 $freqOfTag = $1;        
-            }elsif(/taa:\s*.*\((.*)\)/){
+            }elsif(/taa:\s*.*\((.*)\)/) {
                 $freqOfTaa = $1;        
-            }elsif(/tga:\s*.*\((.*)\)/){
+            }elsif(/tga:\s*.*\((.*)\)/) {
                 $freqOfTga = $1;        
             }
         }
@@ -2333,24 +2334,24 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
         }
 
         # first test
-        if(!uptodate(["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firsttest.stdout"])  || $overwrite){
+        if(!uptodate(["$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb"],["$otherfilesDir/firsttest.stdout"])  || $overwrite) {
             $augpath = "$AUGUSTUS_BIN_PATH/augustus";
             $errorfile = "$errorfilesDir/firsttest.stderr";
             $stdoutfile = "$otherfilesDir/firsttest.stdout";
-            if($nice){
+            if($nice) {
                 print LOG "\# ".(localtime).": nice grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
                 $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-            }else{
+            } else {
                 print LOG "\# ".(localtime).": grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
                 $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
             }
             $cmdString = "";
-            if($nice){
+            if($nice) {
                 $cmdString .= "nice ";
             }
-            if($gb_good_size <= 1000){
+            if($gb_good_size <= 1000) {
                 $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
-            }else{
+            } else {
                 $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
             }
             print LOG "\# ".(localtime).": First AUGUSTUS accuracy test\n";
@@ -2361,32 +2362,32 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
         }
 
         # optimize parameters
-        if(!$skipoptimize){
-            if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb"],[$AUGUSTUS_CONFIG_PATH."/species/$species/$species\_exon_probs.pbl", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_weightmatrix.txt"])){
+        if(!$skipoptimize) {
+            if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb.test", "$otherfilesDir/genbank.good.gb"],[$AUGUSTUS_CONFIG_PATH."/species/$species/$species\_exon_probs.pbl", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", $AUGUSTUS_CONFIG_PATH."/species/$species/$species\_weightmatrix.txt"])) {
                 $string=find("optimize_augustus.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
                 $errorfile = "$errorfilesDir/optimize_augustus.stderr";
                 $stdoutfile = "$otherfilesDir/optimize_augustus.stdout";
-                if($nice){
+                if($nice) {
                     print LOG "\# ".(localtime).": nice grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
                     $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-                }else{
+                } else {
                     print LOG "\# ".(localtime).": grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
                     $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
                 }
                 $perlCmdString = "";
-                if($nice){
+                if($nice) {
                     $perlCmdString .= "nice ";
                 }
-                if($gb_good_size <= 1000){
-                    if($nice){
+                if($gb_good_size <= 1000) {
+                    if($nice) {
                         $perlCmdString .= "perl $string --nice --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
-                    }else{
+                    } else {
                         $perlCmdString .= "perl $string --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
                     }
-                }else{
-                    if($nice){
+                } else {
+                    if($nice) {
                         $perlCmdString .= "perl $string --nice --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
-                    }else{
+                    } else {
                         $perlCmdString .= "perl $string  --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
                     }
                 }
@@ -2398,22 +2399,22 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
         }
 
         # train AUGUSTUS for the second time
-        if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondetraining.stdout"])){
+        if(!uptodate(["$otherfilesDir/genbank.good.gb.train","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondetraining.stdout"])) {
             $augpath = "$AUGUSTUS_BIN_PATH/etraining";
             $errorfile = "$errorfilesDir/secondetraining.stderr";
             $stdoutfile = "$otherfilesDir/secondetraining.stdout";
-            if($nice){
+            if($nice) {
                 $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-            }else{
+            } else {
                 $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
             }
             $cmdString = "";
-            if($nice){
+            if($nice) {
                 $cmdString .= "nice ";
             }
-            if($gb_good_size <= 1000){
+            if($gb_good_size <= 1000) {
                 $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
-            }else{
+            } else {
                 $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
             }
             print LOG "\# ".(localtime).": Second etraining\n";
@@ -2422,24 +2423,24 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
         }
 
         # second test
-        if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondtest.out"]) || $overwrite){
+        if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/secondtest.out"]) || $overwrite) {
             $augpath = "$AUGUSTUS_BIN_PATH/augustus";
             $errorfile = "$errorfilesDir/secondtest.stderr";
             $stdoutfile = "$otherfilesDir/secondtest.stdout";
-            if($nice){
+            if($nice) {
                 print LOG "\# ".(localtime).": nice grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
                 $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-            }else{
+            } else {
                 print LOG "\# ".(localtime).": grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
                 $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
             }
             $cmdString = "";
-            if($nice){
+            if($nice) {
                 $cmdString .= "nice ";
             }
-            if($gb_good_size <= 1000){
+            if($gb_good_size <= 1000) {
                 $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
-            }else{
+            } else {
                 $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
             }
             print LOG "\# ".(localtime).": Second AUGUSTUS accuracy test\n";
@@ -2450,24 +2451,24 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
         }
 
         # optional CRF training
-        if($crf){
-            if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/crftraining.stdout"]) || $overwrite){
+        if($crf) {
+            if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/crftraining.stdout"]) || $overwrite) {
                 $augpath = "$AUGUSTUS_BIN_PATH/etraining";
             }
             $errorfile = "$errorfilesDir/crftraining.stderr";
             $stdoutfile = "$otherfilesDir/crftraining.stdout";
-            if($nice){
+            if($nice) {
                 $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-            }else{
+            } else {
                 $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
             }
             $cmdString = "";
-            if($nice){
+            if($nice) {
                 $cmdString .= "nice ";
             }
-            if($gb_good_size <= 1000){
+            if($gb_good_size <= 1000) {
                 $cmdString .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
-            }else{
+            } else {
                 $cmdString .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
             }
             print LOG "\# ".(localtime).": Third etraining - now with CRF\n";
@@ -2476,22 +2477,22 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
             print LOG "\# ".(localtime).": etraining with CRF finished.\n";
 
             # third test
-            if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/thirdtest.out"]) || $overwrite){
+            if(!uptodate(["$otherfilesDir/genbank.good.gb.test","$otherfilesDir/genbank.good.gb"],["$otherfilesDir/thirdtest.out"]) || $overwrite) {
                 $augpath = "$AUGUSTUS_BIN_PATH/augustus";            
                 $errorfile = "$errorfilesDir/thirdtest.stderr";
                 $stdoutfile = "$otherfilesDir/thirdtest.stdout";
-                if($nice){
+                if($nice) {
                     $gb_good_size = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
-                }else{
+                } else {
                     $gb_good_size = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
                 }
                 $cmdString = "";
-                if($nice){
+                if($nice) {
                     $cmdString .= "nice ";
                 }
-                if($gb_good_size <= 1000){
+                if($gb_good_size <= 1000) {
                     $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
-                }else{
+                } else {
                     $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
                 }
                 print LOG "\# ".(localtime).": Third AUGUSTUS accuracy test\n";
@@ -2502,22 +2503,22 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
             }
 
             # decide on whether to keep CRF parameters
-            if($target_2>$target_3){
+            if($target_2>$target_3) {
                 print LOG "\# ".(localtime).": CRF performance is worse than HMM performance, reverting to usage of HMM paramters.\n";
-            }else{
+            } else {
                 print LOG "\# ".(localtime).": CRF performance is better than HMM performance, keeping CRF paramters.\n";
             }
             # cp config files
             print LOG "\# ".(localtime).": Copying parameter files to $species*.CRF\n";
-            for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")){
+            for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")) {
                 $cmdString = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ cp $AUGUSTUS_CONFIG_PATH/species/$species/$_".".CRF";
                 print LOG "$cmdString\n";
                 system("$cmdString")==0 or die("failed to execute: $cmdString\n");
             }
             # if the accuracy doesn't improve with CRF, overwrite the config files with the HMM parameters from last etraining
-            if($target_2>$target_3){    
+            if($target_2>$target_3) {    
                 print LOG "\# ".(localtime).": overwriting parameter files resulting from CRF training with original HMM files\n";
-                for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")){
+                for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")) {
                     $cmdString = "rm $AUGUSTUS_CONFIG_PATH/species/$species/$_";
                     print LOG "$cmdString\n";
                     system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
@@ -2530,9 +2531,9 @@ if(!uptodate(["$otherfilesDir/genbank.good.gb"],["$otherfilesDir/genbank.good.gb
     }
 
     # copy species files to working directory
-    if(! -d "$parameterDir/$species"){
+    if(! -d "$parameterDir/$species") {
         $cmdString = "";
-        if($nice){
+        if($nice) {
             $cmdString .= "nice ";
         }
         $cmdString .= "cp -r $AUGUSTUS_CONFIG_PATH/species/$species $parameterDir";
@@ -2555,47 +2556,47 @@ sub augustus{
     my $aug_hints_err;
     my $aug_ab_initio_out;
     my $aug_ab_initio_err;
-    if(!uptodate([$extrinsicCfgFile,$hintsfile, $genome],["$otherfilesDir/augustus.gff"])  || $overwrite){
+    if(!uptodate([$extrinsicCfgFile,$hintsfile, $genome],["$otherfilesDir/augustus.gff"])  || $overwrite) {
         # split genome file in smaller parts and use multiple parallel runs of augustus for prediction
-        if($CPU > 1){
+        if($CPU > 1) {
             print LOG "\# ".(localtime).": splitting genome file in smaller parts for parallel execution of AUGUSTUS prediction\n";
             $string = find("splitMfasta.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);    
             $errorfile = "$errorfilesDir/splitMfasta.stderr";
             my $minsize = floor($genome_length / $CPU);
             $perlCmdString = "";
-            if($nice){
+            if($nice) {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
             print LOG "$perlCmdString\n";
             system("$perlCmdString")==0 or die("Failed to execute: $perlCmdString\n");
-            if($nice){
+            if($nice) {
                 print LOG "\# ".(localtime).": nice find $otherfilesDir -name \"genome.split.*\"\n";
                 @genome_files = `nice find $otherfilesDir -name "genome.split.*"`;
-            }else{
+            } else {
                 print LOG "\# ".(localtime).": find $otherfilesDir -name \"genome.split.*\"\n";
                 @genome_files = `find $otherfilesDir -name "genome.split.*"`;
             }
             print LOG "\# ".(localtime).": Split genome file in ".scalar(@genome_files)." parts, finished.\n";
-        }else{
+        } else {
            push(@genome_files, $genome);
         }
         @genome_files = sort {lc($a) cmp lc($b)} @genome_files;
         $pm = new Parallel::ForkManager($CPU);
-        if($ab_initio){
+        if($ab_initio) {
             # ab initio predictions
-            for(my $i = 0; $i < scalar(@genome_files); $i++){
+            for(my $i = 0; $i < scalar(@genome_files); $i++) {
                 chomp($genome_files[$i]);
                 my $pid = $pm->start and next;
                 my $idx = $i + 1;
                 $aug_ab_initio_err = "$errorfilesDir/augustus.ab_initio.$idx.stderr";
                 $aug_ab_initio_out = "$otherfilesDir/augustus.ab_initio.$idx.gff";
                 $cmdString = "";
-                if($nice){
+                if($nice) {
                     $cmdString .= "nice ";
                 }
                 $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on";
-                if($soft_mask){
+                if($soft_mask) {
                     $cmdString .= " --softmasking=1";
                 }
                 $cmdString .= " $genome_files[$i] 1>$aug_ab_initio_out 2>$aug_ab_initio_err";
@@ -2606,24 +2607,24 @@ sub augustus{
             }
         }
         # predictions with hints
-        for(my $i = 0; $i < scalar(@genome_files); $i++){
+        for(my $i = 0; $i < scalar(@genome_files); $i++) {
             chomp($genome_files[$i]);
             my $pid = $pm->start and next;
             my $idx = $i + 1;
             $aug_hints_err = "$errorfilesDir/augustus.hints.$idx.stderr";
             $aug_hints_out = "$otherfilesDir/augustus.hints.$idx.gff";
             $cmdString = "";
-            if($nice){
+            if($nice) {
                 $cmdString .= "nice ";
             }
             $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsicCfgFile --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac";
-            if(defined($optCfgFile)){
+            if(defined($optCfgFile)) {
                 $cmdString .= " --optCfgFile=$optCfgFile"; 
             }
-            if($soft_mask){
+            if($soft_mask) {
                 $cmdString .= " --softmasking=1";
             }
-            if(defined($augustus_args)){
+            if(defined($augustus_args)) {
                 $cmdString .= " $augustus_args";
             }
             $cmdString .= " $genome_files[$i] 1>$aug_hints_out 2>$aug_hints_err";
@@ -2635,13 +2636,13 @@ sub augustus{
         $pm->wait_all_children;
         print LOG "\# ".(localtime).": AUGUSTUS prediction complete\n";
 	    # join prediction files to one file
-        if($CPU > 1){
+        if($CPU > 1) {
             $string = find("join_aug_pred.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-            if($ab_initio){
+            if($ab_initio) {
                 my $cat_ab_initio_file = "$otherfilesDir/augustus.ab_initio.tmp.gff";
-                for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
+                for(my $idx = 1; $idx <= scalar(@genome_files); $idx++) {
                     $cmdString = "";
-                    if($nice){
+                    if($nice) {
                         $cmdString .= "nice ";
                     }
                     $cmdString .= "cat $otherfilesDir/augustus.ab_initio.$idx.gff >> $cat_ab_initio_file";
@@ -2650,14 +2651,14 @@ sub augustus{
                     system("$cmdString")==0 or die("Failed to execute $cmdString\n");
                 }
                 $perlCmdString = "";
-                if($nice){
+                if($nice) {
                     $perlCmdString .= "nice ";
                 }
                 $perlCmdString .= "perl $string <$cat_ab_initio_file >$otherfilesDir/augustus.ab_initio.gff";
                 print LOG "\# ".(localtime).": Joining AUGUSTUS ab initio output\n";
                 print LOG "$perlCmdString\n\n";
                 system("$perlCmdString")==0 or die("Failed to execute $perlCmdString\n");
-                for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
+                for(my $idx = 1; $idx <= scalar(@genome_files); $idx++) {
                     unlink("$otherfilesDir/augustus.ab_initio.$idx.gff");
                     print LOG "\# ".(localtime).": Deleting $otherfilesDir/augustus.ab_initio.$idx.gff\n";
                 }
@@ -2665,9 +2666,9 @@ sub augustus{
                 print LOG "\# ".(localtime).": Deleting $cat_ab_initio_file\n";
             }
             my $cat_hints_file = "$otherfilesDir/augustus.hints.tmp.gff";
-            for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
+            for(my $idx = 1; $idx <= scalar(@genome_files); $idx++) {
                 $cmdString = "";
-                if($nice){
+                if($nice) {
                     $cmdString .= "nice ";
                 }
                 $cmdString .= "cat $otherfilesDir/augustus.hints.$idx.gff >> $cat_hints_file";
@@ -2676,23 +2677,23 @@ sub augustus{
                 system("$cmdString")==0 or die("Failed to execute $cmdString\n");
             }
             $perlCmdString = "";
-            if($nice){
+            if($nice) {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string <$cat_hints_file >$otherfilesDir/augustus.hints.gff";
             print LOG "\# ".(localtime).": Joining AUGUSTUS with hints output\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString")==0 or die("Failed to execute $perlCmdString\n");
-            for(my $idx = 1; $idx <= scalar(@genome_files); $idx++){
+            for(my $idx = 1; $idx <= scalar(@genome_files); $idx++) {
                 unlink("$otherfilesDir/augustus.hints.$idx.gff");
                 print LOG "\# ".(localtime).": Deleting $otherfilesDir/augustus.hints.$idx.gff\n";
             }
             unlink($cat_hints_file);
             print LOG "\# ".(localtime).": Deleting $cat_hints_file\n";
-        }else{
-            if($ab_initio){
+        } else {
+            if($ab_initio) {
                 $cmdString = "";
-                if($nice){
+                if($nice) {
                     $cmdString .= "nice ";
                 }
                 $cmdString .= "mv $otherfilesDir/augustus.ab_initio.1.gff $otherfilesDir/augustus.ab_initio.gff";
@@ -2701,7 +2702,7 @@ sub augustus{
                 system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
             }
             $cmdString = "";
-            if($nice){
+            if($nice) {
                 $cmdString .= "nice ";
             }
             $cmdString .= "mv $otherfilesDir/augustus.hints.1.gff $otherfilesDir/augustus.hints.gff";
@@ -2720,7 +2721,7 @@ sub getAnnoFasta{
     my $string = find("getAnnoFasta.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     my $errorfile = "$errorfilesDir/getAnnoFasta.$name_base.stderr";
     $perlCmdString = "";
-    if($nice){
+    if($nice) {
         $perlCmdString .= "nice ";
     }
     my $perlCmdString .= "perl $string $AUG_pred --seqfile=$genome 2>$errorfile";
@@ -2738,22 +2739,22 @@ sub make_gtf{
     my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gtf.stderr";
     my $perlstring = find("gtf2gff.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     $cmdString = "";
-    if($nice){
+    if($nice) {
         $cmdString .= "nice ";
     }
-    my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
+    my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
     print LOG "\# ".(localtime).": Making a gtf file from $AUG_pred\n";
     print LOG "$cmdString\n\n";
     system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
-    if($gff3){
+    if($gff3) {
         my $gff3_file = substr($AUG_pred,0,-4).".gff3";
         my $errorfile = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
         my $perlstring = find("gtf2gff.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         $cmdString = "";
-        if($nice){
+        if($nice) {
             $cmdString .= "nice ";
         }
-        my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/){print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
+        my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
         print LOG "\# ".(localtime).": Making a gff3 file from $AUG_pred\n";
         print LOG "$cmdString\n\n";
         system("$cmdString")==0 or die("Failed to execute: $cmdString\n");
@@ -2765,16 +2766,16 @@ sub make_gtf{
 # delete empty files
 sub clean_up{
     print LOG "\# ".(localtime).": deleting empty files\n";
-    if($nice){
+    if($nice) {
         print LOG "\# ".(localtime).": nice find $otherfilesDir -empty\n";
         @files = `nice find $otherfilesDir -empty`;
-    }else{
+    } else {
         print LOG "\# ".(localtime).": find $otherfilesDir -empty\n";
         @files = `find $otherfilesDir -empty`;
     }    
-    for(my $i=0; $i <= $#files; $i++){
+    for(my $i=0; $i <= $#files; $i++) {
         chomp($files[$i]); # to prevent error: Unsuccessful stat on filename containing newline
-        if(-f $files[$i]){
+        if(-f $files[$i]) {
             print LOG "rm $files[$i]\n";
             unlink(rel2abs($files[$i]));
         }
@@ -2800,9 +2801,9 @@ sub check_upfront{ # see autoAug.pl
         "Scalar::Util::Numeric"
         );
 
-    foreach my $module (@module_list){  
+    foreach my $module (@module_list) {  
         $pmodule = check_install(module => $module);
-        if(!$pmodule){
+        if(!$pmodule) {
             $prtStr = "\# ".(localtime).": WARNING: Perl module '$module' is required but not installed yet.\n";
             print LOG $prtStr;
             print STDERR $prtStr;
@@ -2811,12 +2812,12 @@ sub check_upfront{ # see autoAug.pl
 
     # check for augustus executable
     $augpath = "$AUGUSTUS_BIN_PATH/augustus";
-    if(system("$augpath > /dev/null 2> /dev/null") != 0){                   # see autoAug.pl
-        if(! -f $augpath){                                                    # see autoAug.pl
+    if(system("$augpath > /dev/null 2> /dev/null") != 0) {                   # see autoAug.pl
+        if(! -f $augpath) {                                                    # see autoAug.pl
             $prtStr = "\# ".(localtime).": ERROR: augustus executable not found at $augpath.\n"; # see autoAug.pl
             print LOG $prtStr;
             print STDERR $prtStr;	    
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": ERROR: $augpath not executable on this machine.\n";   # see autoAug.pl
             print LOG $prtStr;
             print STDERR $prtStr;	    
@@ -2825,7 +2826,7 @@ sub check_upfront{ # see autoAug.pl
     }
 
     # check whether bamtools is installed
-    if(system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0){
+    if(system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0) {
         $prtStr = "\# ".(localtime).": ERROR: bamtools not installed. Please install it first.\n";
         print LOG $prtStr;
         print STDERR $prtStr;	  
@@ -2835,12 +2836,12 @@ sub check_upfront{ # see autoAug.pl
     # check for etraining executable
     my $etrainpath;
     $etrainpath = "$AUGUSTUS_BIN_PATH/etraining";
-    if(system("$etrainpath > /dev/null 2> /dev/null") != 0){                   
-        if(! -f $etrainpath){                                                    
+    if(system("$etrainpath > /dev/null 2> /dev/null") != 0) {                   
+        if(! -f $etrainpath) {                                                    
             $prtStr = "\# ".(localtime).": ERROR: etraining executable not found at $etrainpath.\n";
             print LOG $prtStr;
             print STDERR $prtStr;	    
-            }else{
+            } else {
                 $prtStr = "\# ".(localtime).": ERROR: $etrainpath not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;	    
@@ -2850,13 +2851,13 @@ sub check_upfront{ # see autoAug.pl
 
     #    check whether bam2wig is executable
     $bam2wigPath = "$AUGUSTUS_BIN_PATH/../auxprogs/bam2wig/bam2wig";
-    if($UTR eq "on" && $skipAllTraining==0){ # MIGHT WANT TO CHANGE THIS!
-        if(not(-x $bam2wigPath)){
-            if(! -f $bam2wigPath){
+    if($UTR eq "on" && $skipAllTraining==0) { # MIGHT WANT TO CHANGE THIS!
+        if(not(-x $bam2wigPath)) {
+            if(! -f $bam2wigPath) {
                 $prtStr = "\# ".(localtime).": ERROR: bam2wig executable not found at $bam2wigPath.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;		
-            }else{
+            } else {
                 $prtStr = "\# ".(localtime).": ERROR: $bam2wigPath not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;		
@@ -2870,13 +2871,13 @@ sub check_upfront{ # see autoAug.pl
 
     # check whether rnaseq2utr is executable
     $rnaseq2utrPath = "$AUGUSTUS_BIN_PATH/../auxprogs/utrrnaseq/trunks/Debug/utrrnaseq"; # FIX WHEN TOOL MIGRATES TO AUGUSTUS REPOSITORY BEFORE RELEASE!
-    if($UTR eq "on" && $skipAllTraining==0){
-        if(not(-x $rnaseq2utrPath)){
-            if(! -f $rnaseq2utrPath){
+    if($UTR eq "on" && $skipAllTraining==0) {
+        if(not(-x $rnaseq2utrPath)) {
+            if(! -f $rnaseq2utrPath) {
                 $prtStr = "\# ".(localtime).": ERROR: rnaseq2utr executable not found at $rnaseq2utrPath.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;		
-            }else{
+            } else {
                 $prtStr = "\# ".(localtime).": ERROR: $rnaseq2utrPath not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;		
@@ -2891,55 +2892,55 @@ sub check_upfront{ # see autoAug.pl
 
     # check for alignment executable and in case of SPALN for environment variables
     my $prot_aligner;
-    if(@prot_seq_files){
-        if($prg eq 'gth'){
+    if(@prot_seq_files) {
+        if($prg eq 'gth') {
             $prot_aligner = "$ALIGNMENT_TOOL_PATH/gth";
-            if(! -f $prot_aligner){
+            if(! -f $prot_aligner) {
                 $prtStr = "\# ".(localtime).": ERROR: GenomeThreader executable not found at $prot_aligner.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;		
                 exit(1);
-            }elsif(! -x $prot_aligner){
+            }elsif(! -x $prot_aligner) {
                 $prtStr = "\# ".(localtime).": ERROR: $prot_aligner not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
             }
-        }elsif($prg eq 'spaln'){
+        }elsif($prg eq 'spaln') {
             $prot_aligner = "$ALIGNMENT_TOOL_PATH/spaln";
-            if(! -f $prot_aligner){
+            if(! -f $prot_aligner) {
                 $prtStr = "\# ".(localtime).": ERROR: Spaln executable not found at $prot_aligner.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
-            }elsif(! -x $prot_aligner){
+            }elsif(! -x $prot_aligner) {
                 $prtStr = "\# ".(localtime).": ERROR: $prot_aligner not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;		
                 exit(1);
             }
             # check whether spaln environment variables are configured
-            if(!$ENV{'ALN_DBS'} or !$ENV{'ALN_TAB'}){
-                if(!$ENV{'ALN_DBS'}){
+            if(!$ENV{'ALN_DBS'} or !$ENV{'ALN_TAB'}) {
+                if(!$ENV{'ALN_DBS'}) {
                     $prtStr = "\# ".(localtime).": ERROR: The environment variable ALN_DBS for spaln is not defined. Please export an environment variable with:' export ALN_DBS=/path/to/spaln/seqdb'\n";
                     print LOG $prtStr;
                     print STDERR $prtStr;
                 }
-                if(!$ENV{'ALN_TAB'}){
+                if(!$ENV{'ALN_TAB'}) {
                     $prtStr = "\# ".(localtime).": ERROR: The environment variable ALN_TAB for spaln is not defined. Please export an environment variable with:' export ALN_TAB=/path/to/spaln/table'\n";
                     print LOG $prtStr;
                     print STDERR $prtStr;
                 }
                 exit(1);
             }
-        }elsif($prg eq 'exonerate'){
+        }elsif($prg eq 'exonerate') {
             $prot_aligner = "$ALIGNMENT_TOOL_PATH/exonerate";
-            if(! -f $prot_aligner){
+            if(! -f $prot_aligner) {
                 $prtStr = "\# ".(localtime).": ERROR: Exonerate executable not found at $prot_aligner.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;		
                 exit(1);
-            }elsif(! -x $prot_aligner){
+            }elsif(! -x $prot_aligner) {
                 $prtStr = "\# ".(localtime).": ERROR: $prot_aligner not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;		
@@ -2977,16 +2978,16 @@ sub check_gff{
     my $nIntrons = 0;
     my $printedAllowedHints = 0;
     my %foundFeatures;
-    while(<GFF>){
+    while(<GFF>) {
        my @gff_line = split(/\t/, $_);
-       if(scalar(@gff_line) != 9){
+       if(scalar(@gff_line) != 9) {
            $prtStr = "\# ".(localtime)." ERROR: File $gfffile is not in gff format!\n";
            print STDERR $prtStr;
            $logString .= $prtStr;
            close(GFF) or die("Could not close gff file $gfffile!\n");
            exit(1);
-        }else{
-            if(!isint($gff_line[3]) || !isint($gff_line[4]) || $gff_line[5] =~ m/[^\d\.]/g || $gff_line[6] !~ m/[\+\-\.]/ || length($gff_line[6]) != 1 || $gff_line[7] !~ m/[0-2\.]{1}/ || length($gff_line[7]) != 1){
+        } else {
+            if(!isint($gff_line[3]) || !isint($gff_line[4]) || $gff_line[5] =~ m/[^\d\.]/g || $gff_line[6] !~ m/[\+\-\.]/ || length($gff_line[6]) != 1 || $gff_line[7] !~ m/[0-2\.]{1}/ || length($gff_line[7]) != 1) {
                 $prtStr = "\# ".(localtime)." ERROR:File $gfffile is not in gff format!\n";
                 print STDERR $prtStr;
                 $logString .= $prtStr;
@@ -2996,31 +2997,31 @@ sub check_gff{
         }
 	   # intron hints are the sole source of extrinsic information for GeneMark-ET, thus, if no bam file is given, the
 	   # supplied hints file must contain intron hints (many)
-	   if(!@bam){
-            if($gff_line[2] eq "intron"){
+	   if(!@bam) {
+            if($gff_line[2] eq "intron") {
             $nIntrons++;
             }
         }
         # if no extrinsic.cfg is specified, parameters in braker.pl written extrinsic.cfg correspond to hints in @allowedHints, only; other hints will be treated with neutral malus/bonus. Issue corresponding warning.
-        if(not(defined($extrinsicCfgFile))){
+        if(not(defined($extrinsicCfgFile))) {
             my $isAllowed = 0;
-            foreach(@allowedHints){
-                if($gff_line[2] eq $_){
+            foreach(@allowedHints) {
+                if($gff_line[2] eq $_) {
                     $isAllowed = 1;
                 }
             }
-            if($isAllowed != 1){
-                if(not(defined($foundFeatures{$gff_line[2]}))){	
+            if($isAllowed != 1) {
+                if(not(defined($foundFeatures{$gff_line[2]}))) {	
                     $prtStr = "\# ".(localtime)." WARNING: File $gfffile contains hints of a feature type $gff_line[2] that is currently not supported by BRAKER. Features of this type will be treated with neutral bonus/malus in the extrinsic.cfg file that will be used for running AUGUSTUS.\n";
                     print STDOUT $prtStr;
                     $logString .= $prtStr;
                     $foundFeatures{$gff_line[2]} = 1;
                 }
-                if($printedAllowedHints == 0){
+                if($printedAllowedHints == 0) {
                     $prtStr = "Currently allowed hint types:\n";
                     print STDERR $prtStr;
                     $logString .= $prtStr;
-                    foreach(@allowedHints){
+                    foreach(@allowedHints) {
                         $prtStr = $_."\n";
                         print STDERR $prtStr;
                         $logString .= $prtStr;			
@@ -3031,8 +3032,8 @@ sub check_gff{
         }
     }
     close(GFF) or die("Could not close gff file $gfffile!\n");
-    if(!@bam){
-	   if($nIntrons < 1000){
+    if(!@bam) {
+	   if($nIntrons < 1000) {
             $prtStr = "\# ".(localtime)." ERROR: Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
             print STDERR $prtStr;
             $logString .= $prtStr;	    
@@ -3043,21 +3044,21 @@ sub check_gff{
 
 # check whether all options are set correctly
 sub check_options{
-    if($alternatives_from_evidence ne "true" && $alternatives_from_evidence ne "false"){
+    if($alternatives_from_evidence ne "true" && $alternatives_from_evidence ne "false") {
        $prtStr = "\# ".(localtime).": ERROR: \"$alternatives_from_evidence\" is not a valid option for --alternatives-from-evidence. Please use either 'true' or 'false'.\n";
        print STDERR $prtStr;
        $logString .= $prtStr;	
        exit(1);
    } 
 
-   if($UTR ne "on" && $UTR ne "off"){
+   if($UTR ne "on" && $UTR ne "off") {
        $prtStr = "\# ".(localtime).": ERROR: \"$UTR\" is not a valid option for --UTR. Please use either 'on' or 'off'.\n";
        print STDERR $prtStr;
        $logString .= $prtStr;	
        exit(1);
    }
 
-   if(($UTR eq "on" && $soft_mask==0) or ($UTR eq "on" && not(@bam))){
+   if(($UTR eq "on" && $soft_mask==0) or ($UTR eq "on" && not(@bam))) {
        $prtStr = "\# ".(localtime).": ERROR: --UTR=on has been set but --softmasking has not been enabled. A softmasked genome file and the option --softmasking and a bam file must be provided in order to run --UTR=on.\n";
        print STDERR $prtStr;
        $logString .= $prtStr;	
@@ -3066,13 +3067,13 @@ sub check_options{
 
    my $operatingSystem = "$^O";
    my $cpus_available = 1;
-   if($operatingSystem eq "linux"){
+   if($operatingSystem eq "linux") {
        $cpus_available = `nproc`;
-    }else{ # Mac OS X
+    } else { # Mac OS X
        $cpus_available = `sysctl -n hw.ncpu`;
    }
 
-   if($cpus_available < $CPU){
+   if($cpus_available < $CPU) {
        $prtStr = "\# ".(localtime).": WARNING: Your system does not have $CPU cores available, only $cpus_available. Braker will use the $cpus_available available instead of the chosen $CPU.\n";
        print STDOUT $prtStr;
        $logString .= $prtStr;
@@ -3091,66 +3092,66 @@ sub check_fasta_headers{            # see autoAug.pl
     my $dna = 0;                      # see simplifyFastaHeaders.pl
     my $mapFile = "$otherfilesDir/header.map";
     my $stdStr = "This may later on cause problems! The pipeline will create a new file without spaces or \"|\" characters and a header.map file to look up the old and new headers. This message will be suppressed from now on!\n";
-    if(!uptodate([$genome],["$otherfilesDir/genome.fa"]) || $overwrite){
+    if(!uptodate([$genome],["$otherfilesDir/genome.fa"]) || $overwrite) {
         print LOG "\# ".(localtime).": Checking fasta headers\n";
         open(FASTA, "<", $fastaFile) or die("Could not open fasta file $fastaFile!\n");
         open(OUTPUT, ">", "$otherfilesDir/genome.fa") or die("Could not open fasta file $otherfilesDir/genome.fa!\n");
         open(MAP, ">", $mapFile) or die("Could not open map file $mapFile.\n");
-        while(<FASTA>){
+        while(<FASTA>) {
 	       # check newline character
-            if(not($_ =~ m/\n$/)){  # see simplifyFastaHeaders.pl
-                if($wrongNL < 1){     # see simplifyFastaHeaders.pl
+            if(not($_ =~ m/\n$/)) {  # see simplifyFastaHeaders.pl
+                if($wrongNL < 1) {     # see simplifyFastaHeaders.pl
                     print LOG "\# ".(localtime)." WARNING: something seems to be wrong with the newline character! This is likely to cause problems with the braker.pl pipeline and the AUGUSTUS web service! Please adapt your file to UTF8! This warning will be supressed from now on!\n"; # see simplifyFastaHeaders.pl
                     $wrongNL++;         # see simplifyFastaHeaders.pl
                 }   
             }
             chomp;
             # look for whitespaces in fasta file
-            if($_ =~ m/\s/){      # see autoAug.pl
-                if($spaces == 0){   # see autoAug.pl
+            if($_ =~ m/\s/) {      # see autoAug.pl
+                if($spaces == 0) {   # see autoAug.pl
                     print LOG "\# ".(localtime)." WARNING: Detected whitespace in fasta header of file $fastaFile. ".$stdStr;		 
                     $spaces++;        # see autoAug.pl
                 }
             }
             # look for | in fasta file
-            if($_ =~ m/\|/){      # see autoAug.pl
-                if($orSign == 0){   # see autoAug.pl
+            if($_ =~ m/\|/) {      # see autoAug.pl
+                if($orSign == 0) {   # see autoAug.pl
                     print LOG "\# ".(localtime)." WARNING: Detected | in fasta header of file $fastaFile. ".$stdStr;
                     $orSign++;        # see autoAug.pl
                 }
             }	     
 	       # look for special characters in headers
-	       if(($_ !~ m/[>a-zA-Z0-9]/) && ($_ =~ m/^>/) ){
-                if($someThingWrongWithHeader==0){   # see autoAug.pl
+	       if(($_ !~ m/[>a-zA-Z0-9]/) && ($_ =~ m/^>/) ) {
+                if($someThingWrongWithHeader==0) {   # see autoAug.pl
                     print LOG "\# ".(localtime)." WARNING: Fasta headers in file $fastaFile seem to contain non-letter and non-number characters. That means they may contain some kind of special character. ".$stdStr; 	
                     $someThingWrongWithHeader++;      # see autoAug.pl
                 }
             }	    
-            if($_ =~ m/^>/){
+            if($_ =~ m/^>/) {
                 # replace | and whitespaces by _
                 my $oldHeader = $_;
                 $_ =~ s/\s/_/g;
                 $_ =~ s/\|/_/g;
                 print OUTPUT "$_\n";
                 print MAP "$_\t$oldHeader\n";
-            }else{
-                if(length($_) > 0){    # see simplifyFastaHeaders.pl
+            } else {
+                if(length($_) > 0) {    # see simplifyFastaHeaders.pl
                     $genome_length += length($_);
                     print OUTPUT "$_\n"; # see simplifyFastaHeaders.pl
-                    if($_ !~ m/[ATGCNatgcn]/){ # see simplifyFastaHeaders.pl
-                        if($dna == 0){ # see simplifyFastaHeaders.pl
+                    if($_ !~ m/[ATGCNatgcn]/) { # see simplifyFastaHeaders.pl
+                        if($dna == 0) { # see simplifyFastaHeaders.pl
                             print LOG "\# ".(localtime).": Assuming that this is not a DNA fasta file because other characters than A, T, G, C, N, a, t, g, c, n were contained. If this is supposed to be a DNA fasta file, check the content of your file! If this is supposed to be a protein fasta file, please ignore this message!\n"; # see simplifyFastaHeaders.pl
                             $dna++;      # see simplifyFastaHeaders.pl
                         }
                     }
-                    if($_ !~ m/[AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx]/){ # see simplifyFastaHeaders.pl
-                        if($prot == 0){ # see simplifyFastaHeaders.pl
+                    if($_ !~ m/[AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx]/) { # see simplifyFastaHeaders.pl
+                        if($prot == 0) { # see simplifyFastaHeaders.pl
                             print LOG "\# ".(localtime).": Assuming that this is not a protein fasta file because other characters than AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx were contained. If this is supposed to be DNA fasta file, please ignore this message.\n"; # see simplifyFastaHeaders.pl
                             $prot++;      # see simplifyFastaHeaders.pl
                         }
                     }
-                }else{
-                    if($emptyC < 1){  # see simplifyFastaHeaders.pl
+                } else {
+                    if($emptyC < 1) {  # see simplifyFastaHeaders.pl
                         print LOG "\# ".(localtime)." WARNING: empty line was removed! This warning will be supressed from now on!\n";
                     } 
                     $emptyC++;        # see simplifyFastaHeaders.pl
@@ -3177,10 +3178,10 @@ sub check_bam_headers{
     @_ = split(/\./, $_[-1]);
     my $samHeaderFile = "$otherfilesDir/".$_[0]."_header.sam";
     my $samHeaderFile_new = "$otherfilesDir/".$_[0]."_new_header.sam";
-    if(!uptodate([$bamFile],["$otherfilesDir/$bamFile"]) || $overwrite){
+    if(!uptodate([$bamFile],["$otherfilesDir/$bamFile"]) || $overwrite) {
         # extract header information 
         $cmdString = "";
-        if($nice){
+        if($nice) {
            $cmdString .= "nice ";
         }
         $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools header -in $bamFile > $samHeaderFile";
@@ -3190,10 +3191,10 @@ sub check_bam_headers{
         open(SAM, "<", $samHeaderFile) or die("Could not open SAM file $samHeaderFile!\n");
         open(OUTPUT, ">", "$samHeaderFile_new") or die("Could not open SAM file $samHeaderFile_new!\n");
         open(MAP, ">", $mapFile) or die("Could not open map file $mapFile.\n");
-        while(<SAM>){
+        while(<SAM>) {
             chomp;
             # only check sequence entries
-            if($_ =~ m/^\@SQ/){
+            if($_ =~ m/^\@SQ/) {
                 my @seq_line = split(/\t/, $_);
                 my $seq_end = $seq_line[-1];		
                 @seq_line = split(/\:/, $seq_line[1]);
@@ -3201,16 +3202,16 @@ sub check_bam_headers{
                 my $new_name = $old_name;
                 # remove whitespaces, if necessary
                 @seq_line = split(/\s/, $seq_line[1]);
-                if(scalar(@seq_line) > 1){
-                    if($spaces == 0){
+                if(scalar(@seq_line) > 1) {
+                    if($spaces == 0) {
                         print LOG "\# ".(localtime)." WARNING: Detected whitespace in BAM header of file $bamFile. ".$stdStr; # see autoAug.pl
                         $spaces++;        # see autoAug.pl
                     }
                 }
                 $new_name =~ s/\s/_/g; # removing whitespaces (if any)
                 @seq_line = split(/\|/, $old_name);
-                if(scalar(@seq_line) > 1){
-                    if($orSign == 0){   # see autoAug.pl
+                if(scalar(@seq_line) > 1) {
+                    if($orSign == 0) {   # see autoAug.pl
                         print LOG "\# ".(localtime)." WARNING: Detected | in header of file $bamFile. ".$stdStr; # see autoAug.pl
                         print LOG "Replacing | by underscores in Bam headers.\n";
                         $orSign++;        # see autoAug.pl
@@ -3219,17 +3220,17 @@ sub check_bam_headers{
                 $new_name =~ s/\|/_/g; # replace or signs by underscores (if any)
                 $map_hash{$old_name} = $new_name;
                 $seq_line[0] = "\@SQ\tSN:$new_name\t$seq_end";
-                if($seq_line[0] !~ m/[>a-zA-Z0-9]/){
-                    if($someThingWrongWithHeader==0){   # see autoAug.pl
+                if($seq_line[0] !~ m/[>a-zA-Z0-9]/) {
+                    if($someThingWrongWithHeader==0) {   # see autoAug.pl
                         print LOG  "\# ".(localtime)." WARNING: BAM headers in file $bamFile seem to contain non-letter and non-number characters. That means they may contain some kind of special character. ".$stdStr; # see autoAug.pl
                         $someThingWrongWithHeader++;      # see autoAug.pl
                     }
                 }
                 print OUTPUT "$seq_line[0]\n";   # see simplifyFastaHeaders.pl
                 print MAP "$map_hash{$old_name}\t$old_name\n";  # see simplifyFastaHeaders.pl
-            }elsif(eof){
+            }elsif(eof) {
                 print OUTPUT "$_";
-            }else{
+            } else {
                 print OUTPUT "$_\n";
             }
         }
@@ -3239,16 +3240,16 @@ sub check_bam_headers{
         print LOG "\# ".(localtime).": Deleting SAM header file $samHeaderFile (will not be needed from here on)\n";
         unlink($samHeaderFile);
     	# something wrong with header part
-    	if($spaces != 0 || $orSign != 0 || $someThingWrongWithHeader != 0){
+    	if($spaces != 0 || $orSign != 0 || $someThingWrongWithHeader != 0) {
             # no samtools installed. stop here
-            if(system("which samtools > /dev/null") != 0){
+            if(system("which samtools > /dev/null") != 0) {
                 print LOG "\# ".(localtime)." ERROR: BAM file $bamFile contains spaces, \"|\" or some other kind of special characters.\n";
                 print LOG  "'samtools' not installed. BAM file cannot be fixed automatically.\n";
                 print STDERR "BAM file $bamFile contains spaces, \"|\" or some other kind of special characters.\n";
                 exit(1);
                 # samtools installed. try to correct BAM file
-            }else{
-                if(!$ENV{'SAMTOOLS_PATH'} && !defined($SAMTOOLS_PATH_OP)){
+            } else {
+                if(!$ENV{'SAMTOOLS_PATH'} && !defined($SAMTOOLS_PATH_OP)) {
                     print LOG "\# ".(localtime)." WARNING: The environment variable SAMTOOLS_PATH is not defined. Please export an environment variable for samtools or use --SAMTOOLS_PATH=path/to/samtools.\n"; # see autoAug.pl
                     print LOG "The program will try to use 'samtools' to start samtools, which may not work on your system.\n"; # see autoAug.pl
                     $SAMTOOLS_PATH = "samtools";
@@ -3256,7 +3257,7 @@ sub check_bam_headers{
                 my $samFile = "$otherfilesDir/".$_[0].".sam";
                 my $samFile_new = "$otherfilesDir/".$_[0]."_new.sam";
                 $cmdString = "";
-                if($nice){
+                if($nice) {
                     $cmdString .= "nice ";
                 }
                 $cmdString .= "$SAMTOOLS_PATH view $bamFile > $samFile";
@@ -3265,20 +3266,20 @@ sub check_bam_headers{
                 system("$cmdString")==0 or die("failed to execute: $cmdString!\n");
                 open(SAM, "<", $samFile) or die("Could not open SAM file $samFile!\n");
                 open(OUTPUT, ">", "$samFile_new") or die("Could not open SAM file $samFile_new!\n");
-                while(<SAM>){
+                while(<SAM>) {
                     chomp;
                     my @line = split(/\t/, $_);
                     $line[2] = $map_hash{$line[2]};
-                    if(eof){
+                    if(eof) {
                         print OUTPUT join("\t", @line);
-                    }else{
+                    } else {
                         print OUTPUT join("\t", @line)."\n";
                     }
                 }
                 close(SAM) or die("Could not close SAM file $samFile!\n");
                 close(OUTPUT) or die("Could not close output SAM file $samFile_new!\n");
                 $cmdString = "";
-                if($nice){
+                if($nice) {
                     $cmdString .= "nice ";
                 }
                 $cmdString .= "cat $samHeaderFile_new $samFile_new > $samFile";
@@ -3289,7 +3290,7 @@ sub check_bam_headers{
                 unlink($samFile_new);
 
                 $cmdString = "";
-                if($nice){
+                if($nice) {
                     $cmdString .= "nice ";
                 }
                 $cmdString = "$SAMTOOLS_PATH view -bSh $samFile > $otherfilesDir/".$_[0].".bam";
@@ -3312,16 +3313,16 @@ sub accuracy_calculator{
     my $aug_out=shift;
     my ($nu_sen, $nu_sp, $ex_sen, $ex_sp, $gen_sen, $gen_sp);
     open(AUGOUT, "$aug_out") or die ("Could not open $aug_out!\n");
-    while(<AUGOUT>){
-        if(/^nucleotide level\s*\|\s*(\S+)\s*\|\s*(\S+)/){
+    while(<AUGOUT>) {
+        if(/^nucleotide level\s*\|\s*(\S+)\s*\|\s*(\S+)/) {
             $nu_sen=$1;
             $nu_sp=$2;
         }
-        if(/^exon level\s*\|.*\|.*\|.*\|.*\|.*\|\s*(\S+)\s*\|\s*(\S+)/){
+        if(/^exon level\s*\|.*\|.*\|.*\|.*\|.*\|\s*(\S+)\s*\|\s*(\S+)/) {
             $ex_sen=$1;
             $ex_sp=$2;
         }
-        if(/^gene level\s*\|.*\|.*\|.*\|.*\|.*\|\s*(\S+)\s*\|\s*(\S+)/){
+        if(/^gene level\s*\|.*\|.*\|.*\|.*\|.*\|\s*(\S+)\s*\|\s*(\S+)/) {
             $gen_sen=$1;
             $gen_sp=$2;
         }
@@ -3338,19 +3339,19 @@ sub gth2train{
     my $geneId;
     # GTH may output alternative transcripts; we don't want to have any alternatives in training gene set, only print the first of any occuring alternatives
     my %seen;
-    while(<GTH>){
+    while(<GTH>) {
         chomp;
         my @gtfLine = split(/\t/);
-        if(m/\tgene\t/){
+        if(m/\tgene\t/) {
             my @idCol = split(/=/, $gtfLine[8]);
             $geneId = $idCol[1];
-        }elsif(m/\tCDS\t/){
+        }elsif(m/\tCDS\t/) {
             my @gtfLineLastCol = split(/;/, $gtfLine[8]);
             my @gtfLineLastColField = split(/=/, $gtfLineLastCol[1]);
-            if(not(defined($seen{"$gtfLine[0]"."_".$geneId."_"}))){
+            if(not(defined($seen{"$gtfLine[0]"."_".$geneId."_"}))) {
                 $seen{"$gtfLine[0]"."_".$geneId."_"} = "$gtfLine[0]"."_".$geneId."_".$gtfLineLastColField[1];
             }
-            if($seen{"$gtfLine[0]"."_".$geneId."_"} eq "$gtfLine[0]"."_".$geneId."_".$gtfLineLastColField[1]){
+            if($seen{"$gtfLine[0]"."_".$geneId."_"} eq "$gtfLine[0]"."_".$geneId."_".$gtfLineLastColField[1]) {
                 print GTHGTF "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\ttranscript_id \"$gtfLine[0]"."_".$geneId."_".$gtfLineLastColField[1]."\"\n";
             }
         }
@@ -3364,13 +3365,13 @@ sub computeFlankingRegion{
     my $size = 0;
     my %genes;
     open(GTF, "<", $gtf) or die ("Could not open file $gtf!\n");
-    while(<GTF>){
-        if(m/\tCDS\t/){
+    while(<GTF>) {
+        if(m/\tCDS\t/) {
             chomp;
             my @gtfLine = split(/\t/);
-            if(not(defined($genes{$gtfLine[8]}))){
+            if(not(defined($genes{$gtfLine[8]}))) {
                 $genes{$gtfLine[8]}=$gtfLine[4]-$gtfLine[3]+1;
-            }else{
+            } else {
                 $genes{$gtfLine[8]}+=$gtfLine[4]-$gtfLine[3]+1;
             }
         }
@@ -3379,13 +3380,13 @@ sub computeFlankingRegion{
     my $nGenes=0; 
     my $totalLen=0; 
     my $avLen=0;
-    foreach my $key (keys %genes){
+    foreach my $key (keys %genes) {
         $nGenes++; 
         $totalLen+=$genes{$key};
     } 
     $avLen=$totalLen/$nGenes;
     $size = min((floor($avLen/2), 10000));
-    if($size < 0){
+    if($size < 0) {
         print LOG "\# ".(localtime)." WARNING: \$flanking_DNA has the value $size , which is smaller than 0. Something must have gone wrong, there. Replacing by value 500.\n"; # added by Katharina Hoff
         $size = 500;
     }
@@ -3397,17 +3398,17 @@ sub gtf2gb{
     my $gb = shift;
     $flanking_DNA = computeFlankingRegion($gtf);
     $string = find("gff2gbSmallDNA.pl", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    if(!uptodate([$genome, $gtf],[$gb])  || $overwrite){
+    if(!uptodate([$genome, $gtf],[$gb])  || $overwrite) {
         my @pathName = split(/\//, $gtf);
         $errorfile = "$errorfilesDir/".$pathName[(scalar(@pathName)-1)]."_gff2gbSmallDNA.stderr";
-        if(-z $gtf){
+        if(-z $gtf) {
             $prtStr = "\# ".(localtime)." ERROR: The training gene file $gtf file is empty!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
             exit(1);
         }
         $perlCmdString = "";
-        if($nice){
+        if($nice) {
             $perlCmdString .= "nice ";
         }
         $perlCmdString .= "perl $string $gtf $genome $flanking_DNA $gb 2>$errorfile";
@@ -3420,13 +3421,13 @@ sub gtf2gb{
 sub format_ep_hints{
     open(INTRONS, "<", $genemark_hintsfile) or die("Could not open file $genemark_hintsfile!\n");
     open(OUT, ">", "$otherfilesDir/tmp.hints") or die ("Could not open file $otherfilesDir/tmp.hints!\n");
-    while(<INTRONS>){
+    while(<INTRONS>) {
         $_=~s/Intron/intron/;
         my @t = split(/\t/); 
         print OUT "$t[0]\t$t[1]\t$t[2]\t$t[3]\t$t[4]\t$t[5]\t$t[6]\t$t[7]\t";
-        if($t[5]==1){
+        if($t[5]==1) {
             print OUT "pri=4;src=P\n";
-        }else{
+        } else {
             print OUT "mult=$t[5];pri=4;src=P\n";
         }
     }
@@ -3450,48 +3451,48 @@ sub train_utr{
     move("$otherfilesDir/augustus.aa", "$otherfilesDir/augustus.noUtr.aa");
     # copy species parameter files, revert later if UTR model does not improve predictions
     print LOG "\# ".(localtime).": Create backup of current species parameters:\n";
-    for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")){
+    for(("$species"."_exon_probs.pbl","$species"."_igenic_probs.pbl", "$species"."_intron_probs.pbl")) {
         print LOG "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ $AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR\n";
         copy("$AUGUSTUS_CONFIG_PATH/species/$species/$_", "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR") or die ("Copy failed!\n");
     }
     chdir($otherfilesDir) or die ("Could not change into directory $otherfilesDir!\n");
     # search all start and stop codons from augustus.noUtr.gtf and write them to the file stops.and.starts.gff
-    if (!uptodate(["augustus.noUtr.gtf"],["stops.and.starts.gff"])){	
+    if (!uptodate(["augustus.noUtr.gtf"],["stops.and.starts.gff"])) {	
         print LOG "\# ".(localtime).": extracting all stop and start codons from augustus.noUtr.gtf to stops.and.starts.gff\n";
         my %nonRedundantCodons;
         my @tmpGffLine;
         open(AUG, "<", "augustus.noUtr.gtf") or die ("Could not open file augustus.noUtr.gtf!\n");
-        while(defined(my $i=<AUG>)){
+        while(defined(my $i=<AUG>)) {
             # TODO: we are not dealing with redundancy, correctly. Discarding duplicates is not the optimal solution
             #       because later, we filter for genes where both codons have UTR models. However, at this point in
             #       time, we ignore this matter and hope that we are left with a sufficient number of training
             #       examples.
             if($i=~/\t(start_codon|stop_codon)\t/) {
                 @tmpGffLine = split(/\t/, $i);
-                if(not(defined($nonRedundantCodons{"$tmpGffLine[0]_$tmpGffLine[3]_$tmpGffLine[4]_$tmpGffLine[6]"}))){
+                if(not(defined($nonRedundantCodons{"$tmpGffLine[0]_$tmpGffLine[3]_$tmpGffLine[4]_$tmpGffLine[6]"}))) {
                     $nonRedundantCodons{"$tmpGffLine[0]_$tmpGffLine[3]_$tmpGffLine[4]_$tmpGffLine[6]"} = $i;
                 }
             };
         }
         close(AUG) or die ("Could not close file augustus.noUtr.gtf!\n");
         open(CODON, ">", "stops.and.starts.gff") or die ("Could not open file stops.and.starts.gff!\n");
-        foreach my $key (keys %nonRedundantCodons){
+        foreach my $key (keys %nonRedundantCodons) {
             print CODON $nonRedundantCodons{$key};
         }
         close(CODON) or die ("Could not close file stops.and.starts.gff!\n");
     }
-    if(!uptodate(["$hintsfile"], ["rnaseq.utr.hints"])){
+    if(!uptodate(["$hintsfile"], ["rnaseq.utr.hints"])) {
         # TODO: currently, only using AT-AG, not AC-AG or any other splice site. Possibly extend to other splice patterns.
         print LOG "\# ".(localtime).": filtering RNA-Seq hints for valid splice site AT-AG, storing in rnsaeq.utr.hints\n";
         my %genome_hash;
         my $hash_key;
         open (FASTA , "<", $genome) or die ("Could not open file $genome!\n");
-        LINE: while (my $line = <FASTA>){
+        LINE: while (my $line = <FASTA>) {
             next LINE if $line =~ m/^#/; #discard comments
-            if ($line =~ /^>/){
+            if ($line =~ /^>/) {
                 chomp($line);
                 $hash_key = substr($line, 1, length($line)-1);
-            }else{
+            } else {
             $line =~ s/[\x0A\x0D]+//g;
             $line =~ s/(\s+)(\n)(\r)//g;
             $line = uc($line);
@@ -3504,23 +3505,23 @@ sub train_utr{
         my ($siteA, $siteB, $given, $lastCol);
         my $splice = "ATAG";
         open (UTRHINTS, ">", "rnaseq.utr.hints") or die ("Could not open file rnaseq.utr.hints!\n");
-        LINE: while(my $line = <HINTS>){
+        LINE: while(my $line = <HINTS>) {
             @gff = split(/\t/, $line);
-            if(($gff[1] eq "b2h") && ($gff[2] eq "intron")){ # make sure to use only intron hints from RNA-Seq data
+            if(($gff[1] eq "b2h") && ($gff[2] eq "intron")) { # make sure to use only intron hints from RNA-Seq data
                 $siteA = substr($genome_hash{$gff[0]}, ($gff[3]-1), 2);
                 $siteB = substr($genome_hash{$gff[0]}, ($gff[4]-2), 2);
                 $given = $siteA.$siteB;
-                if($gff[8]=~m/mult=(\d+)/){
+                if($gff[8]=~m/mult=(\d+)/) {
                     $lastCol="mult=$1_$splice\n";
-                }else{
+                } else {
                     $lastCol="mult=1_$splice\n";
                 }
-                if(uc($given) =~ m/$splice/){
+                if(uc($given) =~ m/$splice/) {
                     print $gff[0]."\t".$gff[1]."\t".$gff[2]."\t".$gff[3]."\t".$gff[4]."\t".$gff[5]."\t+\t".$gff[7]."\t".$lastCol;
-                }else{
+                } else {
                     $given = reverse $given;
                     $given =~ tr/ACGTacgt/TGCAtgca/;
-                    if(uc($given) =~ m/$splice/){
+                    if(uc($given) =~ m/$splice/) {
                         print $gff[0]."\t".$gff[1]."\t".$gff[2]."\t".$gff[3]."\t".$gff[4]."\t".$gff[5]."\t-\t".$gff[7]."\t".$lastCol;
                     }
                 }
@@ -3530,22 +3531,22 @@ sub train_utr{
         close(HINTS) or die("Could not close file $hintsfile!\n");
     }
     # create wiggle file from bam files
-    if(!uptodate(["$hintsfile"], ["rnaseq.wig"])){
-        if(scalar(@bam)>1){
+    if(!uptodate(["$hintsfile"], ["rnaseq.wig"])) {
+        if(scalar(@bam)>1) {
             print LOG "\# ".(localtime).": converting bam files to wiggle file rnaseq.wig\n";
             $cmdString = "";
-            if($nice){
+            if($nice) {
                 $cmdString .= "nice ";
             }
             $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools merge ";
-            foreach(@bam){
+            foreach(@bam) {
                 chomp;
                 $cmdString .= "-in $_ ";
             }
             $cmdString .= "-out merged.bam";
             print LOG "\n$cmdString\n\n";
             system("$cmdString") or die ("Failed to execute: $cmdString!\n");
-        }else{
+        } else {
             print LOG "\# ".(localtime).":  Creating softlink to bam file $bam[0]...\n";
             $cmdString = "ln -s $bam[0] merged.bam";
             print LOG "$cmdString\n";
@@ -3553,7 +3554,7 @@ sub train_utr{
         }
         print LOG "\# ".(localtime).": Creating wiggle file...\n";
         $cmdString = "";
-        if($nice){
+        if($nice) {
             $cmdString .= "nice ";
         }
         $cmdString .= "$bam2wigPath merged.bam >merged.wig 2> $otherfilesDir/bam2wig.err";
@@ -3561,10 +3562,10 @@ sub train_utr{
         system("$cmdString")==0 or die ("Failed to execute: $cmdString!\n");
     }
     # call utrrnaseq
-    if(!uptodate(["$hintsfile"], ["utrs.gff"])){
+    if(!uptodate(["$hintsfile"], ["utrs.gff"])) {
         print LOG  "\# ".(localtime).": Creating utrs.gff\n";
         $cmdString = "";
-        if($nice){
+        if($nice) {
             $cmdString .= "nice ";
         }
         $cmdString .= "$rnaseq2utrPath -G $genome -O stops.and.starts.gff -I rnaseq.utr.hints -W rnaseq.wig --outFileName=utrs.gff $rnaseq2utr_args 2> $otherfilesDir/rnaseq2utr.err";
@@ -3572,19 +3573,19 @@ sub train_utr{
         system("$cmdString")==0 or die ("Failed to execute: $cmdString!\n");
     }
     # create genbank file with genes that have to utrs
-    if (!uptodate(["utrs.gff", "augustus.noUtr.gtf"], ["bothutr.lst", "bothutr.test.gb"])){
+    if (!uptodate(["utrs.gff", "augustus.noUtr.gtf"], ["bothutr.lst", "bothutr.test.gb"])) {
         print LOG  "\# ".(localtime).": Creating gb file for UTR training\n";
         # extract subset of genes, where we have both UTRs
         open(UTR, "<", "utrs.gff") or die ("Can not open utrs.gff!\n");
         open(TRLST, ">", "tr.lst");
-        while(<UTR>){
+        while(<UTR>) {
             s/.*\t(\S+UTR)\t.*transcript_id \"(\S+)\".*/$2\t$1/;
             print TRLST;
         }
         close(UTR) or die ("Could not close file utrs.gff!\n");
         close(TRLST) or die("Could not close file tr.lst!\n");
         $cmdString = "";
-        if($nice){
+        if($nice) {
             $cmdString .= "nice ";
         }
         $cmdString .= "cat tr.lst | sort -u > tr_temp.lst";
@@ -3599,16 +3600,16 @@ sub train_utr{
         open(BOTH, ">", "bothutr.lst");
         my $Fld1;
         my $prev;
-        while(<TR>){
+        while(<TR>) {
             ($Fld1) = split('\t', $_, -1);
-            if($Fld1 eq $prev){
+            if($Fld1 eq $prev) {
                 print BOTH "$prev\n";
             }
         }
         close(TR) or die ("Could not close file tr.lst!\n");
         close(BOTH) or die ("Could not close file bothutr.lst!\n");
         $cmdString = "";
-        if($nice){
+        if($nice) {
             $cmdString .= "nice ";
         }
         $cmdString .= "cat utrs.gff augustus.noUtr.gtf > genes.gtf_temp";
@@ -3616,15 +3617,15 @@ sub train_utr{
         system($cmdString)==0 or die("Failed not execute $cmdString!\n");
         open(GENES, "<", "genes.gtf_temp") or die ("Can not open the file genes.gtf_temp!\n");
         open(WRITEGENES, ">", "genes.gtf_unsort");
-        while(<GENES>){
-            if(/(CDS|UTR)\t/){
+        while(<GENES>) {
+            if(/(CDS|UTR)\t/) {
                 print WRITEGENES "Not sure what\n";
             }
         }
         close(GENES) or die ("Could not close file genes.gtf_temp!\n");
         close(WRITEGENES) or die ("Could not close file genes.gtf_unsort!\n");
         $cmdString = "";
-        if($nice){
+        if($nice) {
             $cmdString .= "nice ";
         }
         $cmdString .= "cat genes.gtf_unsort | sort -n -k 4,4 | sort -s -k 10,10 | sort -s -k 1,1 > genes.gtf";
@@ -3638,18 +3639,18 @@ sub train_utr{
     # create train.gb and onlytrain.gb
     # train.gb contains a small proportion of genes with utr and up to 150 genes with UTR
     # onlytrain.gb contains all other genes (with and without utr)
-    if (!uptodate(["bothutr.test.gb", "../training.gb.train.test"] , ["train.gb", "onlytrain.gb"])){
+    if (!uptodate(["bothutr.test.gb", "../training.gb.train.test"] , ["train.gb", "onlytrain.gb"])) {
         # evaluate m: size of smaller set of utr examples
         my $m;
         # count the block number in bothutr.test.gb
         my $count=0;
         open(TEMP1, "<", "bothutr.test.gb") or die ("Can not open the file bothutr.test.gb! \n");
-        while(<TEMP1>){
+        while(<TEMP1>) {
             $count++ if($_=~m/LOCUS/);
         }
         close(TEMP1) or die("Could not close file bothutr.test.gb!\n");
-        if($count>=150){$m=150}else{$m=$count};
-            if($count<50){
+        if($count>=150) {$m=150} else {$m=$count};
+            if($count<50) {
                 die( "ERROR: Number of UTR training examples is smaller than 50. Abort UTR training. If this is the only error message, the AUGUSTUS parameters for your species were optimized ok, but you are lacking UTR parameters. Do not attempt to predict genes with UTRs for this species using the current parameter set!\n");
             exit;
         }
@@ -3658,13 +3659,13 @@ sub train_utr{
         # count the block number in training.gb.train.test
         $count=0;
         open(TEMP2,"genbank.good.gb.test") or die ("Can not open the file genbank.good.gb.test!\n");
-        while(<TEMP2>){
+        while(<TEMP2>) {
             $count++ if($_=~m/LOCUS/);
         }
         close(TEMP2) or die("Could not close file genbank.good.gb.test!\n");
-        if($count>=50){
+        if($count>=50) {
             $n=50;
-        }else{
+        } else {
             $n=$count;
         }
         # extract traininging set for UTR model
@@ -3679,7 +3680,7 @@ sub train_utr{
         my $delete;
         open(GB, "<", "genbank.good.gb.test.test") or die ("Can not open file genbank.good.gb.test.test!\n");
         open(NOMRNA, ">", "nomrna.test.gb") or die("Could not open file nomrna.test.gb!\n");
-        while(<GB>){
+        while(<GB>) {
             $delete=1 if /mRNA/;
             $delete=0 if /CDS/;
             print NOMRNA if (!$delete);
@@ -3692,7 +3693,7 @@ sub train_utr{
         # count how many genes are contained in train.gb
         my $counter_gen=0;
         open(TS, "train.gb");
-        while(<TS>){
+        while(<TS>) {
             $counter_gen++ if(/^     CDS             /);
         }
         close(TS) or die ("Could not close file train.gb!\n");
@@ -3706,7 +3707,7 @@ sub train_utr{
         open(CDSONLY, ">", "cdsonly.gb") or die ("Could not open file cdsonly.gb!\n");
         # delete the mRNA part up to the next CDS tag
         $delete=0;
-        while(<ONLYTRAIN>){
+        while(<ONLYTRAIN>) {
             $delete=1 if /mRNA/;
             $delete=0 if /CDS/;
             print CDSONLY if (!$delete);
@@ -3717,12 +3718,12 @@ sub train_utr{
         open(TRAIN, "<", "train.gb") or die ("Could not open the file train.gb!\n");
         open(REMOVE, ">", "remove.lst") or die ("Could not open file remove.lst!\n");
         my $locustag = 0;
-        while(<TRAIN>){    
-            if(m/LOCUS\s+(\S+)_\d+-\d+/){
+        while(<TRAIN>) {    
+            if(m/LOCUS\s+(\S+)_\d+-\d+/) {
                 $locustag = 0; 
                 print REMOVE "$1_";
-            }elsif(m/gene="(\S+)\.t\d+/){
-                if($locustag==0){
+            }elsif(m/gene="(\S+)\.t\d+/) {
+                if($locustag==0) {
                     print REMOVE $1."\n";                        } 
                 $locustag = 1;
             }	    
@@ -3743,10 +3744,10 @@ sub train_utr{
         setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "UTR", "on");
         setParInConfig($AUGUSTUS_CONFIG_PATH."/species/$species/$species\_parameters.cfg", "print_utr", "on");
     }
-    if (!uptodate(["train.gb", "onlytrain.gb"], ["optimize.utr.out"])){
+    if (!uptodate(["train.gb", "onlytrain.gb"], ["optimize.utr.out"])) {
         # prepare metaparameter file
         my $metaUtrName= $species."_metapars.utr.cfg";
-        if(not(-e $AUGUSTUS_CONFIG_PATH."/species/$species/$metaUtrName")){
+        if(not(-e $AUGUSTUS_CONFIG_PATH."/species/$species/$metaUtrName")) {
             # copy from generic as template
             $cmdString = "cp $AUGUSTUS_CONFIG_PATH"."/species/generic/generic_metapars.utr.cfg $AUGUSTUS_CONFIG_PATH"."/species/$species/$metaUtrName";
             print LOG "Copying utr metaparameter template file:\n$cmdString\n";
@@ -3758,7 +3759,7 @@ sub train_utr{
         print LOG "Now optimizing meta parameters of AUGUSTUS for the UTR model:\n";
         print LOG "Running \"$perlCmdString\"...";
         system("$perlCmdString")==0 or die ("Failed to execute: $perlCmdString!\n");
-    }else{
+    } else {
         print "Skipping UTR parameter optimization. Already up to date.\n";
     }
 }
@@ -3767,14 +3768,14 @@ sub train_utr{
 
 sub set_AUGUSTUS_CONFIG_PATH{
     # get path from ENV (if available)
-    if(defined($ENV{'AUGUSTUS_CONFIG_PATH'})){
-        if(-e $ENV{'AUGUSTUS_CONFIG_PATH'}){
+    if(defined($ENV{'AUGUSTUS_CONFIG_PATH'})) {
+        if(-e $ENV{'AUGUSTUS_CONFIG_PATH'}) {
             $prtStr = "\# ".(localtime).": Found environment variable \$AUGUSTUS_CONFIG_PATH.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
         }
-    }else{
+    } else {
         $prtStr = "\# ".(localtime).": Did not find environment variable \$AUGUSTUS_CONFIG_PATH ";
         $prtStr .= "(either variable does not exist, or the path given in variable does not exist";
         $prtStr .= "). Will try to set this variable in a different way, later.\n";
@@ -3783,18 +3784,18 @@ sub set_AUGUSTUS_CONFIG_PATH{
     }
 
     # get path from braker (if available, overwrite ENV retrieved)
-    if(defined($augustus_cfg_path)){
+    if(defined($augustus_cfg_path)) {
         my $last_char = substr($augustus_cfg_path, -1);
-        if($last_char eq "\/"){
+        if($last_char eq "\/") {
             chop($augustus_cfg_path);
         }
-        if(-d $augustus_cfg_path){
+        if(-d $augustus_cfg_path) {
             $prtStr = "\# ".(localtime).": Command line flag --AUGUSTUS_CONFIG_PATH was provided.";
             $prtStr .= " Setting \$AUGUSTUS_CONFIG_PATH in braker.pl to $augustus_cfg_path.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_CONFIG_PATH = $augustus_cfg_path;
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": WARNING: Command line flag --AUGUSTUS_CONFIG_PATH ";
             $prtStr .= "was provided. The given path $augustus_cfg_path is not a directory. ";
             $prtStr .= "Cannot use this as variable \$AUGUSTUS_CONFIG_PATH in braker.pl!\n";
@@ -3803,11 +3804,11 @@ sub set_AUGUSTUS_CONFIG_PATH{
         }
     }
     # if no AUGUSTUS config given, try to guess from the "augustus" executable
-    if(not(defined $AUGUSTUS_CONFIG_PATH) or length($AUGUSTUS_CONFIG_PATH) == 0){
+    if(not(defined $AUGUSTUS_CONFIG_PATH) or length($AUGUSTUS_CONFIG_PATH) == 0) {
         my $epath = which 'augustus';
         $AUGUSTUS_CONFIG_PATH = dirname(abs_path($epath))."/../config";
         $augustus_cfg_path = $AUGUSTUS_CONFIG_PATH;
-        if(not(-d $AUGUSTUS_CONFIG_PATH)){
+        if(not(-d $AUGUSTUS_CONFIG_PATH)) {
            $prtStr =  "\# ".(localtime).": ERROR: Tried guessing \$AUGUSTUS_CONFIG_PATH from ";
            $prtStr .= "system augustus path, but $AUGUSTUS_CONFIG_PATH is not a directory.\n";
            print STDERR $prtStr;
@@ -3833,14 +3834,14 @@ sub set_AUGUSTUS_CONFIG_PATH{
     $aug_conf_err .= "                are using a system-wide installed augustus installation that\n";
     $aug_conf_err .= "                resides in a directory that is not writable to you as a user.\n";
     # Give user installation instructions
-    if(not(defined $AUGUSTUS_CONFIG_PATH) or length($AUGUSTUS_CONFIG_PATH) == 0){
+    if(not(defined $AUGUSTUS_CONFIG_PATH) or length($AUGUSTUS_CONFIG_PATH) == 0) {
         $prtStr = "\# ".(localtime).": ERROR: \$AUGUSTUS_CONFIG_PATH is not defined!\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $aug_conf_err;
         print STDERR $aug_conf_err;
         exit(1);
-    }elsif(not(-w "$AUGUSTUS_CONFIG_PATH/species")){  # check whether config path is writable
+    }elsif(not(-w "$AUGUSTUS_CONFIG_PATH/species")) {  # check whether config path is writable
         $prtStr = "\# ".(localtime).": ERROR: AUGUSTUS_CONFIG_PATH/species (in this case ";
         $prtStr .= "$AUGUSTUS_CONFIG_PATH/$species) is not writeable.\n";
         print STDERR $prtStr;
@@ -3854,14 +3855,14 @@ sub set_AUGUSTUS_CONFIG_PATH{
 
 sub set_AUGUSTUS_BIN_PATH{
     # get path from ENV (if available)
-    if(defined($ENV{'AUGUSTUS_BIN_PATH'})){
-        if(-e $ENV{'AUGUSTUS_BIN_PATH'}){
+    if(defined($ENV{'AUGUSTUS_BIN_PATH'})) {
+        if(-e $ENV{'AUGUSTUS_BIN_PATH'}) {
             $prtStr = "\# ".(localtime).": Found environment variable \$AUGUSTUS_BIN_PATH.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_BIN_PATH = $ENV{'AUGUSTUS_BIN_PATH'};
         }
-    }else{
+    } else {
         $prtStr = "\# ".(localtime).": Did not find environment variable \$AUGUSTUS_BIN_PATH ";
         $prtStr .= "(either variable does not exist, or the path given in variable does not exist";
         $prtStr .= "). Will try to set this variable in a different way, later.\n";
@@ -3869,18 +3870,18 @@ sub set_AUGUSTUS_BIN_PATH{
         $logString .= $prtStr;
     }
     # get path from braker (if available, overwrite ENV retrieved)
-    if(defined($augustus_bin_path)){
+    if(defined($augustus_bin_path)) {
         my $last_char = substr($augustus_bin_path, -1);
-        if($last_char eq "\/"){
+        if($last_char eq "\/") {
             chop($augustus_bin_path);
         }
-        if(-d $augustus_bin_path){
+        if(-d $augustus_bin_path) {
             $prtStr = "\# ".(localtime).": Setting \$AUGUSTUS_BIN_PATH to command line argument ";
             $prtStr .= "--AUGUSTUS_BIN_PATH value $augustus_bin_path.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_BIN_PATH = $augustus_bin_path;
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": WARNING: Command line argument --AUGUSTUS_BIN_PATH was ";
             $prtStr .= "supplied but value $augustus_bin_path is not a directory. Will not set ";
             $prtStr .= "\$AUGUSTUS_BIN_PATH to $augustus_bin_path!\n";
@@ -3889,18 +3890,18 @@ sub set_AUGUSTUS_BIN_PATH{
         }
     }
     # if both failed, try to guess
-    if(not(defined($AUGUSTUS_BIN_PATH)) || length($AUGUSTUS_BIN_PATH) == 0){
+    if(not(defined($AUGUSTUS_BIN_PATH)) || length($AUGUSTUS_BIN_PATH) == 0) {
         $prtStr = "\# ".(localtime).": Trying to guess \$AUGUSTUS_BIN_PATH from ";
         $prtStr .= "\$AUGUSTUS_CONFIG_PATH.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
-        if(-d "$AUGUSTUS_CONFIG_PATH/../bin"){
+        if(-d "$AUGUSTUS_CONFIG_PATH/../bin") {
             $prtStr = "\# ".(localtime).": Setting \$AUGUSTUS_BIN_PATH to ";
             $prtStr .= "$AUGUSTUS_CONFIG_PATH/../bin\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_BIN_PATH = "$AUGUSTUS_CONFIG_PATH/../bin";
-        }else{
+        } else {
             $prtStr = "\# ".(localtime)." WARNING: Guessing the location of ";
             $prtStr .= "\$AUGUSTUS_BIN_PATH failed. $AUGUSTUS_CONFIG_PATH/../bin is not a ";
             $prtStr .= "directory!\n";
@@ -3909,7 +3910,7 @@ sub set_AUGUSTUS_BIN_PATH{
         }
     }
 
-    if(not(defined($AUGUSTUS_BIN_PATH))){
+    if(not(defined($AUGUSTUS_BIN_PATH))) {
         my $aug_bin_err;
         $aug_bin_err .= "There are 3 alternative ways to set this variable for braker.pl:\n";
         $aug_bin_err .= "   a) provide command-line argument --AUGUSTUS_BIN_PATH=/your/path\n";
@@ -3931,14 +3932,14 @@ sub set_AUGUSTUS_BIN_PATH{
 
 sub set_AUGUSTUS_SCRIPTS_PATH{
     # first try to get path from ENV
-    if(defined($ENV{'AUGUSTUS_SCRIPTS_PATH'})){
-        if(-e $ENV{'AUGUSTUS_SCRIPTS_PATH'}){
+    if(defined($ENV{'AUGUSTUS_SCRIPTS_PATH'})) {
+        if(-e $ENV{'AUGUSTUS_SCRIPTS_PATH'}) {
             $prtStr = "\# ".(localtime).": Found environment variable \$AUGUSTUS_SCRIPTS_PATH.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_SCRIPTS_PATH = $ENV{'AUGUSTUS_SCRIPTS_PATH'};
         }
-    }else{
+    } else {
         $prtStr = "\# ".(localtime).": Did not find environment variable \$AUGUSTUS_SCRIPTS_PATH";
         $prtStr .= "(either variable does not exist, or the path given in variable does not exist";
         $prtStr .= "). Will try to set this variable in a different way, later.\n";
@@ -3946,18 +3947,18 @@ sub set_AUGUSTUS_SCRIPTS_PATH{
         $logString .= $prtStr;
     }
     # then try to get path from braker
-    if(defined($augustus_scripts_path)){
+    if(defined($augustus_scripts_path)) {
         my $last_char = substr($augustus_scripts_path, -1);
-        if($last_char eq "\/"){
+        if($last_char eq "\/") {
             chop($augustus_scripts_path);
         }
-        if(-d $augustus_scripts_path){
+        if(-d $augustus_scripts_path) {
             $AUGUSTUS_SCRIPTS_PATH = $augustus_scripts_path;
             $prtStr = "\# ".(localtime).": Setting \$AUGUSTUS_SCRIPTS_PATH to command line ";
             $prtStr = "argument --AUGUSTUS_SCRIPTS_PATH value $augustus_scripts_path.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": WARNING: Command line argument --AUGUSTUS_SCRIPTS_PATH ";
             $prtStr .= "was supplied but value $augustus_scripts_path is not a directory. Will not ";
             $prtStr .= "set \$AUGUSTUS_SCRIPTS_PATH to $augustus_scripts_path!\n";
@@ -3966,18 +3967,18 @@ sub set_AUGUSTUS_SCRIPTS_PATH{
         }
     }
     # otherwise try to guess
-    if(not(defined($AUGUSTUS_SCRIPTS_PATH)) || length($AUGUSTUS_SCRIPTS_PATH) == 0){
+    if(not(defined($AUGUSTUS_SCRIPTS_PATH)) || length($AUGUSTUS_SCRIPTS_PATH) == 0) {
         $prtStr = "\# ".(localtime).": Trying to guess \$AUGUSTUS_SCRIPTS_PATH from ";
         $prtStr .= "\$AUGUSTUS_CONFIG_PATH.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
-        if(-d "$AUGUSTUS_CONFIG_PATH/../scripts"){
+        if(-d "$AUGUSTUS_CONFIG_PATH/../scripts") {
         $prtStr = "\# ".(localtime).": Setting \$AUGUSTUS_SCRIPTS_PATH to ";
         $prtStr .= "$AUGUSTUS_CONFIG_PATH/../scripts\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         $AUGUSTUS_SCRIPTS_PATH = "$AUGUSTUS_CONFIG_PATH/../scripts";
-        }else{
+        } else {
         $prtStr = "\# ".(localtime).": WARNING: Guessing the location of ";
         $prtStr .= "\$AUGUSTUS_SCRIPTS_PATH failed. $AUGUSTUS_CONFIG_PATH/../scripts is not a ";
         $prtStr .= "directory!\n";
@@ -3985,7 +3986,7 @@ sub set_AUGUSTUS_SCRIPTS_PATH{
         $logString .= $prtStr;
         }
     }
-    if(not(defined($AUGUSTUS_SCRIPTS_PATH))){
+    if(not(defined($AUGUSTUS_SCRIPTS_PATH))) {
         my $aug_scr_err;
         $aug_scr_err .= "There are 3 alternative ways to set this variable for braker.pl:\n";
         $aug_scr_err .= "   a) provide command-line argument --AUGUSTUS_SCRIPTS_PATH=/your/path\n";
@@ -4007,14 +4008,14 @@ sub set_AUGUSTUS_SCRIPTS_PATH{
 
 sub set_BAMTOOLS_PATH{
     # try to get path from ENV
-    if(defined($ENV{'BAMTOOLS_PATH'})){
-        if(-e $ENV{'BAMTOOLS_PATH'}){ 
+    if(defined($ENV{'BAMTOOLS_PATH'})) {
+        if(-e $ENV{'BAMTOOLS_PATH'}) { 
             $prtStr = "\# ".(localtime).": Found environment variable \$BAMTOOLS_PATH.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'}; 
         }
-    }else{
+    } else {
         $prtStr =  "\# ".(localtime).": Did not find environment variable \$BAMTOOLS_PATH ";
         $prtStr .= "(either variable does not exist, or the path given in variable does not ";
         $prtStr .= "exist). Will try to set this variable in a different way, later.\n";
@@ -4022,18 +4023,18 @@ sub set_BAMTOOLS_PATH{
         $logString .= $prtStr;
     }
     # try to get path from braker
-    if(defined($bamtools_path)){
+    if(defined($bamtools_path)) {
         my $last_char = substr($bamtools_path, -1);
-        if($last_char eq "\/"){
+        if($last_char eq "\/") {
             chop($bamtools_path);
         }
-        if(-d $bamtools_path){
+        if(-d $bamtools_path) {
             $prtStr = "\# ".(localtime).": Setting \$BAMTOOLS_BIN_PATH to command line argument ";
             $prtStr .= "--BAMTOOLS_PATH value $bamtools_path.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $BAMTOOLS_BIN_PATH = $bamtools_path;
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": WARNING: Command line argument --BAMTOOLS_PATH was ";
             $prtStr .= "supplied but value $bamtools_path is not a directory. Will not set ";
             $prtStr .= "\$BAMTOOLS_BIN_PATH to $bamtools_path!\n";
@@ -4042,18 +4043,18 @@ sub set_BAMTOOLS_PATH{
         }
     }
     # try to guess
-    if(not(defined($BAMTOOLS_BIN_PATH)) || length($BAMTOOLS_BIN_PATH) == 0){
+    if(not(defined($BAMTOOLS_BIN_PATH)) || length($BAMTOOLS_BIN_PATH) == 0) {
         $prtStr = "\# ".(localtime).": Trying to guess \$BAMTOOLS_BIN_PATH from location of bamtools";
         $prtStr .= " executable that is available in your \$PATH.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         my $epath = which 'bamtools';
-        if(-d dirname($epath)){
+        if(-d dirname($epath)) {
             $prtStr = "\# ".(localtime).": Setting \$BAMTOOLS_BIN_PATH to ".dirname($epath)."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $BAMTOOLS_BIN_PATH = dirname($epath);
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": WARNING: Guessing the location of \$BAMTOOLS_BIN_PATH ";
             $prtStr .= "failed. ".dirname($epath)." is not a directory!\n";
             print STDOUT $prtStr;
@@ -4061,7 +4062,7 @@ sub set_BAMTOOLS_PATH{
         }
     }
 
-    if(not(defined($BAMTOOLS_BIN_PATH))){
+    if(not(defined($BAMTOOLS_BIN_PATH))) {
         my $bamtools_err;
         $bamtools_err .= "There are 3 alternative ways to set this variable for braker.pl:\n";
         $bamtools_err .= "   a) provide command-line argument --BAMTOOLS_PATH=/your/path\n";
@@ -4086,14 +4087,14 @@ sub set_BAMTOOLS_PATH{
 
 sub set_GENEMARK_PATH{
     # try to get path from ENV
-    if(defined($ENV{'GENEMARK_PATH'})){
-        if(-e $ENV{'GENEMARK_PATH'}){
+    if(defined($ENV{'GENEMARK_PATH'})) {
+        if(-e $ENV{'GENEMARK_PATH'}) {
             $prtStr = "\# ".(localtime).": Found environment variable \$GENEMARK_PATH.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}; # path to 'gmes_petap.pl' script on system
         }
-    }else{
+    } else {
         $prtStr = "\# ".(localtime).": Did not find environment variable \$GENEMARK_PATH  (either";
         $prtStr .= " variable does not exist, or the path given in variable does not exist). Will";
         $prtStr .= " try to set this variable in a different way, later.\n";
@@ -4101,18 +4102,18 @@ sub set_GENEMARK_PATH{
         $logString .= $prtStr;
     }
     # try get path from braker
-    if(defined($GMET_path)){
+    if(defined($GMET_path)) {
         my $last_char = substr($GMET_path, -1);
-        if($last_char eq "\/"){
+        if($last_char eq "\/") {
             chop($GMET_path);
         }
-        if(-d $GMET_path){
+        if(-d $GMET_path) {
             $prtStr = "\# ".(localtime).": Setting \$GENEMARK_PATH to command line argument -";
             $prtStr .= "-GENEMARK_PATH value $GMET_path.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $GENEMARK_PATH = $GMET_path;    
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": WARNING: Command line argument --GENEMARK_PATH was ";
             $prtStr .= "supplied but value $GMET_path is not a directory. Will not set ";
             $prtStr .= "\$GENEMARK_PATH to $GMET_path!\n";
@@ -4121,18 +4122,18 @@ sub set_GENEMARK_PATH{
         }
     }
     # try to guess
-    if(not(defined($GENEMARK_PATH)) || length($GENEMARK_PATH) == 0){
+    if(not(defined($GENEMARK_PATH)) || length($GENEMARK_PATH) == 0) {
         $prtStr = "\# ".(localtime).": Trying to guess \$GENEMARK_PATH from location of gmes_petap.pl ";
         $prtStr .= "executable that is available in your \$PATH.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         my $epath = which 'gmes_petap.pl';
-        if(-d dirname($epath)){
+        if(-d dirname($epath)) {
             $prtStr = "\# ".(localtime).": Setting \$GENEMARK_PATH to ".dirname($epath)."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $GENEMARK_PATH = dirname($epath);
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": WARNING: Guessing the location of \$GENEMARK_PATH ";
             $prtStr .= "failed. ".dirname($epath)." is not a directory!\n";
             print STDOUT $prtStr;
@@ -4140,7 +4141,7 @@ sub set_GENEMARK_PATH{
         }
     }
 
-    if(not(defined($GENEMARK_PATH))){
+    if(not(defined($GENEMARK_PATH))) {
         my $gm_err;
         $gm_err .= "There are 3 alternative ways to set this variable for braker.pl:\n";
         $gm_err .= "   a) provide command-line argument --GENEMARK_PATH=/your/path\n";
@@ -4165,14 +4166,14 @@ sub set_GENEMARK_PATH{
 
 sub set_SAMTOOLS_PATH{
     # try to get from ENV
-    if(defined($ENV{'SAMTOOLS_PATH'})){
-        if(-e $ENV{'SAMTOOLS_PATH'}){
+    if(defined($ENV{'SAMTOOLS_PATH'})) {
+        if(-e $ENV{'SAMTOOLS_PATH'}) {
             $prtStr = "\# ".(localtime).": Found environment variable \$SAMTOOLS_PATH.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             my $SAMTOOLS_PATH = $ENV{'SAMTOOLS_PATH'}; # samtools environment variable
         }
-    }else{
+    } else {
         $prtStr = "\# ".(localtime).": Did not find environment variable \$SAMTOOLS_PATH  (either";
         $prtStr .= " variable does not exist, or the path given in variable does not exist). Will";
         $prtStr .= " try to set this variable in a different way, later.\n";
@@ -4180,18 +4181,18 @@ sub set_SAMTOOLS_PATH{
         $logString .= $prtStr;
     }
     # try to get from BRAKER
-    if(defined($SAMTOOLS_PATH_OP)){
+    if(defined($SAMTOOLS_PATH_OP)) {
         my $last_char = substr($SAMTOOLS_PATH_OP, -1);
-        if($last_char eq "\/"){
+        if($last_char eq "\/") {
             chop($SAMTOOLS_PATH_OP);
         }
-        if(-d $SAMTOOLS_PATH_OP){
+        if(-d $SAMTOOLS_PATH_OP) {
             $prtStr = "\# ".(localtime).": Setting \$SAMTOOLS_PATH to command line argument --SAMTOOLS_PATH ";
             $prtStr .= "value $SAMTOOLS_PATH_OP.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;      
             $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
-        }else{
+        } else {
             $prtStr = "\# ".(localtime)." WARNING: Command line argument --SAMTOOLS_PATH was supplied ";
             $prtStr .= "but value $SAMTOOLS_PATH_OP is not a directory. Will not set \$SAMTOOLS_PATH to ";
             $prtStr .= "$SAMTOOLS_PATH_OP!\n";
@@ -4200,18 +4201,18 @@ sub set_SAMTOOLS_PATH{
         }
     }
     # try to guess
-    if(not(defined($SAMTOOLS_PATH)) || length($SAMTOOLS_PATH) == 0){
+    if(not(defined($SAMTOOLS_PATH)) || length($SAMTOOLS_PATH) == 0) {
         $prtStr = "\# ".(localtime).": Trying to guess \$SAMTOOLS_PATH from location of samtools ";
         $prtStr .= "executable in your \$PATH.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         my $epath = which 'samtools';
-        if(-d dirname($epath)){
+        if(-d dirname($epath)) {
             $prtStr = "\# ".(localtime).": Setting \$SAMTOOLS_PATH to ".dirname($epath)."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $SAMTOOLS_PATH = dirname($epath);
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": WARNING: Guessing the location of \$SAMTOOLS_PATH ";
             $prtStr .= "failed. ".dirname($epath)." is not a directory!\n";
             print STDOUT $prtStr;
@@ -4219,7 +4220,7 @@ sub set_SAMTOOLS_PATH{
         }
     }
 
-    if(not(defined($SAMTOOLS_PATH))){
+    if(not(defined($SAMTOOLS_PATH))) {
         my $samtools_err;
         $samtools_err .= "Samtools is not strictly required for running braker.pl. It is a optional tool.\n";
         $samtools_err .= "In case bam files are not formatted entirely correctly, braker.pl can try fixing\n";
@@ -4245,16 +4246,16 @@ sub set_SAMTOOLS_PATH{
 }
 
 sub set_ALIGNMENT_TOOL_PATH{
-    if(@prot_seq_files){
+    if(@prot_seq_files) {
         # try go get from ENV                                    
-        if(defined($ENV{'ALIGNMENT_TOOL_PATH'})){
-            if(-e $ENV{'ALIGNMENT_TOOL_PATH'}){
+        if(defined($ENV{'ALIGNMENT_TOOL_PATH'})) {
+            if(-e $ENV{'ALIGNMENT_TOOL_PATH'}) {
                 $prtStr = "\# ".(localtime).": Found environment variable \$ALIGNMENT_TOOL_PATH.\n";
                 print STDOUT $prtStr;
                 $logString .= $prtStr;
                 $ALIGNMENT_TOOL_PATH = $ENV{'ALIGNMENT_TOOL_PATH'};
             }
-        }else{
+        } else {
             $prtStr = "\# ".(localtime).": Did not find environment variable \$ALIGNMENT_TOOL_PATH ";
             $prtStr .= "(either variable does not exist, or the path given in variable does not ";
             $prtStr .= "exist). Will try to set this variable in a different way, later.\n";
@@ -4262,12 +4263,12 @@ sub set_ALIGNMENT_TOOL_PATH{
             $logString .= $prtStr;
         }
         # try to get from BRAKER
-        if(defined($ALIGNMENT_TOOL_PATH_OP)){
+        if(defined($ALIGNMENT_TOOL_PATH_OP)) {
             my $last_char = substr($ALIGNMENT_TOOL_PATH_OP, -1);
-            if($last_char eq "\/"){
+            if($last_char eq "\/") {
                 chop($ALIGNMENT_TOOL_PATH_OP);
             }
-            if(-d $ALIGNMENT_TOOL_PATH_OP){
+            if(-d $ALIGNMENT_TOOL_PATH_OP) {
                 $prtStr = "\# ".(localtime).": Setting \$ALIGNMENT_TOOL_PATH to command line argument ";
                 $prtStr .= "--ALIGNMENT_TOOL_PATH value $ALIGNMENT_TOOL_PATH_OP.\n";
                 print STDOUT $prtStr;
@@ -4275,59 +4276,59 @@ sub set_ALIGNMENT_TOOL_PATH{
                 $ALIGNMENT_TOOL_PATH = $ALIGNMENT_TOOL_PATH_OP;
             }
         }
-        if(not(defined($ALIGNMENT_TOOL_PATH)) || length($ALIGNMENT_TOOL_PATH) == 0){
-            if(defined($prg)){
-                if($prg eq "gth"){
+        if(not(defined($ALIGNMENT_TOOL_PATH)) || length($ALIGNMENT_TOOL_PATH) == 0) {
+            if(defined($prg)) {
+                if($prg eq "gth") {
                     $prtStr = "\# ".(localtime).": Trying to guess \$ALIGNMENT_TOOL_PATH from location ";
                     $prtStr .= "of GenomeThreader executable in your \$PATH.\n";
                     print STDOUT $prtStr;   
                     $logString .= $prtStr;
                     my $epath = which 'gth';
-                    if(-d dirname($epath)){
+                    if(-d dirname($epath)) {
                         $prtStr = "\# ".(localtime).": Setting \$ALIGNMENT_TOOL_PATH to ";
                         $prtStr .= dirname($epath)."\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                         $ALIGNMENT_TOOL_PATH = dirname($epath);
-                    }else{
+                    } else {
                         $prtStr = "\# ".(localtime).": WARNING: Guessing the location of ";
                         $prtStr .= "\$ALIGNMENT_TOOL_PATH failed. ".dirname($epath)." is not a ";
                         $prtStr .= "directory!\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                     }
-                }elsif($prg eq "exonerate"){
+                }elsif($prg eq "exonerate") {
                     $prtStr = "\# ".(localtime).": Trying to guess \$ALIGNMENT_TOOL_PATH from ";
                     $prtStr .= "location of Exonerate executable in your \$PATH.\n";
                     print STDOUT $prtStr;
                     $logString .= $prtStr;
                     my $epath = which 'exonerate';
-                    if(-d dirname($epath)){
+                    if(-d dirname($epath)) {
                         $prtStr = "\# ".(localtime).": Setting \$ALIGNMENT_TOOL_PATH to ";
                         $prtStr .= dirname($epath)."\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                         $ALIGNMENT_TOOL_PATH = dirname($epath);
-                    }else{
+                    } else {
                         $prtStr = "\# ".(localtime).": WARNING: Guessing the location of ";
                         $prtStr .= "\$ALIGNMENT_TOOL_PATH failed. ".dirname($epath)." is not a ";
                         $prtStr .= "directory!\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                     }       
-                }elsif($prg eq "spaln"){        
+                }elsif($prg eq "spaln") {        
                     $prtStr = "\# ".(localtime).": Trying to guess \$ALIGNMENT_TOOL_PATH ";
                     $prtStr .= "from location of Spaln executable in your \$PATH.\n";
                     print STDOUT $prtStr;
                     $logString .= $prtStr;
                     my $epath = which 'spaln';
-                    if(-d dirname($epath)){
+                    if(-d dirname($epath)) {
                         $prtStr = "\# ".(localtime).": Setting \$ALIGNMENT_TOOL_PATH to ";
                         $prtStr .= dirname($epath)."\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                         $ALIGNMENT_TOOL_PATH = dirname($epath);
-                    }else{          
+                    } else {          
                         $prtStr = "\# ".(localtime)." WARNING: Guessing the location of ";
                         $prtStr .= "\$ALIGNMENT_TOOL_PATH failed. ".dirname($epath)." ";
                         $prtStr .= "is not a directory!\n";
@@ -4338,7 +4339,7 @@ sub set_ALIGNMENT_TOOL_PATH{
             }
         }
 
-        if(not(defined($ALIGNMENT_TOOL_PATH))){
+        if(not(defined($ALIGNMENT_TOOL_PATH))) {
             my $aln_err_str;
             $aln_err_str .= "There are 3 alternative ways to set this variable for braker.pl:\n";
             $aln_err_str .= "   a) provide command-line argument --ALIGNMENT_TOOL_PATH=/your/path\n";
