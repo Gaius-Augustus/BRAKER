@@ -50,18 +50,18 @@ sub ReadGff
 		my $txid = $1;
 		if( $_ =~ m/\tintron\t/ )
 		{
-			if(not(defined($h{$txid}{introns}}))){
-				$h{$txid}{introns}} = 1;
+			if(not(defined($h{$txid}{introns}))){
+				$h{$txid}{introns} = 1;
 			}else{
-					$h{$txid}{introns}} ++;
+					$h{$txid}{introns} ++;
 			}
 			
 		}elsif( $_ =~ m/\tCDS/ )
 		{
-			if(not(defined($h{$txid}{cds}}))){
-				$h{$txid}{cds}} = 1;
+			if(not(defined($h{$txid}{cds}))){
+				$h{$txid}{cds} = 1;
 			}else{
-					$h{$txid}{cds}} ++;
+					$h{$txid}{cds} ++;
 			}
 		}elsif( $_ =~ m/\tstart\t/ )
 		{
