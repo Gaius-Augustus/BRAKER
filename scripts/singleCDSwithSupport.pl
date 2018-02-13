@@ -112,20 +112,27 @@ sub ReadGff
 			}else{
 					$h{$txid}{'cds'} ++;
 			}
-		}elsif( $_ =~ m/\tstart\t/ )
+		}elsif( $_ =~ m/^(.*)\t(.*)\tstart\t(\d+)\t(\d+)\t(.*)\t(\+|-)\t(.*)\t(.*)/ )
 		{
-			$_ =~ m/^(.*)\t(.*)\tstart\t(\d+)\t\d+\t(.*)\t(\+|-)\t(.*)\t(.*)/;
 			$h{$txid}{'seq'} = $1;
 			$h{$txid}{'src'} = $2;
-			$h{$txid}{'score'} = $4;
-			$h{$txid}{'frame'} = $6;
-			$h{$txid}{'start'} = $3;
-			$h{$txid}{'strand'} = $5;
+			$h{$txid}{'score'} = $5;
+			$h{$txid}{'frame'} = $7;
+			$h{$txid}{'strand'} = $6;
+			if( $h{$txid}{'strand'} eq '+'){
+				$h{$txid}{'start'} = $3;
+			} else {
+				$h{$txid}{'stop'} = $4;
+			}
 			$h{$txid}{'grp'} = $7;
-		}elsif( $_ =~ m/\tstop\t/ )
+		}elsif( $_ =~ m/^(.*)\t(.*)\tstop\t(\d+)\t(\d+)\t(.*)\t(\+|-)\t/ )
 		{
-			$_ =~ m/stop\t\d+\t(\d+)\t/;
-			$h{$txid}{'stop'} = $1;
+			if( $5 eq '+'){
+				$h{$txid}{'stop'} = $4;
+			}else{
+				$h{$txid}{'stop'} = $3;
+			}
+
 		}
 	}	
 	close( $IN ) or die( "$!, error on close file $in_gff_file" );
