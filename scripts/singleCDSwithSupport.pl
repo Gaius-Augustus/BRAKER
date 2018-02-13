@@ -126,8 +126,6 @@ sub ParseCMD
 	$cfg->{'d'}->{'debug'} = $debug;
 	$cfg->{'d'}->{'cmd'}   = $cmd;
 	$cfg->{'d'}->{'stopCodonExcludedFromCDS'} = $stopCodonExcludedFromCDS;
-	}
-	
 #	print Dumper($cfg) if $debug;
 };
 # ------------------------------------------------
