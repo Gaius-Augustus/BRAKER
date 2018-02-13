@@ -71,7 +71,7 @@ sub ReadGff
 		}elsif( $_ =~ m/\tstop\t/ )
 		{
 			$_ =~ m/stop\t\d+\t(\d+)\t/;
-			$h{$txid}{stop}} = $1;
+			$h{$txid}{stop} = $1;
 		}
 	}	
 	close( $in_gff_file ) or die( "$!, error on close file $in_gff_file" );
