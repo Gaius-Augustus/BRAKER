@@ -124,7 +124,7 @@ sub ReadGff
 			} else {
 				$h{$txid}{'stop'} = $4;
 			}
-			$h{$txid}{'grp'} = $7;
+			$h{$txid}{'grp'} = $8;
 		}elsif( $_ =~ m/^(.*)\t(.*)\tstop\t(\d+)\t(\d+)\t(.*)\t(\+|-)\t/ )
 		{
 			if( $5 eq '+'){
