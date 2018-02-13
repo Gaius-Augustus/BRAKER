@@ -35,31 +35,59 @@ my $stopCodonExcludedFromCDS = 0;
 # ------------------------------------------------
 
 my %h;
+my %s;
 
 Usage() if ( @ARGV < 1 );
 ParseCMD();
 CheckBeforeRun();
 ReadGff();
+SummarizeHints();
 PrintCDS();
 
 # ------------------------------------------------
 sub PrintCDS
 {
 	open( my $OUT, ">", $out_gff_file ) or die( "$!, error on open file $out_gff_file" );
-	foreach my $txid (keys %h)
+	foreach my $txid (keys %s)
 	{
-		if( defined($h{$txid}{'start'}) && defined($h{$txid}{'stop'}) && !defined($h{$txid}{'introns'}) && $h{$txid}{'cds'} == 1 ){
-			print $OUT $h{$txid}{'seq'}."\t".$h{$txid}{'src'}."\tCDS\t".$h{$txid}{'start'}."\t";
-			if( $stopCodonExcludedFromCDS == 0 ){
-				print $OUT $h{$txid}{'stop'};
-
-			}else{
-				print $OUT ( $h{$txid}{'stop'} - 3 );
-			}
-			print $OUT "\t".$h{$txid}{'score'}."\t".$h{$txid}{'strand'}."\t".$h{$txid}{'frame'}."\t".$h{$txid}{'grp'}."\n";
+		print $OUT $s{$txid}{'seq'}."\t".$s{$txid}{'src'}."\tCDS\t".$s{$txid}{'start'}."\t";
+		if( $stopCodonExcludedFromCDS == 0 ){
+			print $OUT $s{$txid}{'stop'};
+		}else{
+			print $OUT ( $s{$txid}{'stop'} - 3 );
+		}
+		print $OUT "\t".$s{$txid}{'score'}."\t".$s{$txid}{'strand'}."\t".$s{$txid}{'frame'}."\t";
+		if( $s{$txid}{'mult'} > 1 ){
+			print $OUT "src=P;pri=4;mult=".$s{$txid}{'mult'}."\n";
+		}else{
+			print $OUT $h{$txid}{'grp'}."\n";
 		}
 	}
 	close( $OUT ) or die( "$!, error on close file $out_gff_file" );
+}
+# ------------------------------------------------
+sub SummarizeHints
+{
+	foreach my $txid (keys %h)
+	{
+		if( defined($h{$txid}{'start'}) && defined($h{$txid}{'stop'}) && !defined($h{$txid}{'introns'}) && $h{$txid}{'cds'} == 1 ){
+			my $cdsid = $h{$txid}{'seq'}."_".$h{$txid}{'start'}."_".$h{$txid}{'stop'}."_".$h{$txid}{'strand'};
+			if(!defined($s{$cdsid})){
+				$s{$cdsid}{'seq'} = $h{$txid}{'seq'};
+				$s{$cdsid}{'src'} = $h{$txid}{'src'};
+				$s{$cdsid}{'start'} = $h{$txid}{'start'};
+				$s{$cdsid}{'stop'} = $h{$txid}{'stop'};
+				$s{$cdsid}{'score'} = $h{$txid}{'score'};
+				$s{$cdsid}{'strand'} = $h{$txid}{'strand'};
+				$s{$cdsid}{'frame'} = $h{$txid}{'frame'};
+				$s{$cdsid}{'grp'} = $h{$txid}{'grp'};
+				$s{$cdsid}{'mult'} = 1;
+
+			}else{
+				$s{$cdsid}{'mult'}++;
+			}
+		}
+	}
 }
 # ------------------------------------------------
 sub ReadGff
