@@ -65,7 +65,7 @@ sub ReadGff
 			}
 		}elsif( $_ =~ m/\tstart\t/ )
 		{
-			$_ =~ m/start\t(\d+)\t.*\t(+|-)\t/;
+			$_ =~ m/start\t(\d+)\t.*\t(\+|-)\t/;
 			$h{$txid}{start} = $1;
 			$h{$txid}{strand} = $2;
 		}elsif( $_ =~ m/\tstop\t/ )
