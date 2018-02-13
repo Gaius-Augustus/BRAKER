@@ -44,7 +44,7 @@ ReadGff();
 sub ReadGff
 {
 	open( my $IN, $in_gff_file ) or die( "$!, error on open file $in_gff_file" );
-	while ( <IN>  )
+	while ( <$IN>  )
 	{
 		$_ =~ m/grp=(.*);/;
 		my $txid = $1;
@@ -74,7 +74,7 @@ sub ReadGff
 			$h{$txid}{stop} = $1;
 		}
 	}	
-	close( $in_gff_file ) or die( "$!, error on close file $in_gff_file" );
+	close( $IN ) or die( "$!, error on close file $in_gff_file" );
 }
 # ------------------------------------------------
 sub CheckBeforeRun
