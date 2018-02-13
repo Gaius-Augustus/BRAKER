@@ -40,38 +40,64 @@ Usage() if ( @ARGV < 1 );
 ParseCMD();
 CheckBeforeRun();
 ReadGff();
+PrintCDS();
+
+# ------------------------------------------------
+sub PrintCDS
+{
+	open( my $OUT, ">", $out_gff_file ) or die( "$!, error on open file $out_gff_file" );
+	foreach my $txid (keys %h)
+	{
+		if( defined($h{$txid}{'start'}) && defined($h{$txid}{'stop'}) && !defined($h{$txid}{'introns'}) && $h{$txid}{'cds'} == 1 ){
+			print $OUT $h{$txid}{'seq'}."\t".$h{$txid}{'src'}."\tCDS\t".$h{$txid}{'start'}."\t";
+			if( $stopCodonExcludedFromCDS == 0 ){
+				print $OUT $h{$txid}{'stop'};
+
+			}else{
+				print $OUT ( $h{$txid}{'stop'} - 3 );
+			}
+			print $OUT "\t".$h{$txid}{'score'}."\t".$h{$txid}{'strand'}."\t"..$h{$txid}{'frame'}."\t".$h{$txid}{'grp'};
+		}
+	}
+	close( $OUT ) or die( "$!, error on close file $out_gff_file" );
+}
 # ------------------------------------------------
 sub ReadGff
 {
-	open( my $IN, $in_gff_file ) or die( "$!, error on open file $in_gff_file" );
+	open( my $IN, "<", $in_gff_file ) or die( "$!, error on open file $in_gff_file" );
 	while ( <$IN>  )
 	{
 		$_ =~ m/grp=(.*);/;
 		my $txid = $1;
 		if( $_ =~ m/\tintron\t/ )
 		{
-			if(not(defined($h{$txid}{introns}))){
-				$h{$txid}{introns} = 1;
+			if( !defined($h{$txid}{'introns'}) ){
+				$h{$txid}{'introns'} = 1;
 			}else{
-					$h{$txid}{introns} ++;
+					$h{$txid}{'introns'} ++;
 			}
 			
 		}elsif( $_ =~ m/\tCDS/ )
 		{
-			if(not(defined($h{$txid}{cds}))){
-				$h{$txid}{cds} = 1;
+			if( !defined($h{$txid}{'cds'}) ){
+				$h{$txid}{'cds'} = 1;
 			}else{
-					$h{$txid}{cds} ++;
+					$h{$txid}{'cds'} ++;
 			}
 		}elsif( $_ =~ m/\tstart\t/ )
 		{
-			$_ =~ m/start\t(\d+)\t.*\t(\+|-)\t/;
-			$h{$txid}{start} = $1;
-			$h{$txid}{strand} = $2;
+			$_ =~ m/^(.*)\t(.*)\tstart\t(\d+)\t\d+\t(.*)\t(\+|-)\t(.*)\t(.*)/;
+			$h{$txid}{'seq'} = $1;
+			$h{$txid}{'src'} = $2;
+			$h{$txid}{'score'} = $4;
+			$h{$txid}{'frame'} = $6;
+			$h{$txid}{'start'} = $3;
+			$h{$txid}{'strand'} = $5;
+			$h{$txid}{'grp'} = $7;
 		}elsif( $_ =~ m/\tstop\t/ )
 		{
 			$_ =~ m/stop\t\d+\t(\d+)\t/;
-			$h{$txid}{stop} = $1;
+			$h{$txid}{'stop'} = $1;
 		}
 	}	
 	close( $IN ) or die( "$!, error on close file $in_gff_file" );
