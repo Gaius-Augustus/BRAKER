@@ -58,9 +58,9 @@ sub PrintCDS
 		}
 		print $OUT "\t".$s{$txid}{'score'}."\t".$s{$txid}{'strand'}."\t".$s{$txid}{'frame'}."\t";
 		if( $s{$txid}{'mult'} > 1 ){
-			print $OUT "src=P;pri=4;mult=".$s{$txid}{'mult'}."\n";
+			print $OUT "src=P;pri=4;mult=".$s{$txid}{'mult'}.";\n";
 		}else{
-			print $OUT $h{$txid}{'grp'}."\n";
+			print $OUT $s{$txid}{'grp'}."\n";
 		}
 	}
 	close( $OUT ) or die( "$!, error on close file $out_gff_file" );
