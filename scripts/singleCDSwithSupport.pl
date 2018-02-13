@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ==============================================================
-# Katharina J. Hoff
+# Katharina J. Hoff and Alexandre Lomsadze
 # This script takes a hints file generated from the GATECH
 # protein mapping pipeline (contains CDSpart, start and stop
 # hints) and outputs a list of single exon genes that have
@@ -31,12 +31,51 @@ my $work_dir = cwd;
 # ------------------------------------------------
 my $in_gff_file  = '';
 my $out_gff_file = '';
+my $stopCodonExcludedFromCDS = 0;
 # ------------------------------------------------
+
+my %h;
 
 Usage() if ( @ARGV < 1 );
 ParseCMD();
 CheckBeforeRun();
-
+ReadGff();
+# ------------------------------------------------
+sub ReadGff
+{
+	open( my $IN, $in_gff_file ) or die( "$!, error on open file $in_gff_file" );
+	while ( <IN>  )
+	{
+		$_ =~ m/grp=(.*);/;
+		my $txid = $1;
+		if( $_ =~ m/\tintron\t/ )
+		{
+			if(not(defined($h{$txid}{introns}}))){
+				$h{$txid}{introns}} = 1;
+			}else{
+					$h{$txid}{introns}} ++;
+			}
+			
+		}elsif( $_ =~ m/\tCDS/ )
+		{
+			if(not(defined($h{$txid}{cds}}))){
+				$h{$txid}{cds}} = 1;
+			}else{
+					$h{$txid}{cds}} ++;
+			}
+		}elsif( $_ =~ m/\tstart\t/ )
+		{
+			$_ =~ m/start\t(\d+)\t.*\t(+|-)\t/;
+			$h{$txid}{start} = $1;
+			$h{$txid}{strand} = $2;
+		}elsif( $_ =~ m/\tstop\t/ )
+		{
+			$_ =~ m/stop\t\d+\t(\d+)\t/;
+			$h{$txid}{stop}} = $1;
+		}
+	}	
+	close( $in_gff_file ) or die( "$!, error on close file $in_gff_file" );
+}
 # ------------------------------------------------
 sub CheckBeforeRun
 {
@@ -69,10 +108,11 @@ sub ParseCMD
 	
 	my $opt_results = GetOptions
 	(
-		'in_gff=s'  => \$in_gff_file,
-		'out_gff=s' => \$out_gff_file,
-		'verbose' => \$v,
-		'debug'   => \$debug
+		'in_gff=s'  				 => \$in_gff_file,
+		'out_gff=s' 				 => \$out_gff_file,
+		'stopCodonExcludedFromCDS:i' => \$stopCodonExcludedFromCDS,
+		'verbose' 					 => \$v,
+		'debug'    					 => \$debug
 	);
 
 	if( !$opt_results ) { print "error on command line: $0\n"; exit 1; }
@@ -85,6 +125,8 @@ sub ParseCMD
 	$cfg->{'d'}->{'v'}     = $v;
 	$cfg->{'d'}->{'debug'} = $debug;
 	$cfg->{'d'}->{'cmd'}   = $cmd;
+	$cfg->{'d'}->{'stopCodonExcludedFromCDS'} = $stopCodonExcludedFromCDS;
+	}
 	
 #	print Dumper($cfg) if $debug;
 };
@@ -95,10 +137,11 @@ sub Usage
 Usage:  $0
 
 Required options:
-  --in_gff   [name] name of file with ProSplign hints
-  --out_gff  [name] output
+  --in_gff                     [name] name of file with ProSplign hints
+  --out_gff                    [name] output
  
 Developer options:
+  --stopCodonExcludedFromCDS=1 default 0
   --verbose
   --debug
 # -------------------
