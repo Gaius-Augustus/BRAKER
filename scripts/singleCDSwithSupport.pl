@@ -56,7 +56,7 @@ sub PrintCDS
 			}else{
 				print $OUT ( $h{$txid}{'stop'} - 3 );
 			}
-			print $OUT "\t".$h{$txid}{'score'}."\t".$h{$txid}{'strand'}."\t"..$h{$txid}{'frame'}."\t".$h{$txid}{'grp'}."\n";
+			print $OUT "\t".$h{$txid}{'score'}."\t".$h{$txid}{'strand'}."\t".$h{$txid}{'frame'}."\t".$h{$txid}{'grp'}."\n";
 		}
 	}
 	close( $OUT ) or die( "$!, error on close file $out_gff_file" );
