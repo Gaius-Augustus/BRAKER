@@ -429,10 +429,11 @@ my $trainFromGth;   # No GeneMark-Training, train AUGUSTUS from GenomeThreader
                     # alignments, automatically sets --gth2traingenes
 my $gthTrainGeneFile;    # gobally accessible file name variable
 my $EPmode = 0;    # flag for executing GeneMark-EP instead of GeneMark-ET
-my $GeneMarkIntronThreshold
-    = 4;          # use this value to screen hintsfile for GeneMark-EX. If few
+my $EPTmode = 0;   # flag for executing GeneMark-EPT instead of GeneMark-EP or GeneMark-ET
+my $GeneMarkIntronThreshold;          # use this value to screen hintsfile for GeneMark-EX. If few
                   # hints with multiplicity higher than this value are
-                  # contained, braker will be aborted.
+                  # contained, braker will be aborted. Default value is determined by mode of 
+                  # GeneMark-EX: currently 10 for ET and 4 for EP/EPT
 my $ab_initio;    # flag for output of AUGUSTUS ab initio predictions
 
 ############################################################
@@ -858,77 +859,50 @@ if ( -d "$rootDir/$species" && !$overwrite && $wdGiven == 0 ) {
 # set path and check whether assigned extrinsic file exists
 if ( defined($extrinsicCfgFile) ) {
     $extrinsicCfgFile = rel2abs($extrinsicCfgFile);
-}
-if ( defined($extrinsicCfgFile) && !-f $extrinsicCfgFile ) {
     $prtStr
+    = "\# "
+    . (localtime)
+    . ": WARNING: Specifying an extrinsic.cfg file requires that you "
+    . "know exactly what you are doing. Make sure that \n"
+    . " a) the sources in your *.cfg file match the sources in your"
+    . " hints file,\n"
+    . " b) the scoring scheme is appropriate. This usually requires a lot"
+    . " testing, beforehand.\n"
+    . " Will use file $extrinsicCfgFile in this braker.pl run!\n";
+    print STDOUT $prtStr;
+    $logString .= $prtStr;
+    if( ! -f $extrinsicCfgFile  ) {
+        $prtStr
         = "\# "
         . (localtime)
         . ": WARNING: Assigned extrinsic file $extrinsicCfgFile does not ";
-    $prtStr .= "exist. Program will create extrinsic file instead.\n";
+        $prtStr .= "exist. Program will create extrinsic file instead.\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+        $extrinsicCfgFile = undef;
+    }
+} else {
+    $prtStr
+    = "\# "
+    . (localtime)
+    . ": Going to assign an extrinsic.cfg file based on the type of braker.pl call.\n";
     print STDOUT $prtStr;
     $logString .= $prtStr;
-    $extrinsicCfgFile = undef;
-}
-
-if ( $EPmode == 1 && not( defined($extrinsicCfgFile) ) ) {
-    $string = find( "ep.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH,
-        $AUGUSTUS_CONFIG_PATH );
-    if ( -e $string ) {
-        $extrinsicCfgFile = $string;
-    }
-    else {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . " WARNING: tried to assign extrinsicCfgFile ep.cfg as ";
-        $prtStr .= "$string but this file does not seem to exist.\n";
-        print STDOUT $prtStr;
-        $logString .= $prtStr;
-        $extrinsicCfgFile = undef;
-    }
-}
-elsif ( defined($prg) ) {
-    if (   ( $prg eq "gth" && not( defined($extrinsicCfgFile) ) )
+    if( $EPmode == 1 ){
+        assignExCfg( "ep.cfg ");
+    }elsif( defined( $prg ) ){
+         if (   ( $prg eq "gth" && not( defined($extrinsicCfgFile) ) )
         or ( $prg eq "exonerate" && not( defined($extrinsicCfgFile) ) )
         or ( $prg eq "spaln" && not( defined($extrinsicCfgFile) ) ) )
-    {
-        $string = find( "gth.cfg", $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH,
-            $AUGUSTUS_CONFIG_PATH );
-        if ( -e $string ) {
-            $extrinsicCfgFile = $string;
+        {
+            assignExCfg( "gth.cfg" );
         }
-        else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: tried to assign extrinsicCfgFile ";
-            $prtStr
-                .= "ep.cfg as $string but this file does not seem to exist.\n";
-            print STDOUT $prtStr;
-            $logString .= $prtStr;
-            $extrinsicCfgFile = undef;
-        }
+    }elsif( $EPTmode == 1 ){
+        assignExCfg( "ept.cfg" );
+    }else{
+        assignExCfg( "rnaseq.cfg" );
     }
-}
-elsif ( not( defined($extrinsicCfgFile) ) ) {
-    $string = find(
-        "rnaseq.cfg",           $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    if ( -e $string ) {
-        $extrinsicCfgFile = $string;
-    }
-    else {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: tried to assign extrinsicCfgFile ";
-        $prtStr
-            .= "ep.cfg as $string but this file does not seem to exist.\n";
-        print STDOUT $prtStr;
-        $logString .= $prtStr;
-        $extrinsicCfgFile = undef;
-    }
+
 }
 
 # check whether genome file is set
@@ -1987,10 +1961,10 @@ sub aln2hints {
             $perlCmdString .= "--prg=spaln";
         }
         elsif ( $prg eq "gth" ) {
-            $perlCmdString .= "--prg=gth";
+            $perlCmdString .= "--prg=gth --priority=5";
         }
         elsif ( $prg eq "exonerate" ) {
-            $perlCmdString .= "--prg=exonerate --genome_file=$genome";
+            $perlCmdString .= "--prg=exonerate --genome_file=$genome --priority=3";
         }
         print LOG "$perlCmdString\n";
         system("$perlCmdString") == 0
@@ -2047,6 +2021,11 @@ sub join_mult_hints {
 sub checkGeneMarkHints {
     my $nIntrons               = 0;
     my $nIntronsAboveThreshold = 0;
+    if( $EPmode == 1 ) {
+        $GeneMarkIntronThreshold = 4;
+    } else {
+        $GeneMarkIntronThreshold = 10;
+    }
     print LOG "\n\# "
         . (localtime)
         . ": Checking whether file $genemark_hintsfile contains ";
@@ -6265,5 +6244,24 @@ sub set_ALIGNMENT_TOOL_PATH {
             print STDERR $aln_err_str;
             exit(1);
         }
+    }
+}
+
+sub assignExCfg {
+    my $thisCfg = shift;
+    $string = find( $thisCfg, $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH,
+        $AUGUSTUS_CONFIG_PATH );
+    if ( -e $string ) {
+        $extrinsicCfgFile = $string;
+    }
+    else {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . " WARNING: tried to assign extrinsicCfgFile $thisCfg as ";
+        $prtStr .= "$string but this file does not seem to exist.\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+        $extrinsicCfgFile = undef;
     }
 }
