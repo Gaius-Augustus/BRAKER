@@ -342,7 +342,7 @@ my $genemarkDir;         # directory for GeneMark-ET output
 my $GENEMARK_PATH;
 my $GMET_path;           # GeneMark-ET path
 my $genome;              # name of sequence file
-my $genome_length = 0;   # length of genome file
+my %scaffSizes;       # length of scaffolds
 my $gff3          = 0;   # create output file in GFF3 format
 my $help;                # print usage
 my @hints;               # input hints file names
@@ -432,7 +432,7 @@ my $EPmode = 0;    # flag for executing GeneMark-EP instead of GeneMark-ET
 my $EPTmode = 0;   # flag for executing GeneMark-EPT instead of GeneMark-EP or GeneMark-ET
 my $GeneMarkIntronThreshold;          # use this value to screen hintsfile for GeneMark-EX. If few
                   # hints with multiplicity higher than this value are
-                  # contained, braker will be aborted. Default value is determined by mode of 
+                  # contained, braker will be aborted. Default value is determined by mode of
                   # GeneMark-EX: currently 10 for ET and 4 for EP/EPT
 my $ab_initio;    # flag for output of AUGUSTUS ab initio predictions
 
@@ -3553,6 +3553,13 @@ sub augustus {
     my $aug_hints_err;
     my $aug_ab_initio_out;
     my $aug_ab_initio_err;
+    my $augustus_dir = "$otherfilesDir/augustus_tmp";
+    if ( not( -d $augustus_dir ) ) {
+        $prtStr = "\# " . (localtime) . ": Creating directory for storing AUGUSTUS files (temporarily) $augustus_dir.\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+        mkdir $workDir;
+    }
 
     if (!uptodate( [ $extrinsicCfgFile, $hintsfile, $genome ],
             ["$otherfilesDir/augustus.gff"] )
@@ -3569,26 +3576,32 @@ sub augustus {
                 $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
             );
             $errorfile = "$errorfilesDir/splitMfasta.stderr";
-            my $minsize = floor( $genome_length / $CPU );
+
             $perlCmdString = "";
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString .= "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
+            $perlCmdString .= "perl $string $genome --outputpath=$augustus_dir 2>$errorfile";
             print LOG "$perlCmdString\n";
             system("$perlCmdString") == 0
                 or die("Failed to execute: $perlCmdString\n");
+            # rename files according to scaffold name
+            $cmdString = "cd $augustus_dir; for f in genome.split.*; do NAME = `grep \">\" \$f`; mv \$f \${NAME#>}.fa; done; cd ..";
+            print LOG $cmdString."\n";
+            system ("$cmdString") == 0 or die("Failed to execute: $cmdString\n");
+
+
             if ($nice) {
                 print LOG "\# "
                     . (localtime)
-                    . ": nice find $otherfilesDir -name \"genome.split.*\"\n";
-                @genome_files = `nice find $otherfilesDir -name "genome.split.*"`;
+                    . ": nice ls $augustus_dir\n";
+                @genome_files = `nice ls $augustus_dir"`;
             }
             else {
                 print LOG "\# "
                     . (localtime)
-                    . ": find $otherfilesDir -name \"genome.split.*\"\n";
-                @genome_files = `find $otherfilesDir -name "genome.split.*"`;
+                    . ": ls $augustus_dir\n";
+                @genome_files = `ls $augustus_dir"`;
             }
             print LOG "\# "
                 . (localtime)
@@ -3599,6 +3612,18 @@ sub augustus {
         else {
             push( @genome_files, $genome );
         }
+# start extending here
+        print LOG "\# "
+            . (localtime)
+            . ": creating split genome file list for creating AUGUSTUS jobs\n";
+        if ( $CPU > 1 ){
+
+            }else{
+                
+            }
+
+# go into parallelFork here
+
         @genome_files = sort { lc($a) cmp lc($b) } @genome_files;
         $pm = new Parallel::ForkManager($CPU);
         if ($ab_initio) {
@@ -3860,7 +3885,7 @@ sub clean_up {
 # find out if some programs are not installed.
 # checks for GeneMark-ET: perl modules: YAML, Hash::Merge, Logger::Simple, Parallel::ForkManager
 # checks for braker: perl modules: Scalar::Util::Numeric
-sub check_upfront {    # see autoAug.pl
+sub check_upfront {
 
     # check whether required perl modules are installed
     my $pmodule;
@@ -3884,13 +3909,13 @@ sub check_upfront {    # see autoAug.pl
 
     # check for augustus executable
     $augpath = "$AUGUSTUS_BIN_PATH/augustus";
-    if ( system("$augpath > /dev/null 2> /dev/null") != 0 ) { # see autoAug.pl
-        if ( !-f $augpath ) {                                 # see autoAug.pl
+    if ( system("$augpath > /dev/null 2> /dev/null") != 0 ) {
+        if ( !-f $augpath ) {
             $prtStr
                 = "\# "
                 . (localtime)
                 . ": ERROR: augustus executable not found at $augpath.\n"
-                ;                                             # see autoAug.pl
+                ;
             print LOG $prtStr;
             print STDERR $prtStr;
         }
@@ -3899,7 +3924,7 @@ sub check_upfront {    # see autoAug.pl
                 = "\# "
                 . (localtime)
                 . ": ERROR: $augpath not executable on this machine.\n"
-                ;                                             # see autoAug.pl
+                ;
             print LOG $prtStr;
             print STDERR $prtStr;
         }
@@ -4303,15 +4328,16 @@ sub check_options {
 }
 
 # check fasta headers
-sub check_fasta_headers {    # see autoAug.pl
-    my $fastaFile                = shift;    # see autoAug.pl
-    my $someThingWrongWithHeader = 0;        # see autoAug.pl
-    my $spaces                   = 0;        # see autoAug.pl
-    my $orSign                   = 0;        # see autoAug.pl
-    my $emptyC                   = 0;        # see simplifyFastaHeaders.pl
-    my $wrongNL                  = 0;        # see simplifyFastaHeaders.pl
-    my $prot                     = 0;        # see simplifyFastaHeaders.pl
-    my $dna                      = 0;        # see simplifyFastaHeaders.pl
+sub check_fasta_headers {
+    my $fastaFile                = shift;
+    my $someThingWrongWithHeader = 0;
+    my $spaces                   = 0;
+    my $orSign                   = 0;
+    my $emptyC                   = 0;
+    my $wrongNL                  = 0;
+    my $prot                     = 0;
+    my $dna                      = 0;
+    my $scaffName;
     my $mapFile = "$otherfilesDir/header.map";
     my $stdStr
         = "This may later on cause problems! The pipeline will create a new file without spaces or \"|\" characters and a header.map file to look up the old and new headers. This message will be suppressed from now on!\n";
@@ -4328,92 +4354,93 @@ sub check_fasta_headers {    # see autoAug.pl
         while (<FASTA>) {
 
             # check newline character
-            if ( not( $_ =~ m/\n$/ ) ) {    # see simplifyFastaHeaders.pl
-                if ( $wrongNL < 1 ) {       # see simplifyFastaHeaders.pl
+            if ( not( $_ =~ m/\n$/ ) ) {
+                if ( $wrongNL < 1 ) {
                     print LOG "\# "
                         . (localtime)
                         . " WARNING: something seems to be wrong with the newline character! This is likely to cause problems with the braker.pl pipeline and the AUGUSTUS web service! Please adapt your file to UTF8! This warning will be supressed from now on!\n"
-                        ;                   # see simplifyFastaHeaders.pl
-                    $wrongNL++;             # see simplifyFastaHeaders.pl
+                        ;
+                    $wrongNL++;
                 }
             }
             chomp;
 
             # look for whitespaces in fasta file
-            if ( $_ =~ m/\s/ ) {            # see autoAug.pl
-                if ( $spaces == 0 ) {       # see autoAug.pl
+            if ( $_ =~ m/\s/ ) {
+                if ( $spaces == 0 ) {
                     print LOG "\# "
                         . (localtime)
                         . " WARNING: Detected whitespace in fasta header of file $fastaFile. "
                         . $stdStr;
-                    $spaces++;              # see autoAug.pl
+                    $spaces++;
                 }
             }
 
             # look for | in fasta file
-            if ( $_ =~ m/\|/ ) {            # see autoAug.pl
-                if ( $orSign == 0 ) {       # see autoAug.pl
+            if ( $_ =~ m/\|/ ) {
+                if ( $orSign == 0 ) {
                     print LOG "\# "
                         . (localtime)
                         . " WARNING: Detected | in fasta header of file $fastaFile. "
                         . $stdStr;
-                    $orSign++;              # see autoAug.pl
+                    $orSign++;
                 }
             }
 
             # look for special characters in headers
             if ( ( $_ !~ m/[>a-zA-Z0-9]/ ) && ( $_ =~ m/^>/ ) ) {
-                if ( $someThingWrongWithHeader == 0 ) {    # see autoAug.pl
+                if ( $someThingWrongWithHeader == 0 ) {
                     print LOG "\# "
                         . (localtime)
-                        . " WARNING: Fasta headers in file $fastaFile seem to contain non-letter and non-number characters. That means they may contain some kind of special character. "
+                        . " WARNING: Fasta headers in file $fastaFile seem to contain non-letter and non-number characters. That means they may contain some kind of special characters. "
                         . $stdStr;
-                    $someThingWrongWithHeader++;           # see autoAug.pl
+                    $someThingWrongWithHeader++;
                 }
             }
             if ( $_ =~ m/^>/ ) {
-
+                $scaffName = $_;
+                $scaffSizes{$scaffName} = 0;
                 # replace | and whitespaces by _
-                my $oldHeader = $_;
-                $_ =~ s/\s/_/g;
-                $_ =~ s/\|/_/g;
-                print OUTPUT "$_\n";
-                print MAP "$_\t$oldHeader\n";
+                my $oldHeader = $scaffName;
+                $scaffName =~ s/\s/_/g;
+                $scaffName =~ s/\|/_/g;
+                print OUTPUT "$scaffName\n";
+                print MAP "$scaffName\t$oldHeader\n";
             }
             else {
-                if ( length($_) > 0 ) {    # see simplifyFastaHeaders.pl
-                    $genome_length += length($_);
-                    print OUTPUT "$_\n";    # see simplifyFastaHeaders.pl
+                if ( length($_) > 0 ) {
+                    $scaffSizes{$scaffName} += length(chomp($_));
+                    print OUTPUT "$_\n";
                     if ( $_ !~ m/[ATGCNatgcn]/ )
-                    {                       # see simplifyFastaHeaders.pl
-                        if ( $dna == 0 ) {    # see simplifyFastaHeaders.pl
+                    {
+                        if ( $dna == 0 ) {
                             print LOG "\# "
                                 . (localtime)
                                 . ": Assuming that this is not a DNA fasta file because other characters than A, T, G, C, N, a, t, g, c, n were contained. If this is supposed to be a DNA fasta file, check the content of your file! If this is supposed to be a protein fasta file, please ignore this message!\n"
-                                ;             # see simplifyFastaHeaders.pl
-                            $dna++;           # see simplifyFastaHeaders.pl
+                                ;
+                            $dna++;
                         }
                     }
                     if ( $_
                         !~ m/[AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx]/
                         )
-                    {                         # see simplifyFastaHeaders.pl
-                        if ( $prot == 0 ) {    # see simplifyFastaHeaders.pl
+                    {
+                        if ( $prot == 0 ) {
                             print LOG "\# "
                                 . (localtime)
                                 . ": Assuming that this is not a protein fasta file because other characters than AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx were contained. If this is supposed to be DNA fasta file, please ignore this message.\n"
-                                ;              # see simplifyFastaHeaders.pl
-                            $prot++;           # see simplifyFastaHeaders.pl
+                                ;
+                            $prot++;
                         }
                     }
                 }
                 else {
-                    if ( $emptyC < 1 ) {       # see simplifyFastaHeaders.pl
+                    if ( $emptyC < 1 ) {
                         print LOG "\# "
                             . (localtime)
                             . " WARNING: empty line was removed! This warning will be supressed from now on!\n";
                     }
-                    $emptyC++;                 # see simplifyFastaHeaders.pl
+                    $emptyC++;
                 }
             }
         }
@@ -4429,9 +4456,9 @@ sub check_fasta_headers {    # see autoAug.pl
 # check bam headers
 sub check_bam_headers {
     my $bamFile                  = shift;
-    my $someThingWrongWithHeader = 0;       # see autoAug.pl
-    my $spaces                   = 0;       # see autoAug.pl
-    my $orSign                   = 0;       # see autoAug.pl
+    my $someThingWrongWithHeader = 0;
+    my $spaces                   = 0;
+    my $orSign                   = 0;
     my %map_hash;
     my $mapFile = "$otherfilesDir/bam_header.map";
     my $stdStr
@@ -4480,21 +4507,21 @@ sub check_bam_headers {
                         print LOG "\# "
                             . (localtime)
                             . " WARNING: Detected whitespace in BAM header of file $bamFile. "
-                            . $stdStr;    # see autoAug.pl
-                        $spaces++;        # see autoAug.pl
+                            . $stdStr;
+                        $spaces++;
                     }
                 }
                 $new_name =~ s/\s/_/g;    # removing whitespaces (if any)
                 @seq_line = split( /\|/, $old_name );
                 if ( scalar(@seq_line) > 1 ) {
-                    if ( $orSign == 0 ) {    # see autoAug.pl
+                    if ( $orSign == 0 ) {
                         print LOG "\# "
                             . (localtime)
                             . " WARNING: Detected | in header of file $bamFile. "
-                            . $stdStr;       # see autoAug.pl
+                            . $stdStr;
                         print LOG
                             "Replacing | by underscores in Bam headers.\n";
-                        $orSign++;           # see autoAug.pl
+                        $orSign++;
                     }
                 }
                 $new_name
@@ -4502,17 +4529,17 @@ sub check_bam_headers {
                 $map_hash{$old_name} = $new_name;
                 $seq_line[0] = "\@SQ\tSN:$new_name\t$seq_end";
                 if ( $seq_line[0] !~ m/[>a-zA-Z0-9]/ ) {
-                    if ( $someThingWrongWithHeader == 0 ) {   # see autoAug.pl
+                    if ( $someThingWrongWithHeader == 0 ) {
                         print LOG "\# "
                             . (localtime)
                             . " WARNING: BAM headers in file $bamFile seem to contain non-letter and non-number characters. That means they may contain some kind of special character. "
-                            . $stdStr;                        # see autoAug.pl
-                        $someThingWrongWithHeader++;          # see autoAug.pl
+                            . $stdStr;
+                        $someThingWrongWithHeader++;
                     }
                 }
-                print OUTPUT "$seq_line[0]\n";   # see simplifyFastaHeaders.pl
+                print OUTPUT "$seq_line[0]\n";
                 print MAP "$map_hash{$old_name}\t$old_name\n"
-                    ;                            # see simplifyFastaHeaders.pl
+                    ;
             }
             elsif (eof) {
                 print OUTPUT "$_";
@@ -4551,10 +4578,10 @@ sub check_bam_headers {
                     print LOG "\# "
                         . (localtime)
                         . " WARNING: The environment variable SAMTOOLS_PATH is not defined. Please export an environment variable for samtools or use --SAMTOOLS_PATH=path/to/samtools.\n"
-                        ;    # see autoAug.pl
+                        ;
                     print LOG
                         "The program will try to use 'samtools' to start samtools, which may not work on your system.\n"
-                        ;    # see autoAug.pl
+                        ;
                     $SAMTOOLS_PATH = "samtools";
                 }
                 my $samFile     = "$otherfilesDir/" . $_[0] . ".sam";
