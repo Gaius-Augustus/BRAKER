@@ -3,7 +3,7 @@
 ####################################################################################################
 #                                                                                                  #
 # braker.pl                                                                                        #
-# Pipeline for predicting genes with GeneMark-ET and AUGUSTUS with RNA-Seq                         #
+# Pipeline for predicting genes with GeneMark-EX and AUGUSTUS                                      #
 #                                                                                                  #
 # Authors: Katharina Hoff, Simone Lange, Mario Stanke, Alexandre Lomsadze, Mark Borodovsky         #
 #                                                                                                  #
@@ -282,6 +282,8 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     those pre-existing parameters are used.
 --rnaseq2utr_args=params            Expert option: pass additional parameters
                                     to rnaseq2utr as string
+--eval=reference.gtf                Reference set to evaluate predictions
+                                    against
 
 DESCRIPTION
 
@@ -357,6 +359,7 @@ my @malus;               # array of malus values for extrinsic file
 my $optCfgFile;          # optinonal extrinsic config file for AUGUSTUS
 my $otherfilesDir;  # directory for other files besides GeneMark-ET output and
                     # parameter files
+my $annot;               # reference annotation to compare predictions to
 my $overwrite
     = 0;    # overwrite existing files (except for species parameter files)
 my $parameterDir;     # directory of parameter files for species
@@ -549,6 +552,7 @@ GetOptions(
     'trainFromGth!'                => \$trainFromGth,
     'epmode!'                      => \$EPmode,
     'AUGUSTUS_ab_initio!'          => \$ab_initio,
+    'eval=s'                       => \$annot,
     'version!'                     => \$printVersion
 );
 
@@ -969,6 +973,18 @@ if (@prot_seq_files) {
         $logString .= $prtStr;
         exit(1);
     }
+}
+
+# check whether reference annotation file exists
+if ($annot) {
+      if ( not(-e $annot ) ) {
+            $prtStr
+                = "\# ". (localtime). ": ERROR: Reference annotation file "
+                .  "$annot does not exist. Cannot evaluate prediction accuracy!\n";
+            print STDERR $prtStr;
+            $logString .= $prtStr;
+            exit(1);
+      }
 }
 
 # check whether protein alignment file is given
@@ -6329,4 +6345,75 @@ sub join_aug_pred{
         . (localtime)
         . ": Deleting $cat_file\n";
     unlink($cat_file);
+}
+
+sub eval{
+      my @results;
+      my $seqlist = "$otherfilesDir/seqlist";
+      open (SEQLST, ">", $seqlist) or die ("Could not open file $seqlist!\n");
+      while ( my ( $locus, $size ) = each %scaffSizes ) {
+            chomp $locus;
+            $locus =~ s/^>//;
+            print SEQLIST $locus."\n";
+      }
+      close(SEQLIST);
+      if( -e "$otherfilesDir/augustus.ab_initio.gtf" ){
+
+
+
+      }
+
+      if( -e "$otherfilesDir/augustus_hints.gtf" ) {
+
+      }
+
+      if( -e "$genemarkDir/genemark.gtf" ){
+
+      }
+
+      if ( -e "someGthFile" ){
+
+      }
+
+      if ( -e "cdspartHintsfile" ){
+
+      }
+}
+
+sub eval_augustus {
+      my $gtfFile = shift;
+      my $eval_multi_gtf = find(
+            "eval_multi_gtf.pl", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH,       $AUGUSTUS_CONFIG_PATH
+      );
+      my $epath = which 'evaluate_gtf.pl';
+      $epath = dirname( abs_path($epath) );
+      my $validate_gtf = "$epath/validate_gtf.pl";
+      if( not (-e $validate_gtf ) ) {
+            print LOG "\# ". (localtime). ": ERROR: Cannot find validate_gtf at $validate_gtf!\n";
+            exit(1);
+      }
+
+      my $firstStepFile = $gtfFile;
+      $firstStepFile =~ s/\.gtf/\.f\.gtf/;
+      my $secondStepFile = $firstStepFile;
+      $secondStepFile =~ s/\.f\.gtf/f\.fixed\.gtf/;
+      open (FIRST, ">", $firstStepFile) or die ("Could not open file $firstStepFile!\n");
+      open (AUG, "<", $gtfFile ) or die("Could not open file $gtfFile!\n");
+      while(<AUG>){
+            my @t;
+            if( ($t[2] eq "CDS") or ($t[2] eq "exon") or ($t[2] eq "start_codon") or ($t[2] eq "UTR") ) {
+                  print FIRST $_;
+            }
+      }
+      close(AUG) or die ("Could not close file $gtfFile!\n");
+      close (FIRST) or die ("Could not close file $firstStepFile!\n");
+      $cmdString = "$validate_gtf -c -f $$firstStepFile";
+      system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+
+      $cmdString = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'";
+
+
+
+
 }
