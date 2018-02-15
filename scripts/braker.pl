@@ -3559,7 +3559,7 @@ sub augustus {
         || $overwrite
         )
     {
-# split genome file in smaller parts and use multiple parallel runs of augustus for prediction
+    # split genome file in smaller parts and use multiple parallel runs of augustus for prediction
         if ( $CPU > 1 ) {
             print LOG "\# "
                 . (localtime)
@@ -3574,8 +3574,7 @@ sub augustus {
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString
-                .= "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
+            $perlCmdString .= "perl $string $genome --outputpath=$otherfilesDir --minsize=$minsize 2>$errorfile";
             print LOG "$perlCmdString\n";
             system("$perlCmdString") == 0
                 or die("Failed to execute: $perlCmdString\n");
@@ -3583,8 +3582,7 @@ sub augustus {
                 print LOG "\# "
                     . (localtime)
                     . ": nice find $otherfilesDir -name \"genome.split.*\"\n";
-                @genome_files
-                    = `nice find $otherfilesDir -name "genome.split.*"`;
+                @genome_files = `nice find $otherfilesDir -name "genome.split.*"`;
             }
             else {
                 print LOG "\# "
@@ -3610,21 +3608,17 @@ sub augustus {
                 chomp( $genome_files[$i] );
                 my $pid = $pm->start and next;
                 my $idx = $i + 1;
-                $aug_ab_initio_err
-                    = "$errorfilesDir/augustus.ab_initio.$idx.stderr";
-                $aug_ab_initio_out
-                    = "$otherfilesDir/augustus.ab_initio.$idx.gff";
+                $aug_ab_initio_err = "$errorfilesDir/augustus.ab_initio.$idx.stderr";
+                $aug_ab_initio_out = "$otherfilesDir/augustus.ab_initio.$idx.gff";
                 $cmdString = "";
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on";
+                $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on";
                 if ($soft_mask) {
                     $cmdString .= " --softmasking=1";
                 }
-                $cmdString
-                    .= " $genome_files[$i] 1>$aug_ab_initio_out 2>$aug_ab_initio_err";
+                $cmdString .= " $genome_files[$i] 1>$aug_ab_initio_out 2>$aug_ab_initio_err";
                 print LOG "\# "
                     . (localtime)
                     . ": Running AUGUSTUS in ab  initio mode for file $genome_files[$idx-1]\n";
@@ -3646,8 +3640,7 @@ sub augustus {
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString
-                .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsicCfgFile --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac";
+            $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsicCfgFile --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac";
             if ( defined($optCfgFile) ) {
                 $cmdString .= " --optCfgFile=$optCfgFile";
             }
@@ -3657,8 +3650,7 @@ sub augustus {
             if ( defined($augustus_args) ) {
                 $cmdString .= " $augustus_args";
             }
-            $cmdString
-                .= " $genome_files[$i] 1>$aug_hints_out 2>$aug_hints_err";
+            $cmdString .= " $genome_files[$i] 1>$aug_hints_out 2>$aug_hints_err";
             print LOG "\# "
                 . (localtime)
                 . ": Running AUGUSTUS for file $genome_files[$idx-1]\n";
@@ -3677,15 +3669,13 @@ sub augustus {
                 $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
             );
             if ($ab_initio) {
-                my $cat_ab_initio_file
-                    = "$otherfilesDir/augustus.ab_initio.tmp.gff";
+                my $cat_ab_initio_file = "$otherfilesDir/augustus.ab_initio.tmp.gff";
                 for ( my $idx = 1; $idx <= scalar(@genome_files); $idx++ ) {
                     $cmdString = "";
                     if ($nice) {
                         $cmdString .= "nice ";
                     }
-                    $cmdString
-                        .= "cat $otherfilesDir/augustus.ab_initio.$idx.gff >> $cat_ab_initio_file";
+                    $cmdString .= "cat $otherfilesDir/augustus.ab_initio.$idx.gff >> $cat_ab_initio_file";
                     print LOG "\# "
                         . (localtime)
                         . ": Concatenating AUGUSTUS ab initio output files\n";
@@ -3697,8 +3687,7 @@ sub augustus {
                 if ($nice) {
                     $perlCmdString .= "nice ";
                 }
-                $perlCmdString
-                    .= "perl $string <$cat_ab_initio_file >$otherfilesDir/augustus.ab_initio.gff";
+                $perlCmdString .= "perl $string <$cat_ab_initio_file >$otherfilesDir/augustus.ab_initio.gff";
                 print LOG "\# "
                     . (localtime)
                     . ": Joining AUGUSTUS ab initio output\n";
@@ -3722,8 +3711,7 @@ sub augustus {
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString
-                    .= "cat $otherfilesDir/augustus.hints.$idx.gff >> $cat_hints_file";
+                $cmdString .= "cat $otherfilesDir/augustus.hints.$idx.gff >> $cat_hints_file";
                 print LOG "\# "
                     . (localtime)
                     . ": Concatenating AUGUSTUS with hints output files\n";
@@ -3735,8 +3723,7 @@ sub augustus {
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString
-                .= "perl $string <$cat_hints_file >$otherfilesDir/augustus.hints.gff";
+            $perlCmdString .= "perl $string <$cat_hints_file >$otherfilesDir/augustus.hints.gff";
             print LOG "\# "
                 . (localtime)
                 . ": Joining AUGUSTUS with hints output\n";
@@ -3758,8 +3745,7 @@ sub augustus {
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString
-                    .= "mv $otherfilesDir/augustus.ab_initio.1.gff $otherfilesDir/augustus.ab_initio.gff";
+                $cmdString .= "mv $otherfilesDir/augustus.ab_initio.1.gff $otherfilesDir/augustus.ab_initio.gff";
                 print LOG "\# "
                     . (localtime)
                     . ": renaming AUGUSTUS ab initio file\n";
@@ -3771,8 +3757,7 @@ sub augustus {
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString
-                .= "mv $otherfilesDir/augustus.hints.1.gff $otherfilesDir/augustus.hints.gff";
+            $cmdString .= "mv $otherfilesDir/augustus.hints.1.gff $otherfilesDir/augustus.hints.gff";
             print LOG "\# "
                 . (localtime)
                 . ": renaming AUGUSTUS with hints file\n";
