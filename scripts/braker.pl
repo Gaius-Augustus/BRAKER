@@ -55,54 +55,54 @@ braker.pl [OPTIONS] --genome=genome.fa --bam=rnaseq.bam
 INPUT FILE OPTIONS
 
 --genome=genome.fa                  fasta file with DNA sequences
---bam=rnaseq.bam                    bam file with spliced alignments from 
+--bam=rnaseq.bam                    bam file with spliced alignments from
                                     RNA-Seq
---hints=hints.gff                   Alternatively to calling braker.pl with a 
+--hints=hints.gff                   Alternatively to calling braker.pl with a
                                     bam file, it is possible to call it with a
                                     file that contains introns extracted from
-                                    RNA-Seq (or other data) in gff format. 
-                                    This flag also allows the usage of hints 
+                                    RNA-Seq (or other data) in gff format.
+                                    This flag also allows the usage of hints
                                     from additional extrinsic sources for gene
                                     prediction with AUGUSTUS. To consider such
                                     additional extrinsic information, you need
-                                    to use the flag --extrinsicCfgFile to 
+                                    to use the flag --extrinsicCfgFile to
                                     specify parameters for all sources in the
-                                    hints file (including the source "E" for 
+                                    hints file (including the source "E" for
                                     intron hints from RNA-Seq).
---prot_seq=prot.fa                  A protein sequence file in multiple fasta 
+--prot_seq=prot.fa                  A protein sequence file in multiple fasta
                                     format. This file will be used to generate
-                                    protein hints for AUGUSTUS by running one 
-                                    of the three alignment tools Exonerate 
-                                    (--prg=exonerate), Spaln (--prg=spaln) or 
-                                    GenomeThreader (--prg=gth). Default is 
-                                    GenomeThreader if the tool is not 
+                                    protein hints for AUGUSTUS by running one
+                                    of the three alignment tools Exonerate
+                                    (--prg=exonerate), Spaln (--prg=spaln) or
+                                    GenomeThreader (--prg=gth). Default is
+                                    GenomeThreader if the tool is not
                                     specified.  Currently, hints from protein
-                                    sequences are only used in the prediction 
+                                    sequences are only used in the prediction
                                     step with AUGUSTUS.
---prot_aln=prot.aln                 Alignment file generated from aligning 
-                                    protein sequences against the genome with 
-                                    either Exonerate (--prg=exonerate), or 
-                                    Spaln (--prg=spaln), or GenomeThreader 
+--prot_aln=prot.aln                 Alignment file generated from aligning
+                                    protein sequences against the genome with
+                                    either Exonerate (--prg=exonerate), or
+                                    Spaln (--prg=spaln), or GenomeThreader
                                     (--prg=gth).
                                     To prepare alignment file, run Spaln2 with
                                     the following command:
                                     spaln -O0 ... > spalnfile
-                                    To prepare alignment file, run Exonerate 
+                                    To prepare alignment file, run Exonerate
                                     with the following command:
                                     exonerate --model protein2genome \
                                         --showtargetgff T ... > exfile
-                                    To prepare alignment file, run 
+                                    To prepare alignment file, run
                                     GenomeThreader with the following command:
                                     gth -genomic genome.fa  -protein \
                                         protein.fa -gff3out \
                                         -skipalignmentout ... -o gthfile
-                                    A valid option prg=... must be specified 
+                                    A valid option prg=... must be specified
                                     in combination with --prot_aln. Generating
                                     tool will not be guessed.
-                                    Currently, hints from protein alignment 
+                                    Currently, hints from protein alignment
                                     files are only used in the prediction step
-                                    with AUGUSTUS.                                    
---AUGUSTUS_ab_initio                output ab initio predictions by AUGUSTUS 
+                                    with AUGUSTUS.
+--AUGUSTUS_ab_initio                output ab initio predictions by AUGUSTUS
                                     in addition to predictions with hints by
                                     AUGUSTUS
 
@@ -110,178 +110,178 @@ FREQUENTLY USED OPTIONS
 
 --species=sname                     Species name. Existing species will not be
                                     overwritten. Uses Sp_1 etc., if no species
-                                    is assigned 
---softmasking                       Softmasking option for soft masked genome 
+                                    is assigned
+--softmasking                       Softmasking option for soft masked genome
                                     files. Set to 'on' or '1'
 --epmode                            Run GeneMark-EP with intron hints provided
                                     from --hints=proteinhints.gff
---gff3                              Output in GFF3 format (default is gtf 
+--gff3                              Output in GFF3 format (default is gtf
                                     format)
 --cores                             Specifies the maximum number of cores that
                                     can be used during computation. Be aware:
-                                    optimize_augustus.pl will use max. 8 
+                                    optimize_augustus.pl will use max. 8
                                     cores; augustus will use max. nContigs in
                                     --genome=file cores.
---workingdir=/path/to/wd/           Set path to working directory. In the 
-                                    working directory results and temporary 
+--workingdir=/path/to/wd/           Set path to working directory. In the
+                                    working directory results and temporary
                                     files are stored
---fungus                            GeneMark-ET option: run algorithm with 
+--fungus                            GeneMark-ET option: run algorithm with
                                     branch point model (most useful for fungal
                                     genomes)
 --nice                              Execute all system calls within braker.pl
-                                    and its submodules with bash "nice" 
+                                    and its submodules with bash "nice"
                                     (default nice value)
 
---alternatives-from-evidence=true   Output alternative transcripts based on 
-                                    explicit evidence from hints (default is 
+--alternatives-from-evidence=true   Output alternative transcripts based on
+                                    explicit evidence from hints (default is
                                     true).
---crf                               Execute CRF training for AUGUSTUS; 
+--crf                               Execute CRF training for AUGUSTUS;
                                     resulting parameters are only kept for
-                                    final predictions if they show higher 
-                                    accuracy than HMM parameters. 
+                                    final predictions if they show higher
+                                    accuracy than HMM parameters.
 
---prg=gth|exonerate|spaln           Alignment tool gth (GenomeThreader), 
+--prg=gth|exonerate|spaln           Alignment tool gth (GenomeThreader),
                                     exonerate (Exonerate) or Spaln2
-                                    (spaln) that will be used to generate 
-                                    protein alignments that will be the 
-                                    basis for hints generation for gene 
+                                    (spaln) that will be used to generate
+                                    protein alignments that will be the
+                                    basis for hints generation for gene
                                     prediction with AUGUSTUS (if specified
-                                    in combination with --prot_seq) or that 
-                                    was used to externally generate an 
+                                    in combination with --prot_seq) or that
+                                    was used to externally generate an
                                     alignment file with the commands listed in
-                                    description of --prot_aln (if used in 
+                                    description of --prot_aln (if used in
                                     combination with --prot_aln).
---gth2traingenes                    Generate training gene structures for 
-                                    AUGUSTUS from GenomeThreader alignments. 
-                                    (These genes can either be used for 
-                                    training AUGUSTUS alone with 
-                                    --trainFromGth; or in addition to 
-                                    GeneMark-ET training genes if also a 
+--gth2traingenes                    Generate training gene structures for
+                                    AUGUSTUS from GenomeThreader alignments.
+                                    (These genes can either be used for
+                                    training AUGUSTUS alone with
+                                    --trainFromGth; or in addition to
+                                    GeneMark-ET training genes if also a
                                     bam-file is supplied.)
---trainFromGth                      No GeneMark-Training, train AUGUSTUS from 
+--trainFromGth                      No GeneMark-Training, train AUGUSTUS from
                                     GenomeThreader alignments
 --version                           Print version number of braker.pl
 --help                              Print this help message
 
 CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
 
---AUGUSTUS_CONFIG_PATH=/path/       Set path to config directory of AUGUSTUS 
-                                    (if not specified as environment 
-                                    variable). BRAKER1 will assume that the 
-                                    directories ../bin and ../scripts of 
-                                    AUGUSTUS are located relative to the 
-                                    AUGUSTUS_CONFIG_PATH. If this is not the 
-                                    case, please specify AUGUSTUS_BIN_PATH 
+--AUGUSTUS_CONFIG_PATH=/path/       Set path to config directory of AUGUSTUS
+                                    (if not specified as environment
+                                    variable). BRAKER1 will assume that the
+                                    directories ../bin and ../scripts of
+                                    AUGUSTUS are located relative to the
+                                    AUGUSTUS_CONFIG_PATH. If this is not the
+                                    case, please specify AUGUSTUS_BIN_PATH
                                     (and AUGUSTUS_SCRIPTS_PATH if required).
-                                    The braker.pl commandline argument 
+                                    The braker.pl commandline argument
                                     --AUGUSTUS_CONFIG_PATH has higher priority
-                                    than the environment variable with the 
+                                    than the environment variable with the
                                     same name.
---AUGUSTUS_BIN_PATH=/path/          Set path to the AUGUSTUS directory that 
-                                    contains binaries, i.e. augustus and 
-                                    etraining. This variable must only be set 
-                                    if AUGUSTUS_CONFIG_PATH does not have 
+--AUGUSTUS_BIN_PATH=/path/          Set path to the AUGUSTUS directory that
+                                    contains binaries, i.e. augustus and
+                                    etraining. This variable must only be set
+                                    if AUGUSTUS_CONFIG_PATH does not have
                                     ../bin and ../scripts of AUGUSTUS relative
-                                     to its location i.e. for global AUGUSTUS 
-                                    installations. BRAKER1 will assume that 
-                                    the directory ../scripts of AUGUSTUS is 
+                                     to its location i.e. for global AUGUSTUS
+                                    installations. BRAKER1 will assume that
+                                    the directory ../scripts of AUGUSTUS is
                                     located relative to the AUGUSTUS_BIN_PATH.
-                                    If this is not the case, please specify 
+                                    If this is not the case, please specify
                                     --AUGUSTUS_SCRIPTS_PATH.
---AUGUSTUS_SCRIPTS_PATH=/path/      Set path to AUGUSTUS directory that 
-                                    contains scripts, i.e. splitMfasta.pl. 
+--AUGUSTUS_SCRIPTS_PATH=/path/      Set path to AUGUSTUS directory that
+                                    contains scripts, i.e. splitMfasta.pl.
                                     This variable most only be set if
-                                    AUGUSTUS_CONFIG_PATH or AUGUSTUS_BIN_PATH 
-                                    do not contains the ../scripts directory 
-                                    of AUGUSTUS relative to their location, 
-                                    i.e. for special cases of a global 
+                                    AUGUSTUS_CONFIG_PATH or AUGUSTUS_BIN_PATH
+                                    do not contains the ../scripts directory
+                                    of AUGUSTUS relative to their location,
+                                    i.e. for special cases of a global
                                     AUGUSTUS installation.
---BAMTOOLS_PATH=/path/to/           Set path to bamtools (if not specified as 
-                                    environment BAMTOOLS_PATH variable). Has 
-                                    higher priority than the environment 
+--BAMTOOLS_PATH=/path/to/           Set path to bamtools (if not specified as
+                                    environment BAMTOOLS_PATH variable). Has
+                                    higher priority than the environment
                                     variable.
---GENEMARK_PATH=/path/to/           Set path to GeneMark-ET (if not specified 
-                                    as environment GENEMARK_PATH variable). 
-                                    Has higher priority than environment 
+--GENEMARK_PATH=/path/to/           Set path to GeneMark-ET (if not specified
+                                    as environment GENEMARK_PATH variable).
+                                    Has higher priority than environment
                                     variable.
---SAMTOOLS_PATH=/path/to/           Optionally set path to samtools (if not 
+--SAMTOOLS_PATH=/path/to/           Optionally set path to samtools (if not
                                     specified as environment SAMTOOLS_PATH
-                                    variable) to fix BAM files automatically, 
-                                    if necessary. Has higher priority than 
+                                    variable) to fix BAM files automatically,
+                                    if necessary. Has higher priority than
                                     environment variable.
---ALIGNMENT_TOOL_PATH=/path/to/tool Set path to alignment tool 
-                                    (GenomeThreader, Spaln, or Exonerate) if 
-                                    not specified as environment 
-                                    ALIGNMENT_TOOL_PATH variable. Has higher 
+--ALIGNMENT_TOOL_PATH=/path/to/tool Set path to alignment tool
+                                    (GenomeThreader, Spaln, or Exonerate) if
+                                    not specified as environment
+                                    ALIGNMENT_TOOL_PATH variable. Has higher
                                     priority than environment variable.
 
 EXPERT OPTIONS
 
---augustus-args="--some_arg=bla"    One or several command line arguments to 
-                                    be passed to AUGUSTUS, if several 
-                                    arguments are given, separated by 
+--augustus-args="--some_arg=bla"    One or several command line arguments to
+                                    be passed to AUGUSTUS, if several
+                                    arguments are given, separated by
                                     whitespace, i.e.
                                     "--first_arg=sth --second_arg=sth".
---extrinsicCfgFile=file             Optional. This file contains the list of 
-                                    used sources for the hints and their boni 
-                                    and mali. If not specified the file 
-                                    "extrinsic.cfg" in the config directory 
-                                    $AUGUSTUS_CONFIG_PATH is copied and 
+--extrinsicCfgFile=file             Optional. This file contains the list of
+                                    used sources for the hints and their boni
+                                    and mali. If not specified the file
+                                    "extrinsic.cfg" in the config directory
+                                    $AUGUSTUS_CONFIG_PATH is copied and
                                     adjusted.
---overwrite                         Overwrite existing files (except for 
+--overwrite                         Overwrite existing files (except for
                                     species parameter files)
---skipGeneMark-ET                   Skip GeneMark-ET and use provided 
-                                    GeneMark-ET output (e.g. from a different 
+--skipGeneMark-ET                   Skip GeneMark-ET and use provided
+                                    GeneMark-ET output (e.g. from a different
                                     source)
---skipGeneMark-EP                   Skip GeneMark-EP and use provided 
+--skipGeneMark-EP                   Skip GeneMark-EP and use provided
                                     GeneMark-EP output (e.g. provided with
                                     --geneMarkGtf=genemark.gtf)
 --geneMarkGtf=file.gtf              If skipGeneMark-ET is used, braker will by
-                                    default look in the working directory in 
-                                    folder GeneMarkET for an already existing 
-                                    gtf file. Instead, you may provide such a 
+                                    default look in the working directory in
+                                    folder GeneMarkET for an already existing
+                                    gtf file. Instead, you may provide such a
                                     file from another location. If geneMarkGtf
-                                    option is set, skipGeneMark-ET is 
+                                    option is set, skipGeneMark-ET is
                                     automatically also set.
---rounds                            The number of optimization rounds used in 
+--rounds                            The number of optimization rounds used in
                                     optimize_augustus.pl (default 5)
---skipAllTraining                   Skip GeneMark-ET (training and 
-                                    prediction), skip AUGUSTUS training, only 
+--skipAllTraining                   Skip GeneMark-ET (training and
+                                    prediction), skip AUGUSTUS training, only
                                     runs AUGUSTUS with pre-trained and already
-                                    existing parameters (not recommended). 
+                                    existing parameters (not recommended).
                                     Hints from input are still generated.
-                                    This option automatically sets 
+                                    This option automatically sets
                                     --useexisting to true.
 --useexisting                       Use the present config and parameter files
                                     if they exist for 'species'
 --filterOutShort                    It may happen that a "good" training gene,
-                                    i.e. one that has intron support from 
-                                    RNA-Seq in all introns predicted by 
-                                    GeneMark, is in fact too short. This flag 
-                                    will discard such genes that have 
-                                    supported introns and a neighboring 
-                                    RNA-Seq supported intron upstream of the 
-                                    start codon within the range of the 
-                                    maximum CDS size of that gene and with a 
-                                    multiplicity that is at least as high as 
-                                    20% of the average intron multiplicity of 
+                                    i.e. one that has intron support from
+                                    RNA-Seq in all introns predicted by
+                                    GeneMark, is in fact too short. This flag
+                                    will discard such genes that have
+                                    supported introns and a neighboring
+                                    RNA-Seq supported intron upstream of the
+                                    start codon within the range of the
+                                    maximum CDS size of that gene and with a
+                                    multiplicity that is at least as high as
+                                    20% of the average intron multiplicity of
                                     that gene.
---skipOptimize                      Skip optimize parameter step (not 
+--skipOptimize                      Skip optimize parameter step (not
                                     recommended).
 
 DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 
---optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS 
-                                    for running PPX (currently not 
+--optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS
+                                    for running PPX (currently not
                                     implemented)
---UTR                               create UTR training examples from RNA-Seq 
-                                    coverage data; requires options 
-                                    --bam=rnaseq.bam and --softmasking. 
-                                    Alternatively, if UTR parameters already 
-                                    exist, training step will be skipped and 
+--UTR                               create UTR training examples from RNA-Seq
+                                    coverage data; requires options
+                                    --bam=rnaseq.bam and --softmasking.
+                                    Alternatively, if UTR parameters already
+                                    exist, training step will be skipped and
                                     those pre-existing parameters are used.
---rnaseq2utr_args=params            Expert option: pass additional parameters 
-                                    to rnaseq2utr as string                          
+--rnaseq2utr_args=params            Expert option: pass additional parameters
+                                    to rnaseq2utr as string
 
 DESCRIPTION
 

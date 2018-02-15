@@ -230,7 +230,7 @@ Usage:  $0
 Required options:
   --in_gff                     [name] name of file with ProSplign hints
   --out_gff                    [name] output
- 
+
 Developer options:
   --stopCodonExcludedFromCDS=1 default 0
   --verbose

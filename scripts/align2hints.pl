@@ -27,7 +27,7 @@ use Cwd;
 
 my $usage = <<'ENDUSAGE';
 
-align2hints.pl    generate hints from spaln [O0 (=gff3)], exonerate, 
+align2hints.pl    generate hints from spaln [O0 (=gff3)], exonerate,
                   GenomeThreader (gth), scipio
                   or GEMOMA output.
                   Spaln2 run like this: spaln -O0 ... > spalnfile
@@ -45,33 +45,33 @@ SYNOPSIS
 align2hints.pl [OPTIONS] --in=align.gff3 --out=hintsfile.gff \
                          --prg=gth|exonerate|spaln|scipio
 
-  --in                 input file from gth (gff3), spaln (gff3) or exonerate 
-                       output  
+  --in                 input file from gth (gff3), spaln (gff3) or exonerate
+                       output
   --out                contains CDSpart, CDS and intron hints
 
 
 OPTIONS
 
     --help                   Print this help message.
-    --CDSpart_cutoff=n       This many bp are cut off of each CDSpart hint 
+    --CDSpart_cutoff=n       This many bp are cut off of each CDSpart hint
                              w.r.t. the cds (default 15).
-    --maxintronlen=n         Alignments with longer gaps are discarded 
+    --maxintronlen=n         Alignments with longer gaps are discarded
                              (default 350000).
     --minintronlen=n         Alignments with gaps shorter than this and longer
                              than maxgaplen are discarded (default 41).
     --priority=n             Priority of hint group (default 4).
-    --prg=s                  Alignment program of input file, either 'gth', 
+    --prg=s                  Alignment program of input file, either 'gth',
                              'spaln', 'exonerate', 'scipio', or 'gemoma'.
     --source=s               Source identifier (default 'P')
-    --CDS                    Do not output CDSpart hints, but complete CDS 
+    --CDS                    Do not output CDSpart hints, but complete CDS
                              hints.
-    --genome_file=s          if prg is exonerate and start hints shall be 
-                             created, the genome file from which the 
+    --genome_file=s          if prg is exonerate and start hints shall be
+                             created, the genome file from which the
                              alignments were generated, must be specified.
     --version                print version of align2hints.pl
 
 Format:
-  seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB> 
+  seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB>
      strand <TAB> frame <TAB> src=source;grp=target_protein;pri=priority
 
 
