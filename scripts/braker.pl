@@ -377,6 +377,7 @@ my $species;                # species name
 my $soft_mask = 0;          # soft-masked flag
 my $standard  = 0;          # index for standard malus/ bonus value
                             # (currently 0.1 and 1e1)
+my $chunksize = 1252500;          # chunksize for running AUGUSTUS in parallel
 my $stdoutfile;    # stores current standard output
 my $string;        # string for storing script path
 my $augustus_args; # string that stores command line arguments to be passed to
@@ -1348,6 +1349,53 @@ else {
         }
     }
 
+    # count scaffold sizes and check whether the assembly is not too fragmented for parallel execution of AUGUSTUS
+    open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("Could not open file $otherfilesDir/genome.fa");
+    my $gLocus;
+    while( <GENOME> ){
+        chomp;
+        if(m/^>(.*)/){
+            $gLocus = $1;
+        }else{
+            if(not(defined($scaffSizes{$gLocus}))){
+                $scaffSizes{$gLocus} = length ($_);
+            }else{
+                $scaffSizes{$gLocus} += length ($_);
+            }
+        }
+    }
+    close (GENOME) or die ("Could not close file $otherfilesDir/genome.fa");
+    my @nScaffs = keys %scaffSizes;
+    my $totalScaffSize = 0;
+    foreach( values %scaffSizes) {
+        $totalScaffSize += $_;
+    }
+    # I am actually not sure what is an approriate limit, because it depends on the kernel and
+    # on the stack size. Use 30000 just to be sure. This will result in ~90000 files in the
+    # augustus_tmp folder.
+    if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
+        $prtStr = "\# "
+                . (localtime)
+                . ": ERROR: file $genome contains a highly fragmented assembly (".scalar(@nScaffs)." scaffolds). This will lead "
+                . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
+                . "--cores=$CPU. You must run braker.pl in linear mode on such genomes, though (--cores=1). It is possible that GeneMark-EX might not work on highly fragmented assemblies, too.\n";
+        print LOG $prtStr;
+        print STDERR $prtStr;
+        exit(1);
+    }elsif( (($totalScaffSize / $chunksize) > 30000) && ($CPU > 1) ){
+        $prtStr = "\# "
+                . (localtime)
+                . ": ERROR: file $genome contains contains $totalScaffSize bases. "
+                . "This will lead "
+                . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
+                . "--cores=$CPU. There is a variable \$chunksize in braker.pl. Default value is currently"
+                . " $chunksize. You can adapt this to a higher number. The total base content / chunksize / 3"
+                . " should not exceed the number of possible arguments for commands like ls *, cp *, etc. "
+                . "on your system. It is possible that GeneMark-EX might not work on large and complex genomes, too.\n";
+        print LOG $prtStr;
+        print STDERR $prtStr;
+        exit(1);
+    }
 # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS
 # can also handle other hints types
     $hintsfile          = "$otherfilesDir/hintsfile.gff";
@@ -3655,22 +3703,6 @@ sub augustus {
                 . ": creating $otherfilesDir/aug_hints.lst for AUGUSTUS jobs\n";
             open( ALIST, ">", "$otherfilesDir/aug_hints.lst" )
                 or die("Could not open file $otherfilesDir/aug_hints.lst!\n");
-            # count scaffold sizes
-            open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("Could not open file $otherfilesDir/genome.fa");
-            my $gLocus;
-            while( <GENOME> ){
-                chomp;
-                if(m/^>(.*)/){
-                    $gLocus = $1;
-                }else{
-                    if(not(defined($scaffSizes{$gLocus}))){
-                        $scaffSizes{$gLocus} = length ($_);
-                    }else{
-                        $scaffSizes{$gLocus} += length ($_);
-                    }
-                }
-            }
-            close (GENOME) or die ("Could not close file $otherfilesDir/genome.fa");
             # make list for creating augustus jobs
             while ( my ( $locus, $size ) = each %scaffSizes ) {
                 print ALIST "$scaffFileNames{$locus}\t$hintsfile\t1\t$size\n";
@@ -3710,7 +3742,7 @@ sub augustus {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString
-                .= "perl $string --sequences=$otherfilesDir/aug_hints.lst --wrap=\"#\" --overlap=5000 --chunksize=1252500 --outputdir=$augustus_dir --joblist=hints.job.lst --jobprefix=aug_hints_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsicCfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac ";
+                .= "perl $string --sequences=$otherfilesDir/aug_hints.lst --wrap=\"#\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir --joblist=hints.job.lst --jobprefix=aug_hints_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsicCfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac ";
             if ( defined($optCfgFile) ) {
                 $perlCmdString .= " --optCfgFile=$optCfgFile";
             }
@@ -3742,7 +3774,7 @@ sub augustus {
                     $perlCmdString .= "nice ";
                 }
                 $perlCmdString
-                    .= "perl $string --sequences=$otherfilesDir/aug_ab_initio.lst --wrap=\"#\" --overlap=5000 --chunksize=1252500 --outputdir=$augustus_dir_ab_initio --joblist=ab_initio.job.lst --jobprefix=aug_ab_initio_ --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on ";
+                    .= "perl $string --sequences=$otherfilesDir/aug_ab_initio.lst --wrap=\"#\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir_ab_initio --joblist=ab_initio.job.lst --jobprefix=aug_ab_initio_ --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on ";
                 if ($soft_mask) {
                     $perlCmdString .= " --softmasking=1";
                 }
