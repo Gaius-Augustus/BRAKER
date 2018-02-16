@@ -3688,6 +3688,7 @@ sub augustus {
             $errorfile = "$errorfilesDir/createAugustusJoblist_hints.stderr";
 
             $perlCmdString = "";
+            $perlCmdString .= "cd $otherfilesDir\n"
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
@@ -3702,7 +3703,8 @@ sub augustus {
             if ($augustus_args) {
                 $perlCmdString .= " $augustus_args";
             }
-            $perlCmdString .= "\" &>$errorfile";
+            $perlCmdString .= "\" &>$errorfile\n";
+            $perlCmdString .= "cd ..";
             print LOG "$perlCmdString\n";
             system("$perlCmdString") == 0
                 or die("Failed to execute: $perlCmdString\n");
@@ -3718,6 +3720,7 @@ sub augustus {
                     = "$errorfilesDir/createAugustusJoblist_ab_initio.stderr";
 
                 $perlCmdString = "";
+                $perlCmdString = "cd $otherfilesDir\n";
                 if ($nice) {
                     $perlCmdString .= "nice ";
                 }
@@ -3726,7 +3729,8 @@ sub augustus {
                 if ($soft_mask) {
                     $perlCmdString .= " --softmasking=1";
                 }
-                $perlCmdString .= "\" &>$errorfile";
+                $perlCmdString .= "\" &>$errorfile\n";
+                $perlCmdString .= "cd ..";
                 print LOG "$perlCmdString\n";
                 system("$perlCmdString") == 0
                     or die("Failed to execute: $perlCmdString\n");
