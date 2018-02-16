@@ -31,11 +31,12 @@ align2hints.pl    generate hints from spaln [O0 (=gff3)], exonerate,
                   GenomeThreader (gth), scipio
                   or GEMOMA output.
                   Spaln2 run like this: spaln -O0 ... > spalnfile
-                  Exonerate run like this: exonerate --model protein2genome \
-                      --showtargetgff T ... > exfile
-                  GenomeThreader run like this: gth -genomic genome.fa  \
-                      -protein protein.fa -gff3out -skipalignmentout ... \
-                      -o gthfile
+                  Exonerate run like this:
+                      exonerate --model protein2genome --showtargetgff T \
+                         ... > exfile
+                  GenomeThreader run like this: 
+                      gth -genomic genome.fa  -protein protein.fa -gff3out \
+                         -skipalignmentout ... -o gthfile
                  scipio run like this:
                  scipio.1.4.1.pl genome.fa prot.fa | yaml2gff.1.4.pl \
                       > scipio.gff
@@ -103,15 +104,14 @@ my $minintronlen = 41;        # default minimal intron length
 my $parent;                   # current parent
 my $prevParent = "noP"; # previous parent
 my $prevScore  = 0;     # previous exon/CDS score for calculating intron score
-my ( $qstart, $qend, $prevQend )
-    ; # positions in query protein (scipio only), to determine intron for scipio
+# positions in query protein (scipio only), to determine intron for scipio
+my ( $qstart, $qend, $prevQend );
 my $prgsrc;    # source programme (exonerate, spaln or gth)
 my $priority = 4;      # priority for hints
 my $source   = "P";    # source for extrinsic file
 my $genome_file;       # genome file name
 my %genome;            # hash to store genome sequence
-my $CDS
-    ; # output CDS instead of CDSpart hints (may be useful for aligners with high specificity)
+my $CDS; # output CDS instead of CDSpart hints
 my $help;
 
 if ( $#ARGV < 1 || $help ) {
@@ -164,7 +164,8 @@ if ( defined($alignfile) ) {
 
 if ( !defined($prgsrc) ) {
     print STDERR
-        "ERROR: Please assign the source programme with --prg. Possible Options are 'exonerate', 'spaln', 'gth' or 'scipio'.\n";
+        "ERROR: Please assign the source programme with --prg. Possible "
+        . "Options are 'exonerate', 'spaln', 'gth' or 'scipio'.\n";
     exit(1);
 }
 
@@ -176,7 +177,8 @@ if (   $prgsrc ne "exonerate"
     && $prgsrc ne "gemoma" )
 {
     print STDERR
-        "ERROR: Invalid value '$prgsrc' for option --prg. Possible Options are 'exonerate', 'spaln', 'gth', 'scipio', or 'gemoma'.\n";
+        "ERROR: Invalid value '$prgsrc' for option --prg. Possible Options "
+        . "are 'exonerate', 'spaln', 'gth', 'scipio', or 'gemoma'.\n";
     exit(1);
 }
 
@@ -207,7 +209,8 @@ if ( not( ( $prgsrc eq "xnt2h" ) || ( $prgsrc eq "gemoma2h" ) )
     && defined($genome_file) )
 {
     print STDERR
-        "ERROR: program name is $prgsrc and a genome file was specified. Will ignore genome file.\n";
+        "ERROR: program name is $prgsrc and a genome file was specified. "
+        . "Will ignore genome file.\n";
 }
 elsif ( $prgsrc eq "xnt2h" && defined($genome_file) ) {
     open( GENOME, "<", $genome_file )
@@ -354,7 +357,8 @@ while (<ALN>) {
             $start = $end = int( ( $start + $end ) / 2 );
         }
         print HINTS
-            "$seqname\t$prgsrc\t$CDSpartid\t$start\t$end\t$score\t$strand\t$frame\tsrc=$source;grp=$parent;pri=$priority\n";
+            "$seqname\t$prgsrc\t$CDSpartid\t$start\t$end\t$score\t$strand\t"
+            . "$frame\tsrc=$source;grp=$parent;pri=$priority\n";
         if ( $prgsrc eq "spn2h" || $prgsrc eq "scipio2h" ) {
             get_intron( \@f );
         }
@@ -373,7 +377,8 @@ while (<ALN>) {
             && $end - $start + 1 <= $maxintronlen )
         {
             print HINTS
-                "$seqname\t$prgsrc\tintron\t$start\t$end\t$score\t$strand\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+                "$seqname\t$prgsrc\tintron\t$start\t$end\t$score\t$strand\t"
+                . ".\tsrc=$source;grp=$parent;pri=$priority\n";
         }
     }
 }
@@ -410,8 +415,8 @@ sub get_intron {
             $intron_end   = $tmp;
         }
 
-# check conditions: length of intron is at least $minintronlen and maximal $maxintronlen and its score
-# is greater than $intron_threshold
+# check conditions: length of intron is at least $minintronlen and maximal
+# $maxintronlen and its score is greater than $intron_threshold
         if (   $intron_end - $intron_start + 1 >= $minintronlen
             && $intron_end - $intron_start + 1 <= $maxintronlen
             && ( !defined($intron_threshold)
@@ -422,7 +427,9 @@ sub get_intron {
                 || ( defined($prevQend) && $prevQend + 1 == $qstart ) )
             {
                 print HINTS
-                    "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t$intron_score\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+                    "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end"
+                    . "\t$intron_score\t@{$line}[6]\t.\tsrc=$source;"
+                    . "grp=$parent;pri=$priority\n";
             }
         }
         if ( @{$line}[6] eq "-"
@@ -456,7 +463,9 @@ sub get_gemoma_intron {
                 && $intron_end - $intron_start + 1 <= $maxintronlen )
             {
                 print HINTS
-                    "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+                    "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end"
+                    . "\t.\t@{$line}[6]\t.\tsrc=$source;"
+                    . "grp=$parent;pri=$priority\n";
             }
             $intron_start = @{$line}[4] + 1;
         }
@@ -476,7 +485,9 @@ sub get_gemoma_intron {
                 && $intron_end - $intron_start + 1 <= $maxintronlen )
             {
                 print HINTS
-                    "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;pri=$priority\n";
+                    "@{$line}[0]\t$prgsrc\tintron\t$intron_start\t$intron_end"
+                    . "\t.\t@{$line}[6]\t.\tsrc=$source;grp=$parent;"
+                    . "pri=$priority\n";
             }
             $intron_end = @{$line}[3] - 1;
         }
