@@ -3688,7 +3688,7 @@ sub augustus {
             $errorfile = "$errorfilesDir/createAugustusJoblist_hints.stderr";
 
             $perlCmdString = "";
-            $perlCmdString .= "cd $otherfilesDir\n"
+            $perlCmdString .= "cd $otherfilesDir\n";
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
