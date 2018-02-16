@@ -3763,6 +3763,7 @@ sub augustus {
                 open( AIJOBS, "<", "$otherfilesDir/ab_initio.job.lst" )
                     or die("Could not open file $otherfilesDir/ab_initio.job.lst!\n");
                 while (<AIJOBS>) {
+                    my $pid = $pm->start;
                     $cInitJobs++;
                     print LOG "\# "
                         . (localtime)
@@ -3782,6 +3783,7 @@ sub augustus {
                 or die("Could not open file $otherfilesDir/hints.job.lst!\n");
             $pm2 = new Parallel::ForkManager($CPU);
             while (<HIJOBS>) {
+                my $pid = $pm2->start;
                 $cHintJobs++;
                 print LOG "\# "
                     . (localtime)
