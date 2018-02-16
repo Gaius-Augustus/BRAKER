@@ -1943,6 +1943,10 @@ sub add_other_hints {
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
                 or die("Failed to execute: $cmdString!\n");
+            print LOG "\n\# "
+                . (localtime)
+                . ": deleting file $filteredHintsFile\n";
+            unlink ( $filteredHintsFile );
         }
         join_mult_hints( $hintsfile, "all" );
     }
@@ -3971,7 +3975,7 @@ sub make_gtf {
 }
 
 ####################### delete all zero sized files #########################
-# delete empty files
+# delete empty files, and files produced by parallelization
 sub clean_up {
     print LOG "\# " . (localtime) . ": deleting empty files\n";
     if ($nice) {
@@ -3988,6 +3992,14 @@ sub clean_up {
         if ( -f $files[$i] ) {
             print LOG "rm $files[$i]\n";
             unlink( rel2abs( $files[$i] ) );
+        }
+    }
+    # deleting files from AUGUSTUS parallelization
+    opendir( DIR, $otherfilesDir ) or die $!;
+    while ( my $file = readdir(DIR) ) {
+        if( ( $file =~ m/aug_ab_initio_/ ) || ( $file =~ m/aug_hints_/ ) || ( $file =~ m/\.lst/ ) ){
+            print LOG "rm $file\n";
+            unlink( $file );
         }
     }
 }
@@ -6388,6 +6400,7 @@ sub join_aug_pred {
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     my $cat_file = "$otherfilesDir/augustus.tmp.gff";
+    my $error_cat_file = "$errorfilesDir/augustus.err";
     print LOG "\# "
         . (localtime)
         . ": Concatenating AUGUSTUS output files in $pred_dir\n";
@@ -6400,6 +6413,17 @@ sub join_aug_pred {
                 $cmdString .= "nice ";
             }
             $cmdString .= "cat $pred_dir/$file >> $cat_file";
+            print LOG "$cmdString\n";
+            system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+        }elsif ( $file =~ m/\.err/ ){
+            $cmdString = "echo \"Contents of file $file\" >> $error_cat_file";
+            print LOG "$cmdString\n";
+            system ("$cmdString") == 0 or die ("Failed to execute $cmdString\n");
+            $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            $cmdString .= "cat $pred_dir/$file >> $error_cat_file";
             print LOG "$cmdString\n";
             system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
         }
