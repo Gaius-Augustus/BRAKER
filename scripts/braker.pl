@@ -3659,7 +3659,22 @@ sub augustus {
             while( my ($k, $v) = each %scaffFileNames){
                 print LOG "scaffFileNames: $k\t$v\n";
             }
-
+            # count scaffold sizes
+            open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("Could not open file $otherfilesDir/genome.fa");
+            my $gLocus;
+            while( <GENOME> ){
+                chomp;
+                if(m/^>(.*)/){
+                    $gLocus = $1;
+                }else{
+                    if(not(defined($scaffSizes{$gLocus}))){
+                        $scaffSizes{$gLocus} = length ($_);
+                    }else{
+                        $scaffSizes{$gLocus} += length ($_);
+                    }
+                }
+            }
+            close (GENOME) or die ("Could not close file $otherfilesDir/genome.fa");
             while ( my ( $locus, $size ) = each %scaffSizes ) {
                 print ALIST "$scaffFileNames{$locus}\t$hintsfile\t1\t$size\n";
             }
@@ -4461,11 +4476,6 @@ sub check_fasta_headers {
             }
             else {
                 if ( length($_) > 0 ) {
-                    if(not(defined($scaffSizes{$scaffName}))){
-                         $scaffSizes{$scaffName} = 0;
-                    }else{
-                        $scaffSizes{$scaffName} += length( chomp($_) );
-                    }
                     print OUTPUT "$_\n";
                     if ( $_ !~ m/[ATGCNatgcn]/ ) {
                         if ( $dna == 0 ) {
