@@ -6357,7 +6357,7 @@ sub join_aug_pred {
 sub eval {
     my @results;
     my $seqlist = "$otherfilesDir/seqlist";
-    open( SEQLST, ">", $seqlist ) or die("Could not open file $seqlist!\n");
+    open( SEQLIST, ">", $seqlist ) or die("Could not open file $seqlist!\n");
     while ( my ( $locus, $size ) = each %scaffSizes ) {
         chomp $locus;
         $locus =~ s/^>//;
