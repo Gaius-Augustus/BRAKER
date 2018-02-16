@@ -359,7 +359,8 @@ my @malus;               # array of malus values for extrinsic file
 my $optCfgFile;          # optinonal extrinsic config file for AUGUSTUS
 my $otherfilesDir;  # directory for other files besides GeneMark-ET output and
                     # parameter files
-my $annot;               # reference annotation to compare predictions to
+my $annot;          # reference annotation to compare predictions to
+my %accuracy;    # stores accuracy results of gene prediction runs
 my $overwrite
     = 0;    # overwrite existing files (except for species parameter files)
 my $parameterDir;     # directory of parameter files for species
@@ -6358,13 +6359,11 @@ sub eval{
       }
       close(SEQLIST);
       if( -e "$otherfilesDir/augustus.ab_initio.gtf" ){
-
-
-
+        eval_augustus("$otherfilesDir/augustus.ab_initio.gtf");
       }
 
       if( -e "$otherfilesDir/augustus_hints.gtf" ) {
-
+        eval_augustus("$otherfilesDir/augustus_hints.gtf")
       }
 
       if( -e "$genemarkDir/genemark.gtf" ){
@@ -6410,10 +6409,10 @@ sub eval_augustus {
       close (FIRST) or die ("Could not close file $firstStepFile!\n");
       $cmdString = "$validate_gtf -c -f $$firstStepFile";
       system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
-
-      $cmdString = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'";
-
-
-
-
+      $cmdString = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out";
+      system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+      my @eval_result = `grep $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'`;
+      $accuracy{$gtfFile} = @eval_result;
+      unlink($firstStepFile) or die ("Failed to delete file $firstStepFile!\n");
+      unlink($secondStepFile) or die ("Failed to delete $secondStepFile!\n");
 }

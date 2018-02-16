@@ -29,7 +29,7 @@
 
 use Getopt::Long;
 use Cwd;
-use File::Path qw(make_path);
+use File::Path qw(make_path rmtree);
 use File::Spec::Functions qw(rel2abs);
 use Parallel::ForkManager;
 
@@ -1013,12 +1013,15 @@ sub clean_up {
     my @files = `find $alignDir -empty`;
     print LOG "\# " . (localtime) . ": delete empty files\n";
     for ( my $i = 0; $i <= $#files; $i++ ) {
-        chomp( $files[$i] )
-            ; # to prevent error: Unsuccessful stat on filename containing newline
-            if ( -f $files[$i] ) {
-                print LOG "rm $files[$i]\n";
-                unlink( rel2abs( $files[$i] ) );
-            }
+        # to prevent error: Unsuccessful stat on filename containing newline
+        chomp( $files[$i] );
+        if ( -f $files[$i] ) {
+            print LOG "rm $files[$i]\n";
+            unlink( rel2abs( $files[$i] ) );
         }
-        print LOG "empty files deleted.\n";
     }
+    print LOG "empty files deleted.\n";
+    print LOG "NEXT STEP: deleting $tmpDir\n";
+    rmtree( ["$tmpDir"] );
+    print LOG "directory deleted.\n";
+}

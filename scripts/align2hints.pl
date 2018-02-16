@@ -37,8 +37,8 @@ align2hints.pl    generate hints from spaln [O0 (=gff3)], exonerate,
                   GenomeThreader run like this: 
                       gth -genomic genome.fa  -protein protein.fa -gff3out \
                          -skipalignmentout ... -o gthfile
-                 scipio run like this:
-                 scipio.1.4.1.pl genome.fa prot.fa | yaml2gff.1.4.pl \
+                  scipio run like this:
+                  scipio.1.4.1.pl genome.fa prot.fa | yaml2gff.1.4.pl \
                       > scipio.gff
 
 SYNOPSIS
