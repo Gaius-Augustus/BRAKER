@@ -3788,7 +3788,7 @@ sub augustus {
             }
             close(HIJOBS) or die("Could not close file $otherfilesDir/hints.job.lst!\n");
             $pm2 = new Parallel::ForkManager($CPU);
-            foreach(@hintJobs)
+            foreach(@hintJobs){
                 my $pid = $pm2->start;
                 $cHintJobs++;
                 print LOG "\# "
