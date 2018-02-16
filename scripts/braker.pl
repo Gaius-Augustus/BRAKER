@@ -3768,7 +3768,7 @@ sub augustus {
                         . (localtime)
                         . ": Running AUGUSTUS ab initio job "
                         . chomp($_) . "\n";
-                    $cmdString = $_;
+                    $cmdString = "$otherfilesDir/$_";
                     print LOG "$cmdString\n";
                     system("$cmdString") == 0
                         or die("Failed to execute: $cmdString!\n");
@@ -3787,7 +3787,7 @@ sub augustus {
                     . (localtime)
                     . ": Running AUGUSTUS hints job "
                     . chomp($_) . "\n";
-                $cmdString = $_;
+                $cmdString = "$otherfilesDir/$_";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
                     or die("Failed to execute: $cmdString!\n");
