@@ -3770,7 +3770,6 @@ sub augustus {
                 close(AIJOBS)
                     or die("Could not close file $otherfilesDir/ab_initio.job.lst!\n");
                 foreach(@aiJobs){
-                    my $pid = $pm->start and next;
                     $cInitJobs++;
                     print LOG "\# "
                         . (localtime)
@@ -3778,6 +3777,7 @@ sub augustus {
                         . "\n";
                     $cmdString = "$_";
                     print LOG "$cmdString\n";
+                    my $pid = $pm->start and next;
                     system("$cmdString") == 0
                         or die("Failed to execute: $cmdString!\n");
                     $pm->finish;
@@ -3795,7 +3795,6 @@ sub augustus {
             close(HIJOBS) or die("Could not close file $otherfilesDir/hints.job.lst!\n");
             $pm2 = new Parallel::ForkManager($CPU);
             foreach(@hintJobs){
-                my $pid = $pm2->start and next;
                 $cHintJobs++;
                 print LOG "\# "
                     . (localtime)
@@ -3803,6 +3802,7 @@ sub augustus {
                     . "\n";
                 $cmdString = $_;
                 print LOG "$cmdString\n";
+                my $pid = $pm2->start and next;
                 system("$cmdString") == 0
                     or die("Failed to execute: $cmdString!\n");
                 $pm2->finish;
