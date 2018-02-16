@@ -6393,14 +6393,16 @@ sub join_aug_pred {
         . ": Concatenating AUGUSTUS output files in $pred_dir\n";
     opendir( DIR, $pred_dir ) or die $!;
     while ( my $file = readdir(DIR) ) {
-        next if ( $file =~ m/\.gff/ );
-        $cmdString = "";
-        if ($nice) {
-            $cmdString .= "nice ";
+        print LOG "file is $file\n";
+        if ( $file =~ m/gff/ ) {
+            $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            $cmdString .= "cat $pred_dir/$file >> $cat_file";
+            print LOG "$cmdString\n";
+            system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
         }
-        $cmdString .= "cat $pred_dir/$file >> $cat_file";
-        print LOG "$cmdString\n";
-        system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
     }
     closedir(DIR);
     $perlCmdString = "";
