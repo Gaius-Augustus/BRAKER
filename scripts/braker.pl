@@ -3655,10 +3655,6 @@ sub augustus {
                 . ": creating $otherfilesDir/aug_hints.lst for AUGUSTUS jobs\n";
             open( ALIST, ">", "$otherfilesDir/aug_hints.lst" )
                 or die("Could not open file $otherfilesDir/aug_hints.lst!\n");
-
-            while( my ($k, $v) = each %scaffFileNames){
-                print LOG "scaffFileNames: $k\t$v\n";
-            }
             # count scaffold sizes
             open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("Could not open file $otherfilesDir/genome.fa");
             my $gLocus;
@@ -3675,6 +3671,7 @@ sub augustus {
                 }
             }
             close (GENOME) or die ("Could not close file $otherfilesDir/genome.fa");
+            # make list for creating augustus jobs
             while ( my ( $locus, $size ) = each %scaffSizes ) {
                 print ALIST "$scaffFileNames{$locus}\t$hintsfile\t1\t$size\n";
             }
@@ -3763,8 +3760,8 @@ sub augustus {
         if ( $CPU > 1 ) {
             $pm = new Parallel::ForkManager($CPU);
             if ($ab_initio) {
-                open( AIJOBS, "<", "ab_initio.job.lst" )
-                    or die("Could not open file ab_initio.job.lst!\n");
+                open( AIJOBS, "<", "$otherfilesDir/ab_initio.job.lst" )
+                    or die("Could not open file $otherfilesDir/ab_initio.job.lst!\n");
                 while (<AIJOBS>) {
                     $cInitJobs++;
                     print LOG "\# "
@@ -3779,10 +3776,10 @@ sub augustus {
                 }
                 $pm->wait_all_children;
                 close(AIJOBS)
-                    or die("Could not close file ab_initio.job.lst!\n");
+                    or die("Could not close file $otherfilesDir/ab_initio.job.lst!\n");
             }
-            open( HIJOBS, "<", "hints.job.lst" )
-                or die("Could not open file hints.job.lst!\n");
+            open( HIJOBS, "<", "$otherfilesDir/hints.job.lst" )
+                or die("Could not open file $otherfilesDir/hints.job.lst!\n");
             $pm2 = new Parallel::ForkManager($CPU);
             while (<HIJOBS>) {
                 $cHintJobs++;
@@ -3797,7 +3794,7 @@ sub augustus {
                 $pm2->finish;
             }
             $pm2->wait_all_children;
-            close(HIJOBS) or die("Could not close file hints.job.lst!\n");
+            close(HIJOBS) or die("Could not close file $otherfilesDir/hints.job.lst!\n");
         }
         else {
             if ($ab_initio) {
