@@ -6391,6 +6391,9 @@ sub join_aug_pred {
 sub eval {
     my @results;
     my $seqlist = "$otherfilesDir/seqlist";
+    print LOG "\# "
+        . (localtime)
+        . ": Trying to evaluate braker.pl gene prediction files...\n";
     open( SEQLIST, ">", $seqlist ) or die("Could not open file $seqlist!\n");
     while ( my ( $locus, $size ) = each %scaffSizes ) {
         chomp $locus;
@@ -6415,6 +6418,10 @@ sub eval {
     }
     my @accKeys = keys %accuracy;
     if(scalar(@accKeys) > 0){
+        print LOG "\# "
+        . (localtime)
+        . ": was able to run evaluations on ". scalar (@accKeys) . "gene sets. Now summarizing "
+        . "eval results...\n";
         open (ACC, ">", "$otherfilesDir/eval.summary") or die ("Could not open file $otherfilesDir/eval.summary");
         print ACC "Measure";
         foreach(@accKeys){
@@ -6439,6 +6446,9 @@ sub eval {
         }
         close(ACC) or die ("Could not close file $otherfilesDir/eval.summary");
     }
+    print LOG "\# "
+        . (localtime)
+        . ": Done with evaluating braker.pl gene prediction files!\n";
 }
 
 sub eval_gene_pred {
@@ -6458,9 +6468,21 @@ sub eval_gene_pred {
     }
 
     my $firstStepFile = $gtfFile;
+    print LOG "\# "
+        . (localtime)
+        . ": Trying to evaluate predictions in file $gtfFile\n";
     $firstStepFile =~ s/\.gtf/\.f\.gtf/;
+    print LOG "\# "
+        . (localtime)
+        . ": firstStepFile is $firstStepFile\n";
     my $secondStepFile = $firstStepFile;
     $secondStepFile =~ s/\.f\.gtf/f\.fixed\.gtf/;
+    print LOG "\# "
+        . (localtime)
+        . ": secondStepFile is $secondStepFile\n";
+    print LOG "\# "
+        . (localtime)
+        . ": filtering $gtfFile for CDS, exon, start_codon and UTR features, writing to $firstStepFile.\n";
     open( FIRST, ">", $firstStepFile )
         or die("Could not open file $firstStepFile!\n");
     open( AUG, "<", $gtfFile ) or die("Could not open file $gtfFile!\n");
@@ -6476,11 +6498,23 @@ sub eval_gene_pred {
     }
     close(AUG)   or die("Could not close file $gtfFile!\n");
     close(FIRST) or die("Could not close file $firstStepFile!\n");
+    print LOG "\# "
+        . (localtime)
+        . ": Validating gtf of $firstStepFile, results are written to $secondStepFile\n";
     $cmdString = "$validate_gtf -c -f $$firstStepFile";
+    print LOG "$cmdString\n";
     system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+    print LOG "\# "
+        . (localtime)
+        . ": Running eval on $secondStepFile\n";
     $cmdString
         = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out";
+    print LOG $cmdString."\n";
     system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+    print LOG "\# "
+        . (localtime)
+        . ": Extracting results from $gtfFile.eval.out\n"
+        . "grep $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'\n";
     my @eval_result
         = `grep $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'`;
     $accuracy{$gtfFile} = @eval_result;
