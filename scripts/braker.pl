@@ -3781,22 +3781,28 @@ sub augustus {
             }
             open( HIJOBS, "<", "$otherfilesDir/hints.job.lst" )
                 or die("Could not open file $otherfilesDir/hints.job.lst!\n");
+            my @hintJobs;
+            while(<HIJOBS>){
+                chomp;
+                push @hintJobs, "$otherfilesDir/$_";
+            }
+            close(HIJOBS) or die("Could not close file $otherfilesDir/hints.job.lst!\n");
             $pm2 = new Parallel::ForkManager($CPU);
-            while (<HIJOBS>) {
+            foreach(@hintJobs)
                 my $pid = $pm2->start;
                 $cHintJobs++;
                 print LOG "\# "
                     . (localtime)
                     . ": Running AUGUSTUS hints job "
                     . chomp($_) . "\n";
-                $cmdString = "$otherfilesDir/$_";
+                $cmdString = $_;
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
                     or die("Failed to execute: $cmdString!\n");
                 $pm2->finish;
             }
             $pm2->wait_all_children;
-            close(HIJOBS) or die("Could not close file $otherfilesDir/hints.job.lst!\n");
+
         }
         else {
             if ($ab_initio) {
