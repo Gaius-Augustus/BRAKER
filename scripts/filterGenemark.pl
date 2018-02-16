@@ -636,7 +636,7 @@ sub add_single_cds {
     my $available_single_cds_genes = 0;
     if( $filterOutShort ) {
         foreach (@singleCDSgenes) {
-            if( ${$_{'short'}} eq "false" ) {
+            if( $_->{'short'} eq "false" ) {
                 $available_single_cds_genes++;
             }
         }
