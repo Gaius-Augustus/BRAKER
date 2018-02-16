@@ -3782,10 +3782,13 @@ sub augustus {
             open( HIJOBS, "<", "$otherfilesDir/hints.job.lst" )
                 or die("Could not open file $otherfilesDir/hints.job.lst!\n");
             my @hintJobs;
+            my $counter = 0;
             while(<HIJOBS>){
                 chomp;
                 push @hintJobs, "$otherfilesDir/$_";
+                $counter ++;
             }
+            print LOG "COUNTER IS $counter!\n";
             close(HIJOBS) or die("Could not close file $otherfilesDir/hints.job.lst!\n");
             $pm2 = new Parallel::ForkManager($CPU);
             foreach(@hintJobs){
