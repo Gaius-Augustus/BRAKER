@@ -3655,6 +3655,14 @@ sub augustus {
                 . ": creating $otherfilesDir/aug_hints.lst for AUGUSTUS jobs\n";
             open( ALIST, ">", "$otherfilesDir/aug_hints.lst" )
                 or die("Could not open file $otherfilesDir/aug_hints.lst!\n");
+
+            while( my ($k, $v) = each %scaffSizes){
+                print LOG "saffSizesLine: $k\t$v\n";
+            }
+            while( my ($k, $v) = each %scaffFileNames){
+                print LOG "scaffFileNames: $k\t$v\n";
+            }
+
             while ( my ( $locus, $size ) = each %scaffSizes ) {
                 print ALIST "$scaffFileNames{$locus}\t$hintsfile\t1\t$size\n";
             }
