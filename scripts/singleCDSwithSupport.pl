@@ -80,9 +80,7 @@ sub SummarizeHints {
     foreach my $txid ( keys %h ) {
         if (   defined( $h{$txid}{'start'} )
             && defined( $h{$txid}{'stop'} )
-            && !defined( $h{$txid}{'introns'} )
-            && $h{$txid}{'cds'} == 1 )
-        {
+            && $h{$txid}{'cds'} == 1 ){
             my $cdsid
                 = $h{$txid}{'seq'} . "_"
                 . $h{$txid}{'start'} . "_"
@@ -98,7 +96,6 @@ sub SummarizeHints {
                 $s{$cdsid}{'frame'}  = $h{$txid}{'frame'};
                 $s{$cdsid}{'grp'}    = $h{$txid}{'grp'};
                 $s{$cdsid}{'mult'}   = 1;
-
             }
             else {
                 $s{$cdsid}{'mult'}++;
@@ -112,49 +109,40 @@ sub ReadGff {
     open( my $IN, "<", $in_gff_file )
         or die("$!, error on open file $in_gff_file");
     while (<$IN>) {
-        $_ =~ m/grp=(.*);/;
-        my $txid = $1;
-        if ( $_ =~ m/\tintron\t/ ) {
-            if ( !defined( $h{$txid}{'introns'} ) ) {
-                $h{$txid}{'introns'} = 1;
+        if( $_ =~ m/\tCDS/ || $_ =~ m/\tstart\t/ || $_ =~ m/\tstop\t/ ) {
+            $_ =~ m/grp=(.*);/;
+            my $txid = $1;
+            if ( $_ =~ m/\tCDS/ ) {
+                if ( !defined( $h{$txid}{'cds'} ) ) {
+                    $h{$txid}{'cds'} = 1;
+                }
+                else {
+                    $h{$txid}{'cds'}++;
+                }
             }
-            else {
-                $h{$txid}{'introns'}++;
+            elsif ( $_ =~ m/^(.*)\t(.*)\tstart\t(\d+)\t(\d+)\t(.*)\t(\+|-)\t(.*)\t(.*)/ )
+            {
+                $h{$txid}{'seq'}    = $1;
+                $h{$txid}{'src'}    = $2;
+                $h{$txid}{'score'}  = $5;
+                $h{$txid}{'frame'}  = $7;
+                $h{$txid}{'strand'} = $6;
+                if ( $h{$txid}{'strand'} eq '+' ) {
+                    $h{$txid}{'start'} = $3;
+                }
+                else {
+                    $h{$txid}{'stop'} = $4;
+                }
+                $h{$txid}{'grp'} = $8;
             }
-
-        }
-        elsif ( $_ =~ m/\tCDS/ ) {
-            if ( !defined( $h{$txid}{'cds'} ) ) {
-                $h{$txid}{'cds'} = 1;
+            elsif ( $_ =~ m/^(.*)\t(.*)\tstop\t(\d+)\t(\d+)\t(.*)\t(\+|-)\t/ ) {
+                if ( $5 eq '+' ) {
+                    $h{$txid}{'stop'} = $4;
+                }
+                else {
+                    $h{$txid}{'stop'} = $3;
+                }
             }
-            else {
-                $h{$txid}{'cds'}++;
-            }
-        }
-        elsif ( $_
-            =~ m/^(.*)\t(.*)\tstart\t(\d+)\t(\d+)\t(.*)\t(\+|-)\t(.*)\t(.*)/ )
-        {
-            $h{$txid}{'seq'}    = $1;
-            $h{$txid}{'src'}    = $2;
-            $h{$txid}{'score'}  = $5;
-            $h{$txid}{'frame'}  = $7;
-            $h{$txid}{'strand'} = $6;
-            if ( $h{$txid}{'strand'} eq '+' ) {
-                $h{$txid}{'start'} = $3;
-            }
-            else {
-                $h{$txid}{'stop'} = $4;
-            }
-            $h{$txid}{'grp'} = $8;
-        }
-        elsif ( $_ =~ m/^(.*)\t(.*)\tstop\t(\d+)\t(\d+)\t(.*)\t(\+|-)\t/ ) {
-            if ( $5 eq '+' ) {
-                $h{$txid}{'stop'} = $4;
-            }
-            else {
-                $h{$txid}{'stop'} = $3;
-            }
-
         }
     }
     close($IN) or die("$!, error on close file $in_gff_file");
