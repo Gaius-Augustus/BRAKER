@@ -2818,8 +2818,7 @@ sub training {
         my $geneMarkGb = "$otherfilesDir/genemark.gb";
         my $gthGb      = "$otherfilesDir/gth.gb";
         if ( not($trainFromGth) ) {
-
-# make genemark gb, but this is not the final file because gth genes may be added later
+            # make genemark gb, but this is not the final file because gth genes may be added later
             gtf2gb( "$genemarkDir/genemark.f.good.gtf", $geneMarkGb );
         }
 
@@ -3995,11 +3994,12 @@ sub clean_up {
         }
     }
     # deleting files from AUGUSTUS parallelization
+    print LOG "\# " . (localtime) . ": deleting files from AUGUSTUS parallelization\n";
     opendir( DIR, $otherfilesDir ) or die $!;
     while ( my $file = readdir(DIR) ) {
         if( ( $file =~ m/aug_ab_initio_/ ) || ( $file =~ m/aug_hints_/ ) || ( $file =~ m/\.lst/ ) ){
             print LOG "rm $file\n";
-            unlink( $file );
+            unlink( rel2abs( $file ) );
         }
     }
 }

@@ -102,6 +102,7 @@ my $bool_complete = "false"
 my $bool_good   = "true";  # if true gene is good, if false, gene is bad
 my $bool_intron = "false"; # true, if currently between exons, false otherwise
 my @CDS;                   # contains coding region lines
+my @singleCDSgenes;
 my $file_name;             # file name
 my $cds_file;              # name of file with single exon gene CDSpart hints
 my @cds_hints;
@@ -222,6 +223,8 @@ if (defined ($cds_file) ) {
     }
 }
 convert_and_filter();
+
+add_single_cds();
 
 if ( $nr_of_complete > 0 ) {
     $average_gene_length = ceil( $length / $nr_of_complete );
@@ -566,6 +569,15 @@ sub print_gene {
     }
     if ( $size == 1 ) {
         $one_exon_gene_count++;
+        $bool_good = "false"; # add single CDS genes later
+        if( $bool_complete eq "true" ) {
+            my %thisCDS;
+            $thisCDS{'cds'} = $_;
+            if($filterOutShort){
+                $thisCDS{'short'} = $boolShortBad;
+            }
+            push @singleCDSgenes, \%thisCDS;
+        }
     }
     if ( $bool_complete eq "true" ) {
         $average_nr_introns += $size - 1;
@@ -617,3 +629,11 @@ sub print_gene {
     $mults         = 0;
 }
 
+sub add_single_cds {
+    my $single_exon_ratio = $one_exon_gene_count/$nr_of_genes;
+    my $required_train_genes = $nr_of_good / (1 - $single_exon_ratio);
+    my $required_single_cds_genes = $required_train_genes - $nr_of_good;
+    my $available_single_cds_genes = scalar (@singleCDSgenes);
+
+    print "Will try to add $required_single_cds_genes from $available_single_cds_genes\n";
+}
