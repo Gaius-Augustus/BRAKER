@@ -3634,7 +3634,7 @@ sub augustus {
 
             # rename files according to scaffold name
             $cmdString
-                = "cd $augustus_dir; for f in genome.split.*; do NAME = `grep \">\" \$f`; mv \$f \${NAME#>}.fa; done; cd ..";
+                = "cd $augustus_dir; for f in genome.split.*; do NAME=`grep \">\" \$f`; mv \$f \${NAME#>}.fa; done; cd ..";
             print LOG $cmdString . "\n";
             system("$cmdString") == 0
                 or die("Failed to execute: $cmdString\n");
