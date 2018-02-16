@@ -4450,13 +4450,14 @@ sub check_fasta_headers {
             }
             if ( $_ =~ m/^>/ ) {
                 $scaffName = $_;
+                $scaffName =~ s/^>//;
                 $scaffSizes{$scaffName} = 0;
 
                 # replace | and whitespaces by _
                 my $oldHeader = $scaffName;
                 $scaffName =~ s/\s/_/g;
                 $scaffName =~ s/\|/_/g;
-                print OUTPUT "$scaffName\n";
+                print OUTPUT ">$scaffName\n";
                 print MAP "$scaffName\t$oldHeader\n";
             }
             else {
