@@ -3762,33 +3762,36 @@ sub augustus {
             if ($ab_initio) {
                 open( AIJOBS, "<", "$otherfilesDir/ab_initio.job.lst" )
                     or die("Could not open file $otherfilesDir/ab_initio.job.lst!\n");
+                my @aiJobs;
                 while (<AIJOBS>) {
+                    chomp;
+                    push @aiJobs, "$otherfilesDir/$_";
+                }
+                close(AIJOBS)
+                    or die("Could not close file $otherfilesDir/ab_initio.job.lst!\n");
+                foreach(@aiJobs){
                     my $pid = $pm->start and next;
                     $cInitJobs++;
                     print LOG "\# "
                         . (localtime)
-                        . ": Running AUGUSTUS ab initio job "
-                        . chomp($_) . "\n";
-                    $cmdString = "$otherfilesDir/$_";
+                        . ": Running AUGUSTUS ab initio job $cInitJobs"
+                        . "\n";
+                    $cmdString = "$_";
                     print LOG "$cmdString\n";
                     system("$cmdString") == 0
                         or die("Failed to execute: $cmdString!\n");
                     $pm->finish;
                 }
                 $pm->wait_all_children;
-                close(AIJOBS)
-                    or die("Could not close file $otherfilesDir/ab_initio.job.lst!\n");
+
             }
             open( HIJOBS, "<", "$otherfilesDir/hints.job.lst" )
                 or die("Could not open file $otherfilesDir/hints.job.lst!\n");
             my @hintJobs;
-            my $counter = 0;
             while(<HIJOBS>){
                 chomp;
                 push @hintJobs, "$otherfilesDir/$_";
-                $counter ++;
             }
-            print LOG "COUNTER IS $counter!\n";
             close(HIJOBS) or die("Could not close file $otherfilesDir/hints.job.lst!\n");
             $pm2 = new Parallel::ForkManager($CPU);
             foreach(@hintJobs){
@@ -3796,8 +3799,8 @@ sub augustus {
                 $cHintJobs++;
                 print LOG "\# "
                     . (localtime)
-                    . ": Running AUGUSTUS hints job "
-                    . chomp($_) . "\n";
+                    . ": Running AUGUSTUS hints job $cHintJobs"
+                    . "\n";
                 $cmdString = $_;
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
