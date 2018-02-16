@@ -360,7 +360,7 @@ my $optCfgFile;          # optinonal extrinsic config file for AUGUSTUS
 my $otherfilesDir;  # directory for other files besides GeneMark-ET output and
                     # parameter files
 my $annot;          # reference annotation to compare predictions to
-my %accuracy;    # stores accuracy results of gene prediction runs
+my %accuracy;       # stores accuracy results of gene prediction runs
 my $overwrite
     = 0;    # overwrite existing files (except for species parameter files)
 my $parameterDir;     # directory of parameter files for species
@@ -978,14 +978,16 @@ if (@prot_seq_files) {
 
 # check whether reference annotation file exists
 if ($annot) {
-      if ( not(-e $annot ) ) {
-            $prtStr
-                = "\# ". (localtime). ": ERROR: Reference annotation file "
-                .  "$annot does not exist. Cannot evaluate prediction accuracy!\n";
-            print STDERR $prtStr;
-            $logString .= $prtStr;
-            exit(1);
-      }
+    if ( not( -e $annot ) ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: Reference annotation file "
+            . "$annot does not exist. Cannot evaluate prediction accuracy!\n";
+        print STDERR $prtStr;
+        $logString .= $prtStr;
+        exit(1);
+    }
 }
 
 # check whether protein alignment file is given
@@ -1495,6 +1497,10 @@ else {
 
     if ( $UTR eq "on" ) {
         train_utr();
+    }
+
+    if( $annot ) {
+        eval();
     }
 
     clean_up();         # delete all empty files
@@ -3822,10 +3828,12 @@ sub augustus {
 
         # join prediction files to one file
         if ( $CPU > 1 ) {
-            if($ab_initio){
-                join_aug_pred ($augustus_dir_ab_initio, "$otherfilesDir/augustus.ab_initio.gff");
+            if ($ab_initio) {
+                join_aug_pred( $augustus_dir_ab_initio,
+                    "$otherfilesDir/augustus.ab_initio.gff" );
             }
-            join_aug_pred ($augustus_dir, "$otherfilesDir/augustus.hints.gff");
+            join_aug_pred( $augustus_dir,
+                "$otherfilesDir/augustus.hints.gff" );
         }
     }
 }
@@ -4708,8 +4716,7 @@ sub accuracy_calculator {
             + 4 * $ex_sen
             + 3 * $ex_sp
             + 2 * $gen_sen
-            + 1 * $gen_sp )
-        / 15;
+            + 1 * $gen_sp ) / 15;
     return $target;
 }
 
@@ -6307,18 +6314,20 @@ sub assignExCfg {
     }
 }
 
-sub join_aug_pred{
-    my $pred_dir = shift;
+sub join_aug_pred {
+    my $pred_dir    = shift;
     my $target_file = shift;
     $string = find(
-                "join_aug_pred.pl",     $AUGUSTUS_BIN_PATH,
-                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-            );
+        "join_aug_pred.pl",     $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
     my $cat_file = "$otherfilesDir/augustus.tmp.gff";
-    print LOG "\# ". (localtime). ": Concatenating AUGUSTUS output files in $pred_dir\n";
-    opendir(DIR, $pred_dir) or die $!;
-    while (my $file = readdir(DIR)) {
-        next if ($file =~ m/\.gff/);
+    print LOG "\# "
+        . (localtime)
+        . ": Concatenating AUGUSTUS output files in $pred_dir\n";
+    opendir( DIR, $pred_dir ) or die $!;
+    while ( my $file = readdir(DIR) ) {
+        next if ( $file =~ m/\.gff/ );
         $cmdString = "";
         if ($nice) {
             $cmdString .= "nice ";
@@ -6337,82 +6346,110 @@ sub join_aug_pred{
         . (localtime)
         . ": Joining AUGUSTUS output from $pred_dir\n";
     print LOG "$perlCmdString\n\n";
-    system("$perlCmdString") == 0 or die("Failed to execute $perlCmdString\n");
-    print LOG "\# "
-        . (localtime)
-        . ": Deleting $pred_dir\n";
+    system("$perlCmdString") == 0
+        or die("Failed to execute $perlCmdString\n");
+    print LOG "\# " . (localtime) . ": Deleting $pred_dir\n";
     rmtree( ["$pred_dir"] );
-    print LOG "\# "
-        . (localtime)
-        . ": Deleting $cat_file\n";
+    print LOG "\# " . (localtime) . ": Deleting $cat_file\n";
     unlink($cat_file);
 }
 
-sub eval{
-      my @results;
-      my $seqlist = "$otherfilesDir/seqlist";
-      open (SEQLST, ">", $seqlist) or die ("Could not open file $seqlist!\n");
-      while ( my ( $locus, $size ) = each %scaffSizes ) {
-            chomp $locus;
-            $locus =~ s/^>//;
-            print SEQLIST $locus."\n";
-      }
-      close(SEQLIST);
-      if( -e "$otherfilesDir/augustus.ab_initio.gtf" ){
-        eval_augustus("$otherfilesDir/augustus.ab_initio.gtf");
-      }
+sub eval {
+    my @results;
+    my $seqlist = "$otherfilesDir/seqlist";
+    open( SEQLST, ">", $seqlist ) or die("Could not open file $seqlist!\n");
+    while ( my ( $locus, $size ) = each %scaffSizes ) {
+        chomp $locus;
+        $locus =~ s/^>//;
+        print SEQLIST $locus . "\n";
+    }
+    close(SEQLIST);
+    if ( -e "$otherfilesDir/augustus.ab_initio.gtf" ) {
+        eval_gene_pred("$otherfilesDir/augustus.ab_initio.gtf");
+    }
 
-      if( -e "$otherfilesDir/augustus_hints.gtf" ) {
-        eval_augustus("$otherfilesDir/augustus_hints.gtf")
-      }
+    if ( -e "$otherfilesDir/augustus_hints.gtf" ) {
+        eval_gene_pred("$otherfilesDir/augustus_hints.gtf");
+    }
 
-      if( -e "$genemarkDir/genemark.gtf" ){
+    if ( -e "$genemarkDir/genemark.gtf" ) {
+        eval_gene_pred("$genemarkDir/genemark.gtf");
+    }
 
-      }
-
-      if ( -e "someGthFile" ){
-
-      }
-
-      if ( -e "cdspartHintsfile" ){
-
-      }
+    if ( -e "$otherfilesDir/gthTrainGenes.gtf" ) {
+        eval_gene_pred("$otherfilesDir/gthTrainGenes.gtf");
+    }
+    my @accKeys = keys %accuracy;
+    if(scalar(@accKeys) > 0){
+        open (ACC, ">", "$otherfilesDir/eval.summary") or die ("Could not open file $otherfilesDir/eval.summary");
+        print ACC "Measure";
+        foreach(@accKeys){
+            chomp;
+            print ACC "\t$_";
+        }
+        print ACC "\n";
+        for( my $i = 0; $i < 8; $i ++){
+            if( $i == 0 ){ print "Gene_Sensitivity" }
+            elsif( $i == 1 ){ print "Gene_Specificity" }
+            elsif( $i == 2 ){ print "Transcript_Sensitivity" }
+            elsif( $i == 3 ){ print "Transcript_Specificity" }
+            elsif( $i == 4 ){ print "Exon_Sensitivity" }
+            elsif( $i == 5 ){ print "Exon_Specificity" }
+            elsif( $i == 6 ){ print "Nucleotide_Sensitivity" }
+            elsif( $i == 7 ){ print "Nucleotide_Specificity" }
+            foreach(@accKeys){
+                chomp;
+                print "\t".${$accuracy{$_}}[$i];
+            }
+            print "\n";
+        }
+        close(ACC) or die ("Could not close file $otherfilesDir/eval.summary");
+    }
 }
 
-sub eval_augustus {
-      my $gtfFile = shift;
-      my $eval_multi_gtf = find(
-            "eval_multi_gtf.pl", $AUGUSTUS_BIN_PATH,
-            $AUGUSTUS_SCRIPTS_PATH,       $AUGUSTUS_CONFIG_PATH
-      );
-      my $epath = which 'evaluate_gtf.pl';
-      $epath = dirname( abs_path($epath) );
-      my $validate_gtf = "$epath/validate_gtf.pl";
-      if( not (-e $validate_gtf ) ) {
-            print LOG "\# ". (localtime). ": ERROR: Cannot find validate_gtf at $validate_gtf!\n";
-            exit(1);
-      }
+sub eval_gene_pred {
+    my $gtfFile        = shift;
+    my $eval_multi_gtf = find(
+        "eval_multi_gtf.pl",    $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    my $epath = which 'evaluate_gtf.pl';
+    $epath = dirname( abs_path($epath) );
+    my $validate_gtf = "$epath/validate_gtf.pl";
+    if ( not( -e $validate_gtf ) ) {
+        print LOG "\# "
+            . (localtime)
+            . ": ERROR: Cannot find validate_gtf at $validate_gtf!\n";
+        exit(1);
+    }
 
-      my $firstStepFile = $gtfFile;
-      $firstStepFile =~ s/\.gtf/\.f\.gtf/;
-      my $secondStepFile = $firstStepFile;
-      $secondStepFile =~ s/\.f\.gtf/f\.fixed\.gtf/;
-      open (FIRST, ">", $firstStepFile) or die ("Could not open file $firstStepFile!\n");
-      open (AUG, "<", $gtfFile ) or die("Could not open file $gtfFile!\n");
-      while(<AUG>){
-            my @t;
-            if( ($t[2] eq "CDS") or ($t[2] eq "exon") or ($t[2] eq "start_codon") or ($t[2] eq "UTR") ) {
-                  print FIRST $_;
-            }
-      }
-      close(AUG) or die ("Could not close file $gtfFile!\n");
-      close (FIRST) or die ("Could not close file $firstStepFile!\n");
-      $cmdString = "$validate_gtf -c -f $$firstStepFile";
-      system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
-      $cmdString = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out";
-      system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
-      my @eval_result = `grep $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'`;
-      $accuracy{$gtfFile} = @eval_result;
-      unlink($firstStepFile) or die ("Failed to delete file $firstStepFile!\n");
-      unlink($secondStepFile) or die ("Failed to delete $secondStepFile!\n");
+    my $firstStepFile = $gtfFile;
+    $firstStepFile =~ s/\.gtf/\.f\.gtf/;
+    my $secondStepFile = $firstStepFile;
+    $secondStepFile =~ s/\.f\.gtf/f\.fixed\.gtf/;
+    open( FIRST, ">", $firstStepFile )
+        or die("Could not open file $firstStepFile!\n");
+    open( AUG, "<", $gtfFile ) or die("Could not open file $gtfFile!\n");
+    while (<AUG>) {
+        my @t;
+        if (   ( $t[2] eq "CDS" )
+            or ( $t[2] eq "exon" )
+            or ( $t[2] eq "start_codon" )
+            or ( $t[2] eq "UTR" ) )
+        {
+            print FIRST $_;
+        }
+    }
+    close(AUG)   or die("Could not close file $gtfFile!\n");
+    close(FIRST) or die("Could not close file $firstStepFile!\n");
+    $cmdString = "$validate_gtf -c -f $$firstStepFile";
+    system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+    $cmdString
+        = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out";
+    system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+    my @eval_result
+        = `grep $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'`;
+    $accuracy{$gtfFile} = @eval_result;
+    unlink($firstStepFile)  or die("Failed to delete file $firstStepFile!\n");
+    unlink($secondStepFile) or die("Failed to delete $secondStepFile!\n");
 }
