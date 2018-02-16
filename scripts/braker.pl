@@ -3638,7 +3638,7 @@ sub augustus {
             print LOG $cmdString . "\n";
             system("$cmdString") == 0
                 or die("Failed to execute: $cmdString\n");
-            my @genome_files = `ls $augustus_dir"`;
+            my @genome_files = `ls $augustus_dir`;
             my %scaffFileNames;
             foreach (@genome_files) {
                 chomp;
@@ -3656,9 +3656,6 @@ sub augustus {
             open( ALIST, ">", "$otherfilesDir/aug_hints.lst" )
                 or die("Could not open file $otherfilesDir/aug_hints.lst!\n");
 
-            while( my ($k, $v) = each %scaffSizes){
-                print LOG "saffSizesLine: $k\t$v\n";
-            }
             while( my ($k, $v) = each %scaffFileNames){
                 print LOG "scaffFileNames: $k\t$v\n";
             }
