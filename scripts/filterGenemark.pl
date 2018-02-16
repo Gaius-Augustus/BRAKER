@@ -633,7 +633,16 @@ sub add_single_cds {
     my $single_exon_ratio = $one_exon_gene_count/$nr_of_genes;
     my $required_train_genes = $nr_of_good / (1 - $single_exon_ratio);
     my $required_single_cds_genes = $required_train_genes - $nr_of_good;
-    my $available_single_cds_genes = scalar (@singleCDSgenes);
+    my $available_single_cds_genes = 0;
+    if( $filterOutShort ) {
+        foreach (@singleCDSgenes) {
+            if( ${$_{'short'}} eq "false" ) {
+                $available_single_cds_genes++;
+            }
+        }
+    }else{
+        $available_single_cds_genes = scalar (@singleCDSgenes);
+    }
 
     print "Will try to add $required_single_cds_genes from $available_single_cds_genes\n";
 }
