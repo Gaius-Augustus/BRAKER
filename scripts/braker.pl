@@ -4451,7 +4451,6 @@ sub check_fasta_headers {
             if ( $_ =~ m/^>/ ) {
                 $scaffName = $_;
                 $scaffName =~ s/^>//;
-                $scaffSizes{$scaffName} = 0;
 
                 # replace | and whitespaces by _
                 my $oldHeader = $scaffName;
@@ -4462,7 +4461,11 @@ sub check_fasta_headers {
             }
             else {
                 if ( length($_) > 0 ) {
-                    $scaffSizes{$scaffName} += length( chomp($_) );
+                    if(not(defined($scaffSizes{$scaffName}))){
+                         $scaffSizes{$scaffName} = 0;
+                    }else{
+                        $scaffSizes{$scaffName} += length( chomp($_) );
+                    }
                     print OUTPUT "$_\n";
                     if ( $_ !~ m/[ATGCNatgcn]/ ) {
                         if ( $dna == 0 ) {
