@@ -102,10 +102,10 @@ my $bool_complete = "false"
 my $bool_good   = "true";  # if true gene is good, if false, gene is bad
 my $bool_intron = "false"; # true, if currently between exons, false otherwise
 my @CDS;                   # contains coding region lines
-my @singleCDSgenes;
+my %singleCDSgenes;
 my $file_name;             # file name
 my $cds_file;              # name of file with single exon gene CDSpart hints
-my @cds_hints;
+my %cds_hints;
 my $gene_start;            # for length determination
 my $good_mults = 0;        # all supported intron 'mult' entries summed up
 my $ID_new;                # new ID with doublequotes for each gene
@@ -315,7 +315,7 @@ sub read_cds {
             $cds{'end'} = $t[4] + 15;
         }
         $cds{'strand'} = $t[6];
-        push @cds_hints, \%cds;
+        push @{$cds_hints{$t[0]}}, \%cds;
     }
     close(CDS) or die ("Could not close file $cds_file!\n");
 }
@@ -576,7 +576,7 @@ sub print_gene {
             if($filterOutShort){
                 $thisCDS{'short'} = $boolShortBad;
             }
-            push @singleCDSgenes, \%thisCDS;
+            $singleCDSgenes{$one_exon_gene_count} = \%thisCDS;
         }
     }
     if ( $bool_complete eq "true" ) {
@@ -633,26 +633,55 @@ sub add_single_cds {
     my $single_exon_ratio = $one_exon_gene_count/$nr_of_genes;
     my $required_train_genes = $nr_of_good / (1 - $single_exon_ratio);
     my $required_single_cds_genes = ceil($required_train_genes - $nr_of_good);
-
-    if( $filterOutShort ) {
-        foreach (@singleCDSgenes) {
-            if( $_->{'short'} eq "false" ) {
-                # delete array element??
-            }
+    my %goodSingleCDSgenes;
+    my $goodCounter = 0;
+    foreach( keys %singleCDSgenes ) {
+        if( $singleCDSgenes{$_}->{'short'} eq "false" && $filterOutShort) {
+            $goodCounter ++;
+            $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
+        }else{
+            $goodCounter ++;
+            $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
         }
     }
-    my $available_single_cds_genes =  scalar (@singleCDSgenes);
-    
-
+    my @goodKeys = keys %goodSingleCDSgenes;
+    my $available_single_cds_genes =  scalar (@goodKeys);
     print "Will try to add $required_single_cds_genes from $available_single_cds_genes\n";
+    if ($required_single_cds_genes > $available_single_cds_genes) {
+        print "Reducing $required_single_cds_genes to $available_single_cds_genes\n";
+        $required_single_cds_genes = $available_single_cds_genes
+    }
+    # select genes that overlap with given CDSpart hints in @cdshints
+    my @printCDS;
+    if ( ( (scalar (keys %cds_hints) ) > 0 ) && ( $available_single_cds_genes > 0 ) ) {
+        while (my ($goodGeneIdx, $goodGene) = each %goodSingleCDSgenes) {
+            my @t = split(/\t/, $goodGene);
+            foreach ( @{$cds_hints{$t[0]}} ) {
+                # check whether cds is an exact overlap of coordinates and strand;
+                if ( ( $_->{'start'} == $t[3] ) && ( $_->{'end'} == $t[4] ) && ( $_->{'strand'} eq $t[6] ) ) {
+                    push @printCDS, $goodGene;
+                    delete $goodSingleCDSgenes{$goodGeneIdx};
+                    last;
+                }
+            }
 
-#my @list = 'a'..'z';                                # use your data instead of this
-#my $n = 5;                                          # how many do you need?
+        }
+    }
+    # check how many random non supported single cds genes are still missing
+    my $stillLacking = $required_single_cds_genes - scalar( @printCDS );
 
-#foreach my $i (0..$n-1) {
-#  my $j = rand @list;
-#  ($list[$i], $list[$j]) = ($list[$j], $list[$i]);  # swap ith and jth+ elements
-#};
+    #permute good genes, if I want to select n random ones, take the first n entries, later
+    @goodKeys = keys %goodSingleCDSgenes;
+    foreach my $i (0..$required_single_cds_genes-1) {
+        my $j = rand @goodKeys;
+        ($goodKeys[$i], $goodKeys[$j]) = ($goodKeys[$j], $goodKeys[$i]);
+    }
+    # select random genes without support and add to print list
+    for(my $i=0; $i<$stillLacking; $i++) {
+        push @printCDS, $goodSingleCDSgenes{$goodKeys[$i]};
+    }
+    foreach (@printCDS) {
+        print $_;
+    }
 
-#print join(', ', @list[0..$n-1]), "\n";
 }
