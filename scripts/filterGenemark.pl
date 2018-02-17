@@ -653,6 +653,7 @@ sub add_single_cds {
     }
     # select genes that overlap with given CDSpart hints in @cdshints
     my @printCDS;
+    my @badCDS;
     if ( ( (scalar (keys %cds_hints) ) > 0 ) && ( $available_single_cds_genes > 0 ) ) {
         while (my ($goodGeneIdx, $goodGene) = each %goodSingleCDSgenes) {
             my @t = split(/\t/, $goodGene);
@@ -679,9 +680,34 @@ sub add_single_cds {
     # select random genes without support and add to print list
     for(my $i=0; $i<$stillLacking; $i++) {
         push @printCDS, $goodSingleCDSgenes{$goodKeys[$i]};
+        delete $goodSingleCDSgenes{$goodKeys[$i]};
     }
+    # select bad genes
+    for(my $i = $stillLacking; $i < scalar(@goodKeys); $i++){
+        push @badCDS, $goodSingleCDSgenes{$goodKeys[$i]};
+    }
+    if ($filterOutShort) {
+        foreach ( keys %singleCDSgenes ) {
+            if( $singleCDSgenes{$_}->{'short'} eq "true" ) {
+                push @badCDS, $singleCDSgenes{$_}->{'cds'};
+            }
+        }
+    }
+    # print to files
+    open( GOOD, ">>", "$file_name.f.good.gtf")
+        or die "Cannot open file: $file_name.f.good.gtf\n";
+    open( BAD, ">>" , "$file_name.f.bad.gtf" )
+        or die "Cannot open file: $file_name.f.bad.gtf\n";
     foreach (@printCDS) {
-        print $_;
+        print GOOD $_;
+        $nr_of_good++;
     }
+    foreach (@badCDS) {
+        print BAD $_;
+        $nr_of_bad++;
+    }
+
+    close (GOOD) or die ( "Cannot close file: $file_name.f.good.gtf!\n" );
+    close (BAD) or die ( "Cannot close file: $file_name.f.bad.gtf!\n" );
 
 }
