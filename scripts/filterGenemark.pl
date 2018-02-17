@@ -81,6 +81,8 @@ OPTIONS
                                 genes are still added to "good genes" in order
                                 to generate a good training gene set for
                                 AUGUSTUS
+--cdspart_cutoff=n              CDSpart cutoff that was used for generating hints
+                                default 15
 
 Format:
 seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB> strand <TAB> frame <TAB> gene_id value <TAB> transcript_id value
@@ -147,6 +149,7 @@ my %averageMult;
 my $percentMult = 0.2;
 my %maxCdsSize;    # contains max CDS size of a gene (gene is key)
 my $boolShortBad;
+my $cutoff = 15;
 
 if ( @ARGV == 0 ) {
     print "$usage\n";
@@ -160,6 +163,7 @@ GetOptions(
     'suppress!'       => \$suppress,
     'filterOutShort!' => \$filterOutShort,
     'singeCDSfile=s'  => \$cds_file,
+    'cdspart_cutoff=s'=> \$cutoff,
     'help!'           => \$help
     );
 
@@ -311,8 +315,8 @@ sub read_cds {
             $cds{'start'} = $t[3];
             $cds{'end'} = $t[4];
         }elsif(m/\tCDSpart\t/){
-            $cds{'start'} = $t[3] - 15;
-            $cds{'end'} = $t[4] + 15;
+            $cds{'start'} = $t[3] - $cutoff;
+            $cds{'end'} = $t[4] + $cutoff;
         }
         $cds{'strand'} = $t[6];
         push @{$cds_hints{$t[0]}}, \%cds;
