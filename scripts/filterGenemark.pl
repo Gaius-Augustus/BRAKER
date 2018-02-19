@@ -640,6 +640,7 @@ sub print_gene {
 
 sub add_single_cds {
     my $single_exon_ratio = $one_exon_gene_count/$nr_of_genes;
+    print "Here, I have $nr_of_good good genes\n";
     print "Here, I think one exon rate is $single_exon_ratio\n";
     my $required_train_genes = $nr_of_good / (1 - $single_exon_ratio);
     print "I thus guess that I need to have a total of $required_train_genes good genes\n";
@@ -724,7 +725,7 @@ sub add_single_cds {
             $nr_of_bad++;
         }
     }
-
+    print "And now I think I have $nr_of_good good genes\n";
     print "And now I think that there are $nr_of_bad bad genes\n";
     close (GOOD) or die ( "Cannot close file: $file_name.f.good.gtf!\n" );
     close (BAD) or die ( "Cannot close file: $file_name.f.bad.gtf!\n" );
