@@ -575,16 +575,19 @@ sub print_gene {
     if ( $size == 1 ) {
         $one_exon_gene_count++;
         $bool_good = "false"; # add single CDS genes later
-        if( $bool_complete eq "true" ) {
-            my %thisCDS;
-            $thisCDS{'cds'} = $_;
-            if($filterOutShort){
-                $thisCDS{'short'} = $boolShortBad;
-            }else{
-                $thisCDS{'short'} = "false";
-            }
-            $singleCDSgenes{$one_exon_gene_count} = \%thisCDS;
+        my %thisCDS;
+        $thisCDS{'cds'} = $_;
+        if($filterOutShort){
+            $thisCDS{'short'} = $boolShortBad;
+        }else{
+            $thisCDS{'short'} = "false";
         }
+        if( $bool_complete eq "true" ) {
+            $thisCDS{'complete'} = "true";
+        }else{
+            $thisCDS{'complete'} = "false";
+        }
+        $singleCDSgenes{$one_exon_gene_count} = \%thisCDS;
     }
     if ( $bool_complete eq "true" ) {
         $average_nr_introns += $size - 1;
@@ -648,17 +651,24 @@ sub add_single_cds {
     print "I thus think that we need $required_single_cds_genes\n";
     print "I currently think that there are $nr_of_bad bad genes\n";
     my %goodSingleCDSgenes;
+    my %badSingleCDSgenes;
     my $goodCounter = 0;
+    my $badCounter = 0;
     foreach( keys %singleCDSgenes ) {
-        if( ( $singleCDSgenes{$_}->{'short'} eq "false" ) && $filterOutShort) {
+        if( ( $singleCDSgenes{$_}->{'short'} eq "false" ) && $filterOutShort && $singleCDSgenes{'complete'} eq "true" ) {
+            $goodCounter ++;
+            $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
+        }elsif($singleCDSgenes{'complete'} eq "true"){
             $goodCounter ++;
             $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
         }else{
-            $goodCounter ++;
-            $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
+            $badCounter++;
+            $badSingleCDSgenes{$badCounter} = $singleCDSgenes{$_}->{'cds'};
         }
     }
     my @goodKeys = keys %goodSingleCDSgenes;
+    my @allSingleCDS = keys %singleCDSgenes;
+    print "All Single CDS: ".scalar(@allSingleCDS). "good single CDS: ". scalar(@goodKeys);
     my $available_single_cds_genes =  scalar (@goodKeys);
     print "Will try to add $required_single_cds_genes from $available_single_cds_genes\n";
     if ($required_single_cds_genes > $available_single_cds_genes) {
@@ -724,6 +734,10 @@ sub add_single_cds {
             print BAD $bad."\n";
             $nr_of_bad++;
         }
+    }
+    foreach ( keys %badSingleCDSgenes ) {
+        print BAD $badSingleCDSgenes{$_}."\n";
+        $nr_of_bad++;
     }
     print "And now I think I have $nr_of_good good genes\n";
     print "And now I think that there are $nr_of_bad bad genes\n";
