@@ -643,13 +643,8 @@ sub print_gene {
 
 sub add_single_cds {
     my $single_exon_ratio = $one_exon_gene_count/$nr_of_genes;
-    print "Good genes before one exon adding: $nr_of_good\n";
-    print "Bad genes before one exon adding : $nr_of_bad\n";
-    print "Current number of genes          : ".($nr_of_good+$nr_of_bad)."\n";
     my $required_train_genes = $nr_of_good / (1 - $single_exon_ratio);
-    print "Required single CDS genes        : $required_train_genes\n";
     my $required_single_cds_genes = ceil($required_train_genes - $nr_of_good);
-    print "This would lead to good genes    : ".($nr_of_good+$required_single_cds_genes)."\n";
     my %goodSingleCDSgenes;
     my %badSingleCDSgenes;
     my $goodCounter = 0;
@@ -668,16 +663,9 @@ sub add_single_cds {
     }
     my @goodKeys = keys %goodSingleCDSgenes;
     my @allSingleCDS = keys %singleCDSgenes;
-    print "All Single CDS                   : ".scalar(@allSingleCDS)."\n";
-    print "The complete single CDS          : ".scalar(@goodKeys)."\n";
-    print "The bad single CDS               : ".scalar(keys %badSingleCDSgenes)."\n";
-
-
 
     my $available_single_cds_genes =  scalar (@goodKeys);
-    print "Will try to add $required_single_cds_genes from $available_single_cds_genes\n";
     if ($required_single_cds_genes > $available_single_cds_genes) {
-        print "Reducing $required_single_cds_genes to $available_single_cds_genes\n";
         $required_single_cds_genes = $available_single_cds_genes
     }
     $goodOneExonGenes = $required_single_cds_genes;
@@ -738,9 +726,6 @@ sub add_single_cds {
         print BAD $badSingleCDSgenes{$_}."\n";
         $nr_of_bad++;
     }
-    print "After printing, I have good genes: $nr_of_good\n";
-    print "After printing, I have bad genes: $nr_of_bad\n";
-    print "Which sums up to a total of:      ".($nr_of_good+$nr_of_bad)."\n";
     close (GOOD) or die ( "Cannot close file: $file_name.f.good.gtf!\n" );
     close (BAD) or die ( "Cannot close file: $file_name.f.bad.gtf!\n" );
 
