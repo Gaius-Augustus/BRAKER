@@ -643,13 +643,13 @@ sub print_gene {
 
 sub add_single_cds {
     my $single_exon_ratio = $one_exon_gene_count/$nr_of_genes;
-    print "Here, I have $nr_of_good good genes\n";
-    print "Here, I think one exon rate is $single_exon_ratio\n";
+    print "Good genes before one exon adding: $nr_of_good\n";
+    print "Bad genes before one exon adding : $nr_of_bad\n";
+    print "Current number of genes          : ".($nr_of_good+$nr_of_bad)."\n";
     my $required_train_genes = $nr_of_good / (1 - $single_exon_ratio);
-    print "I thus guess that I need to have a total of $required_train_genes good genes\n";
+    print "Required single CDS genes        : $required_train_genes\n";
     my $required_single_cds_genes = ceil($required_train_genes - $nr_of_good);
-    print "I thus think that we need $required_single_cds_genes\n";
-    print "I currently think that there are $nr_of_bad bad genes\n";
+    print "This would lead to good genes    : ".($nr_of_good+$$required_single_cds_genes)."\n";
     my %goodSingleCDSgenes;
     my %badSingleCDSgenes;
     my $goodCounter = 0;
@@ -668,7 +668,12 @@ sub add_single_cds {
     }
     my @goodKeys = keys %goodSingleCDSgenes;
     my @allSingleCDS = keys %singleCDSgenes;
-    print "All Single CDS: ".scalar(@allSingleCDS). "good single CDS: ". scalar(@goodKeys);
+    print "All Single CDS                   : ".scalar(@allSingleCDS)."\n";
+    print "The complete single CDS          : ".scalar(@goodKeys)."\n";
+    print "The bad single CDS               : ".scalar(keys %badSingleCDSgenes)."\n";
+
+
+
     my $available_single_cds_genes =  scalar (@goodKeys);
     print "Will try to add $required_single_cds_genes from $available_single_cds_genes\n";
     if ($required_single_cds_genes > $available_single_cds_genes) {
