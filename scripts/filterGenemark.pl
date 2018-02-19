@@ -371,7 +371,8 @@ sub convert_and_filter {
             }
 
             # new gene starts
-            if ( $prev_ID ne $ID_old[1] && defined($introns) ) {
+            # if ( $prev_ID ne $ID_old[1] && defined($introns) ) {
+            if ( $prev_ID ne $ID_old[1] ) {
                 if (@CDS) {
                     $nr_of_genes++;
                     print_gene();
@@ -445,15 +446,14 @@ sub convert_and_filter {
             $prev_ID = $ID_old[1];
         }
     }
-    if ( defined($introns) ) {
-        $nr_of_genes++;
-        # print last gene, since print_gene() was only executed after the ID changed
-        print_gene();
-        if ( !defined($suppress) ) {
-            close(BAD)  or die("Could not close file $output_file_bad!\n");
-            close(GOOD) or die("Could not close file $output_file_good!\n");
-        }
+    $nr_of_genes++;
+    # print last gene, since print_gene() was only executed after the ID changed
+    print_gene();
+    if ( !defined($suppress) ) {
+        close(BAD)  or die("Could not close file $output_file_bad!\n");
+        close(GOOD) or die("Could not close file $output_file_good!\n");
     }
+
     close(GENEMARK) or die("Could not close file $genemark!\n");
     if ( !defined($suppress) ) {
         close(OUTPUT) or die("Could not close file $output_file!\n");
