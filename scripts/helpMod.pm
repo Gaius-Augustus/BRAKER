@@ -6,7 +6,7 @@ package helpMod;
 
 use Exporter 'import';
 @EXPORT_OK
-    = qw(find tildeConvert checkFile formatDetector relToAbs setParInConfig uptodate);
+    = qw(find tildeConvert checkFile formatDetector relToAbs setParInConfig uptodate gtf2fasta);
 
 use strict;
 use Cwd;
