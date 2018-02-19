@@ -6420,11 +6420,11 @@ sub set_BLAST_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Trying to guess \$BLAST_PATH from location of blastall"
+            . ": Trying to guess \$BLAST_PATH from location of blastp"
             . " executable that is available in your \$PATH.\n";
         $logString .= $prtStr;
         print STDOUT $prtStr;
-        my $epath = which 'blastall';
+        my $epath = which 'blastp';
         if ( -d dirname($epath) ) {
             $prtStr
                 = "\# "
@@ -6459,11 +6459,11 @@ sub set_BLAST_PATH {
                    .  "      order to make the variable available to all your bash sessions.\n"
                    .  "   c) aa2nonred.pl can try guessing the location of "
                    .  "\$BLAST_PATH from the\n"
-                   .  "      location of a blastall executable that is available in your \$PATH "
+                   .  "      location of a blastp executable that is available in your \$PATH "
                    .  " variable.\n"
                    .  "      If you try to rely on this option, you can check by typing\n"
-                   .  "           which blastall\n"
-                   .  "      in your shell, whether there is a blastall "
+                   .  "           which blastp\n"
+                   .  "      in your shell, whether there is a blastp "
                    .  "executable in your \$PATH\n";
         $prtStr = "\# " . (localtime) . " ERROR: \$BLAST_PATH not set!\n";
         print STDERR $prtStr;
@@ -6472,13 +6472,13 @@ sub set_BLAST_PATH {
         print STDERR $blast_err;
         exit(1);
     }
-    if ( not ( -x "$BLAST_PATH/blastall" ) ) {
+    if ( not ( -x "$BLAST_PATH/blastp" ) ) {
         $logString .= $prtStr;
-        print STDERR "\# " . (localtime) . " ERROR: $BLAST_PATH/blastall is not an executable file!\n";
+        print STDERR "\# " . (localtime) . " ERROR: $BLAST_PATH/blastp is not an executable file!\n";
         exit(1);
-    }elsif( not ( -x "$BLAST_PATH/formatdb" ) ){
+    }elsif( not ( -x "$BLAST_PATH/makeblastdb" ) ){
         $logString .= $prtStr;
-        print STDERR "\# " . (localtime) . " ERROR: $BLAST_PATH/formatdb is not an executable file!\n";
+        print STDERR "\# " . (localtime) . " ERROR: $BLAST_PATH/makeblastdb is not an executable file!\n";
         exit(1);
     }
 }
