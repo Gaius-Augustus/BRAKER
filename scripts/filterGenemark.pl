@@ -655,10 +655,10 @@ sub add_single_cds {
     my $goodCounter = 0;
     my $badCounter = 0;
     foreach( keys %singleCDSgenes ) {
-        if( ( $singleCDSgenes{$_}->{'short'} eq "false" ) && $filterOutShort && $singleCDSgenes{'complete'} eq "true" ) {
+        if( ( $singleCDSgenes{$_}->{'short'} eq "false" ) && $filterOutShort && $singleCDSgenes{$_}->{'complete'} eq "true" ) {
             $goodCounter ++;
             $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
-        }elsif($singleCDSgenes{'complete'} eq "true"){
+        }elsif($singleCDSgenes{$_}->{'complete'} eq "true"){
             $goodCounter ++;
             $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
         }else{
