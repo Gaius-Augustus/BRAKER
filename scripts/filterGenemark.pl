@@ -705,16 +705,14 @@ sub add_single_cds {
     open( BAD, ">>" , "$file_name.f.bad.gtf" )
         or die "Cannot open file: $file_name.f.bad.gtf\n";
     foreach my $good (@printCDS) {
-	if( defined ( $good ) ) {
-	    print GOOD $good;
-	    $nr_of_good++;
-	}
+        if( defined ( $good ) ) {
+            print GOOD $good;
+        }
     }
     foreach my $bad (@badCDS) {
-	if (defined ( $bad ) ) {
-	    print BAD $bad;
-	    $nr_of_bad++;
-	}
+        if (defined ( $bad ) ) {
+            print BAD $bad;
+        }
     }
 
     close (GOOD) or die ( "Cannot close file: $file_name.f.good.gtf!\n" );
