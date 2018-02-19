@@ -640,7 +640,9 @@ sub add_single_cds {
     my %goodSingleCDSgenes;
     my $goodCounter = 0;
     foreach( keys %singleCDSgenes ) {
-        if( ( $singleCDSgenes{$_}{'short'} eq "false" ) && $filterOutShort) {
+        print "key: $_\n";
+        print $singleCDSgenes{$key}."\n";
+        if( ( $singleCDSgenes{$_}->{'short'} eq "false" ) && $filterOutShort) {
             $goodCounter ++;
             $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
         }else{
