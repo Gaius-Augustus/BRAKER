@@ -214,6 +214,10 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     not specified as environment
                                     ALIGNMENT_TOOL_PATH variable. Has higher
                                     priority than environment variable.
+--BLAST_PATH=/path/to/blastall      Set path to NCBI blastall and formatdb
+                                    executables if not specified as
+                                    environment variable. Has higher priority
+                                    than environment variable.
 
 EXPERT OPTIONS
 
@@ -338,7 +342,7 @@ my $flanking_DNA;        # length of flanking DNA, default value is
                          # min{ave. gene length/2, 10000}
 my @forbidden_words;     # words/commands that are not allowed in species name
 my $fungus = 0;          # option for GeneMark-ET
-my $gb_good_size;        # number of LOCUS entries in 'genbank.good.gb'
+my $gb_good_size;        # number of LOCUS entries in 'train.gb'
 my $genbank;             # genbank file name
 my $genemarkDir;         # directory for GeneMark-ET output
 my $GENEMARK_PATH;
@@ -421,6 +425,8 @@ my $ALIGNMENT_TOOL_PATH
     ;    # stores path to binary of gth, spaln or exonerate for running
          # protein alignments
 my $ALIGNMENT_TOOL_PATH_OP;    # higher priority than environment variable
+my $BLAST_PATH; # path to blastall and formatdb ncbi blast executable
+my $blast_path; # command line argument value for $BLAST_PATH
 my %hintTypes;    # stores hint types occuring over all generated and supplied
                   # hints for comparison
 my $rnaseq2utr_args;    # additional parameters to be passed to rnaseq2utr
@@ -517,6 +523,7 @@ GetOptions(
     'AUGUSTUS_BIN_PATH=s'          => \$augustus_bin_path,
     'AUGUSTUS_SCRIPTS_PATH=s'      => \$augustus_scripts_path,
     'ALIGNMENT_TOOL_PATH=s'        => \$ALIGNMENT_TOOL_PATH_OP,
+    'BLAST_PATH=s'                 => \$blast_path,
     'bam=s'                        => \@bam,
     'BAMTOOLS_PATH=s'              => \$bamtools_path,
     'cores=i'                      => \$CPU,
@@ -653,6 +660,7 @@ else {
 set_BAMTOOLS_PATH();
 set_SAMTOOLS_PATH();
 set_ALIGNMENT_TOOL_PATH();
+set_BLAST_PATH();
 $prtStr = "\# " . (localtime) . ": Configuring of BRAKER complete!\n";
 print STDERR $prtStr;
 $logString .= $prtStr;
@@ -1900,7 +1908,7 @@ sub make_prot_hints {
                     or die("Failed to execute: $cmdString!\n");
             }
         }
-        gth2train( $alignment_outfile, $gthTrainGeneFile );
+        gth2gtf( $alignment_outfile, $gthTrainGeneFile );
     }
 }
 
@@ -2815,257 +2823,237 @@ sub printCfg {
 # create genbank file and train AUGUSTUS parameters for given species
 sub training {
     if ( !$useexisting ) {
-        my $geneMarkGb = "$otherfilesDir/genemark.gb";
-        my $gthGb      = "$otherfilesDir/gth.gb";
-        if ( not($trainFromGth) ) {
-            gtf2fasta ($genome, "$genemarkDir/genemark.f.good.gtf", "$otherfilesDir/genemark.fa");
-            # make genemark gb, but this is not the final file because gth genes may be added later
-            gtf2gb( "$genemarkDir/genemark.f.good.gtf", $geneMarkGb );
+
+        my $gmGtf = "$genemarkDir/genemark.gtf";
+        my $gthGtf = $gthTrainGeneFile;
+        my $trainGenesGtf = "$otherfilesDir/traingenes.gtf";
+        my $trainGb1 = "$otherfilesDir/train.gb";
+        my $trainGb2 = "$otherfilesDir/train.f.gb";
+        my $trainGb3 = "$otherfilesDir/train.ff.gb";
+        my $trainGb4 = "$otherfilesDir/train.fff.gb";
+        my $goodLstFile = "$otherfilesDir/good_genes.lst";
+
+        # set contents of trainGenesGtf file
+        if ( not ($gth2traingenes) and not ($trainFromGth) ) {
+            # create softlink from genemark.gtf to traingenes.gtf
+            print LOG "\#  "
+                . (localtime)
+                . ": creating softlink from $gmGtf to $trainGenesGtf.\n";
+            $cmdString = "ln -s $gmGtf $trainGenesGtf";
+            print LOG "$cmdString\n";
+            system($cmdString) == 0
+                or die("failed to execute: $cmdString!\n");
+        } elsif ( $trainFromGth ) {
+            # create softlinke from gth.gtf to traingenes.gtf
+             # make gth gb final
+            print LOG "\#  "
+                . (localtime)
+                . ": creating softlink from $gthGtf to $trainGenesGtf.\n";
+            $cmdString = "ln -s $gthGtf $trainGenesGtf";
+            print LOG "$cmdString\n";
+            system($cmdString) == 0
+                or die("failed to execute: $cmdString!\n");
+        } elsif ( $gth2traingenes and not ($trainFromGth) ) {
+            # merge gth and gm gtf files
+            combine_gm_and_gth_gtf ( $gmGtf, "$otherfilesDir/protein_alignment_$prg.gff3", $gthGtf, "$trainGenesGtf");
+        } else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: unknown training gene generation scenario!\n";
+            print STDERR $prtStr;
+            print LOG $prtStr;
+            exit(1);
         }
 
-        if ($gth2traingenes) {
-            print LOG "# Creating training genbank file from gth\n";
-            if ( not($trainFromGth) ) {
+        # convert gtf to gb
+        gtf2gb ($trainGenesGtf, $trainGb1);
 
-# find those genes in gth.gtf that overlap on genome level with genemark.gtf and print them
-# not the most elegant data structure, FIX LATER!
-                my %gmGeneStarts;
-                my %gmGeneStops;
-                open( GMGTF, "<", "$genemarkDir/genemark.f.good.gtf" )
-                    or die(
-                    "Could not open file $genemarkDir/genemark.f.good.gtf!\n"
-                    );
-                while (<GMGTF>) {
-                    chomp;
-                    my @gtfLine = split(/\t/);
-                    if ( scalar(@gtfLine) == 9 ) {
-                        my @lastCol = split( /;/, $gtfLine[8] );
-                        my @geneId  = split( /"/, $lastCol[1] );   # geneId[1]
-                        if ( $gtfLine[2] =~ m/start_codon/ ) {
-                            if ( $gtfLine[6] eq "+" ) {
-                                $gmGeneStarts{ $geneId[1] } = $gtfLine[3];
-                            }
-                            else {
-                                $gmGeneStops{ $geneId[1] } = $gtfLine[4];
-                            }
-                        }
-                        elsif ( $gtfLine[2] =~ m/stop_codon/ ) {
-                            if ( $gtfLine[6] eq "+" ) {
-                                $gmGeneStops{ $geneId[1] } = $gtfLine[4];
-                            }
-                            else {
-                                $gmGeneStarts{ $geneId[1] } = $gtfLine[3];
-                            }
-                        }
-                    }
-                }
-                close(GMGTF)
-                    or die(
-                    "Could not close file $genemarkDir/genemark.f.good.gtf!\n"
-                    );
-                open( PROTALN, "<",
-                    "$otherfilesDir/protein_alignment_$prg.gff3" )
-                    or die(
-                    "Could not open file $otherfilesDir/protein_alignment_$prg.gff3!\n"
-                    );
-                my %gthGeneStarts;
-                my %gthGeneStops;
-                my $gthGeneId;
-                while (<PROTALN>) {
-                    chomp;
-                    my @gtfLine = split(/\t/);
-                    if ( scalar(@gtfLine) == 9 ) {
-                        my @lastCol = split( /;/, $gtfLine[8] );
-                        my @geneId  = split( /=/, $lastCol[0] );   # geneId[1]
-                        if ( not(m/\#/) ) {
-                            if ( $gtfLine[2] eq "gene" ) {
-                                $gthGeneId = $geneId[1];
-                            }
-                            elsif ( $gtfLine[2] eq "mRNA" ) {
-                                $gthGeneStarts{ "$gtfLine[0]" . "_"
-                                        . $gthGeneId . "_"
-                                        . $geneId[1] } = $gtfLine[3];
-                                $gthGeneStops{ "$gtfLine[0]" . "_"
-                                        . $gthGeneId . "_"
-                                        . $geneId[1] } = $gtfLine[4];
-                            }
-                        }
-                    }
-                }
-                close(PROTALN)
-                    or die(
-                    "Could not close file $otherfilesDir/protein_alignment_$prg.gff3!\n"
-                    );
-
-                # read gth gtf to be filtered later
-                open( GTHGTF, "<", $gthTrainGeneFile )
-                    or die("Could not open file $gthTrainGeneFile!\n");
-                my %gthGtf;
-                while (<GTHGTF>) {
-                    my @gtfLine = split(/"/);
-                    push( @{ $gthGtf{ $gtfLine[1] } }, $_ );
-                }
-                close(GTHGTF)
-                    or die("Could not close file $gthTrainGeneFile!\n");
-                my %discard;
-                while ( my ( $k, $v ) = each %gthGeneStarts ) {
-
-                    # check whether gene overlaps with genemark genes
-                    while ( my ( $gmk, $gmv ) = each %gmGeneStarts ) {
-                        if ((   ( $v >= $gmv ) && ( $v <= $gmGeneStops{$gmk} )
-                            )
-                            or (   ( $gthGeneStops{$k} >= $gmv )
-                                && ( $gthGeneStops{$k} <= $gmGeneStops{$gmk} )
-                            )
-                            )
-                        {
-                            $discard{$k} = 1;
-                            last;
-                        }
-                    }
-                }
-                open( FILTEREDGTH, ">", "$gthTrainGeneFile.f" )
-                    or die("Could not open file $gthTrainGeneFile.f!\n");
-                while ( my ( $k, $v ) = each %gthGtf ) {
-                    if ( not( defined( $discard{$k} ) ) ) {
-                        foreach ( @{$v} ) {
-                            print FILTEREDGTH $_;
-                        }
-                    }
-                }
-                close(FILTEREDGTH)
-                    or die("Could not close file $gthTrainGeneFile.f!\n");
-            }
-            else {
-                $cmdString = "ln -s $gthTrainGeneFile $gthTrainGeneFile.f";
-                print LOG "$cmdString\n\n";
-                system("$cmdString") == 0
-                    or die("Failed to execute: $cmdString\n");
-            }
-
-            # make gth gtb
-            gtf2gb( "$gthTrainGeneFile.f", "$otherfilesDir/gth.initial.gb" );
-
-            # filter GthGb temporary file
-            $augpath    = "$AUGUSTUS_BIN_PATH/etraining";
-            $errorfile  = "$errorfilesDir/gthFilterEtraining.stderr";
-            $stdoutfile = "$otherfilesDir/gthFilterEtraining.stdout";
-            $cmdString  = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-
-            # species is irrelevant! Use fly.
-            $cmdString
-                .= "$augpath --species=fly --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/gth.initial.gb 1>$stdoutfile 2>$errorfile";
-            print LOG "\# "
-                . (localtime)
-                . ": Running etraining with fly parameters to catch gene structure inconsistencies in GenomeThreader training gene file:\n";
-            print LOG "$cmdString\n\n";
-            system("$cmdString") == 0
-                or die("Failed to execute: $cmdString\n");
-            open( ERRS, "<", $errorfile )
-                or die("Could not open file $errorfile!\n");
-            open( BADS, ">", "$otherfilesDir/gth.bad.lst" )
-                or die("Could not open file $otherfilesDir/gth.bad.lst!\n");
-            while (<ERRS>) {
-
-                if (m/n sequence (\S+):.*/) {
-                    print BADS "$1\n";
+        # filter "good" genes from train.gb: all gth genes that are left, plus the genemark "good" genes
+        my %goodLst;
+        if ( not ( $trainFromGth ) ) {
+            # get good genemark genes
+            open ( GMGOOD, "<", "$genemarkDir/genemark.f.good.gtf") or die ("Could not open file $genemarkDir/genemark.f.good.gtf!\n");
+            while ( <GMGOOD> ) {
+                if ( $_ =~ m/transcript_id \"(\S+)\"/ ) {
+                    $goodLst{$1} = 1;
                 }
             }
-            close(BADS)
-                or die("Could not close file $otherfilesDir/gth.bad.lst!\n");
-            close(ERRS) or die("Could not close file $errorfile!\n");
-            $string = find(
-                "filterGenes.pl",       $AUGUSTUS_BIN_PATH,
+            close ( GMGOOD ) or die ( "Could not close file $genemarkDir/genemark.f.good.gtf!\n" );
+        }
+        if ( $gth2traingenes ) {
+            # get all remaining gth genes
+            open ( GTHGOOD, "<", $trainGenesGtf ) or die ( "Could not open file $trainGenesGtf!\n" );
+            while ( <GTHGOOD> ) {
+                if ( $_ =~ m/\tgth2h\t.*transcript_id \"(\S+)\"/ ) {
+                    $goodLst{$1} = 1;
+                }
+            }
+           close ( GTHGOOD ) or die ( "Could not close file $trainGenesGtf!\n" );
+        }
+        open (GOODLST, "<", $goodLstFile) or die ("Could not open file $goodLstFile!\n");
+        foreach (keys %goodLst) {
+            print GOODLST $_."\n";
+        }
+        close (GOODLST) or die ("Could not open fiel $goodLstFile!\n");
+
+        # filter good genes from trainGb1 into trainGb2
+        $string = find(
+                "filterGenesIn_mRNAname.pl",       $AUGUSTUS_BIN_PATH,
                 $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
             );
-            $errorfile     = "$errorfilesDir/gthFilterGenes.stderr";
-            $perlCmdString = "";
-            if ($nice) {
-                $perlCmdString .= "nice ";
+        $errorfile     = "$errorfilesDir/filterGenesIn_mRNAname.stderr";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString
+            .= "perl $string $goodLstFile $trainGb1 > $trainGb2 2>$errorfile";
+        print LOG "\# "
+            . (localtime)
+            . ": Filtering train.gb for \"good\" mRNAs:\n";
+        print LOG "$perlCmdString\n\n";
+        system("$perlCmdString") == 0
+            or die("Failed to execute: $perlCmdString\n");
+
+        # filter out genes that lead to etraining errors
+        $augpath    = "$AUGUSTUS_BIN_PATH/etraining";
+        $errorfile  = "$errorfilesDir/gbFilterEtraining.stderr";
+        $stdoutfile = "$otherfilesDir/gbFilterEtraining.stdout";
+        $cmdString  = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        # species is irrelevant!
+        $cmdString
+            .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $trainGb2 1> $stdoutfile 2>$errorfile";
+        print LOG "\# "
+            . (localtime)
+            . ": Running etraining to catch gene structure inconsistencies:\n";
+        print LOG "$cmdString\n\n";
+        system("$cmdString") == 0
+            or die("Failed to execute: $cmdString\n");
+        open( ERRS, "<", $errorfile )
+            or die("Could not open file $errorfile!\n");
+        open( BADS, ">", "$otherfilesDir/etrain.bad.lst" )
+            or die("Could not open file $otherfilesDir/etrain.bad.lst!\n");
+        while (<ERRS>) {
+            if (m/n sequence (\S+):.*/) {
+                print BADS "$1\n";
             }
-            $perlCmdString
-                .= "perl $string $otherfilesDir/gth.bad.lst $otherfilesDir/gth.initial.gb 1> $gthGb 2>$errorfile";
-            print LOG "\# "
-                . (localtime)
-                . ": Filtering GenomeThreader training file to remove inconsistent gehe structures:\n";
-            print LOG "$perlCmdString\n\n";
-            system("$perlCmdString") == 0
-                or die("Failed to execute: $perlCmdString\n");
         }
-
-        if ( not($trainFromGth) && not($gth2traingenes) ) {
-
-            # make genemark gb final
-            print LOG "\#  "
-                . (localtime)
-                . ": creating softlink of $geneMarkGb to $otherfilesDir/genbank.good.gb.\n";
-            $cmdString = "ln -s $geneMarkGb $otherfilesDir/genbank.good.gb";
-            print LOG "$cmdString\n";
-            system($cmdString) == 0
-                or die("failed to execute: $cmdString!\n");
+        close(BADS)
+            or die("Could not close file $otherfilesDir/etrain.bad.lst!\n");
+        close(ERRS) or die("Could not close file $errorfile!\n");
+        $string = find(
+            "filterGenes.pl",       $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $errorfile     = "$errorfilesDir/etrainFilterGenes.stderr";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
         }
-        elsif ($trainFromGth) {
+        $perlCmdString
+            .= "perl $string $otherfilesDir/etrain.bad.lst $trainGb2 1> $trainGb3 2>$errorfile";
+        print LOG "\# "
+            . (localtime)
+            . ": Filtering $trainGb2 file to remove inconsistent gehe structures:\n";
+        print LOG "$perlCmdString\n\n";
+        system("$perlCmdString") == 0
+            or die("Failed to execute: $perlCmdString\n");
 
-            # make gth gb final
-            print LOG "\#  "
-                . (localtime)
-                . ": creating softlink of $gthGb to $otherfilesDir/genbank.good.gb.\n";
-            $cmdString = "ln -s $gthGb $otherfilesDir/genbank.good.gb";
-            print LOG "$cmdString\n";
-            system($cmdString) == 0
-                or die("failed to execute: $cmdString!\n");
-        }
-        elsif ( not($trainFromGth) && $gth2traingenes ) {
-
-# merge both genbank files, filter and prefer genemark genes, make result final
-            $cmdString
-                = "cat $geneMarkGb $gthGb > $otherfilesDir/genbank.initial.gb";
-            print LOG "\#  "
-                . (localtime)
-                . ": Merging files and $geneMarkGb $gthGb:\n";
-            print LOG "$cmdString\n";
-            system($cmdString) == 0
-                or die("failed to execute: $cmdString!\n");
-            open( GB, "<", "$otherfilesDir/genbank.initial.gb" )
-                or die(
-                "Could not open file $otherfilesDir/genbank.initial.gb!\n");
-            open( GBNEW, ">", "$otherfilesDir/genbank.good.gb" )
-                or
-                die("Could not open file $otherfilesDir/genbank.good.gb!\n");
-            my %loci;
-            my $pF = 1;
-
-            while (<GB>) {
-                if (m/LOCUS/) {
-                    my @line = split(/\s+/);
-                    if ( not( defined( $loci{ $line[1] } ) ) ) {
-                        $pF = 1;
-                    }
-                    else {
-                        $pF = 0;
-                    }
-                    $loci{ $line[1] } = 1;
-                }
-                if ( $pF == 1 ) {
-                    print GBNEW $_;
-                }
+        # find those training genes in gtf that are still in gb
+        open (TRAINGB3, "<", $trainGb3) or die ( "Could not open file $trainGb3!\n" );
+        my %txInGb3;
+        my $txLocus;;
+        while( <TRAINGB3> ) {
+            if ( $_ =~ m/LOCUS\s*(\S+)\s.*/ ) {
+                $txLocus = $1;
+            }elsif ( $_ =~ m/\/gene=\"(\S+)\"/ ) {
+                $txInGb3{$_} = $txLocus;
             }
-            close(GBNEW)
-                or
-                die("Could not close file $otherfilesDir/genbank.good.gb!\n");
-            close(GB)
-                or die(
-                "Could not open file $otherfilesDir/genbank.initial.gb!\n");
         }
+        close (TRAINGB3) or die ( "Could not close file $trainGb3!\n" );
+        open (TRAINGB3TXLST, ">", "$otherfilesDir/ingb3.lst") or die ("Could not open file $otherfilesDir/ingb3.lst!\n");
+        foreach ( keys %txInGb3 ) {
+            print TRAINGB3TXLST "transcript_id \"$_\"\n";
+        }
+        close (TRAINGB3TXLST) or die ("Could not close file $otherfilesDir/ingb3.lst!\n");
+        $cmdString = "grep -f $otherfilesDir/ingb3.lst $trainGenesGtf > $otherfilesDir/traingenes.good.gtf";
+        print LOG "$cmdString\n";
+        system("$cmdString") == 0
+            or die("Failed to execute: $cmdString\n");
+
+        # convert those training genes to protein fasta file
+        gtf2fasta ($genome, "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/traingenes.good.fa");
+
+        # blast good training genes to exclude redundant sequences
+        $string = find(
+            "aa2nonred.pl",       $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $errorfile     = "$errorfilesDir/aa2nonred.stderr";
+        $stdoutfile    = "$otherfilesDir/aa2nonred.stdout";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString
+            .= "perl $string $otherfilesDir/traingenes.good.fa $otherfilesDir/traingenes.good.nr.fa 1> $stdoutfile 2>$errorfile";
+        print LOG "\# "
+            . (localtime)
+            . ": BLAST training gene structures against themselves:\n";
+        print LOG "$perlCmdString\n\n";
+        system("$perlCmdString") == 0
+            or die("Failed to execute: $perlCmdString\n");
+
+        # parse output of blast
+        my %nonRed;
+        open (BLASTOUT, "<", "$otherfilesDir/traingenes.good.nr.fa") or die ( "Could not open file $otherfilesDir/traingenes.good.nr.fa!\n" );
+        while ( <BLASTOUT> ) {
+            $_ =~ s/>//;
+            $nonRed{$_} = 1;
+        }
+        close (BLASTOUT) or die ( "Could not close file $otherfilesDir/traingenes.good.nr.fa!\n" );
+        open ( NONREDLOCI, ">", "$otherfilesDir/nonred.loci.lst") or die ( "Could not open file $otherfilesDir/nonred.loci.lst!\n");
+        foreach ( keys %nonRed ) {
+            print NONREDLOCI $txInGb3{$_}."\n";
+        }
+        close (NONREDLOCI) or die ( "Could not close file $otherfilesDir/nonred.loci.lst!\n");
+
+        # filter trainGb3 file for nonredundant loci
+        $string = find(
+            "filterGenesIn.pl",       $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $errorfile     = "$errorfilesDir/filterGenesIn.stderr";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString
+            .= "perl $string $otherfilesDir/nonred.loci.lst $trainGb3 1> $trainGb4 2>$errorfile";
+        print LOG "\# "
+            . (localtime)
+            . ": Filtering nonredundant loci into $trainGb4:\n";
+        print LOG "$perlCmdString\n\n";
+        system("$perlCmdString") == 0
+            or die("Failed to execute: $perlCmdString\n");
+        # making trainGb4 the trainGb file
+        $cmdString = "mv $trainGb4 $trainGb1";
+        print LOG "\# "
+            . (localtime)
+            . ": Moving $trainGb4 to $trainGb1:\n";
+        print LOG "$cmdString\n";
+        system ("$cmdString") == 0 or die ("Failed to execute: $cmdString!\n");
+
 
         # split into training and test set
         if (!uptodate(
-                ["$otherfilesDir/genbank.good.gb"],
-                [   "$otherfilesDir/genbank.good.gb.test",
-                    "$otherfilesDir/genbank.good.gb.train"
+                ["$otherfilesDir/train.gb"],
+                [   "$otherfilesDir/train.gb.test",
+                    "$otherfilesDir/train.gb.train"
                 ]
             )
             || $overwrite
@@ -3081,11 +3069,11 @@ sub training {
             $errorfile = "$errorfilesDir/randomSplit.stderr";
             if ($nice) {
                 $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
             }
             else {
                 $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `grep -c LOCUS $otherfilesDir/train.gb`;
             }
             if ( $gb_good_size < 300 ) {
                 print LOG "\# "
@@ -3108,7 +3096,7 @@ sub training {
                     $perlCmdString .= "nice ";
                 }
                 $perlCmdString
-                    .= "perl $string $otherfilesDir/genbank.good.gb $testsize 2>$errorfile";
+                    .= "perl $string $otherfilesDir/train.gb $testsize 2>$errorfile";
                 print LOG "$perlCmdString\n\n";
                 system("$perlCmdString") == 0
                     or die("Failed to execute: $perlCmdString\n");
@@ -3117,8 +3105,8 @@ sub training {
 
         # train AUGUSTUS for the first time
         if (!uptodate(
-                [   "$otherfilesDir/genbank.good.gb.train",
-                    "$otherfilesDir/genbank.good.gb"
+                [   "$otherfilesDir/train.gb.train",
+                    "$otherfilesDir/train.gb"
                 ],
                 ["$otherfilesDir/firstetraining.stdout"]
             )
@@ -3140,11 +3128,11 @@ sub training {
             $stdoutfile = "$otherfilesDir/firstetraining.stdout";
             if ($nice) {
                 $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
             }
             else {
                 $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `grep -c LOCUS $otherfilesDir/train.gb`;
             }
             $cmdString = "";
             if ($nice) {
@@ -3152,13 +3140,13 @@ sub training {
             }
             if ( $gb_good_size <= 1000 ) {
                 $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
                 $testsize = $gb_good_size - 1;
             }
             else {
                 $testsize = 1000;
                 $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
             }
             print LOG "\# " . (localtime) . ": first etraining\n";
             print LOG "$cmdString\n\n";
@@ -3252,8 +3240,8 @@ sub training {
 
         # first test
         if (!uptodate(
-                [   "$otherfilesDir/genbank.good.gb.test",
-                    "$otherfilesDir/genbank.good.gb"
+                [   "$otherfilesDir/train.gb.test",
+                    "$otherfilesDir/train.gb"
                 ],
                 ["$otherfilesDir/firsttest.stdout"]
             )
@@ -3266,16 +3254,16 @@ sub training {
             if ($nice) {
                 print LOG "\# "
                     . (localtime)
-                    . ": nice grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
+                    . ": nice grep -c LOCUS $otherfilesDir/train.gb\n";
                 $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
             }
             else {
                 print LOG "\# "
                     . (localtime)
-                    . ": grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
+                    . ": grep -c LOCUS $otherfilesDir/train.gb\n";
                 $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `grep -c LOCUS $otherfilesDir/train.gb`;
             }
             $cmdString = "";
             if ($nice) {
@@ -3283,11 +3271,11 @@ sub training {
             }
             if ( $gb_good_size <= 1000 ) {
                 $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
             }
             else {
                 $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test 1>$stdoutfile 2>$errorfile";
             }
             print LOG "\# "
                 . (localtime)
@@ -3304,9 +3292,9 @@ sub training {
         # optimize parameters
         if ( !$skipoptimize ) {
             if (!uptodate(
-                    [   "$otherfilesDir/genbank.good.gb.train",
-                        "$otherfilesDir/genbank.good.gb.test",
-                        "$otherfilesDir/genbank.good.gb"
+                    [   "$otherfilesDir/train.gb.train",
+                        "$otherfilesDir/train.gb.test",
+                        "$otherfilesDir/train.gb"
                     ],
                     [   $AUGUSTUS_CONFIG_PATH
                             . "/species/$species/$species\_exon_probs.pbl",
@@ -3327,16 +3315,16 @@ sub training {
                 if ($nice) {
                     print LOG "\# "
                         . (localtime)
-                        . ": nice grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
+                        . ": nice grep -c LOCUS $otherfilesDir/train.gb\n";
                     $gb_good_size
-                        = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                        = `nice grep -c LOCUS $otherfilesDir/train.gb`;
                 }
                 else {
                     print LOG "\# "
                         . (localtime)
-                        . ": grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
+                        . ": grep -c LOCUS $otherfilesDir/train.gb\n";
                     $gb_good_size
-                        = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                        = `grep -c LOCUS $otherfilesDir/train.gb`;
                 }
                 $perlCmdString = "";
                 if ($nice) {
@@ -3345,21 +3333,21 @@ sub training {
                 if ( $gb_good_size <= 1000 ) {
                     if ($nice) {
                         $perlCmdString
-                            .= "perl $string --nice --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+                            .= "perl $string --nice --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
                     }
                     else {
                         $perlCmdString
-                            .= "perl $string --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+                            .= "perl $string --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
                     }
                 }
                 else {
                     if ($nice) {
                         $perlCmdString
-                            .= "perl $string --nice --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+                            .= "perl $string --nice --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/train.gb.train --cpus=$CPU $otherfilesDir/train.gb.test 1>$stdoutfile 2>$errorfile";
                     }
                     else {
                         $perlCmdString
-                            .= "perl $string  --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/genbank.good.gb.train --cpus=$CPU $otherfilesDir/genbank.good.gb.test 1>$stdoutfile 2>$errorfile";
+                            .= "perl $string  --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/train.gb.train --cpus=$CPU $otherfilesDir/train.gb.test 1>$stdoutfile 2>$errorfile";
                     }
                 }
                 print LOG "\# "
@@ -3376,8 +3364,8 @@ sub training {
 
         # train AUGUSTUS for the second time
         if (!uptodate(
-                [   "$otherfilesDir/genbank.good.gb.train",
-                    "$otherfilesDir/genbank.good.gb"
+                [   "$otherfilesDir/train.gb.train",
+                    "$otherfilesDir/train.gb"
                 ],
                 ["$otherfilesDir/secondetraining.stdout"]
             )
@@ -3388,11 +3376,11 @@ sub training {
             $stdoutfile = "$otherfilesDir/secondetraining.stdout";
             if ($nice) {
                 $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
             }
             else {
                 $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `grep -c LOCUS $otherfilesDir/train.gb`;
             }
             $cmdString = "";
             if ($nice) {
@@ -3400,11 +3388,11 @@ sub training {
             }
             if ( $gb_good_size <= 1000 ) {
                 $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
             }
             else {
                 $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
             }
             print LOG "\# " . (localtime) . ": Second etraining\n";
             print LOG "$cmdString\n\n";
@@ -3414,8 +3402,8 @@ sub training {
 
         # second test
         if (!uptodate(
-                [   "$otherfilesDir/genbank.good.gb.test",
-                    "$otherfilesDir/genbank.good.gb"
+                [   "$otherfilesDir/train.gb.test",
+                    "$otherfilesDir/train.gb"
                 ],
                 ["$otherfilesDir/secondtest.out"]
             )
@@ -3428,16 +3416,16 @@ sub training {
             if ($nice) {
                 print LOG "\# "
                     . (localtime)
-                    . ": nice grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
+                    . ": nice grep -c LOCUS $otherfilesDir/train.gb\n";
                 $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
             }
             else {
                 print LOG "\# "
                     . (localtime)
-                    . ": grep -c LOCUS $otherfilesDir/genbank.good.gb\n";
+                    . ": grep -c LOCUS $otherfilesDir/train.gb\n";
                 $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `grep -c LOCUS $otherfilesDir/train.gb`;
             }
             $cmdString = "";
             if ($nice) {
@@ -3445,11 +3433,11 @@ sub training {
             }
             if ( $gb_good_size <= 1000 ) {
                 $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb >$stdoutfile 2>$errorfile";
             }
             else {
                 $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test >$stdoutfile 2>$errorfile";
             }
             print LOG "\# "
                 . (localtime)
@@ -3465,8 +3453,8 @@ sub training {
         # optional CRF training
         if ($crf) {
             if (!uptodate(
-                    [   "$otherfilesDir/genbank.good.gb.test",
-                        "$otherfilesDir/genbank.good.gb"
+                    [   "$otherfilesDir/train.gb.test",
+                        "$otherfilesDir/train.gb"
                     ],
                     ["$otherfilesDir/crftraining.stdout"]
                 )
@@ -3479,11 +3467,11 @@ sub training {
             $stdoutfile = "$otherfilesDir/crftraining.stdout";
             if ($nice) {
                 $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
             }
             else {
                 $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                    = `grep -c LOCUS $otherfilesDir/train.gb`;
             }
             $cmdString = "";
             if ($nice) {
@@ -3491,11 +3479,11 @@ sub training {
             }
             if ( $gb_good_size <= 1000 ) {
                 $cmdString
-                    .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb 1>$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
             }
             else {
                 $cmdString
-                    .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.train 1>$stdoutfile 2>$errorfile";
+                    .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
             }
             print LOG "\# "
                 . (localtime)
@@ -3509,8 +3497,8 @@ sub training {
 
             # third test
             if (!uptodate(
-                    [   "$otherfilesDir/genbank.good.gb.test",
-                        "$otherfilesDir/genbank.good.gb"
+                    [   "$otherfilesDir/train.gb.test",
+                        "$otherfilesDir/train.gb"
                     ],
                     ["$otherfilesDir/thirdtest.out"]
                 )
@@ -3522,11 +3510,11 @@ sub training {
                 $stdoutfile = "$otherfilesDir/thirdtest.stdout";
                 if ($nice) {
                     $gb_good_size
-                        = `nice grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                        = `nice grep -c LOCUS $otherfilesDir/train.gb`;
                 }
                 else {
                     $gb_good_size
-                        = `grep -c LOCUS $otherfilesDir/genbank.good.gb`;
+                        = `grep -c LOCUS $otherfilesDir/train.gb`;
                 }
                 $cmdString = "";
                 if ($nice) {
@@ -3534,11 +3522,11 @@ sub training {
                 }
                 if ( $gb_good_size <= 1000 ) {
                     $cmdString
-                        .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb >$stdoutfile 2>$errorfile";
+                        .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb >$stdoutfile 2>$errorfile";
                 }
                 else {
                     $cmdString
-                        .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/genbank.good.gb.test >$stdoutfile 2>$errorfile";
+                        .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test >$stdoutfile 2>$errorfile";
                 }
                 print LOG "\# "
                     . (localtime)
@@ -4799,7 +4787,7 @@ sub accuracy_calculator {
     return $target;
 }
 
-sub gth2train {
+sub gth2gtf {
     my $align = shift;
     my $out   = shift;    # writes to $gthTrainGeneFile
     open( GTH,    "<", $align ) or die("Could not open file $align!\n");
@@ -5262,12 +5250,12 @@ sub train_utr {
 
         # count the block number in training.gb.train.test
         $count = 0;
-        open( TEMP2, "genbank.good.gb.test" )
-            or die("Can not open the file genbank.good.gb.test!\n");
+        open( TEMP2, "train.gb.test" )
+            or die("Can not open the file train.gb.test!\n");
         while (<TEMP2>) {
             $count++ if ( $_ =~ m/LOCUS/ );
         }
-        close(TEMP2) or die("Could not close file genbank.good.gb.test!\n");
+        close(TEMP2) or die("Could not close file train.gb.test!\n");
         if ( $count >= 50 ) {
             $n = 50;
         }
@@ -5285,13 +5273,13 @@ sub train_utr {
         print LOG "\nperlCmdString\n";
         system("$perlCmdString") == 0
             or die("Failed to execute: $perlCmdString!\n");
-        $perlCmdString = "perl $string genbank.good.gb.test $n";
+        $perlCmdString = "perl $string train.gb.test $n";
         print LOG "\n$perlCmdString\n";
         system("$perlCmdString") == 0
             or die("Failed to execute: $perlCmdString!\n");
         my $delete;
-        open( GB, "<", "genbank.good.gb.test.test" )
-            or die("Can not open file genbank.good.gb.test.test!\n");
+        open( GB, "<", "train.gb.test.test" )
+            or die("Can not open file train.gb.test.test!\n");
         open( NOMRNA, ">", "nomrna.test.gb" )
             or die("Could not open file nomrna.test.gb!\n");
 
@@ -5300,7 +5288,7 @@ sub train_utr {
             $delete = 0 if /CDS/;
             print NOMRNA if ( !$delete );
         }
-        close(GB) or die("Could not close file genbank.good.gb.test.test!\n");
+        close(GB) or die("Could not close file train.gb.test.test!\n");
         close(NOMRNA) or die("Could not close file nomrna.test.gb!\n");
         $cmdString = "cat nomrna.test.gb bothutr.test.gb.test > train.gb";
         print LOG "\n$cmdString\n";
@@ -5316,14 +5304,14 @@ sub train_utr {
         print LOG
             "Have constructed a training set train.gb for UTRs with $counter_gen genes\n";
         print LOG
-            "Deleting nomrna.test.gb, genbank.good.gb.test.test, genbank.good.gb.test.train\n";
+            "Deleting nomrna.test.gb, train.gb.test.test, train.gb.test.train\n";
         unlink("nomrna.test.gb");
-        unlink("genbank.good.gb.test.test");
-        unlink("genbank.good.gb.test.train");
+        unlink("train.gb.test.test");
+        unlink("train.gb.test.train");
 
         # create onlytrain training set only used for training #
-        open( ONLYTRAIN, "<", "genbank.good.gb.train" )
-            or die("Could not open file genbank.good.gb.train!\n");
+        open( ONLYTRAIN, "<", "train.gb.train" )
+            or die("Could not open file train.gb.train!\n");
         open( CDSONLY, ">", "cdsonly.gb" )
             or die("Could not open file cdsonly.gb!\n");
 
@@ -5335,7 +5323,7 @@ sub train_utr {
             print CDSONLY if ( !$delete );
         }
         close(ONLYTRAIN)
-            or die("Could not close file genbank.good.gb.train!\n");
+            or die("Could not close file train.gb.train!\n");
         close(CDSONLY) or die("Could not close file cdsonlyl.gb!\n");
 
 # construct the disjoint sets: remove training UTR genes from onlytrain UTR gene set (train.utronly.gb)
@@ -6374,6 +6362,132 @@ sub set_ALIGNMENT_TOOL_PATH {
     }
 }
 
+sub set_BLAST_PATH {
+    # try to get path from ENV
+    if ( defined( $ENV{'BLAST_PATH'} ) ) {
+        if ( -e $ENV{'BLAST_PATH'} ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Found environment variable \$BLAST_PATH.\n";
+            $logString .= $prtStr;
+            print STDOUT $prtStr;
+            $BLAST_PATH = $ENV{'BLAST_PATH'};
+        }
+    }
+    else {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Did not find environment variable \$BLAST_PATH ";
+        $logString .= $prtStr;
+        print STDOUT $prtStr;
+    }
+
+    # try to get path from command line
+    if ( defined($blast_path) ) {
+        my $last_char = substr( $blast_path, -1 );
+        if ( $last_char eq "\/" ) {
+            chop($blast_path);
+        }
+        if ( -d $blast_path ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$BLAST_PATH to command line argument ";
+            $prtStr .= "--BLAST_PATH value $blast_path.\n";
+            $logString .= $prtStr;
+            print STDOUT $prtStr;
+            $BLAST_PATH = $blast_path;
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Command line argument --BLAST_PATH was ";
+            $prtStr
+                .= "supplied but value $blast_path is not a directory. Will not set ";
+            $prtStr .= "\$BLAST_PATH to $blast_path!\n";
+            $logString .= $prtStr;
+            print STDOUT $prtStr;
+        }
+    }
+
+    # try to guess
+    if ( not( defined($BLAST_PATH) )
+        || length($BLAST_PATH) == 0 )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Trying to guess \$BLAST_PATH from location of blastall";
+        $prtStr .= " executable that is available in your \$PATH.\n";
+        $logString .= $prtStr;
+        print STDOUT $prtStr;
+        my $epath = which 'blastall';
+        if ( -d dirname($epath) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$BLAST_PATH to "
+                . dirname($epath) . "\n";
+            $logString .= $prtStr;
+            print STDOUT $prtStr;
+            $BLAST_PATH = dirname($epath);
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Guessing the location of \$BLAST_PATH ";
+            $prtStr
+                .= "failed. " . dirname($epath) . " is not a directory!\n";
+            $logString .= $prtStr;
+            print STDOUT $prtStr;
+        }
+    }
+
+    if ( not( defined($BLAST_PATH) ) ) {
+        my $blast_err;
+        $blast_err .= "There are 3 alternative ways to set this variable for "
+                   .  " aa2nonred.pl:\n";
+        $blast_err .= "   a) provide command-line argument "
+                   .  "--BLAST_PATH=/your/path\n";
+        $blast_err .= "   b) use an existing environment variable "
+                   .  "\$BLAST_PATH\n";
+        $blast_err .= "      for setting the environment variable, run\n";
+        $blast_err .= "           export BLAST_PATH=/your/path\n";
+        $blast_err .= "      in your shell. You may append this to your "
+                   .  ".bashrc or .profile file in\n";
+        $blast_err .= "      order to make the variable available to all your "
+                   .  "bash sessions.\n";
+        $blast_err .= "   c) aa2nonred.pl can try guessing the location of "
+                   .  "\$BLAST_PATH from the\n";
+        $blast_err .= "      location of a blastall executable that is "
+                   .  "available in your \$PATH variable.\n";
+        $blast_err .= "      If you try to rely on this option, you can check "
+                   .  "by typing\n";
+        $blast_err .= "           which blastall\n";
+        $blast_err .= "      in your shell, whether there is a blastall "
+                   .  "executable in your \$PATH\n";
+        $prtStr = "\# " . (localtime) . " ERROR: \$BLAST_PATH not set!\n";
+        print STDERR $prtStr;
+        $logString .= $prtStr;
+        $logString .= $blast_err;
+        print STDERR $blast_err;
+        exit(1);
+    }
+    if ( not ( -x "$BLAST_PATH/blastall" ) ) {
+        $logString .= $prtStr;
+        print STDERR "\# " . (localtime) . " ERROR: $BLAST_PATH/blastall is not an executable file!\n";
+        exit(1);
+    }elsif( not ( -x "$BLAST_PATH/formatdb" ) ){
+        $logString .= $prtStr;
+        print STDERR "\# " . (localtime) . " ERROR: $BLAST_PATH/formatdb is not an executable file!\n";
+        exit(1);
+    }
+}
+
 sub assignExCfg {
     my $thisCfg = shift;
     $string = find( $thisCfg, $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH,
@@ -6447,6 +6561,7 @@ sub join_aug_pred {
     unlink($cat_file);
 }
 
+# evaluate available gene prediction sets
 sub eval {
     my @results;
     my $seqlist = "$otherfilesDir/seqlist";
@@ -6510,6 +6625,7 @@ sub eval {
         . ": Done with evaluating braker.pl gene prediction files!\n";
 }
 
+# execute eval on a particular gene prediction set
 sub eval_gene_pred {
     my $gtfFile        = shift;
     my $eval_multi_gtf = find(
@@ -6579,4 +6695,103 @@ sub eval_gene_pred {
     $accuracy{$gtfFile} = @eval_result;
     unlink($firstStepFile)  or die("Failed to delete file $firstStepFile!\n");
     unlink($secondStepFile) or die("Failed to delete $secondStepFile!\n");
+}
+
+# combine gth and genemark gtf file
+# find those genes in gth.gtf that overlap on genome level with genemark.gtf and print them
+# not the most elegant data structure, FIX LATER!
+sub combine_gm_and_gth_gtf {
+    my $gm_gtf = shift; # $genemarkDir/genemark.f.good.gtf
+    my $gth_gff3 = shift; # $otherfilesDir/protein_alignment_$prg.gff3
+    my $gth_gtf = shift; # $gthTrainGeneFile
+    my $gth_filtered_gtf = shift; # $gth_gtf.f
+    my %gmGeneStarts;
+    my %gmGeneStops;
+    open( GMGTF, "<", $gm_gtf ) or die( "Could not open file $gm_gtf!\n" );
+    while (<GMGTF>) {
+        chomp;
+        my @gtfLine = split(/\t/);
+        if ( scalar(@gtfLine) == 9 ) {
+            my @lastCol = split( /;/, $gtfLine[8] );
+            my @geneId  = split( /"/, $lastCol[1] );   # geneId[1]
+            if ( $gtfLine[2] =~ m/start_codon/ ) {
+                if ( $gtfLine[6] eq "+" ) {
+                    $gmGeneStarts{ $geneId[1] } = $gtfLine[3];
+                }
+                else {
+                    $gmGeneStops{ $geneId[1] } = $gtfLine[4];
+                }
+            }
+            elsif ( $gtfLine[2] =~ m/stop_codon/ ) {
+                if ( $gtfLine[6] eq "+" ) {
+                    $gmGeneStops{ $geneId[1] } = $gtfLine[4];
+                }
+                else {
+                    $gmGeneStarts{ $geneId[1] } = $gtfLine[3];
+                }
+            }
+        }
+    }
+    close(GMGTF) or die( "Could not close file $gm_gtf!\n" );
+    open( PROTALN, "<", "$gth_gff3" ) or die( "Could not open file $gth_gff3!\n" );
+    my %gthGeneStarts;
+    my %gthGeneStops;
+    my $gthGeneId;
+    while (<PROTALN>) {
+        chomp;
+        my @gtfLine = split(/\t/);
+        if ( scalar(@gtfLine) == 9 ) {
+            my @lastCol = split( /;/, $gtfLine[8] );
+            my @geneId  = split( /=/, $lastCol[0] );   # geneId[1]
+            if ( not(m/\#/) ) {
+                if ( $gtfLine[2] eq "gene" ) {
+                    $gthGeneId = $geneId[1];
+                }
+                elsif ( $gtfLine[2] eq "mRNA" ) {
+                    $gthGeneStarts{ "$gtfLine[0]" . "_"
+                            . $gthGeneId . "_"
+                            . $geneId[1] } = $gtfLine[3];
+                    $gthGeneStops{ "$gtfLine[0]" . "_"
+                            . $gthGeneId . "_"
+                            . $geneId[1] } = $gtfLine[4];
+                }
+            }
+        }
+    }
+    close(PROTALN) or die( "Could not close file $gth_gff3!\n" );
+
+    # read gth gtf to be filtered later
+    open( GTHGTF, "<", $gth_gtf ) or die("Could not open file $gth_gtf!\n");
+    my %gthGtf;
+    while (<GTHGTF>) {
+        my @gtfLine = split(/"/);
+        push( @{ $gthGtf{ $gtfLine[1] } }, $_ );
+    }
+    close(GTHGTF) or die("Could not close file $gth_gtf!\n");
+    my %discard;
+    while ( my ( $k, $v ) = each %gthGeneStarts ) {
+
+        # check whether gene overlaps with genemark genes
+        while ( my ( $gmk, $gmv ) = each %gmGeneStarts ) {
+            if ((   ( $v >= $gmv ) && ( $v <= $gmGeneStops{$gmk} )
+                )
+                or (   ( $gthGeneStops{$k} >= $gmv )
+                    && ( $gthGeneStops{$k} <= $gmGeneStops{$gmk} )
+                )
+                )
+            {
+                $discard{$k} = 1;
+                last;
+            }
+        }
+    }
+    open( FILTEREDGTH, ">", "$gth_filtered_gtf" ) or die("Could not open file $gth_filtered_gtf!\n");
+    while ( my ( $k, $v ) = each %gthGtf ) {
+        if ( not( defined( $discard{$k} ) ) ) {
+            foreach ( @{$v} ) {
+                print FILTEREDGTH $_;
+            }
+        }
+    }
+    close(FILTEREDGTH) or die("Could not close file $gth_filtered_gtf!\n");
 }
