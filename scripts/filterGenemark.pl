@@ -713,13 +713,13 @@ sub add_single_cds {
         or die "Cannot open file: $file_name.f.bad.gtf\n";
     foreach my $good (@printCDS) {
         if( defined ( $good ) ) {
-            print GOOD $good;
+            print GOOD $good."\n";
             $nr_of_good++;
         }
     }
     foreach my $bad (@badCDS) {
         if (defined ( $bad ) ) {
-            print BAD $bad;
+            print BAD $bad."\n";
             $nr_of_bad++;
         }
     }
