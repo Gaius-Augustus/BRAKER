@@ -2891,7 +2891,7 @@ sub training {
             }
            close ( GTHGOOD ) or die ( "Could not close file $trainGenesGtf!\n" );
         }
-        open (GOODLST, "<", $goodLstFile) or die ("Could not open file $goodLstFile!\n");
+        open (GOODLST, ">", $goodLstFile) or die ("Could not open file $goodLstFile!\n");
         foreach (keys %goodLst) {
             print GOODLST $_."\n";
         }
