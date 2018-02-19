@@ -704,14 +704,17 @@ sub add_single_cds {
         or die "Cannot open file: $file_name.f.good.gtf\n";
     open( BAD, ">>" , "$file_name.f.bad.gtf" )
         or die "Cannot open file: $file_name.f.bad.gtf\n";
-        print "Number of good is ".scalar(@printCDS)."!\n";
-    foreach (@printCDS) {
-        print GOOD $_;
-        $nr_of_good++;
+    foreach my $good (@printCDS) {
+	if( defined ( $good ) ) {
+	    print GOOD $good;
+	    $nr_of_good++;
+	}
     }
-    foreach (@badCDS) {
-        print BAD $_;
-        $nr_of_bad++;
+    foreach my $bad (@badCDS) {
+	if (defined ( $bad ) ) {
+	    print BAD $bad;
+	    $nr_of_bad++;
+	}
     }
 
     close (GOOD) or die ( "Cannot close file: $file_name.f.good.gtf!\n" );
