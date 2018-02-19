@@ -638,7 +638,7 @@ sub print_gene {
 
 sub add_single_cds {
     my $single_exon_ratio = $one_exon_gene_count/$nr_of_genes;
-    print "Here, I think one exon rate is $single_exon_ration\n";
+    print "Here, I think one exon rate is $single_exon_ratio\n";
     my $required_train_genes = $nr_of_good / (1 - $single_exon_ratio);
     print "I thus guess that I need to have a total of $required_train_genes good genes\n";
     my $required_single_cds_genes = ceil($required_train_genes - $nr_of_good);
