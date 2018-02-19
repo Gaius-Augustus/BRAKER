@@ -579,6 +579,8 @@ sub print_gene {
             $thisCDS{'cds'} = $_;
             if($filterOutShort){
                 $thisCDS{'short'} = $boolShortBad;
+            }else{
+                $thisCDS{'short'} = "false";
             }
             $singleCDSgenes{$one_exon_gene_count} = \%thisCDS;
         }
@@ -641,7 +643,7 @@ sub add_single_cds {
     my $goodCounter = 0;
     foreach( keys %singleCDSgenes ) {
         print "key: $_\n";
-        print $singleCDSgenes{$_}."\n";
+        print $singleCDSgenes{$_}->{'short'}."\n";
         if( ( $singleCDSgenes{$_}->{'short'} eq "false" ) && $filterOutShort) {
             $goodCounter ++;
             $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
