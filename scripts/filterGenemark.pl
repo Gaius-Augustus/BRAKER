@@ -649,7 +649,7 @@ sub add_single_cds {
     my $required_train_genes = $nr_of_good / (1 - $single_exon_ratio);
     print "Required single CDS genes        : $required_train_genes\n";
     my $required_single_cds_genes = ceil($required_train_genes - $nr_of_good);
-    print "This would lead to good genes    : ".($nr_of_good+$$required_single_cds_genes)."\n";
+    print "This would lead to good genes    : ".($nr_of_good+$required_single_cds_genes)."\n";
     my %goodSingleCDSgenes;
     my %badSingleCDSgenes;
     my $goodCounter = 0;
