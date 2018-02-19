@@ -642,8 +642,6 @@ sub add_single_cds {
     my %goodSingleCDSgenes;
     my $goodCounter = 0;
     foreach( keys %singleCDSgenes ) {
-        print "key: $_\n";
-        print $singleCDSgenes{$_}->{'short'}."\n";
         if( ( $singleCDSgenes{$_}->{'short'} eq "false" ) && $filterOutShort) {
             $goodCounter ++;
             $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
@@ -709,10 +707,12 @@ sub add_single_cds {
     foreach (@printCDS) {
         print GOOD $_;
         $nr_of_good++;
+        print "Addint a godd one\n";
     }
     foreach (@badCDS) {
         print BAD $_;
         $nr_of_bad++;
+        print "adding a bad one\n";
     }
 
     close (GOOD) or die ( "Cannot close file: $file_name.f.good.gtf!\n" );
