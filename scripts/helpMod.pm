@@ -55,7 +55,7 @@ sub gtf2fasta {
                             if ( $line[6] eq '+') {
                                 $cds_seq{$txid} .= substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) );
                             } else {
-                                $cds_seq{$txid} = reverse_complement( substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) ) ).$cds_seq{$txid}
+                                $cds_seq{$txid} = reverse_complement( substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) ) ).$cds_seq{$txid};
                             }
                         }
                     }
