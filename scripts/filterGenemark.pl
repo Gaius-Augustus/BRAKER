@@ -500,7 +500,7 @@ sub print_gene {
             }
             $nCds++;
         }
-        if ( defined( $sumMult{ $cdsLine[8] } ) ) {    
+        if ( defined( $sumMult{ $cdsLine[8] } ) ) {
         # otherwise gene has not intron support and will be bad, anyway
             $averageMult{ $cdsLine[8] } = $sumMult{ $cdsLine[8] } / $nCds;
 
@@ -526,7 +526,7 @@ sub print_gene {
             foreach (@screenBlocksUp) {
                 foreach ( @{ $introns_for_filterOutShort{ $cdsLine[0] }{$_} } ) {
                     my @intronLine = split(/\t/);
-                    if ( ( $checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[4] < $checkUpstreamOf && 
+                    if ( ( $checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[4] < $checkUpstreamOf &&
                         $intronLine[4] > ( $checkUpstreamOf - 2 * $maxCdsSize{ $cdsLine[8] } ) && $percentMult * $averageMult{ $cdsLine[8] } < $intronLine[5] )
                         or ( $checkStrand eq "-" && $intronLine[3] > $checkUpstreamOf && $intronLine[3] < ( $checkUpstreamOf + 2 * $maxCdsSize{ $cdsLine[8] } )
                         && $checkStrand eq $intronLine[6] && $percentMult * $averageMult{ $cdsLine[8] }
@@ -558,7 +558,7 @@ sub print_gene {
                 foreach (@screenBlocksDown) {
                     foreach ( @{ $introns_for_filterOutShort{ $cdsLine[0] }{$_} } ) {
                     my @intronLine = split(/\t/);
-                    if ( ( $checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[3] > $checkDownstreamOf  && 
+                    if ( ( $checkStrand eq "+" && $checkStrand eq $intronLine[6] && $intronLine[3] > $checkDownstreamOf  &&
                         $intronLine[3] > ( $checkDownstreamOf + 2 * $maxCdsSize{ $cdsLine[8] } ) && $percentMult * $averageMult{ $cdsLine[8] } < $intronLine[5] )
                         or ( $checkStrand eq "-" && $intronLine[4] < $checkDownstreamOf && $intronLine[4] > ( $checkDownstreamOf - 2 * $maxCdsSize{ $cdsLine[8] } )
                         && $checkStrand eq $intronLine[6] && $percentMult * $averageMult{ $cdsLine[8] } < $intronLine[5] ) ) {
@@ -591,7 +591,7 @@ sub print_gene {
     }
 
     # all exons in intron file
-    if ( $bool_good eq "true" && $bool_complete eq "true" && !$filterOutShort ) {
+    if ( $bool_good eq "true" && $bool_complete eq "true" && !$filterOutShort && not ($size == 1) ) {
         $nr_of_good++;
         $good_mults += $mults;
         if ( !defined($suppress) ) {
@@ -604,7 +604,7 @@ sub print_gene {
 
         # not all exons in intron file or gene incomplete
     }
-    elsif ($bool_good eq "true" && $bool_complete eq "true" && $filterOutShort && $boolShortBad eq "false" ) {
+    elsif ($bool_good eq "true" && $bool_complete eq "true" && $filterOutShort && $boolShortBad eq "false" && not ($size == 1) ) {
         # filter for genes that do NOT have an upstream intron in close proximity
         $nr_of_good++;
         $good_mults += $mults;
@@ -645,6 +645,7 @@ sub add_single_cds {
     print "I thus guess that I need to have a total of $required_train_genes good genes\n";
     my $required_single_cds_genes = ceil($required_train_genes - $nr_of_good);
     print "I thus think that we need $required_single_cds_genes\n";
+    print "I currently think that there are $nr_of_bad bad genes\n";
     my %goodSingleCDSgenes;
     my $goodCounter = 0;
     foreach( keys %singleCDSgenes ) {
@@ -724,6 +725,7 @@ sub add_single_cds {
         }
     }
 
+    print "And now I think that there are $nr_of_bad bad genes\n";
     close (GOOD) or die ( "Cannot close file: $file_name.f.good.gtf!\n" );
     close (BAD) or die ( "Cannot close file: $file_name.f.bad.gtf!\n" );
 
