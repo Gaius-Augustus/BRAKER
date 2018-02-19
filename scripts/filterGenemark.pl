@@ -617,13 +617,15 @@ sub print_gene {
         }
     }
     else {
-        $nr_of_bad++;
-        if ( !defined($suppress) ) {
-            print BAD "$start_codon";
-            foreach (@CDS) {
-                print BAD "$_\n";
+        if(not($size == 1)){
+            $nr_of_bad++;
+            if ( !defined($suppress) ) {
+                print BAD "$start_codon";
+                foreach (@CDS) {
+                    print BAD "$_\n";
+                }
+                print BAD "$stop_codon";
             }
-            print BAD "$stop_codon";
         }
     }
     @CDS           = ();
@@ -643,7 +645,6 @@ sub add_single_cds {
     print "I thus guess that I need to have a total of $required_train_genes good genes\n";
     my $required_single_cds_genes = ceil($required_train_genes - $nr_of_good);
     print "I thus think that we need $required_single_cds_genes\n";
-    $nr_of_good = $nr_of_good - $one_exon_gene_count;
     my %goodSingleCDSgenes;
     my $goodCounter = 0;
     foreach( keys %singleCDSgenes ) {
