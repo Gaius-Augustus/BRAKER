@@ -658,7 +658,7 @@ sub add_single_cds {
         if( ( $singleCDSgenes{$_}->{'short'} eq "false" ) && $filterOutShort && $singleCDSgenes{$_}->{'complete'} eq "true" ) {
             $goodCounter ++;
             $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
-        }elsif($singleCDSgenes{$_}->{'complete'} eq "true"){
+        }elsif($singleCDSgenes{$_}->{'complete'} eq "true" && !$filterOutShort){
             $goodCounter ++;
             $goodSingleCDSgenes{$goodCounter} = $singleCDSgenes{$_}->{'cds'};
         }else{
@@ -716,13 +716,7 @@ sub add_single_cds {
     for(my $i = $stillLacking; $i < scalar(@goodKeys); $i++){
         push @badCDS, $goodSingleCDSgenes{$goodKeys[$i]};
     }
-    if ($filterOutShort) {
-        foreach ( keys %singleCDSgenes ) {
-            if( $singleCDSgenes{$_}->{'short'} eq "true" ) {
-                push @badCDS, $singleCDSgenes{$_}->{'cds'};
-            }
-        }
-    }
+
     # print to files
     open( GOOD, ">>", "$file_name.f.good.gtf")
         or die "Cannot open file: $file_name.f.good.gtf\n";
@@ -744,8 +738,9 @@ sub add_single_cds {
         print BAD $badSingleCDSgenes{$_}."\n";
         $nr_of_bad++;
     }
-    print "And now I think I have $nr_of_good good genes\n";
-    print "And now I think that there are $nr_of_bad bad genes\n";
+    print "After printing, I have good genes: $nr_of_good\n";
+    print "After printing, I have bad genes: $nr_of_bad\n";
+    print "Which sums up to a total of:      ".($nr_of_good+$nr_of_bad)."\n";
     close (GOOD) or die ( "Cannot close file: $file_name.f.good.gtf!\n" );
     close (BAD) or die ( "Cannot close file: $file_name.f.bad.gtf!\n" );
 
