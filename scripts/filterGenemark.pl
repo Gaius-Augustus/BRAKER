@@ -639,6 +639,7 @@ sub add_single_cds {
     my $single_exon_ratio = $one_exon_gene_count/$nr_of_genes;
     my $required_train_genes = $nr_of_good / (1 - $single_exon_ratio);
     my $required_single_cds_genes = ceil($required_train_genes - $nr_of_good);
+    $nr_of_good = $nr_of_good - $one_exon_gene_count;
     my %goodSingleCDSgenes;
     my $goodCounter = 0;
     foreach( keys %singleCDSgenes ) {
@@ -707,11 +708,13 @@ sub add_single_cds {
     foreach my $good (@printCDS) {
         if( defined ( $good ) ) {
             print GOOD $good;
+            $nr_of_good++;
         }
     }
     foreach my $bad (@badCDS) {
         if (defined ( $bad ) ) {
             print BAD $bad;
+            $nr_of_bad++;
         }
     }
 
