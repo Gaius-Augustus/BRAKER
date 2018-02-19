@@ -2818,6 +2818,7 @@ sub training {
         my $geneMarkGb = "$otherfilesDir/genemark.gb";
         my $gthGb      = "$otherfilesDir/gth.gb";
         if ( not($trainFromGth) ) {
+            gtf2fasta ($genome, "$genemarkDir/genemark.f.good.gtf", "$otherfilesDir/genemark.fa");
             # make genemark gb, but this is not the final file because gth genes may be added later
             gtf2gb( "$genemarkDir/genemark.f.good.gtf", $geneMarkGb );
         }
