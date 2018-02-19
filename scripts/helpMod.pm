@@ -17,6 +17,77 @@ use File::Basename qw(dirname);
 ######################################################################################
 # extract DNA sequence of CDS in gtf from genome fasta file, write to CDS fasta file #
 ######################################################################################
+
+##############################################################################################################
+# genetic code (use only one because the purpose is training gene blast all-against-all, not gene prediction)#
+##############################################################################################################
+my(%genetic_code) = (
+    'TCA' => 'S', # Serine
+    'TCC' => 'S', # Serine
+    'TCG' => 'S', # Serine
+    'TCT' => 'S', # Serine
+    'TTC' => 'F', # Phenylalanine
+    'TTT' => 'F', # Phenylalanine
+    'TTA' => 'L', # Leucine
+    'TTG' => 'L', # Leucine
+    'TAC' => 'Y', # Tyrosine
+    'TAT' => 'Y', # Tyrosine
+    'TAA' => '*', # Stop
+    'TAG' => '*', # Stop
+    'TGC' => 'C', # Cysteine
+    'TGT' => 'C', # Cysteine
+    'TGA' => '*', # Stop
+    'TGG' => 'W', # Tryptophan
+    'CTA' => 'L', # Leucine
+    'CTC' => 'L', # Leucine
+    'CTG' => 'L', # Leucine
+    'CTT' => 'L', # Leucine
+    'CCA' => 'P', # Proline
+    'CAT' => 'H', # Histidine
+    'CAA' => 'Q', # Glutamine
+    'CAG' => 'Q', # Glutamine
+    'CGA' => 'R', # Arginine
+    'CGC' => 'R', # Arginine
+    'CGG' => 'R', # Arginine
+    'CGT' => 'R', # Arginine
+    'ATA' => 'I', # Isoleucine
+    'ATC' => 'I', # Isoleucine
+    'ATT' => 'I', # Isoleucine
+    'ATG' => 'M', # Methionine
+    'ACA' => 'T', # Threonine
+    'ACC' => 'T', # Threonine
+    'ACG' => 'T', # Threonine
+    'ACT' => 'T', # Threonine
+    'AAC' => 'N', # Asparagine
+    'AAT' => 'N', # Asparagine
+    'AAA' => 'K', # Lysine
+    'AAG' => 'K', # Lysine
+    'AGC' => 'S', # Serine
+    'AGT' => 'S', # Serine
+    'AGA' => 'R', # Arginine
+    'AGG' => 'R', # Arginine
+    'CCC' => 'P', # Proline
+    'CCG' => 'P', # Proline
+    'CCT' => 'P', # Proline
+    'CAC' => 'H', # Histidine
+    'GTA' => 'V', # Valine
+    'GTC' => 'V', # Valine
+    'GTG' => 'V', # Valine
+    'GTT' => 'V', # Valine
+    'GCA' => 'A', # Alanine
+    'GCC' => 'A', # Alanine
+    'GCG' => 'A', # Alanine
+    'GCT' => 'A', # Alanine
+    'GAC' => 'D', # Aspartic Acid
+    'GAT' => 'D', # Aspartic Acid
+    'GAA' => 'E', # Glutamic Acid
+    'GAG' => 'E', # Glutamic Acid
+    'GGA' => 'G', # Glycine
+    'GGC' => 'G', # Glycine
+    'GGG' => 'G', # Glycine
+    'GGT' => 'G'  # Glycine
+);
+
 sub gtf2fasta {
     my $genome_file = shift;
     my $gtf_file = shift;
@@ -88,7 +159,7 @@ sub gtf2fasta {
     close(GENOME) or die ("Could not close file $genome_file!\n");
     open (FASTA, ">", $fasta_file) or die ("Could not close file $fasta_file!\n");
     while ( my ( $txid, $dna ) = each %cds_seq ) {
-        print FASTA ">$txid\n$dna\n";
+        print FASTA ">$txid\n".dna2aa($dna)."\n";
     }
     close (FASTA) or die ("Could not close file $fasta_file!\n");
 }
@@ -100,7 +171,22 @@ sub gtf2fasta {
 sub reverse_complement {
     my $in = shift;
     $in =~ tr/ACGTacgt/TGCAtgca/;
-    return $in = reverse ($in);
+    $in = reverse ($in);
+    return $in;
+}
+
+######################################
+# Translate DNA to protein sequence  #
+######################################
+
+sub dna2aa {
+    my $seq = shift;
+    my $seq = uc($seq);
+    my @codons = $seq =~ /(.{1,3})/g;
+    my $aa = "";
+    foreach ( @codons ) {
+        $aa .= $genetic_code{$_};
+    }
 }
 
 ###################################################################################################
@@ -371,5 +457,6 @@ sub uptodate {
     }
     return ( $latestInMtime <= $earliestOutMtime );
 }
+
 
 1;
