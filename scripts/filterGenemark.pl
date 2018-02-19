@@ -704,7 +704,7 @@ sub add_single_cds {
         or die "Cannot open file: $file_name.f.good.gtf\n";
     open( BAD, ">>" , "$file_name.f.bad.gtf" )
         or die "Cannot open file: $file_name.f.bad.gtf\n";
-        print "Number of good is $nr_of_good!\n";
+        print "Number of good is ".scalar(@printCDS)."!\n";
     foreach (@printCDS) {
         print GOOD $_;
         $nr_of_good++;
