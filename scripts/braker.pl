@@ -6379,7 +6379,7 @@ sub set_BLAST_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Did not find environment variable \$BLAST_PATH ";
+            . ": Did not find environment variable \$BLAST_PATH\n";
         $logString .= $prtStr;
         print STDOUT $prtStr;
     }
@@ -6394,8 +6394,8 @@ sub set_BLAST_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Setting \$BLAST_PATH to command line argument ";
-            $prtStr .= "--BLAST_PATH value $blast_path.\n";
+                . ": Setting \$BLAST_PATH to command line argument "
+                . "--BLAST_PATH value $blast_path.\n";
             $logString .= $prtStr;
             print STDOUT $prtStr;
             $BLAST_PATH = $blast_path;
@@ -6406,8 +6406,8 @@ sub set_BLAST_PATH {
                 . (localtime)
                 . ": WARNING: Command line argument --BLAST_PATH was ";
             $prtStr
-                .= "supplied but value $blast_path is not a directory. Will not set ";
-            $prtStr .= "\$BLAST_PATH to $blast_path!\n";
+                .= "supplied but value $blast_path is not a directory. Will not set "
+                .  "\$BLAST_PATH to $blast_path!\n";
             $logString .= $prtStr;
             print STDOUT $prtStr;
         }
@@ -6420,8 +6420,8 @@ sub set_BLAST_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Trying to guess \$BLAST_PATH from location of blastall";
-        $prtStr .= " executable that is available in your \$PATH.\n";
+            . ": Trying to guess \$BLAST_PATH from location of blastall"
+            . " executable that is available in your \$PATH.\n";
         $logString .= $prtStr;
         print STDOUT $prtStr;
         my $epath = which 'blastall';
@@ -6439,9 +6439,8 @@ sub set_BLAST_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Guessing the location of \$BLAST_PATH ";
-            $prtStr
-                .= "failed. " . dirname($epath) . " is not a directory!\n";
+                . ": WARNING: Guessing the location of \$BLAST_PATH "
+                . "failed. " . dirname($epath) . " is not a directory!\n";
             $logString .= $prtStr;
             print STDOUT $prtStr;
         }
@@ -6450,25 +6449,21 @@ sub set_BLAST_PATH {
     if ( not( defined($BLAST_PATH) ) ) {
         my $blast_err;
         $blast_err .= "There are 3 alternative ways to set this variable for "
-                   .  " aa2nonred.pl:\n";
-        $blast_err .= "   a) provide command-line argument "
-                   .  "--BLAST_PATH=/your/path\n";
-        $blast_err .= "   b) use an existing environment variable "
-                   .  "\$BLAST_PATH\n";
-        $blast_err .= "      for setting the environment variable, run\n";
-        $blast_err .= "           export BLAST_PATH=/your/path\n";
-        $blast_err .= "      in your shell. You may append this to your "
-                   .  ".bashrc or .profile file in\n";
-        $blast_err .= "      order to make the variable available to all your "
-                   .  "bash sessions.\n";
-        $blast_err .= "   c) aa2nonred.pl can try guessing the location of "
-                   .  "\$BLAST_PATH from the\n";
-        $blast_err .= "      location of a blastall executable that is "
-                   .  "available in your \$PATH variable.\n";
-        $blast_err .= "      If you try to rely on this option, you can check "
-                   .  "by typing\n";
-        $blast_err .= "           which blastall\n";
-        $blast_err .= "      in your shell, whether there is a blastall "
+                   .  " aa2nonred.pl:\n"
+                   .  "   a) provide command-line argument --BLAST_PATH=/your/path\n"
+                   .  "   b) use an existing environment variable \$BLAST_PATH\n"
+                   .  "      for setting the environment variable, run\n"
+                   .  "           export BLAST_PATH=/your/path\n"
+                   .  "      in your shell. You may append this to your "
+                   .  ".bashrc or .profile file in\n"
+                   .  "      order to make the variable available to all your bash sessions.\n"
+                   .  "   c) aa2nonred.pl can try guessing the location of "
+                   .  "\$BLAST_PATH from the\n"
+                   .  "      location of a blastall executable that is available in your \$PATH "
+                   .  " variable.\n"
+                   .  "      If you try to rely on this option, you can check by typing\n"
+                   .  "           which blastall\n"
+                   .  "      in your shell, whether there is a blastall "
                    .  "executable in your \$PATH\n";
         $prtStr = "\# " . (localtime) . " ERROR: \$BLAST_PATH not set!\n";
         print STDERR $prtStr;
