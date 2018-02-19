@@ -150,6 +150,7 @@ my $percentMult = 0.2;
 my %maxCdsSize;    # contains max CDS size of a gene (gene is key)
 my $boolShortBad;
 my $cutoff = 15;
+my $goodOneExonGenes = 0;
 
 if ( @ARGV == 0 ) {
     print "$usage\n";
@@ -260,7 +261,7 @@ else {
     "Rate of good introns cannot be computed since there are no 'mult' entries.\n";
 }
 if ( $nr_of_good > 0 ) {
-    my $onex_rate_g = $one_exon_gene_count / $nr_of_good;
+    my $onex_rate_g = $goodOneExonGenes / $nr_of_good;
     print STDOUT "One exon gene rate (of good genes): $onex_rate_g\n";
 }
 else {
@@ -658,6 +659,7 @@ sub add_single_cds {
         print "Reducing $required_single_cds_genes to $available_single_cds_genes\n";
         $required_single_cds_genes = $available_single_cds_genes
     }
+    $goodOneExonGenes = $required_single_cds_genes;
     # select genes that overlap with given CDSpart hints in @cdshints
     my @printCDS;
     my @badCDS;
