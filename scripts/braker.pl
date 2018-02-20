@@ -749,7 +749,7 @@ if ( $EPmode == 1 ) {
         = "\# "
         . (localtime)
         . ": BRAKER will be execute GeneMark-EP for training GeneMark and "
-        . "generating a training gene set for AUGUSTUS, using protein information as sole ";
+        . "generating a training gene set for AUGUSTUS, using protein information as sole "
         . "extrinsic evidence source.\n";
     print STDOUT $prtStr;
     $logString .= $prtStr;
