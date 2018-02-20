@@ -2997,7 +2997,7 @@ sub training {
             $perlCmdString .= "nice ";
         }
         $perlCmdString
-            .= "perl $string $otherfilesDir/traingenes.good.fa $otherfilesDir/traingenes.good.nr.fa --BLAST_PATH=$BLAST_PATH 1> $stdoutfile 2>$errorfile";
+            .= "perl $string $otherfilesDir/traingenes.good.fa $otherfilesDir/traingenes.good.nr.fa --BLAST_PATH=$BLAST_PATH --cores=$CPU 1> $stdoutfile 2>$errorfile";
         print LOG "\# "
             . (localtime)
             . ": BLAST training gene structures against themselves:\n";
