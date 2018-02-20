@@ -94,7 +94,7 @@ sub gtf2fasta {
     my $fasta_file = shift;
     my %gtf;
     my %genome;
-    open (GTF, "<", $gtf_file ) or die ("Could not close file $gtf_file!\n");
+    open (GTF, "<", $gtf_file ) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gtf_file!\n");
     while ( <GTF> ) {
         if ( $_ =~ m/\tCDS\t/ ) {
             $_ =~ m/transcript_id \"(\S+)\"/;
@@ -103,8 +103,8 @@ sub gtf2fasta {
             push @{$gtf{$line[0]}{$txid}}, $_;
         }
     }
-    close (GTF) or die ("Could not close file $gtf_file!\n");
-    open (GENOME, "<", $genome_file ) or die ("Could not close file $genome_file!\n");
+    close (GTF) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gtf_file!\n");
+    open (GENOME, "<", $genome_file ) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genome_file!\n");
     my $seq = "";
     my $locus;
     my %cds_seq;
@@ -156,12 +156,12 @@ sub gtf2fasta {
             }
         }
     }
-    close(GENOME) or die ("Could not close file $genome_file!\n");
-    open (FASTA, ">", $fasta_file) or die ("Could not close file $fasta_file!\n");
+    close(GENOME) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genome_file!\n");
+    open (FASTA, ">", $fasta_file) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $fasta_file!\n");
     while ( my ( $txid, $dna ) = each %cds_seq ) {
         print FASTA ">$txid\n".dna2aa($dna)."\n";
     }
-    close (FASTA) or die ("Could not close file $fasta_file!\n");
+    close (FASTA) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $fasta_file!\n");
 }
 
 ######################################
@@ -235,7 +235,7 @@ sub find {
     }
     else {
         # if not found, output error
-        die("Error: found neither $path_1/$script nor $path_2/$script nor $path_3/$script nor $path_4/$script!\nPlease Check the environment variables AUGUSTUS_CONFIG_PATH and command line options AUGUSTUS_BIN_PATH and AUGUSTUS_SCRIPTS_PATH or install AUGUSTUS, again!\n"
+        die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n found neither $path_1/$script nor $path_2/$script nor $path_3/$script nor $path_4/$script!\nPlease Check the environment variables AUGUSTUS_CONFIG_PATH and command line options AUGUSTUS_BIN_PATH and AUGUSTUS_SCRIPTS_PATH or install AUGUSTUS, again!\n"
         );
     }
 }
@@ -263,13 +263,13 @@ sub checkFile {
         ;   # type of file, used by error outputting if the file doesn't exist
     my $usage = shift;    # usage to be outputted if the file doesn't exist
 
-    die("Error: missing $type file!\n$usage") if ( !$file );
+    die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nmissing $type file!\n$usage") if ( !$file );
 
     # overwrite $file with absolute path
     $file = tildeConvert($file);
     $file = rel2abs($file);        # overwrite $file with absolute path
     if ( !( -f $file ) ) {
-        die("Error: $type file $file not found!\n");
+        die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n $type file $file not found!\n");
     }
     return $file;
 }
@@ -286,7 +286,7 @@ sub formatDetector {
     #
     # check if file has GENBANK format
     #
-    open( DFILE, $file ) or die("Could not open $file!\n");
+    open( DFILE, $file ) or die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open $file!\n");
     $i = 0;
     my $haveLOCUS    = 0;
     my $haveSource   = 0;
@@ -308,23 +308,23 @@ sub formatDetector {
         )
     {
         print STDERR
-            "$file appears to be in corrupt Genbank format. 'LOCUS' missing\n"
+            "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt Genbank format. 'LOCUS' missing\n"
             if ( !$haveLOCUS );
         print STDERR
-            "$file appears to be in corrupt Genbank format. ' source ' line missing\n"
+            "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt Genbank format. ' source ' line missing\n"
             if ( !$haveSource );
         print STDERR
             "$file appears to be in corrupt Genbank format. 'ORIGIN' missing\n"
             if ( !$haveOrigin );
         print STDERR
-            "$file appears to be in corrupt Genbank format. '//' missing\n"
+            "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt Genbank format. '//' missing\n"
             if ( !$haveTermSymb );
         return "gb";
     }
     #
     # check if file has GFF format
     #
-    open( DFILE, $file ) or die("Could not open $file!\n");
+    open( DFILE, $file ) or die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open $file!\n");
     $i = 0;
     my $badGFFlines  = 0;
     my $goodGFFlines = 0;
@@ -347,7 +347,7 @@ sub formatDetector {
     close(DFILE);
     if ( $goodGFFlines > 0 ) {
         if ( $badGFFlines > 0 ) {
-            print STDERR "$file appears to be in corrupt GFF format.\n";
+            print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt GFF format.\n";
             return "";
         }
         else {
@@ -357,7 +357,7 @@ sub formatDetector {
     #
     # check if file has FASTA format and whether it is DNA or protein
     #
-    open( DFILE, $file ) or die("Could not open $file!\n");
+    open( DFILE, $file ) or die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open $file!\n");
     $i = 0;
     my $greaterLines = 0;
     my $concatseq    = "";
@@ -384,7 +384,7 @@ sub formatDetector {
             return "fasta-dna";
         }
         else {
-            print STDERR "$file appears to be in corrupt FASTA format.\n";
+            print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt FASTA format.\n";
             return "";
         }
     }
