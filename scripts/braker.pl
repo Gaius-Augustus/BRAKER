@@ -610,7 +610,8 @@ if ( !-w $workDir ) {
     $prtStr
         = "\# "
         . (localtime)
-        . ": ERROR: Do not have write permission for $workDir.\nPlease";
+        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "Do not have write permission for $workDir.\nPlease";
     $prtStr
         .= " use command 'chmod' to reset permissions, or specify another working ";
     $prtStr .= "directory with option --workingdir=...\n";
@@ -628,7 +629,8 @@ if (   ( !@bam && !@hints )
     $prtStr
         = "\# "
         . (localtime)
-        . ": ERROR: in addition to a genome file, braker.pl requires at ";
+        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "in addition to a genome file, braker.pl requires at ";
     $prtStr = "least one of the following files/flags as input:\n";
     $prtStr = "    --bam=file.bam\n";
     $prtStr = "    --hints=file.hints\n";
@@ -645,7 +647,7 @@ $prtStr
     = "\# "
     . (localtime)
     . ": Configuring of BRAKER for using external tools...\n";
-print STDERR $prtStr;
+print STDOUT $prtStr;
 $logString .= $prtStr;
 set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
@@ -662,7 +664,7 @@ set_SAMTOOLS_PATH();
 set_ALIGNMENT_TOOL_PATH();
 set_BLAST_PATH();
 $prtStr = "\# " . (localtime) . ": Configuring of BRAKER complete!\n";
-print STDERR $prtStr;
+print STDOUT $prtStr;
 $logString .= $prtStr;
 
 # check upfront whether any common problems will occur later
@@ -677,7 +679,8 @@ if (@bam) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: BAM file $bam[$i] does not exist.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "BAM file $bam[$i] does not exist.\n";
             print STDERR $prtStr;
             $logString .= $prtStr;
             exit(1);
@@ -694,7 +697,8 @@ if (@hints) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: Hints file $hints[$i] does not exist.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Hints file $hints[$i] does not exist.\n";
             print STDERR $prtStr;
             $logString .= $prtStr;
             exit(1);
@@ -730,7 +734,8 @@ if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth ) {
     $prtStr
         = "\# "
         . (localtime)
-        . ": ERROR: No RNA-Seq or hints file(s) from RNA-Seq specified. ";
+        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "No RNA-Seq or hints file(s) from RNA-Seq specified. ";
     $prtStr
         .= "Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq ";
     $prtStr
@@ -796,12 +801,12 @@ if ( !defined($species) || $bool_species eq "false" ) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: There are already $limit species folders under ";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "There are already $limit species folders under ";
         $prtStr
-            .= "$AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move ";
-        $prtStr
-            .= "some of those folders or assign a valid species identifier with ";
-        $prtStr .= "--species=name.\n";
+            .= "$AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move "
+            . "some of those folders or assign a valid species identifier with "
+            . "--species=name.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         exit(1);
@@ -827,12 +832,11 @@ if ( -d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting ) {
     $prtStr
         = "\# "
         . (localtime)
-        . ": ERROR: $AUGUSTUS_CONFIG_PATH/species/$species already exists. ";
-    $prtStr
-        .= "Choose another species name, delete this directory or use the existing species ";
-    $prtStr
-        .= "with the option --useexisting. Be aware that existing parameters will then be ";
-    $prtStr .= "overwritten during training.\n";
+        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "$AUGUSTUS_CONFIG_PATH/species/$species already exists. "
+        . "Choose another species name, delete this directory or use the existing species "
+        . "with the option --useexisting. Be aware that existing parameters will then be "
+        . "overwritten during training.\n";
     print STDERR $prtStr;
     $logString .= $prtStr;
     exit(1);
@@ -928,7 +932,8 @@ else {
 # check whether genome file is set
 if ( !defined($genome) ) {
     $prtStr
-        = "\# " . (localtime) . ": ERROR: No genome file was specified.\n";
+        = "\# " . (localtime) . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "No genome file was specified.\n";
     print STDERR $prtStr;
     $logString .= $prtStr;
     exit(1);
@@ -942,8 +947,9 @@ if (@prot_seq_files) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: protein sequence file $prot_seq_files[$i] does ";
-            $prtStr .= "not exist.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "protein sequence file $prot_seq_files[$i] does "
+                . "not exist.\n";
             print STDERR $prtStr;
             $logString .= $prtStr;
             exit(1);
@@ -956,9 +962,9 @@ if (@prot_seq_files) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": WARNING: No alignment tool was specified for aligning protein";
-        $prtStr
-            .= " sequences against genome. Setting GenomeThreader as default alignment tool.\n";
+            . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "No alignment tool was specified for aligning protein"
+            . " sequences against genome. Setting GenomeThreader as default alignment tool.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         $prg = "gth";
@@ -977,8 +983,9 @@ if (@prot_seq_files) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR:  Running ProSplign from within BRAKER is currently ";
-        $prtStr .= "not supported. Aborting braker.pl!\n";
+            . ": ERROR:  in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Running ProSplign from within BRAKER is currently "
+            . "not supported. Aborting braker.pl!\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         exit(1);
@@ -991,7 +998,8 @@ if ($annot) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: Reference annotation file "
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Reference annotation file "
             . "$annot does not exist. Cannot evaluate prediction accuracy!\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
@@ -1007,8 +1015,9 @@ if (@prot_aln_files) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: protein alignment file $prot_aln_files[$i] does";
-            $prtStr .= " not exist.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "protein alignment file $prot_aln_files[$i] does"
+                . " not exist.\n";
             print STDERR $prtStr;
             $logString .= $prtStr;
             exit(1);
@@ -1019,12 +1028,11 @@ if (@prot_aln_files) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: if protein alignment file is specified, you must ";
-        $prtStr
-            .= "specify the source tool that was used to create that alignment file, i.e. ";
-        $prtStr
-            .= "--prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for";
-        $prtStr .= " Exonerate.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "if protein alignment file is specified, you must "
+            . "specify the source tool that was used to create that alignment file, i.e. "
+            . "--prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for"
+            . " Exonerate.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         exit(1);
@@ -1041,14 +1049,12 @@ if ( defined($prg) ) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: An alignment tool other than gth, exonerate and spaln";
-        $prtStr
-            .= " has been specified with option --prg=$prg. BRAKER currently only supports the ";
-        $prtStr
-            .= "options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and ";
-        $prtStr
-            .= "prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in ";
-        $prtStr .= "GeneMark-ET mode.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "An alignment tool other than gth, exonerate and spaln"
+            . " has been specified with option --prg=$prg. BRAKER currently only supports the "
+            . "options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and "
+            . "prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in "
+            . "GeneMark-ET mode.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         exit(1);
@@ -1057,14 +1063,12 @@ if ( defined($prg) ) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: An alignment tool other than gth, exonerate and ";
-        $prtStr
-            .= "spaln has been specified with option --prg=$prg. BRAKER currently only ";
-        $prtStr
-            .= "supports the options gth, exonerate and spaln for running BRAKER in ";
-        $prtStr
-            .= "GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. ";
-        $prtStr .= "BRAKER was now started in GeneMark-EP mode.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "An alignment tool other than gth, exonerate and "
+            . "spaln has been specified with option --prg=$prg. BRAKER currently only "
+            . "supports the options gth, exonerate and spaln for running BRAKER in "
+            . "GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. "
+            . "BRAKER was now started in GeneMark-EP mode.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         exit(1);
@@ -1073,10 +1077,10 @@ if ( defined($prg) ) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: a protein alignment tool ($prg) has been given, ";
-        $prtStr
-            .= "but neither a protein sequence file, nor a protein alignment file ";
-        $prtStr .= "generated by such a tool have been specified.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "a protein alignment tool ($prg) has been given, "
+            . "but neither a protein sequence file, nor a protein alignment file "
+            . "generated by such a tool have been specified.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         exit(1);
@@ -1088,8 +1092,9 @@ if ( defined($gth2traingenes) && not( $prg eq "gth" ) ) {
     $prtStr
         = "\# "
         . (localtime)
-        . ": ERROR: Option --gth2traingenes can only be specified with ";
-    $prtStr .= "option --prg=gth!\n";
+        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "Option --gth2traingenes can only be specified with "
+        . "option --prg=gth!\n";
     print STDERR $prtStr;
     $logString .= $prtStr;
     exit(1);
@@ -1098,8 +1103,9 @@ elsif ( defined($trainFromGth) && not( $prg eq "gth" ) ) {
     $prtStr
         = "\# "
         . (localtime)
-        . ": ERROR: Option --trainFromGth can only be specified with ";
-    $prtStr .= "option --prg=gth!\n";
+        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "Option --trainFromGth can only be specified with "
+        . "option --prg=gth!\n";
     print STDERR $prtStr;
     $logString .= $prtStr;
     exit(1);
@@ -1123,7 +1129,8 @@ if ( !-f "$genome" ) {
     $prtStr
         = "\# "
         . (localtime)
-        . ": ERROR: Genome file $genome does not exist.\n";
+        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "Genome file $genome does not exist.\n";
     print STDERR $prtStr;
     $logString .= $prtStr;
     exit(1);
@@ -1173,7 +1180,7 @@ else {
         . (localtime)
         . ": Further logging information can be found in $logfile!\n";
     print STDOUT $prtStr;
-    open( LOG, ">>" . $logfile ) or die("Cannot open file $logfile!\n");
+    open( LOG, ">>" . $logfile ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file $logfile!\n");
     print LOG $logString;
     if ( $bool_rootDir eq "true" ) {
         print LOG "\# "
@@ -1215,16 +1222,15 @@ else {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: The --skipGeneMark-ET option was used, but ";
-                $prtStr
-                    .= "there is no genemark.gtf file under $genemarkDir and no valid file ";
-                $prtStr .= "--geneMarkGtf=... was specified.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "The --skipGeneMark-ET option was used, but "
+                    . "there is no genemark.gtf file under $genemarkDir and no valid file "
+                    . "--geneMarkGtf=... was specified.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 if ( defined($geneMarkGtf) ) {
-                    $prtStr
-                        = "       The specified geneMarkGtf=... file was $geneMarkGtf. This is ";
-                    $prtStr .= "not an accessible file.\n";
+                    $prtStr = "       The specified geneMarkGtf=... file was $geneMarkGtf. This is "
+                         . "not an accessible file.\n";
                     print LOG $prtStr;
                     print STDERR $prtStr;
                 }
@@ -1241,18 +1247,19 @@ else {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: The --skipGeneMark-EP option was used, but there is ";
-            $prtStr
-                .= "no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... ";
-            $prtStr .= "was specified.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The --skipGeneMark-EP option was used, but there is "
+                . "no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... "
+                . "was specified.\n";
             print LOG $prtStr;
             print STDERR $prtStr;
             if ( defined($geneMarkGtf) ) {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: The specified geneMarkGtf=... file was ";
-                $prtStr .= "$geneMarkGtf. This is not an accessible file.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "The specified geneMarkGtf=... file was "
+                    . "$geneMarkGtf. This is not an accessible file.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
             }
@@ -1263,8 +1270,9 @@ else {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: Option --skipGeneMarkEP cannot be used when BRAKER is ";
-        $prtStr .= "started in GeneMark-ET mode.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Option --skipGeneMarkEP cannot be used when BRAKER is "
+            . "started in GeneMark-ET mode.\n";
         print LOG $prtStr;
         print STDERR $prtStr;
         exit(1);
@@ -1277,7 +1285,7 @@ else {
         print LOG "$genemarkDir/genemark.gtf.\n";
         $cmdString = "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
         print LOG "$cmdString\n";
-        system($cmdString) == 0 or die("failed to execute: $cmdString!\n");
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
 
     if ( !-d $parameterDir ) {
@@ -1302,7 +1310,7 @@ else {
         . (localtime)
         . ": changing into working directory $rootDir\n";
     print LOG "$cmdString\n\n";
-    chdir $rootDir or die("Could not change into directory $rootDir.\n");
+    chdir $rootDir or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $rootDir.\n");
 
     if ( $skipAllTraining == 0 ) {
         new_species()
@@ -1324,9 +1332,10 @@ else {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: Config file $specPath"
-                    . "$_ for species $species ";
-                $prtStr .= "does not exist!\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Config file $specPath"
+                    . "$_ for species $species "
+                    . "does not exist!\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -1339,9 +1348,10 @@ else {
                     $prtStr
                         = "\# "
                         . (localtime)
-                        . ": ERROR: Config file $specPath"
-                        . "$_ for species $species ";
-                    $prtStr .= "does not exist!\n";
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Config file $specPath"
+                        . "$_ for species $species "
+                        . "does not exist!\n";
                     print LOG $prtStr;
                     print STDERR $prtStr;
                     exit(1);
@@ -1358,7 +1368,7 @@ else {
     }
 
     # count scaffold sizes and check whether the assembly is not too fragmented for parallel execution of AUGUSTUS
-    open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("Could not open file $otherfilesDir/genome.fa");
+    open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/genome.fa");
     my $gLocus;
     while( <GENOME> ){
         chomp;
@@ -1372,7 +1382,7 @@ else {
             }
         }
     }
-    close (GENOME) or die ("Could not close file $otherfilesDir/genome.fa");
+    close (GENOME) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/genome.fa");
     my @nScaffs = keys %scaffSizes;
     my $totalScaffSize = 0;
     foreach( values %scaffSizes) {
@@ -1384,7 +1394,8 @@ else {
     if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
         $prtStr = "\# "
                 . (localtime)
-                . ": ERROR: file $genome contains a highly fragmented assembly (".scalar(@nScaffs)." scaffolds). This will lead "
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "file $genome contains a highly fragmented assembly (".scalar(@nScaffs)." scaffolds). This will lead "
                 . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
                 . "--cores=$CPU. You must run braker.pl in linear mode on such genomes, though (--cores=1). It is possible that GeneMark-EX might not work on highly fragmented assemblies, too.\n";
         print LOG $prtStr;
@@ -1393,7 +1404,8 @@ else {
     }elsif( (($totalScaffSize / $chunksize) > 30000) && ($CPU > 1) ){
         $prtStr = "\# "
                 . (localtime)
-                . ": ERROR: file $genome contains contains $totalScaffSize bases. "
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "file $genome contains contains $totalScaffSize bases. "
                 . "This will lead "
                 . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
                 . "--cores=$CPU. There is a variable \$chunksize in braker.pl. Default value is currently"
@@ -1426,7 +1438,7 @@ else {
             . ":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
         $cmdString = "ln -s $hintsfile $genemark_hintsfile";
         print LOG "$cmdString\n";
-        system($cmdString) == 0 or die("failed to execute: $cmdString!\n");
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
 
     if ( $skipAllTraining == 0 ) {
@@ -1503,7 +1515,7 @@ else {
                 . ": copy extrinsic file to working directory\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         }
     }
 
@@ -1561,7 +1573,7 @@ else {
 
     clean_up();         # delete all empty files
 
-    close(LOG) or die("Could not close log file $logfile!\n");
+    close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close log file $logfile!\n");
 }
 
 ############### sub functions ##############
@@ -1596,7 +1608,7 @@ sub make_rna_seq_hints {
                     . ": make hints from BAM file $bam[$i]\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("Failed to execute: $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
                 $cmdString = "";
                 if ($nice) {
                     $cmdString .= "nice ";
@@ -1607,7 +1619,7 @@ sub make_rna_seq_hints {
                     . ": add hints from BAM file $bam[$i] to hints file\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("failed to execute: $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
             }
         }
         unlink($bam_temp);
@@ -1633,7 +1645,7 @@ sub make_rna_seq_hints {
                 . ": filter introns, find strand and change score to \'mult\' entry\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("failed to execute: $perlCmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $perlCmdString!\n");
             print LOG "\# " . (localtime) . ": rm $hintsfile_temp\n";
             unlink($hintsfile_temp);
         }
@@ -1641,8 +1653,9 @@ sub make_rna_seq_hints {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: The hints file is empty. Maybe the genome and the ";
-            $prtStr .= "RNA-seq file do not belong together.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The hints file is empty. Maybe the genome and the "
+                . "RNA-seq file do not belong together.\n";
             print LOG $prtStr;
             print STDERR $prtStr;
             exit(1);
@@ -1660,7 +1673,7 @@ sub make_prot_hints {
     $cmdString = "cd $otherfilesDir";
     print LOG "\# " . (localtime) . ": Changing to $otherfilesDir\n";
     print LOG "$cmdString\n";
-    chdir $otherfilesDir or die("Failed to execute $cmdString!\n");
+    chdir $otherfilesDir or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
 
     # from fasta files
     if ( @prot_seq_files && $EPmode == 0 ) {
@@ -1710,7 +1723,7 @@ sub make_prot_hints {
                 $perlCmdString .= ">> $logfile 2>>$errorfile";
                 print LOG "$perlCmdString\n\n";
                 system("$perlCmdString") == 0
-                    or die("failed to execute: $perlCmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $perlCmdString!\n");
                 print LOG "\# "
                     . (localtime)
                     . ": Alignments from file $prot_seq_files[$i] created.\n";
@@ -1722,7 +1735,7 @@ sub make_prot_hints {
                         . ": concatenating alignment file to $alignment_outfile\n";
                     print LOG "$cmdString\n\n";
                     system("$cmdString") == 0
-                        or die("Failed to execute $cmdString!\n");
+                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
                 }
                 else {
                     print LOG "\# " . (localtime) . ": alignment file ";
@@ -1736,15 +1749,15 @@ sub make_prot_hints {
                 $cmdString = "mv startAlign_$prg.log startAlign_$prg.log$i";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
-                    or die("Failed to execute $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
                 $cmdString = "mv tmp_$prg tmp_$prg$i";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
-                    or die("Failed to execute: $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
                 $cmdString = "mv align_$prg align_$prg$i";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
-                    or die("Failed to execute: $cmdString!\n\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n\n");
             }
             else {
                 $prtStr
@@ -1760,12 +1773,11 @@ sub make_prot_hints {
     }
     elsif ( @prot_seq_files && $EPmode == 1 ) {
         $prtStr
-            = "\# " . (localtime) . ": ERROR: Running ProSplign from within ";
-        $prtStr
-            .= "braker.pl is currently not supported. For running braker.pl ";
-        $prtStr
-            .= "with GeneMark-EP, please provide --hints=intronhints.gff file!";
-        $prtStr .= " Aborting braker.pl!\n";
+            = "\# " . (localtime) . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Running ProSplign from within "
+            . "braker.pl is currently not supported. For running braker.pl "
+            . "with GeneMark-EP, please provide --hints=intronhints.gff file!"
+            . " Aborting braker.pl!\n";
         print LOG $prtStr;
         print STDERR $prtStr;
         exit(1);
@@ -1783,12 +1795,11 @@ sub make_prot_hints {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: Conversion of ProSplign alignments within ";
-                $prtStr
-                    .= "braker.pl is currently not supported. To run braker.pl with ";
-                $prtStr
-                    .= "GeneMark-EP, please provide --hints=intronhints.gff! Aborting ";
-                $prtStr .= "braker.pl!\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Conversion of ProSplign alignments within "
+                    . "braker.pl is currently not supported. To run braker.pl with "
+                    . "GeneMark-EP, please provide --hints=intronhints.gff! Aborting "
+                    . "braker.pl!\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -1826,11 +1837,10 @@ sub make_prot_hints {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: Conversion of ProSplign alignments within ";
-        $prtStr
-            .= "braker.pl is currently not supported. To run braker.pl with GeneMark-EP, ";
-        $prtStr
-            .= "please provide --hints=intronhints.gff! Aborting braker.pl!\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Conversion of ProSplign alignments within "
+            . "braker.pl is currently not supported. To run braker.pl with GeneMark-EP, "
+            . "please provide --hints=intronhints.gff! Aborting braker.pl!\n";
         print LOG $prtStr;
         print STDERR $prtStr;
         exit(1);
@@ -1848,7 +1858,7 @@ sub make_prot_hints {
             $cmdString = "mv $prot_hints_file_temp $prot_hintsfile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "Deleting $prot_hints_file_temp\n";
             unlink($prot_hints_file_temp);
             print LOG "\n\# "
@@ -1858,7 +1868,7 @@ sub make_prot_hints {
             $cmdString = "cat $prot_hintsfile >> $hintsfile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "\n\# " . (localtime) . ": Deleting $prot_hintsfile\n";
             unlink($prot_hintsfile);
             my $toBeSortedHintsFile = "$otherfilesDir/hintsfile.tmp.gff";
@@ -1869,7 +1879,7 @@ sub make_prot_hints {
             $cmdString = "mv $hintsfile $toBeSortedHintsFile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "\n\# "
                 . (localtime)
                 . ": Sorting hints file $hintsfile\n";
@@ -1877,7 +1887,7 @@ sub make_prot_hints {
                 = "cat $toBeSortedHintsFile | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 > $hintsfile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "\n\# "
                 . (localtime)
                 . ": Deleting file $toBeSortedHintsFile\n";
@@ -1889,8 +1899,9 @@ sub make_prot_hints {
         $prtStr
             = "\n\# "
             . (localtime)
-            . " ERROR: The hints file is empty. There were no protein ";
-        $prtStr .= "alignments.\n";
+            . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "The hints file is empty. There were no protein "
+            . "alignments.\n";
         print LOG $prtStr;
         print STDERR $prtStr;
         exit(1);
@@ -1905,7 +1916,7 @@ sub make_prot_hints {
                 print LOG "$alignment_outfile\n";
                 print LOG "$cmdString\n";
                 system($cmdString) == 0
-                    or die("Failed to execute: $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             }
         }
         gth2gtf( $alignment_outfile, $gthTrainGeneFile );
@@ -1939,7 +1950,7 @@ sub add_other_hints {
             print LOG "entry\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("failed to execute: $perlCmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $perlCmdString!\n");
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
@@ -1950,7 +1961,7 @@ sub add_other_hints {
                 . ": adding hints from file $filteredHintsFile to $hintsfile\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "\n\# "
                 . (localtime)
                 . ": deleting file $filteredHintsFile\n";
@@ -1963,14 +1974,14 @@ sub add_other_hints {
 # checks which hint types are present in the hintsfile that will be used for running AUGUSTUS
 sub identifyHintTypes {
     open( HINTS, "<", $hintsfile )
-        or die("Could not open hints file $hintsfile!\n");
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open hints file $hintsfile!\n");
     while (<HINTS>) {
         $_ =~ m/src=(\w)/;
         if ( not( defined( $hintTypes{$1} ) ) ) {
             $hintTypes{$1} = 1;
         }
     }
-    close(HINTS) or die("Could not close hints file $hintsfile!\n");
+    close(HINTS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close hints file $hintsfile!\n");
 }
 
 # checks whether hints files contain RNA-Seq or protein hints; if file does contain RNA-Seq, it
@@ -2014,7 +2025,7 @@ sub separateHints {
                 = "grep Intron $hintsfile | grep ProSplign > $genemark_hintsfile";
         }
         print LOG "$cmdString\n\n";
-        system($cmdString) == 0 or die("Failed to execute: $cmdString\n");
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     }
     else {
         print LOG "\n\# "
@@ -2023,7 +2034,7 @@ sub separateHints {
         print LOG "$genemark_hintsfile to $hintsfile\n";
         $cmdString = "ln -s $hintsfile $genemark_hintsfile";
         print LOG "$cmdString\n";
-        system($cmdString) == 0 or die("Failed to execute: $cmdString\n");
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     }
 }
 
@@ -2058,13 +2069,13 @@ sub aln2hints {
         }
         print LOG "$perlCmdString\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
         $cmdString = "cat $out_file_name >> $final_out_file";
         print LOG "\n\# "
             . (localtime)
             . ": concatenating protein hints from $out_file_name to $final_out_file\n";
         print LOG $cmdString . "\n";
-        system("$cmdString") == 0 or die("Failed to execute: $cmdString\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     }
     else {
         print "Alignment file $aln_file was empty!\n";
@@ -2086,7 +2097,7 @@ sub join_mult_hints {
         .= "cat $hints_file_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
     print LOG "\n\# " . (localtime) . ": sort hints of type $type\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString") == 0 or die("Failed to execute: $cmdString!\n");
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     $string = find(
         "join_mult_hints.pl",   $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -2102,7 +2113,7 @@ sub join_mult_hints {
     print LOG "\# " . (localtime) . ": join multiple hints\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString") == 0
-        or die("Failed to execute: $perlCmdString\n");
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
     unlink($hintsfile_temp_sort);
 }
 
@@ -2122,7 +2133,7 @@ sub checkGeneMarkHints {
         . ": Checking whether file $genemark_hintsfile contains ";
     print LOG "sufficient multiplicity information...\n";
     open( GH, "<", $genemark_hintsfile )
-        or die("Could not open file $genemark_hintsfile!\n");
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $genemark_hintsfile!\n");
     while (<GH>) {
         my @line = split(/\t/);
         if ( scalar(@line) == 9 ) {
@@ -2134,23 +2145,19 @@ sub checkGeneMarkHints {
             }
         }
     }
-    close(GH) or die("Could not close file $genemark_hintsfile!\n");
+    close(GH) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genemark_hintsfile!\n");
     if ( $nIntronsAboveThreshold < 1000 ) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: The file $genemark_hintsfile contains less than 1000 ";
-        $prtStr
-            .= "introns with multiplicity >= $GeneMarkIntronThreshold! (In total, $nIntrons unique ";
-        $prtStr
-            .= "introns are contained.) Possibly, you are trying to run braker.pl on data that ";
-        $prtStr
-            .= "does not supply multiplicity information. This will e.g. happen if you try to use ";
-        $prtStr
-            .= "introns generated from assembled RNA-Seq transcripts; or if you try to run ";
-        $prtStr
-            .= "braker.pl in epmode with mappings from proteins without sufficient hits per ";
-        $prtStr .= "locus.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "The file $genemark_hintsfile contains less than 1000 "
+            . "introns with multiplicity >= $GeneMarkIntronThreshold! (In total, $nIntrons unique "
+            . "introns are contained.) Possibly, you are trying to run braker.pl on data that "
+            . "does not supply multiplicity information. This will e.g. happen if you try to use "
+            . "introns generated from assembled RNA-Seq transcripts; or if you try to run "
+            . "braker.pl in epmode with mappings from proteins without sufficient hits per "
+            . "locus.\n";
         print LOG $prtStr;
         print STDERR $prtStr;
         exit(1);
@@ -2173,7 +2180,7 @@ sub GeneMark_ET {
                 . ": changing into GeneMark-ET directory $genemarkDir\n";
             print LOG "$cmdString\n\n";
             chdir $genemarkDir
-                or die("Could not change into directory $genemarkDir.\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $genemarkDir.\n");
             $string        = "$GENEMARK_PATH/gmes_petap.pl";
             $errorfile     = "$errorfilesDir/GeneMark-ET.stderr";
             $stdoutfile    = "$otherfilesDir/GeneMark-ET.stdout";
@@ -2198,14 +2205,14 @@ sub GeneMark_ET {
             print LOG "\# " . (localtime) . ": Running GeneMark-ET\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("Failed to execute: $perlCmdString\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n";
             print LOG "$cmdString\n\n";
             chdir $rootDir
-                or die("Could not change to directory $rootDir.\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $rootDir.\n");
         }
     }
 }
@@ -2225,7 +2232,7 @@ sub GeneMark_EP {
                 . ": changing into GeneMark-EP directory $genemarkDir\n";
             print LOG "$cmdString\n\n";
             chdir $genemarkDir
-                or die("Could not change into directory $genemarkDir.\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $genemarkDir.\n");
             $string        = "$GENEMARK_PATH/gmes_petap.pl";
             $errorfile     = "$errorfilesDir/GeneMark-EP.stderr";
             $stdoutfile    = "$otherfilesDir/GeneMark-EP.stdout";
@@ -2246,14 +2253,14 @@ sub GeneMark_EP {
             print LOG "\# " . (localtime) . ": Running GeneMark-EP\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("Failed to execute: $perlCmdString\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n";
             print LOG "$cmdString\n\n";
             chdir $rootDir
-                or die("Could not change to directory $rootDir.\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $rootDir.\n");
         }
     }
 }
@@ -2297,7 +2304,7 @@ sub filterGeneMark {
         }
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
     }
 }
 
@@ -2335,14 +2342,15 @@ sub new_species {
                 print LOG "$perlCmdString\n\n";
                 system("$perlCmdString") == 0
                     or die(
-                    "Failed to create new species with new_species.pl, check write permissions in $AUGUSTUS_CONFIG_PATH/species directory! Command was $perlCmdString\n"
+                    "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create new species with new_species.pl, check write permissions in $AUGUSTUS_CONFIG_PATH/species directory! Command was $perlCmdString\n"
                     );
             }
             else {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: Directory $AUGUSTUS_CONFIG_PATH/species is not writable! You must make the directory AUGUSTUS_CONFIG_PATH/species writable or specify another AUGUSTUS_CONFIG_PATH!\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Directory $AUGUSTUS_CONFIG_PATH/species is not writable! You must make the directory AUGUSTUS_CONFIG_PATH/species writable or specify another AUGUSTUS_CONFIG_PATH!\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -2352,7 +2360,8 @@ sub new_species {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Directory $AUGUSTUS_CONFIG_PATH/species does not exist. Please check that AUGUSTUS_CONFIG_PATH is set, correctly!\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Directory $AUGUSTUS_CONFIG_PATH/species does not exist. Please check that AUGUSTUS_CONFIG_PATH is set, correctly!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
             exit(1);
@@ -2379,7 +2388,7 @@ sub extrinsic {
             . (localtime)
             . " ERROR: Cannot find extrinsic template file extrinsic.M.RM.E.W.P.cfg in BRAKER2 directory or $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg.\n";
         die
-            "Cannot find extrinsic template file extrinsic.M.RM.E.W.P.cfg in BRAKER2 directory or $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg.\n";
+            "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot find extrinsic template file extrinsic.M.RM.E.W.P.cfg in BRAKER2 directory or $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg.\n";
     }
     my $extrinsic_cp
         = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
@@ -2399,9 +2408,9 @@ sub extrinsic {
 # number of bonus per source, etc.
             print LOG "\# " . (localtime) . ": create extrinsic file\n";
             open( EXTRINSIC, "<", $extrinsic )
-                or die("Cannot open file: $extrinsic!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $extrinsic!\n");
             open( OUT, ">", $extrinsic_cp )
-                or die("Cannot open file: $extrinsic_cp!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $extrinsic_cp!\n");
             my $GENERAL     = "false";
             my $bonus_idx   = $standard;    # 0 => 1e1  (currently standard)
             my $malus_idx   = $standard;    # 0 => 0.1  (currently standard)
@@ -2432,7 +2441,8 @@ sub extrinsic {
                             $prtStr
                                 = "\# "
                                 . (localtime)
-                                . " ERROR: Hints file contains hints from type $key. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
+                                . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                                . "Hints file contains hints from type $key. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
                             print LOG $prtStr;
                             print STDERR $prtStr;
                             exit(1);
@@ -2462,7 +2472,8 @@ sub extrinsic {
                             $prtStr
                                 = "\# "
                                 . (localtime)
-                                . " ERROR: In extrinsic template file $extrinsic, column 4 does not contain M, and/or column 7 does not contain RM, and/or column 11 does not contain E and/or column 13 does not contain W and/or column 16 does not contain P. Aborting braker! (line without local malus)\n";
+                                . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                                . "In extrinsic template file $extrinsic, column 4 does not contain M, and/or column 7 does not contain RM, and/or column 11 does not contain E and/or column 13 does not contain W and/or column 16 does not contain P. Aborting braker! (line without local malus)\n";
                             print LOG $prtStr;
                             print STDERR $prtStr;
                             exit(1);
@@ -2479,7 +2490,8 @@ sub extrinsic {
                             $prtStr
                                 = "\# "
                                 . (localtime)
-                                . " ERROR:In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 111 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line with local malus)\n";
+                                . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                                . "In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 111 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line with local malus)\n";
                             print LOG $prtStr;
                             print STDERR $prtStr;
                             exit(1);
@@ -2784,9 +2796,9 @@ sub extrinsic {
                 }
             }
             close(OUT)
-                or die("Could not close extrinsic file $extrinsic_cp!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close extrinsic file $extrinsic_cp!\n");
             close(EXTRINSIC)
-                or die("Could not close extrinsic file $extrinsic!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close extrinsic file $extrinsic!\n");
             $extrinsicCfgFile = $extrinsic_cp;
         }
         else {
@@ -2842,7 +2854,7 @@ sub training {
             $cmdString = "ln -s $gmGtf $trainGenesGtf";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $trainFromGth ) {
             # create softlinke from gth.gtf to traingenes.gtf
              # make gth gb final
@@ -2852,7 +2864,7 @@ sub training {
             $cmdString = "ln -s $gthGtf $trainGenesGtf";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $gth2traingenes and not ($trainFromGth) ) {
             # merge gth and gm gtf files
             combine_gm_and_gth_gtf ( $gmGtf, "$otherfilesDir/protein_alignment_$prg.gff3", $gthGtf, "$trainGenesGtf");
@@ -2860,7 +2872,8 @@ sub training {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: unknown training gene generation scenario!\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "unknown training gene generation scenario!\n";
             print STDERR $prtStr;
             print LOG $prtStr;
             exit(1);
@@ -2878,19 +2891,19 @@ sub training {
             $cmdString = "cat $genemarkDir/genemark.f.good.gtf > $goodLstFile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         }
         if ( $gth2traingenes ) {
             # get all remaining gth genes
-            open (GOODLST, ">>", $goodLstFile) or die ( "Could not open file $goodLstFile!\n" );
-            open ( GTHGOOD, "<", $trainGenesGtf ) or die ( "Could not open file $trainGenesGtf!\n" );
+            open (GOODLST, ">>", $goodLstFile) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $goodLstFile!\n" );
+            open ( GTHGOOD, "<", $trainGenesGtf ) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGenesGtf!\n" );
             while ( <GTHGOOD> ) {
                 if ( $_ =~ m/\tgth2h\t/ ) {
                     print GOODLST $_;
                 }
             }
-           close ( GTHGOOD ) or die ( "Could not close file $trainGenesGtf!\n" );
-           close (GOODLST) or die ( "Could not close file $goodLstFile!\n" );
+           close ( GTHGOOD ) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $trainGenesGtf!\n" );
+           close (GOODLST) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $goodLstFile!\n" );
         }
 
 
@@ -2911,7 +2924,7 @@ sub training {
             . ": Filtering train.gb for \"good\" mRNAs:\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
         # filter out genes that lead to etraining errors
         $augpath    = "$AUGUSTUS_BIN_PATH/etraining";
@@ -2929,19 +2942,19 @@ sub training {
             . ": Running etraining to catch gene structure inconsistencies:\n";
         print LOG "$cmdString\n\n";
         system("$cmdString") == 0
-            or die("Failed to execute: $cmdString\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
         open( ERRS, "<", $errorfile )
-            or die("Could not open file $errorfile!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $errorfile!\n");
         open( BADS, ">", "$otherfilesDir/etrain.bad.lst" )
-            or die("Could not open file $otherfilesDir/etrain.bad.lst!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/etrain.bad.lst!\n");
         while (<ERRS>) {
             if (m/n sequence (\S+):.*/) {
                 print BADS "$1\n";
             }
         }
         close(BADS)
-            or die("Could not close file $otherfilesDir/etrain.bad.lst!\n");
-        close(ERRS) or die("Could not close file $errorfile!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/etrain.bad.lst!\n");
+        close(ERRS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $errorfile!\n");
         $string = find(
             "filterGenes.pl",       $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -2958,10 +2971,10 @@ sub training {
             . ": Filtering $trainGb2 file to remove inconsistent gehe structures:\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
         # find those training genes in gtf that are still in gb
-        open (TRAINGB3, "<", $trainGb3) or die ( "Could not open file $trainGb3!\n" );
+        open (TRAINGB3, "<", $trainGb3) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGb3!\n" );
         my %txInGb3;
         my $txLocus;;
         while( <TRAINGB3> ) {
@@ -2971,10 +2984,10 @@ sub training {
                 $txInGb3{$1} = $txLocus;
             }
         }
-        close (TRAINGB3) or die ( "Could not close file $trainGb3!\n" );
+        close (TRAINGB3) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $trainGb3!\n" );
         # filter in those genes that are good
-        open (GTF, "<", $trainGenesGtf) or die ("Could not open file $trainGenesGtf!\n");
-        open (GOODGTF, ">", "$otherfilesDir/traingenes.good.gtf") or die ("Could not open file $otherfilesDir/traingenes.good.gtf!\n");
+        open (GTF, "<", $trainGenesGtf) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGenesGtf!\n");
+        open (GOODGTF, ">", "$otherfilesDir/traingenes.good.gtf") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/traingenes.good.gtf!\n");
         while(<GTF>){
             if($_ =~ m/transcript_id \"(\S+)\"/){
                 if(defined($txInGb3{$1})){
@@ -2982,8 +2995,8 @@ sub training {
                 }
             }
         }
-        close(GOODGTF) or die ("Could not close file $otherfilesDir/traingenes.good.gtf!\n");
-        close(GTF) or die ("Could not close file $trainGenesGtf!\n");
+        close(GOODGTF) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/traingenes.good.gtf!\n");
+        close(GTF) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $trainGenesGtf!\n");
 
         # convert those training genes to protein fasta file
         gtf2fasta ($genome, "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/traingenes.good.fa");
@@ -3006,21 +3019,21 @@ sub training {
             . ": BLAST training gene structures against themselves:\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
         # parse output of blast
         my %nonRed;
-        open (BLASTOUT, "<", "$otherfilesDir/traingenes.good.nr.fa") or die ( "Could not open file $otherfilesDir/traingenes.good.nr.fa!\n" );
+        open (BLASTOUT, "<", "$otherfilesDir/traingenes.good.nr.fa") or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/traingenes.good.nr.fa!\n" );
         while ( <BLASTOUT> ) {
             $_ =~ s/>//;
             $nonRed{$_} = 1;
         }
-        close (BLASTOUT) or die ( "Could not close file $otherfilesDir/traingenes.good.nr.fa!\n" );
-        open ( NONREDLOCI, ">", "$otherfilesDir/nonred.loci.lst") or die ( "Could not open file $otherfilesDir/nonred.loci.lst!\n");
+        close (BLASTOUT) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/traingenes.good.nr.fa!\n" );
+        open ( NONREDLOCI, ">", "$otherfilesDir/nonred.loci.lst") or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/nonred.loci.lst!\n");
         foreach ( keys %nonRed ) {
             print NONREDLOCI $txInGb3{$_}."\n";
         }
-        close (NONREDLOCI) or die ( "Could not close file $otherfilesDir/nonred.loci.lst!\n");
+        close (NONREDLOCI) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/nonred.loci.lst!\n");
 
         # filter trainGb3 file for nonredundant loci
         $string = find(
@@ -3039,14 +3052,14 @@ sub training {
             . ": Filtering nonredundant loci into $trainGb4:\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
         # making trainGb4 the trainGb file
         $cmdString = "mv $trainGb4 $trainGb1";
         print LOG "\# "
             . (localtime)
             . ": Moving $trainGb4 to $trainGb1:\n";
         print LOG "$cmdString\n";
-        system ("$cmdString") == 0 or die ("Failed to execute: $cmdString!\n");
+        system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
 
 
         # split into training and test set
@@ -3084,7 +3097,8 @@ sub training {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . " ERROR: Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
+                    . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -3099,7 +3113,7 @@ sub training {
                     .= "perl $string $otherfilesDir/train.gb $testsize 2>$errorfile";
                 print LOG "$perlCmdString\n\n";
                 system("$perlCmdString") == 0
-                    or die("Failed to execute: $perlCmdString\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             }
         }
 
@@ -3151,7 +3165,7 @@ sub training {
             print LOG "\# " . (localtime) . ": first etraining\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-                or die("Failed to execute $cmdString\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
 
 # set "stopCodonExcludedFromCDS" to false and run etraining again if necessary
             my $t_b_t = $gb_good_size - $testsize;
@@ -3194,7 +3208,7 @@ sub training {
                     . ": Trying etraining again\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("Failed to execute $cmdString\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
             }
 
 # adjust the stop-codon frequency in species_parameters.cfg according to train.out
@@ -3205,7 +3219,7 @@ sub training {
             my $freqOfTaa;
             my $freqOfTga;
             open( TRAIN, "$stdoutfile" )
-                or die("Can not open file $stdoutfile!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCan not open file $stdoutfile!\n");
             while (<TRAIN>) {
                 if (/tag:\s*.*\((.*)\)/) {
                     $freqOfTag = $1;
@@ -3217,7 +3231,7 @@ sub training {
                     $freqOfTga = $1;
                 }
             }
-            close(TRAIN) or die("Could not close gff file $stdoutfile!\n");
+            close(TRAIN) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close gff file $stdoutfile!\n");
             print LOG "\# "
                 . (localtime)
                 . ": Setting frequency of stop codons to tag=$freqOfTag, taa=$freqOfTaa, tga=$freqOfTga.\n";
@@ -3282,7 +3296,7 @@ sub training {
                 . ": First AUGUSTUS accuracy test\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             $target_1 = accuracy_calculator($stdoutfile);
             print LOG "\# "
                 . (localtime)
@@ -3355,7 +3369,7 @@ sub training {
                     . ": optimizing AUGUSTUS parameters\n";
                 print LOG "$perlCmdString\n\n";
                 system("$perlCmdString") == 0
-                    or die("Failed to execute: $perlCmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
                 print LOG "\# "
                     . (localtime)
                     . ":  parameter optimization finished.\n";
@@ -3397,7 +3411,7 @@ sub training {
             print LOG "\# " . (localtime) . ": Second etraining\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         }
 
         # second test
@@ -3444,7 +3458,7 @@ sub training {
                 . ": Second AUGUSTUS accuracy test\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-                or die("Failed to execute: $cmdString\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
             $target_2 = accuracy_calculator($stdoutfile);
             print LOG
                 "\# The accuracy after training (after optimize_augustus.pl, no CRF) is $target_2\n";
@@ -3490,7 +3504,7 @@ sub training {
                 . ": Third etraining - now with CRF\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-                or die("failed to execute: $cmdString\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString\n");
             print LOG "\# "
                 . (localtime)
                 . ": etraining with CRF finished.\n";
@@ -3533,7 +3547,7 @@ sub training {
                     . ": Third AUGUSTUS accuracy test\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("Failed to execute: $cmdString\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
                 $target_3 = accuracy_calculator($stdoutfile);
                 print LOG "\# The accuracy after CRF training is $target_2\n";
             }
@@ -3566,7 +3580,7 @@ sub training {
                     . ".CRF";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
-                    or die("failed to execute: $cmdString\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString\n");
             }
 
 # if the accuracy doesn't improve with CRF, overwrite the config files with the HMM parameters from last etraining
@@ -3585,13 +3599,13 @@ sub training {
                         = "rm $AUGUSTUS_CONFIG_PATH/species/$species/$_";
                     print LOG "$cmdString\n";
                     system("$cmdString") == 0
-                        or die("Failed to execute: $cmdString\n");
+                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
                     print LOG "$cmdString\n";
                     $cmdString
                         = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_"
                         . ".HMM $AUGUSTUS_CONFIG_PATH/species/$species/$_";
                     system("$cmdString") == 0
-                        or die("Failed to execute: $cmdString\n");
+                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
                 }
             }
         }
@@ -3609,7 +3623,7 @@ sub training {
             . (localtime)
             . ": Copying optimized parameters to working directory $parameterDir\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString") == 0 or die("Failed to execute: $cmdString!\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
 }
 
@@ -3670,14 +3684,14 @@ sub augustus {
                 .= "perl $string $genome --outputpath=$augustus_dir 2>$errorfile";
             print LOG "$perlCmdString\n";
             system("$perlCmdString") == 0
-                or die("Failed to execute: $perlCmdString\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
             # rename files according to scaffold name
             $cmdString
                 = "cd $augustus_dir; for f in genome.split.*; do NAME=`grep \">\" \$f`; mv \$f \${NAME#>}.fa; done; cd ..";
             print LOG $cmdString . "\n";
             system("$cmdString") == 0
-                or die("Failed to execute: $cmdString\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
             my @genome_files = `ls $augustus_dir`;
             my %scaffFileNames;
             foreach (@genome_files) {
@@ -3694,28 +3708,28 @@ sub augustus {
                 . (localtime)
                 . ": creating $otherfilesDir/aug_hints.lst for AUGUSTUS jobs\n";
             open( ALIST, ">", "$otherfilesDir/aug_hints.lst" )
-                or die("Could not open file $otherfilesDir/aug_hints.lst!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/aug_hints.lst!\n");
             # make list for creating augustus jobs
             while ( my ( $locus, $size ) = each %scaffSizes ) {
                 print ALIST "$scaffFileNames{$locus}\t$hintsfile\t1\t$size\n";
             }
             close(ALIST)
                 or
-                die("Could not close file $otherfilesDir/aug_hints.lst!\n");
+                die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/aug_hints.lst!\n");
             if ($ab_initio) {
                 print LOG "\# "
                     . (localtime)
                     . ": creating $otherfilesDir/aug_ab_initio.lst for AUGUSTUS jobs\n";
                 open( ILIST, ">", "$otherfilesDir/aug_ab_initio.lst" )
                     or die(
-                    "Could not open file $otherfilesDir/aug_ab_initio.lst!\n"
+                    "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/aug_ab_initio.lst!\n"
                     );
                 while ( my ( $locus, $size ) = each %scaffSizes ) {
                     print ILIST "$scaffFileNames{$locus}\t1\t$size\n";
                 }
                 close(ILIST)
                     or die(
-                    "Could not close file $otherfilesDir/aug_ab_initio.lst!\n"
+                    "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/aug_ab_initio.lst!\n"
                     );
             }
 
@@ -3748,7 +3762,7 @@ sub augustus {
             $perlCmdString .= "cd ..";
             print LOG "$perlCmdString\n";
             system("$perlCmdString") == 0
-                or die("Failed to execute: $perlCmdString\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             if ($ab_initio) {
                 print LOG "\# "
                     . (localtime)
@@ -3774,7 +3788,7 @@ sub augustus {
                 $perlCmdString .= "cd ..";
                 print LOG "$perlCmdString\n";
                 system("$perlCmdString") == 0
-                    or die("Failed to execute: $perlCmdString\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             }
         }
         else {
@@ -3785,14 +3799,14 @@ sub augustus {
             $pm = new Parallel::ForkManager($CPU);
             if ($ab_initio) {
                 open( AIJOBS, "<", "$otherfilesDir/ab_initio.job.lst" )
-                    or die("Could not open file $otherfilesDir/ab_initio.job.lst!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/ab_initio.job.lst!\n");
                 my @aiJobs;
                 while (<AIJOBS>) {
                     chomp;
                     push @aiJobs, "$otherfilesDir/$_";
                 }
                 close(AIJOBS)
-                    or die("Could not close file $otherfilesDir/ab_initio.job.lst!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/ab_initio.job.lst!\n");
                 foreach(@aiJobs){
                     $cInitJobs++;
                     print LOG "\# "
@@ -3803,20 +3817,20 @@ sub augustus {
                     print LOG "$cmdString\n";
                     my $pid = $pm->start and next;
                     system("$cmdString") == 0
-                        or die("Failed to execute: $cmdString!\n");
+                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
                     $pm->finish;
                 }
                 $pm->wait_all_children;
 
             }
             open( HIJOBS, "<", "$otherfilesDir/hints.job.lst" )
-                or die("Could not open file $otherfilesDir/hints.job.lst!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/hints.job.lst!\n");
             my @hintJobs;
             while(<HIJOBS>){
                 chomp;
                 push @hintJobs, "$otherfilesDir/$_";
             }
-            close(HIJOBS) or die("Could not close file $otherfilesDir/hints.job.lst!\n");
+            close(HIJOBS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/hints.job.lst!\n");
             $pm2 = new Parallel::ForkManager($CPU);
             foreach(@hintJobs){
                 $cHintJobs++;
@@ -3828,7 +3842,7 @@ sub augustus {
                 print LOG "$cmdString\n";
                 my $pid = $pm2->start and next;
                 system("$cmdString") == 0
-                    or die("Failed to execute: $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
                 $pm2->finish;
             }
             $pm2->wait_all_children;
@@ -3855,7 +3869,7 @@ sub augustus {
                     . ": Running AUGUSTUS in ab initio mode for file $genome\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("Failed to execute: $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             }
             $aug_hints_err = "$errorfilesDir/augustus.hints.stderr";
             $aug_hints_out = "$otherfilesDir/augustus.hints.gff";
@@ -3880,7 +3894,7 @@ sub augustus {
                 . ": Running AUGUSTUS with hints for file $genome\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         }
 
         print LOG "\# " . (localtime) . ": AUGUSTUS prediction complete\n";
@@ -3918,7 +3932,7 @@ sub getAnnoFasta {
         . ": Making a fasta file with protein sequences of $AUG_pred\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString") == 0
-        or die("Failed to execute: $perlCmdString\n");
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 }
 
 # make gtf file
@@ -3940,7 +3954,7 @@ sub make_gtf {
         .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
     print LOG "\# " . (localtime) . ": Making a gtf file from $AUG_pred\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString") == 0 or die("Failed to execute: $cmdString\n");
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     if ($gff3) {
         my $gff3_file  = substr( $AUG_pred, 0, -4 ) . ".gff3";
         my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
@@ -3958,7 +3972,7 @@ sub make_gtf {
             . (localtime)
             . ": Making a gff3 file from $AUG_pred\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString") == 0 or die("Failed to execute: $cmdString\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     }
 }
 
@@ -3984,7 +3998,7 @@ sub clean_up {
     }
     # deleting files from AUGUSTUS parallelization
     print LOG "\# " . (localtime) . ": deleting files from AUGUSTUS parallelization\n";
-    opendir( DIR, $otherfilesDir ) or die $!;
+    opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $otherfilesDir!\n");
     while ( my $file = readdir(DIR) ) {
         if( ( $file =~ m/aug_ab_initio_/ ) || ( $file =~ m/aug_hints_/ ) || ( $file =~ m/\.lst/ ) ){
             print LOG "rm $file\n";
@@ -4005,7 +4019,12 @@ sub check_upfront {
     my @module_list = (
         "YAML",           "Hash::Merge",
         "Logger::Simple", "Parallel::ForkManager",
-        "Scalar::Util::Numeric"
+        "Scalar::Util::Numeric", "Getopt::Long",
+        "File::Compare", "File::Path", "Module::Load::Conditional",
+        "Scalar::Util::Numeric", "POSIX", "List::Util",
+        "FindBin", "File::Which", "Cwd", "File::Spec::Functions",
+        "File::Basename", "File::Copy", "Term::ANSIColor",
+        "strict", "warnings"
     );
 
     foreach my $module (@module_list) {
@@ -4014,7 +4033,8 @@ sub check_upfront {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Perl module '$module' is required but not installed yet.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Perl module '$module' is required but not installed yet.\n";
             print LOG $prtStr;
             print STDERR $prtStr;
         }
@@ -4027,7 +4047,8 @@ sub check_upfront {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: augustus executable not found at $augpath.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "augustus executable not found at $augpath.\n";
             print LOG $prtStr;
             print STDERR $prtStr;
         }
@@ -4035,7 +4056,8 @@ sub check_upfront {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: $augpath not executable on this machine.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "$augpath not executable on this machine.\n";
             print LOG $prtStr;
             print STDERR $prtStr;
         }
@@ -4047,7 +4069,8 @@ sub check_upfront {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: bamtools not installed. Please install it first.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "bamtools not installed. Please install it first.\n";
         print LOG $prtStr;
         print STDERR $prtStr;
         exit(1);
@@ -4061,7 +4084,8 @@ sub check_upfront {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: etraining executable not found at $etrainpath.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "etraining executable not found at $etrainpath.\n";
             print LOG $prtStr;
             print STDERR $prtStr;
         }
@@ -4069,7 +4093,8 @@ sub check_upfront {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: $etrainpath not executable on this machine.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "$etrainpath not executable on this machine.\n";
             print LOG $prtStr;
             print STDERR $prtStr;
         }
@@ -4085,7 +4110,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: bam2wig executable not found at $bam2wigPath.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "bam2wig executable not found at $bam2wigPath.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
             }
@@ -4093,7 +4119,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: $bam2wigPath not executable on this machine.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "$bam2wigPath not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
             }
@@ -4115,7 +4142,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: rnaseq2utr executable not found at $rnaseq2utrPath.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "rnaseq2utr executable not found at $rnaseq2utrPath.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
             }
@@ -4123,7 +4151,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: $rnaseq2utrPath not executable on this machine.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "$rnaseq2utrPath not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
             }
@@ -4144,7 +4173,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: GenomeThreader executable not found at $prot_aligner.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "GenomeThreader executable not found at $prot_aligner.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -4153,7 +4183,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: $prot_aligner not executable on this machine.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "$prot_aligner not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -4165,7 +4196,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: Spaln executable not found at $prot_aligner.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Spaln executable not found at $prot_aligner.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -4174,7 +4206,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: $prot_aligner not executable on this machine.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "$prot_aligner not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -4186,7 +4219,8 @@ sub check_upfront {
                     $prtStr
                         = "\# "
                         . (localtime)
-                        . ": ERROR: The environment variable ALN_DBS for spaln is not defined. Please export an environment variable with:' export ALN_DBS=/path/to/spaln/seqdb'\n";
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "The environment variable ALN_DBS for spaln is not defined. Please export an environment variable with:' export ALN_DBS=/path/to/spaln/seqdb'\n";
                     print LOG $prtStr;
                     print STDERR $prtStr;
                 }
@@ -4194,7 +4228,8 @@ sub check_upfront {
                     $prtStr
                         = "\# "
                         . (localtime)
-                        . ": ERROR: The environment variable ALN_TAB for spaln is not defined. Please export an environment variable with:' export ALN_TAB=/path/to/spaln/table'\n";
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "The environment variable ALN_TAB for spaln is not defined. Please export an environment variable with:' export ALN_TAB=/path/to/spaln/table'\n";
                     print LOG $prtStr;
                     print STDERR $prtStr;
                 }
@@ -4207,7 +4242,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: Exonerate executable not found at $prot_aligner.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Exonerate executable not found at $prot_aligner.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -4216,7 +4252,8 @@ sub check_upfront {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": ERROR: $prot_aligner not executable on this machine.\n";
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "$prot_aligner not executable on this machine.\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
                 exit(1);
@@ -4316,7 +4353,7 @@ sub check_gff {
         . ": Checking if input file $gfffile is in gff format\n";
     print STDOUT $prtStr;
     $logString .= $prtStr;
-    open( GFF, $gfffile ) or die "Cannot open file: $gfffile\n";
+    open( GFF, $gfffile ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $gfffile\n";
     my $nIntrons            = 0;
     my $printedAllowedHints = 0;
     my %foundFeatures;
@@ -4327,10 +4364,11 @@ sub check_gff {
             $prtStr
                 = "\# "
                 . (localtime)
-                . " ERROR: File $gfffile is not in gff format!\n";
+                . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "File $gfffile is not in gff format!\n";
             print STDERR $prtStr;
             $logString .= $prtStr;
-            close(GFF) or die("Could not close gff file $gfffile!\n");
+            close(GFF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close gff file $gfffile!\n");
             exit(1);
         }
         else {
@@ -4345,10 +4383,11 @@ sub check_gff {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . " ERROR:File $gfffile is not in gff format!\n";
+                    . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "File $gfffile is not in gff format!\n";
                 print STDERR $prtStr;
                 $logString .= $prtStr;
-                close(GFF) or die("Could not close gff file $gfffile!\n");
+                close(GFF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close gff file $gfffile!\n");
                 exit(1);
             }
         }
@@ -4393,13 +4432,14 @@ sub check_gff {
             }
         }
     }
-    close(GFF) or die("Could not close gff file $gfffile!\n");
+    close(GFF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close gff file $gfffile!\n");
     if ( !@bam ) {
         if ( $nIntrons < 1000 ) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . " ERROR: Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
+                . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
             print STDERR $prtStr;
             $logString .= $prtStr;
             exit(1);
@@ -4415,7 +4455,8 @@ sub check_options {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: \"$alternatives_from_evidence\" is not a valid option for --alternatives-from-evidence. Please use either 'true' or 'false'.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "\"$alternatives_from_evidence\" is not a valid option for --alternatives-from-evidence. Please use either 'true' or 'false'.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         exit(1);
@@ -4425,7 +4466,8 @@ sub check_options {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: \"$UTR\" is not a valid option for --UTR. Please use either 'on' or 'off'.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "\"$UTR\" is not a valid option for --UTR. Please use either 'on' or 'off'.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         exit(1);
@@ -4437,7 +4479,8 @@ sub check_options {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: --UTR=on has been set but --softmasking has not been enabled. A softmasked genome file and the option --softmasking and a bam file must be provided in order to run --UTR=on.\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "--UTR=on has been set but --softmasking has not been enabled. A softmasked genome file and the option --softmasking and a bam file must be provided in order to run --UTR=on.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         exit(1);
@@ -4481,11 +4524,11 @@ sub check_fasta_headers {
     {
         print LOG "\# " . (localtime) . ": Checking fasta headers\n";
         open( FASTA, "<", $fastaFile )
-            or die("Could not open fasta file $fastaFile!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open fasta file $fastaFile!\n");
         open( OUTPUT, ">", "$otherfilesDir/genome.fa" )
-            or die("Could not open fasta file $otherfilesDir/genome.fa!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open fasta file $otherfilesDir/genome.fa!\n");
         open( MAP, ">", $mapFile )
-            or die("Could not open map file $mapFile.\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open map file $mapFile.\n");
         while (<FASTA>) {
 
             # check newline character
@@ -4575,11 +4618,11 @@ sub check_fasta_headers {
                 }
             }
         }
-        close(FASTA) or die("Could not close fasta file $fastaFile!\n");
+        close(FASTA) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close fasta file $fastaFile!\n");
         close(OUTPUT)
             or die(
-            "Could not close output fasta file $otherfilesDir/genome.fa!\n");
-        close(MAP) or die("Could not close map file $mapFile!\n");
+            "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close output fasta file $otherfilesDir/genome.fa!\n");
+        close(MAP) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close map file $mapFile!\n");
     }
     $genome = "$otherfilesDir/genome.fa";
 }
@@ -4612,13 +4655,13 @@ sub check_bam_headers {
             . (localtime)
             . ": create header file $samHeaderFile\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString") == 0 or die("Failed to execute: $cmdString!\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         open( SAM, "<", $samHeaderFile )
-            or die("Could not open SAM file $samHeaderFile!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open SAM file $samHeaderFile!\n");
         open( OUTPUT, ">", "$samHeaderFile_new" )
-            or die("Could not open SAM file $samHeaderFile_new!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open SAM file $samHeaderFile_new!\n");
         open( MAP, ">", $mapFile )
-            or die("Could not open map file $mapFile.\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open map file $mapFile.\n");
 
         while (<SAM>) {
             chomp;
@@ -4678,10 +4721,10 @@ sub check_bam_headers {
                 print OUTPUT "$_\n";
             }
         }
-        close(SAM) or die("Could not close header file $samHeaderFile!\n");
+        close(SAM) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close header file $samHeaderFile!\n");
         close(OUTPUT)
-            or die("Could not close output SAM file $samHeaderFile_new!\n");
-        close(MAP) or die("Could not close map file $mapFile!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close output SAM file $samHeaderFile_new!\n");
+        close(MAP) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close map file $mapFile!\n");
         print LOG "\# "
             . (localtime)
             . ": Deleting SAM header file $samHeaderFile (will not be needed from here on)\n";
@@ -4692,25 +4735,24 @@ sub check_bam_headers {
         {
             # no samtools installed. stop here
             if ( system("which samtools > /dev/null") != 0 ) {
-                print LOG "\# "
+                $prtStr = "\# "
                     . (localtime)
-                    . " ERROR: BAM file $bamFile contains spaces, \"|\" or some other kind of special characters.\n";
-                print LOG
-                    "'samtools' not installed. BAM file cannot be fixed automatically.\n";
-                print STDERR
-                    "BAM file $bamFile contains spaces, \"|\" or some other kind of special characters.\n";
+                    . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "BAM file $bamFile contains spaces, \"|\" or some other kind of special characters.\n"
+                    . "'samtools' not installed. BAM file cannot be fixed automatically.\n";
+                print LOG $prtStr;
+                print STDERR $prtStr;
                 exit(1);
 
                 # samtools installed. try to correct BAM file
             }
             else {
-                if ( !$ENV{'SAMTOOLS_PATH'} && !defined($SAMTOOLS_PATH_OP) ) {
-                    print LOG "\# "
+                if ( not ( defined ($SAMTOOLS_PATH) ) ) {
+                    $prtStr = "\# "
                         . (localtime)
-                        . " WARNING: The environment variable SAMTOOLS_PATH is not defined. Please export an environment variable for samtools or use --SAMTOOLS_PATH=path/to/samtools.\n";
-                    print LOG
-                        "The program will try to use 'samtools' to start samtools, which may not work on your system.\n";
-                    $SAMTOOLS_PATH = "samtools";
+                        . " WARNING: The environment variable SAMTOOLS_PATH is not defined. Please export an environment variable for samtools or use --SAMTOOLS_PATH=path/to/samtools.\n"
+                        . "The program will try to use '/usr/bin/samtools' to start samtools, which may not work on your system.\n";
+                    $SAMTOOLS_PATH = "/usr/bin";
                 }
                 my $samFile     = "$otherfilesDir/" . $_[0] . ".sam";
                 my $samFile_new = "$otherfilesDir/" . $_[0] . "_new.sam";
@@ -4718,17 +4760,17 @@ sub check_bam_headers {
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString .= "$SAMTOOLS_PATH view $bamFile > $samFile";
+                $cmdString .= "$SAMTOOLS_PATH/samtools view $bamFile > $samFile";
                 print LOG "\# "
                     . (localtime)
                     . ": convert BAM to SAM file $samFile\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("failed to execute: $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
                 open( SAM, "<", $samFile )
-                    or die("Could not open SAM file $samFile!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open SAM file $samFile!\n");
                 open( OUTPUT, ">", "$samFile_new" )
-                    or die("Could not open SAM file $samFile_new!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open SAM file $samFile_new!\n");
                 while (<SAM>) {
                     chomp;
                     my @line = split( /\t/, $_ );
@@ -4740,9 +4782,9 @@ sub check_bam_headers {
                         print OUTPUT join( "\t", @line ) . "\n";
                     }
                 }
-                close(SAM) or die("Could not close SAM file $samFile!\n");
+                close(SAM) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close SAM file $samFile!\n");
                 close(OUTPUT)
-                    or die("Could not close output SAM file $samFile_new!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close output SAM file $samFile_new!\n");
                 $cmdString = "";
                 if ($nice) {
                     $cmdString .= "nice ";
@@ -4754,7 +4796,7 @@ sub check_bam_headers {
                     . ": concatenate new header and SAM file\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("failed to execute: $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
                 print LOG "\# " . (localtime) . ": Deleting $samFile_new\n";
                 unlink($samFile_new);
 
@@ -4763,14 +4805,14 @@ sub check_bam_headers {
                     $cmdString .= "nice ";
                 }
                 $cmdString
-                    = "$SAMTOOLS_PATH view -bSh $samFile > $otherfilesDir/"
+                    = "$SAMTOOLS_PATH/samtools view -bSh $samFile > $otherfilesDir/"
                     . $_[0] . ".bam";
                 print LOG "\# "
                     . (localtime)
                     . ": Converting new SAM file to BAM format\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("failed to execute: $cmdString!\n");
+                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
                 print LOG "\# " . (localtime) . ": Deleting $samFile\n";
                 unlink($samFile);
                 $bamFile = "$otherfilesDir/" . $_[0] . ".bam";
@@ -4786,7 +4828,7 @@ sub check_bam_headers {
 sub accuracy_calculator {
     my $aug_out = shift;
     my ( $nu_sen, $nu_sp, $ex_sen, $ex_sp, $gen_sen, $gen_sp );
-    open( AUGOUT, "$aug_out" ) or die("Could not open $aug_out!\n");
+    open( AUGOUT, "$aug_out" ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open $aug_out!\n");
     while (<AUGOUT>) {
         if (/^nucleotide level\s*\|\s*(\S+)\s*\|\s*(\S+)/) {
             $nu_sen = $1;
@@ -4814,8 +4856,8 @@ sub accuracy_calculator {
 sub gth2gtf {
     my $align = shift;
     my $out   = shift;    # writes to $gthTrainGeneFile
-    open( GTH,    "<", $align ) or die("Could not open file $align!\n");
-    open( GTHGTF, ">", $out )   or die("Could not open file $out!\n");
+    open( GTH,    "<", $align ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $align!\n");
+    open( GTHGTF, ">", $out )   or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $out!\n");
     my $geneId;
 
 # GTH may output alternative transcripts; we don't want to have any alternatives in training gene set, only print the first of any occuring alternatives
@@ -4851,15 +4893,15 @@ sub gth2gtf {
             }
         }
     }
-    close(GTHGTF) or die("Could not close file $out!\n");
-    close(GTH)    or die("Could not close file $align!\n");
+    close(GTHGTF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $out!\n");
+    close(GTH)    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $align!\n");
 }
 
 sub computeFlankingRegion {
     my $gtf  = shift;
     my $size = 0;
     my %genes;
-    open( GTF, "<", $gtf ) or die("Could not open file $gtf!\n");
+    open( GTF, "<", $gtf ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gtf!\n");
     while (<GTF>) {
         if (m/\tCDS\t/) {
             chomp;
@@ -4872,7 +4914,7 @@ sub computeFlankingRegion {
             }
         }
     }
-    close(GTF) or die("Could not close file $gtf!\n");
+    close(GTF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gtf!\n");
     my $nGenes   = 0;
     my $totalLen = 0;
     my $avLen    = 0;
@@ -4910,7 +4952,8 @@ sub gtf2gb {
             $prtStr
                 = "\# "
                 . (localtime)
-                . " ERROR: The training gene file $gtf file is empty!\n";
+                . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The training gene file $gtf file is empty!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
             exit(1);
@@ -4924,15 +4967,15 @@ sub gtf2gb {
         print LOG "\# " . (localtime) . ": create genbank file $gb\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
     }
 }
 
 sub format_ep_hints {
     open( INTRONS, "<", $genemark_hintsfile )
-        or die("Could not open file $genemark_hintsfile!\n");
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $genemark_hintsfile!\n");
     open( OUT, ">", "$otherfilesDir/tmp.hints" )
-        or die("Could not open file $otherfilesDir/tmp.hints!\n");
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/tmp.hints!\n");
     while (<INTRONS>) {
         $_ =~ s/Intron/intron/;
         my @t = split(/\t/);
@@ -4944,14 +4987,14 @@ sub format_ep_hints {
             print OUT "mult=$t[5];pri=4;src=P\n";
         }
     }
-    close(OUT)     or die("Could not close file $otherfilesDir/tmp.hints!\n");
-    close(INTRONS) or die("Could not close file $genemark_hintsfile!\n");
+    close(OUT)     or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/tmp.hints!\n");
+    close(INTRONS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genemark_hintsfile!\n");
     $cmdString = "mv $otherfilesDir/tmp.hints $genemark_hintsfile";
     print LOG "\# "
         . (localtime)
         . ": Reformatted hints file for GeneMark-EP and AUGUSTUS\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString") == 0 or die("Failed to execute: $cmdString\n");
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
 }
 
 # UTR training from rnaseq2utr
@@ -4989,10 +5032,10 @@ sub train_utr {
         copy(
             "$AUGUSTUS_CONFIG_PATH/species/$species/$_",
             "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR"
-        ) or die("Copy failed!\n");
+        ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCopy failed!\n");
     }
     chdir($otherfilesDir)
-        or die("Could not change into directory $otherfilesDir!\n");
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $otherfilesDir!\n");
 
 # search all start and stop codons from augustus.noUtr.gtf and write them to the file stops.and.starts.gff
     if ( !uptodate( ["augustus.noUtr.gtf"], ["stops.and.starts.gff"] ) ) {
@@ -5002,7 +5045,7 @@ sub train_utr {
         my %nonRedundantCodons;
         my @tmpGffLine;
         open( AUG, "<", "augustus.noUtr.gtf" )
-            or die("Could not open file augustus.noUtr.gtf!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file augustus.noUtr.gtf!\n");
         while ( defined( my $i = <AUG> ) ) {
 
 # TODO: we are not dealing with redundancy, correctly. Discarding duplicates is not the optimal solution
@@ -5025,13 +5068,13 @@ sub train_utr {
                 }
             }
         }
-        close(AUG) or die("Could not close file augustus.noUtr.gtf!\n");
+        close(AUG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file augustus.noUtr.gtf!\n");
         open( CODON, ">", "stops.and.starts.gff" )
-            or die("Could not open file stops.and.starts.gff!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file stops.and.starts.gff!\n");
         foreach my $key ( keys %nonRedundantCodons ) {
             print CODON $nonRedundantCodons{$key};
         }
-        close(CODON) or die("Could not close file stops.and.starts.gff!\n");
+        close(CODON) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file stops.and.starts.gff!\n");
     }
     if ( !uptodate( ["$hintsfile"], ["rnaseq.utr.hints"] ) ) {
 
@@ -5041,7 +5084,7 @@ sub train_utr {
             . ": filtering RNA-Seq hints for valid splice site AT-AG, storing in rnsaeq.utr.hints\n";
         my %genome_hash;
         my $hash_key;
-        open( FASTA, "<", $genome ) or die("Could not open file $genome!\n");
+        open( FASTA, "<", $genome ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $genome!\n");
     LINE: while ( my $line = <FASTA> ) {
             next LINE if $line =~ m/^#/;    #discard comments
             if ( $line =~ /^>/ ) {
@@ -5055,14 +5098,14 @@ sub train_utr {
                 $genome_hash{$hash_key} .= $line;
             }
         }
-        close(FASTA) or die("Could not close file $genome!\n");
+        close(FASTA) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genome!\n");
         open( HINTS, "<", $hintsfile )
-            or die("Could not open file $hintsfile!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $hintsfile!\n");
         my @gff;
         my ( $siteA, $siteB, $given, $lastCol );
         my $splice = "ATAG";
         open( UTRHINTS, ">", "rnaseq.utr.hints" )
-            or die("Could not open file rnaseq.utr.hints!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file rnaseq.utr.hints!\n");
     LINE: while ( my $line = <HINTS> ) {
             @gff = split( /\t/, $line );
             if ( ( $gff[1] eq "b2h" ) && ( $gff[2] eq "intron" ) )
@@ -5104,8 +5147,8 @@ sub train_utr {
                 }
             }
         }
-        close(UTRHINTS) or die("Could not close file rnaseq.utr.hints!\n");
-        close(HINTS)    or die("Could not close file $hintsfile!\n");
+        close(UTRHINTS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file rnaseq.utr.hints!\n");
+        close(HINTS)    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $hintsfile!\n");
     }
 
     # create wiggle file from bam files
@@ -5125,7 +5168,7 @@ sub train_utr {
             }
             $cmdString .= "-out merged.bam";
             print LOG "\n$cmdString\n\n";
-            system("$cmdString") or die("Failed to execute: $cmdString!\n");
+            system("$cmdString") or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         }
         else {
             print LOG "\# "
@@ -5134,7 +5177,7 @@ sub train_utr {
             $cmdString = "ln -s $bam[0] merged.bam";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("Failed to exectute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to exectute: $cmdString!\n");
         }
         print LOG "\# " . (localtime) . ": Creating wiggle file...\n";
         $cmdString = "";
@@ -5144,7 +5187,7 @@ sub train_utr {
         $cmdString
             .= "$bam2wigPath merged.bam >merged.wig 2> $otherfilesDir/bam2wig.err";
         print LOG "\n$cmdString\n";
-        system("$cmdString") == 0 or die("Failed to execute: $cmdString!\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
 
     # call utrrnaseq
@@ -5157,7 +5200,7 @@ sub train_utr {
         $cmdString
             .= "$rnaseq2utrPath -G $genome -O stops.and.starts.gff -I rnaseq.utr.hints -W rnaseq.wig --outFileName=utrs.gff $rnaseq2utr_args 2> $otherfilesDir/rnaseq2utr.err";
         print LOG "\n$cmdString\n";
-        system("$cmdString") == 0 or die("Failed to execute: $cmdString!\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
 
     # create genbank file with genes that have to utrs
@@ -5172,27 +5215,27 @@ sub train_utr {
             . ": Creating gb file for UTR training\n";
 
         # extract subset of genes, where we have both UTRs
-        open( UTR, "<", "utrs.gff" ) or die("Can not open utrs.gff!\n");
+        open( UTR, "<", "utrs.gff" ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCan not open file utrs.gff!\n");
         open( TRLST, ">", "tr.lst" );
         while (<UTR>) {
             s/.*\t(\S+UTR)\t.*transcript_id \"(\S+)\".*/$2\t$1/;
             print TRLST;
         }
-        close(UTR)   or die("Could not close file utrs.gff!\n");
-        close(TRLST) or die("Could not close file tr.lst!\n");
+        close(UTR)   or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file utrs.gff!\n");
+        close(TRLST) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file tr.lst!\n");
         $cmdString = "";
         if ($nice) {
             $cmdString .= "nice ";
         }
         $cmdString .= "cat tr.lst | sort -u > tr_temp.lst";
         print LOG "\n$cmdString\n";
-        system($cmdString) == 0 or die("Failed not execute $cmdString!\n");
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed not execute $cmdString!\n");
         print LOG "\nrm tr.lst\n";
         unlink("tr.lst");
         $cmdString = "mv tr_temp.lst tr.lst";
         print LOG "\n$cmdString\n";
-        system($cmdString) == 0 or die("Failed not execute $cmdString!\n");
-        open( TR, "tr.lst" ) or die("Can not open tr.lst!\n");
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed not execute $cmdString!\n");
+        open( TR, "tr.lst" ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCan not open file tr.lst!\n");
         open( BOTH, ">", "bothutr.lst" );
         my $Fld1;
         my $prev;
@@ -5203,25 +5246,25 @@ sub train_utr {
                 print BOTH "$prev\n";
             }
         }
-        close(TR)   or die("Could not close file tr.lst!\n");
-        close(BOTH) or die("Could not close file bothutr.lst!\n");
+        close(TR)   or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file tr.lst!\n");
+        close(BOTH) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file bothutr.lst!\n");
         $cmdString = "";
         if ($nice) {
             $cmdString .= "nice ";
         }
         $cmdString .= "cat utrs.gff augustus.noUtr.gtf > genes.gtf_temp";
         print LOG "\n$cmdString\n";
-        system($cmdString) == 0 or die("Failed not execute $cmdString!\n");
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed not execute $cmdString!\n");
         open( GENES, "<", "genes.gtf_temp" )
-            or die("Can not open the file genes.gtf_temp!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCan not open the file genes.gtf_temp!\n");
         open( WRITEGENES, ">", "genes.gtf_unsort" );
         while (<GENES>) {
             if (/(CDS|UTR)\t/) {
                 print WRITEGENES "Not sure what\n";
             }
         }
-        close(GENES)      or die("Could not close file genes.gtf_temp!\n");
-        close(WRITEGENES) or die("Could not close file genes.gtf_unsort!\n");
+        close(GENES)      or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file genes.gtf_temp!\n");
+        close(WRITEGENES) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file genes.gtf_unsort!\n");
         $cmdString = "";
         if ($nice) {
             $cmdString .= "nice ";
@@ -5229,7 +5272,7 @@ sub train_utr {
         $cmdString
             .= "cat genes.gtf_unsort | sort -n -k 4,4 | sort -s -k 10,10 | sort -s -k 1,1 > genes.gtf";
         print LOG "\n$cmdString\n";
-        system($cmdString) == 0 or die("Failed not execute $cmdString!\n");
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed not execute $cmdString!\n");
         $string = find(
             "gff2gbSmallDNA.pl",    $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -5238,7 +5281,7 @@ sub train_utr {
             = "perl $string genes.gtf $genome $flanking_DNA bothutr.test.gb --good=bothutr.lst 1> $otherfilesDir/gff2gbSmallDNA.utr.stdout 2> $otherfilesDir/gff2gbSmallDNA.utr.stderr";
         print LOG "\n$perlCmdString\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
     }
 
 # create train.gb and onlytrain.gb
@@ -5256,15 +5299,15 @@ sub train_utr {
         # count the block number in bothutr.test.gb
         my $count = 0;
         open( TEMP1, "<", "bothutr.test.gb" )
-            or die("Can not open the file bothutr.test.gb! \n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCan not open the file bothutr.test.gb! \n");
         while (<TEMP1>) {
             $count++ if ( $_ =~ m/LOCUS/ );
         }
-        close(TEMP1) or die("Could not close file bothutr.test.gb!\n");
+        close(TEMP1) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file bothutr.test.gb!\n");
         if   ( $count >= 150 ) { $m = 150 }
         else                   { $m = $count }
         if ( $count < 50 ) {
-            die("ERROR: Number of UTR training examples is smaller than 50. Abort UTR training. If this is the only error message, the AUGUSTUS parameters for your species were optimized ok, but you are lacking UTR parameters. Do not attempt to predict genes with UTRs for this species using the current parameter set!\n"
+            die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\n Number of UTR training examples is smaller than 50. Abort UTR training. If this is the only error message, the AUGUSTUS parameters for your species were optimized ok, but you are lacking UTR parameters. Do not attempt to predict genes with UTRs for this species using the current parameter set!\n"
             );
             exit;
         }
@@ -5275,11 +5318,11 @@ sub train_utr {
         # count the block number in training.gb.train.test
         $count = 0;
         open( TEMP2, "train.gb.test" )
-            or die("Can not open the file train.gb.test!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCan not open the file train.gb.test!\n");
         while (<TEMP2>) {
             $count++ if ( $_ =~ m/LOCUS/ );
         }
-        close(TEMP2) or die("Could not close file train.gb.test!\n");
+        close(TEMP2) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file train.gb.test!\n");
         if ( $count >= 50 ) {
             $n = 50;
         }
@@ -5296,27 +5339,27 @@ sub train_utr {
         $perlCmdString = "perl $string bothutr.test.gb $m";
         print LOG "\nperlCmdString\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
         $perlCmdString = "perl $string train.gb.test $n";
         print LOG "\n$perlCmdString\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
         my $delete;
         open( GB, "<", "train.gb.test.test" )
-            or die("Can not open file train.gb.test.test!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCan not open file train.gb.test.test!\n");
         open( NOMRNA, ">", "nomrna.test.gb" )
-            or die("Could not open file nomrna.test.gb!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file nomrna.test.gb!\n");
 
         while (<GB>) {
             $delete = 1 if /mRNA/;
             $delete = 0 if /CDS/;
             print NOMRNA if ( !$delete );
         }
-        close(GB) or die("Could not close file train.gb.test.test!\n");
-        close(NOMRNA) or die("Could not close file nomrna.test.gb!\n");
+        close(GB) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file train.gb.test.test!\n");
+        close(NOMRNA) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file nomrna.test.gb!\n");
         $cmdString = "cat nomrna.test.gb bothutr.test.gb.test > train.gb";
         print LOG "\n$cmdString\n";
-        system("$cmdString") == 0 or die("Failed to execute: $cmdString\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
 
         # count how many genes are contained in train.gb
         my $counter_gen = 0;
@@ -5324,7 +5367,7 @@ sub train_utr {
         while (<TS>) {
             $counter_gen++ if (/^     CDS             /);
         }
-        close(TS) or die("Could not close file train.gb!\n");
+        close(TS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file train.gb!\n");
         print LOG
             "Have constructed a training set train.gb for UTRs with $counter_gen genes\n";
         print LOG
@@ -5335,9 +5378,9 @@ sub train_utr {
 
         # create onlytrain training set only used for training #
         open( ONLYTRAIN, "<", "train.gb.train" )
-            or die("Could not open file train.gb.train!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file train.gb.train!\n");
         open( CDSONLY, ">", "cdsonly.gb" )
-            or die("Could not open file cdsonly.gb!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file cdsonly.gb!\n");
 
         # delete the mRNA part up to the next CDS tag
         $delete = 0;
@@ -5347,14 +5390,14 @@ sub train_utr {
             print CDSONLY if ( !$delete );
         }
         close(ONLYTRAIN)
-            or die("Could not close file train.gb.train!\n");
-        close(CDSONLY) or die("Could not close file cdsonlyl.gb!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file train.gb.train!\n");
+        close(CDSONLY) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file cdsonlyl.gb!\n");
 
 # construct the disjoint sets: remove training UTR genes from onlytrain UTR gene set (train.utronly.gb)
         open( TRAIN, "<", "train.gb" )
-            or die("Could not open the file train.gb!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open the file train.gb!\n");
         open( REMOVE, ">", "remove.lst" )
-            or die("Could not open file remove.lst!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file remove.lst!\n");
         my $locustag = 0;
         while (<TRAIN>) {
             if (m/LOCUS\s+(\S+)_\d+-\d+/) {
@@ -5368,8 +5411,8 @@ sub train_utr {
                 $locustag = 1;
             }
         }
-        close(TRAIN)  or die("Could not close file train.gb!\n");
-        close(REMOVE) or die("Could not close file remove.lst!\n");
+        close(TRAIN)  or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file train.gb!\n");
+        close(REMOVE) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file remove.lst!\n");
         $string = find(
             "filterGenes.pl",       $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -5379,10 +5422,10 @@ sub train_utr {
             = "perl $string remove.lst bothutr.test.gb > train.utronly.gb";
         print LOG "\n$perlCmdString\n";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
         $cmdString = "cat cdsonly.gb train.utronly.gb > onlytrain.gb";
         print LOG "\n$cmdString\n";
-        system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 
         # changing UTR parameters in species config file to "on"
         print STDOUT
@@ -5416,7 +5459,7 @@ sub train_utr {
             print LOG
                 "Copying utr metaparameter template file:\n$cmdString\n";
             system("$cmdString") == 0
-                or die("Failed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         }
         $string = find(
             "optimize_augustus.pl", $AUGUSTUS_BIN_PATH,
@@ -5430,7 +5473,7 @@ sub train_utr {
             "Now optimizing meta parameters of AUGUSTUS for the UTR model:\n";
         print LOG "Running \"$perlCmdString\"...";
         system("$perlCmdString") == 0
-            or die("Failed to execute: $perlCmdString!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
     }
     else {
         print "Skipping UTR parameter optimization. Already up to date.\n";
@@ -5457,11 +5500,9 @@ sub set_AUGUSTUS_CONFIG_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Did not find environment variable \$AUGUSTUS_CONFIG_PATH ";
-        $prtStr
-            .= "(either variable does not exist, or the path given in variable does not exist";
-        $prtStr
-            .= "). Will try to set this variable in a different way, later.\n";
+            . ": Did not find environment variable \$AUGUSTUS_CONFIG_PATH "
+            . "(either variable does not exist, or the path given in variable does not exist"
+            . "). Will try to set this variable in a different way, later.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
     }
@@ -5487,11 +5528,9 @@ sub set_AUGUSTUS_CONFIG_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Command line flag --AUGUSTUS_CONFIG_PATH ";
-            $prtStr
-                .= "was provided. The given path $augustus_cfg_path is not a directory. ";
-            $prtStr
-                .= "Cannot use this as variable \$AUGUSTUS_CONFIG_PATH in braker.pl!\n";
+                . ": WARNING: Command line flag --AUGUSTUS_CONFIG_PATH "
+                . "was provided. The given path $augustus_cfg_path is not a directory. "
+                . "Cannot use this as variable \$AUGUSTUS_CONFIG_PATH in braker.pl!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -5508,45 +5547,32 @@ sub set_AUGUSTUS_CONFIG_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: Tried guessing \$AUGUSTUS_CONFIG_PATH from ";
-            $prtStr
-                .= "system augustus path, but $AUGUSTUS_CONFIG_PATH is not a directory.\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Tried guessing \$AUGUSTUS_CONFIG_PATH from "
+                . "system augustus path, but $AUGUSTUS_CONFIG_PATH is not a directory.\n";
             print STDERR $prtStr;
             $logString .= $prtStr;
         }
     }
     my $aug_conf_err;
     $aug_conf_err
-        .= "There are 3 alternative ways to set this variable for braker.pl:\n";
-    $aug_conf_err
-        .= "   a) provide command-line argument --AUGUSTUS_CONFIG_PATH=/your/path\n";
-    $aug_conf_err
-        .= "   b) use an existing environment variable \$AUGUSTUS_CONFIG_PATH\n";
-    $aug_conf_err .= "      for setting the environment variable, run\n";
-    $aug_conf_err .= "           export AUGUSTUS_CONFIG_PATH=/your/path\n";
-    $aug_conf_err
-        .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
-    $aug_conf_err
-        .= "      order to make the variable available to all your bash sessions.\n";
-    $aug_conf_err
-        .= "   c) braker.pl can try guessing the location of \$AUGUSTUS_CONFIG_PATH from an\n";
-    $aug_conf_err
-        .= "      augustus executable that is available in your \$PATH variable.\n";
-    $aug_conf_err
-        .= "      If you try to rely on this option, you can check by typing\n";
-    $aug_conf_err .= "           which augustus\n";
-    $aug_conf_err
-        .= "      in your shell, whether there is an augustus executable in your \$PATH\n";
-    $aug_conf_err
-        .= "      Be aware: the \$AUGUSTUS_CONFIG_PATH must be writable for braker.pl\n";
-    $aug_conf_err
-        .= "                because braker.pl is a pipeline that optimizes parameters that\n";
-    $aug_conf_err
-        .= "                reside in that directory! This might be problmatic in case you\n";
-    $aug_conf_err
-        .= "                are using a system-wide installed augustus installation that\n";
-    $aug_conf_err
-        .= "                resides in a directory that is not writable to you as a user.\n";
+        .= "There are 3 alternative ways to set this variable for braker.pl:\n"
+        . "   a) provide command-line argument --AUGUSTUS_CONFIG_PATH=/your/path\n"
+        . "   b) use an existing environment variable \$AUGUSTUS_CONFIG_PATH\n"
+        . "      for setting the environment variable, run\n"
+        . "           export AUGUSTUS_CONFIG_PATH=/your/path\n"
+        . "      in your shell. You may append this to your .bashrc or .profile file in\n"
+        . "      order to make the variable available to all your bash sessions.\n"
+        . "   c) braker.pl can try guessing the location of \$AUGUSTUS_CONFIG_PATH from an\n"
+        . "      augustus executable that is available in your \$PATH variable.\n"
+        . "      If you try to rely on this option, you can check by typing\n"
+        . "           which augustus\n"
+        . "      in your shell, whether there is an augustus executable in your \$PATH\n"
+        . "      Be aware: the \$AUGUSTUS_CONFIG_PATH must be writable for braker.pl\n"
+        . "                because braker.pl is a pipeline that optimizes parameters that\n"
+        . "                reside in that directory! This might be problmatic in case you\n"
+        . "                are using a system-wide installed augustus installation that\n"
+        . "                resides in a directory that is not writable to you as a user.\n";
 
     # Give user installation instructions
     if ( not( defined $AUGUSTUS_CONFIG_PATH )
@@ -5555,7 +5581,8 @@ sub set_AUGUSTUS_CONFIG_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: \$AUGUSTUS_CONFIG_PATH is not defined!\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "\$AUGUSTUS_CONFIG_PATH is not defined!\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $aug_conf_err;
@@ -5567,7 +5594,8 @@ sub set_AUGUSTUS_CONFIG_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: AUGUSTUS_CONFIG_PATH/species (in this case ";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "AUGUSTUS_CONFIG_PATH/species (in this case ";
         $prtStr .= "$AUGUSTUS_CONFIG_PATH/$species) is not writeable.\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
@@ -5655,10 +5683,9 @@ sub set_AUGUSTUS_BIN_PATH {
         }
         else {
             $prtStr
-                = "\# " . (localtime) . " WARNING: Guessing the location of ";
-            $prtStr
-                .= "\$AUGUSTUS_BIN_PATH failed. $AUGUSTUS_CONFIG_PATH/../bin is not a ";
-            $prtStr .= "directory!\n";
+                = "\# " . (localtime) . " WARNING: Guessing the location of "
+                . "\$AUGUSTUS_BIN_PATH failed. $AUGUSTUS_CONFIG_PATH/../bin is not a "
+                . "directory!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -5667,23 +5694,18 @@ sub set_AUGUSTUS_BIN_PATH {
     if ( not( defined($AUGUSTUS_BIN_PATH) ) ) {
         my $aug_bin_err;
         $aug_bin_err
-            .= "There are 3 alternative ways to set this variable for braker.pl:\n";
-        $aug_bin_err
-            .= "   a) provide command-line argument --AUGUSTUS_BIN_PATH=/your/path\n";
-        $aug_bin_err
-            .= "   b) use an existing environment variable \$AUGUSTUS_BIN_PATH\n";
-        $aug_bin_err .= "      for setting the environment variable, run\n";
-        $aug_bin_err .= "           export AUGUSTUS_BIN_PATH=/your/path\n";
-        $aug_bin_err
-            .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
-        $aug_bin_err
-            .= "      order to make the variable available to all your bash sessions.\n";
-        $aug_bin_err
-            .= "   c) braker.pl can try guessing the location of \$AUGUSTUS_BIN_PATH from the\n";
-        $aug_bin_err
-            .= "      location of \$AUGUSTUS_CONFIG_PATH (in this case $AUGUSTUS_CONFIG_PATH/../bin\n";
+            .= "There are 3 alternative ways to set this variable for braker.pl:\n"
+            . "   a) provide command-line argument --AUGUSTUS_BIN_PATH=/your/path\n"
+            . "   b) use an existing environment variable \$AUGUSTUS_BIN_PATH\n"
+            . "      for setting the environment variable, run\n"
+            . "           export AUGUSTUS_BIN_PATH=/your/path\n"
+            . "      in your shell. You may append this to your .bashrc or .profile file in\n"
+            . "      order to make the variable available to all your bash sessions.\n"
+            . "   c) braker.pl can try guessing the location of \$AUGUSTUS_BIN_PATH from the\n"
+            . "      location of \$AUGUSTUS_CONFIG_PATH (in this case $AUGUSTUS_CONFIG_PATH/../bin\n";
         $prtStr
-            = "\# " . (localtime) . ": ERROR: \$AUGUSTUS_BIN_PATH not set!\n";
+            = "\# " . (localtime) . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "\$AUGUSTUS_BIN_PATH not set!\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $aug_bin_err;
@@ -5786,26 +5808,20 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
     if ( not( defined($AUGUSTUS_SCRIPTS_PATH) ) ) {
         my $aug_scr_err;
         $aug_scr_err
-            .= "There are 3 alternative ways to set this variable for braker.pl:\n";
-        $aug_scr_err
-            .= "   a) provide command-line argument --AUGUSTUS_SCRIPTS_PATH=/your/path\n";
-        $aug_scr_err
-            .= "   b) use an existing environment variable \$AUGUSTUS_SCRIPTS_PATH\n";
-        $aug_scr_err .= "      for setting the environment variable, run\n";
-        $aug_scr_err
-            .= "           export AUGUSTUS_SCRIPTS_PATH=/your/path\n";
-        $aug_scr_err
-            .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
-        $aug_scr_err
-            .= "      order to make the variable available to all your bash sessions.\n";
-        $aug_scr_err
-            .= "   c) braker.pl can try guessing the location of \$AUGUSTUS_SCRIPTS_PATH from the\n";
-        $aug_scr_err
-            .= "      location of \$AUGUSTUS_CONFIG_PATH (in this case $AUGUSTUS_CONFIG_PATH/../scripts\n";
+            .= "There are 3 alternative ways to set this variable for braker.pl:\n"
+            . "   a) provide command-line argument --AUGUSTUS_SCRIPTS_PATH=/your/path\n"
+            . "   b) use an existing environment variable \$AUGUSTUS_SCRIPTS_PATH\n"
+            . "      for setting the environment variable, run\n"
+            . "           export AUGUSTUS_SCRIPTS_PATH=/your/path\n"
+            . "      in your shell. You may append this to your .bashrc or .profile file in\n"
+            . "      order to make the variable available to all your bash sessions.\n"
+            . "   c) braker.pl can try guessing the location of \$AUGUSTUS_SCRIPTS_PATH from the\n"
+            . "      location of \$AUGUSTUS_CONFIG_PATH (in this case $AUGUSTUS_CONFIG_PATH/../scripts\n";
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: \$AUGUSTUS_SCRIPTS_PATH not set!\n";
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "\$AUGUSTUS_SCRIPTS_PATH not set!\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $aug_scr_err;
@@ -5907,28 +5923,21 @@ sub set_BAMTOOLS_PATH {
     if ( not( defined($BAMTOOLS_BIN_PATH) ) ) {
         my $bamtools_err;
         $bamtools_err
-            .= "There are 3 alternative ways to set this variable for braker.pl:\n";
-        $bamtools_err
-            .= "   a) provide command-line argument --BAMTOOLS_PATH=/your/path\n";
-        $bamtools_err
-            .= "   b) use an existing environment variable \$BAMTOOLS_PATH\n";
-        $bamtools_err .= "      for setting the environment variable, run\n";
-        $bamtools_err .= "           export BAMTOOLS_PATH=/your/path\n";
-        $bamtools_err
-            .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
-        $bamtools_err
-            .= "      order to make the variable available to all your bash sessions.\n";
-        $bamtools_err
-            .= "   c) braker.pl can try guessing the location of \$BAMTOOLS_BIN_PATH from the\n";
-        $bamtools_err
-            .= "      location of a bamtools executable that is available in your \$PATH variable.\n";
-        $bamtools_err
-            .= "      If you try to rely on this option, you can check by typing\n";
-        $bamtools_err .= "           which bamtools\n";
-        $bamtools_err
-            .= "      in your shell, whether there is a bamtools executable in your \$PATH\n";
+            .= "There are 3 alternative ways to set this variable for braker.pl:\n"
+            . "   a) provide command-line argument --BAMTOOLS_PATH=/your/path\n"
+            . "   b) use an existing environment variable \$BAMTOOLS_PATH\n"
+            . "      for setting the environment variable, run\n"
+            . "           export BAMTOOLS_PATH=/your/path\n"
+            . "      in your shell. You may append this to your .bashrc or .profile file in\n"
+            . "      order to make the variable available to all your bash sessions.\n"
+            . "   c) braker.pl can try guessing the location of \$BAMTOOLS_BIN_PATH from the\n"
+            . "      location of a bamtools executable that is available in your \$PATH variable.\n"
+            . "      If you try to rely on this option, you can check by typing\n"
+            . "           which bamtools\n"
+            . "      in your shell, whether there is a bamtools executable in your \$PATH\n";
         $prtStr
-            = "\# " . (localtime) . " ERROR: \$BAMTOOLS_BIN_PATH not set!\n";
+            = "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "\$BAMTOOLS_BIN_PATH not set!\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $bamtools_err;
@@ -6028,27 +6037,20 @@ sub set_GENEMARK_PATH {
     if ( not( defined($GENEMARK_PATH) ) ) {
         my $gm_err;
         $gm_err
-            .= "There are 3 alternative ways to set this variable for braker.pl:\n";
-        $gm_err
-            .= "   a) provide command-line argument --GENEMARK_PATH=/your/path\n";
-        $gm_err
-            .= "   b) use an existing environment variable \$GENEMARK_PATH\n";
-        $gm_err .= "      for setting the environment variable, run\n";
-        $gm_err .= "           export GENEMARK_PATH=/your/path\n";
-        $gm_err
-            .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
-        $gm_err
-            .= "      order to make the variable available to all your bash sessions.\n";
-        $gm_err
-            .= "   c) braker.pl can try guessing the location of \$GENEMARK_PATH from the\n";
-        $gm_err
-            .= "      location of a gmes_petap.pl executable that is available in your \$PATH variable.\n";
-        $gm_err
-            .= "      If you try to rely on this option, you can check by typing\n";
-        $gm_err .= "           which gmes_petap.pl\n";
-        $gm_err
-            .= "      in your shell, whether there is a bamtools executable in your \$PATH\n";
-        $prtStr = "\# " . (localtime) . ": ERROR: \$GENEMARK_PATH not set!\n";
+            .= "There are 3 alternative ways to set this variable for braker.pl:\n"
+            . "   a) provide command-line argument --GENEMARK_PATH=/your/path\n"
+            . "   b) use an existing environment variable \$GENEMARK_PATH\n"
+            . "      for setting the environment variable, run\n"
+            . "           export GENEMARK_PATH=/your/path\n"
+            . "      in your shell. You may append this to your .bashrc or .profile file in\n"
+            . "      order to make the variable available to all your bash sessions.\n"
+            . "   c) braker.pl can try guessing the location of \$GENEMARK_PATH from the\n"
+            . "      location of a gmes_petap.pl executable that is available in your \$PATH variable.\n"
+            . "      If you try to rely on this option, you can check by typing\n"
+            . "           which gmes_petap.pl\n"
+            . "      in your shell, whether there is a bamtools executable in your \$PATH\n";
+        $prtStr = "\# " . (localtime) . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "\$GENEMARK_PATH not set!\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $gm_err;
@@ -6339,44 +6341,33 @@ sub set_ALIGNMENT_TOOL_PATH {
         if ( not( defined($ALIGNMENT_TOOL_PATH) ) ) {
             my $aln_err_str;
             $aln_err_str
-                .= "There are 3 alternative ways to set this variable for braker.pl:\n";
-            $aln_err_str
-                .= "   a) provide command-line argument --ALIGNMENT_TOOL_PATH=/your/path\n";
-            $aln_err_str
-                .= "   b) use an existing environment variable \$ALIGNMENT_TOOL_PATH\n";
-            $aln_err_str
-                .= "      for setting the environment variable, run\n";
-            $aln_err_str
-                .= "           export ALIGNMENT_TOOL_PATH=/your/path\n";
-            $aln_err_str
-                .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
-            $aln_err_str
-                .= "      order to make the variable available to all your bash sessions.\n";
-            $aln_err_str
-                .= "   c) braker.pl can try guessing the location of \$ALIGNMENT_TOOL_PATH from the\n";
-            $aln_err_str
-                .= "      location an alignment tool executable (corresponding to the alignment tool \n";
-            $aln_err_str
-                .= "      given by command line argument --prg=yourTool (in this case $prg) that is \n";
-            $aln_err_str .= "      available in your \$PATH variable.\n";
-            $aln_err_str
-                .= "      If you try to rely on this option, you can check by typing\n";
-            $aln_err_str .= "           which gth\n";
-            $aln_err_str .= "               or\n";
-            $aln_err_str .= "           which exonerate\n";
-            $aln_err_str .= "               or\n";
-            $aln_err_str .= "           which spaln\n";
-            $aln_err_str
-                .= "      in your shell, whether there is an alignment tool executable in your \$PATH\n";
+                .= "There are 3 alternative ways to set this variable for braker.pl:\n"
+                . "   a) provide command-line argument --ALIGNMENT_TOOL_PATH=/your/path\n"
+                . "   b) use an existing environment variable \$ALIGNMENT_TOOL_PATH\n"
+                . "      for setting the environment variable, run\n"
+                . "           export ALIGNMENT_TOOL_PATH=/your/path\n"
+                . "      in your shell. You may append this to your .bashrc or .profile file in\n"
+                . "      order to make the variable available to all your bash sessions.\n"
+                . "   c) braker.pl can try guessing the location of \$ALIGNMENT_TOOL_PATH from the\n"
+                . "      location an alignment tool executable (corresponding to the alignment tool \n"
+                . "      given by command line argument --prg=yourTool (in this case $prg) that is \n"
+                . "      available in your \$PATH variable.\n"
+                . "      If you try to rely on this option, you can check by typing\n"
+                . "           which gth\n"
+                . "               or\n"
+                . "           which exonerate\n"
+                . "               or\n"
+                . "           which spaln\n"
+                . "      in your shell, whether there is an alignment tool executable in your \$PATH\n";
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": ERROR: \$ALIGNMENT_TOOL_PATH not set!\n";
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "\$ALIGNMENT_TOOL_PATH not set!\n";
             print STDERR $prtStr;
             $logString .= $prtStr;
             $prtStr
-                = "This is an obligatory argument if you provided protein sequence ";
-            $prtStr .= "file(s).\n";
+                = "This is an obligatory argument if you provided protein sequence file(s).\n";
             print STDERR $prtStr;
             $logString .= $prtStr;
             $logString .= $aln_err_str;
@@ -6489,7 +6480,8 @@ sub set_BLAST_PATH {
                    .  "           which blastp\n"
                    .  "      in your shell, whether there is a blastp "
                    .  "executable in your \$PATH\n";
-        $prtStr = "\# " . (localtime) . " ERROR: \$BLAST_PATH not set!\n";
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "\$BLAST_PATH not set!\n";
         print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $blast_err;
@@ -6498,11 +6490,13 @@ sub set_BLAST_PATH {
     }
     if ( not ( -x "$BLAST_PATH/blastp" ) ) {
         $logString .= $prtStr;
-        print STDERR "\# " . (localtime) . " ERROR: $BLAST_PATH/blastp is not an executable file!\n";
+        print STDERR "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "$BLAST_PATH/blastp is not an executable file!\n";
         exit(1);
     }elsif( not ( -x "$BLAST_PATH/makeblastdb" ) ){
         $logString .= $prtStr;
-        print STDERR "\# " . (localtime) . " ERROR: $BLAST_PATH/makeblastdb is not an executable file!\n";
+        print STDERR "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "$BLAST_PATH/makeblastdb is not an executable file!\n";
         exit(1);
     }
 }
@@ -6538,7 +6532,7 @@ sub join_aug_pred {
     print LOG "\# "
         . (localtime)
         . ": Concatenating AUGUSTUS output files in $pred_dir\n";
-    opendir( DIR, $pred_dir ) or die $!;
+    opendir( DIR, $pred_dir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $pred_dir!\n");
     while ( my $file = readdir(DIR) ) {
         print LOG "file is $file\n";
         if ( $file =~ m/gff/ ) {
@@ -6548,18 +6542,18 @@ sub join_aug_pred {
             }
             $cmdString .= "cat $pred_dir/$file >> $cat_file";
             print LOG "$cmdString\n";
-            system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+            system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
         }elsif ( $file =~ m/\.err/ ){
             $cmdString = "echo \"Contents of file $file\" >> $error_cat_file";
             print LOG "$cmdString\n";
-            system ("$cmdString") == 0 or die ("Failed to execute $cmdString\n");
+            system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
             }
             $cmdString .= "cat $pred_dir/$file >> $error_cat_file";
             print LOG "$cmdString\n";
-            system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+            system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
         }
     }
     closedir(DIR);
@@ -6573,7 +6567,7 @@ sub join_aug_pred {
         . ": Joining AUGUSTUS output from $pred_dir\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString") == 0
-        or die("Failed to execute $perlCmdString\n");
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $perlCmdString\n");
     print LOG "\# " . (localtime) . ": Deleting $pred_dir\n";
     rmtree( ["$pred_dir"] );
     print LOG "\# " . (localtime) . ": Deleting $cat_file\n";
@@ -6587,7 +6581,7 @@ sub eval {
     print LOG "\# "
         . (localtime)
         . ": Trying to evaluate braker.pl gene prediction files...\n";
-    open( SEQLIST, ">", $seqlist ) or die("Could not open file $seqlist!\n");
+    open( SEQLIST, ">", $seqlist ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $seqlist!\n");
     while ( my ( $locus, $size ) = each %scaffSizes ) {
         chomp $locus;
         $locus =~ s/^>//;
@@ -6615,7 +6609,7 @@ sub eval {
         . (localtime)
         . ": was able to run evaluations on ". scalar (@accKeys) . "gene sets. Now summarizing "
         . "eval results...\n";
-        open (ACC, ">", "$otherfilesDir/eval.summary") or die ("Could not open file $otherfilesDir/eval.summary");
+        open (ACC, ">", "$otherfilesDir/eval.summary") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/eval.summary");
         print ACC "Measure";
         foreach(@accKeys){
             chomp;
@@ -6637,7 +6631,7 @@ sub eval {
             }
             print "\n";
         }
-        close(ACC) or die ("Could not close file $otherfilesDir/eval.summary");
+        close(ACC) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/eval.summary");
     }
     print LOG "\# "
         . (localtime)
@@ -6678,8 +6672,8 @@ sub eval_gene_pred {
         . (localtime)
         . ": filtering $gtfFile for CDS, exon, start_codon and UTR features, writing to $firstStepFile.\n";
     open( FIRST, ">", $firstStepFile )
-        or die("Could not open file $firstStepFile!\n");
-    open( AUG, "<", $gtfFile ) or die("Could not open file $gtfFile!\n");
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $firstStepFile!\n");
+    open( AUG, "<", $gtfFile ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gtfFile!\n");
     while (<AUG>) {
         my @t;
         if (   ( $t[2] eq "CDS" )
@@ -6690,21 +6684,21 @@ sub eval_gene_pred {
             print FIRST $_;
         }
     }
-    close(AUG)   or die("Could not close file $gtfFile!\n");
-    close(FIRST) or die("Could not close file $firstStepFile!\n");
+    close(AUG)   or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gtfFile!\n");
+    close(FIRST) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $firstStepFile!\n");
     print LOG "\# "
         . (localtime)
         . ": Validating gtf of $firstStepFile, results are written to $secondStepFile\n";
     $cmdString = "$validate_gtf -c -f $$firstStepFile";
     print LOG "$cmdString\n";
-    system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
     print LOG "\# "
         . (localtime)
         . ": Running eval on $secondStepFile\n";
     $cmdString
         = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out";
     print LOG $cmdString."\n";
-    system("$cmdString") == 0 or die("Failed to execute $cmdString\n");
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
     print LOG "\# "
         . (localtime)
         . ": Extracting results from $gtfFile.eval.out\n"
@@ -6712,8 +6706,8 @@ sub eval_gene_pred {
     my @eval_result
         = `grep $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'`;
     $accuracy{$gtfFile} = @eval_result;
-    unlink($firstStepFile)  or die("Failed to delete file $firstStepFile!\n");
-    unlink($secondStepFile) or die("Failed to delete $secondStepFile!\n");
+    unlink($firstStepFile)  or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $firstStepFile!\n");
+    unlink($secondStepFile) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $secondStepFile!\n");
 }
 
 # combine gth and genemark gtf file
@@ -6726,7 +6720,7 @@ sub combine_gm_and_gth_gtf {
     my $gth_filtered_gtf = shift; # $gth_gtf.f
     my %gmGeneStarts;
     my %gmGeneStops;
-    open( GMGTF, "<", $gm_gtf ) or die( "Could not open file $gm_gtf!\n" );
+    open( GMGTF, "<", $gm_gtf ) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_gtf!\n" );
     while (<GMGTF>) {
         chomp;
         my @gtfLine = split(/\t/);
@@ -6751,8 +6745,8 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    close(GMGTF) or die( "Could not close file $gm_gtf!\n" );
-    open( PROTALN, "<", "$gth_gff3" ) or die( "Could not open file $gth_gff3!\n" );
+    close(GMGTF) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_gtf!\n" );
+    open( PROTALN, "<", "$gth_gff3" ) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_gff3!\n" );
     my %gthGeneStarts;
     my %gthGeneStops;
     my $gthGeneId;
@@ -6777,16 +6771,16 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    close(PROTALN) or die( "Could not close file $gth_gff3!\n" );
+    close(PROTALN) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_gff3!\n" );
 
     # read gth gtf to be filtered later
-    open( GTHGTF, "<", $gth_gtf ) or die("Could not open file $gth_gtf!\n");
+    open( GTHGTF, "<", $gth_gtf ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_gtf!\n");
     my %gthGtf;
     while (<GTHGTF>) {
         my @gtfLine = split(/"/);
         push( @{ $gthGtf{ $gtfLine[1] } }, $_ );
     }
-    close(GTHGTF) or die("Could not close file $gth_gtf!\n");
+    close(GTHGTF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_gtf!\n");
     my %discard;
     while ( my ( $k, $v ) = each %gthGeneStarts ) {
 
@@ -6804,7 +6798,7 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    open( FILTEREDGTH, ">", "$gth_filtered_gtf" ) or die("Could not open file $gth_filtered_gtf!\n");
+    open( FILTEREDGTH, ">", "$gth_filtered_gtf" ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_filtered_gtf!\n");
     while ( my ( $k, $v ) = each %gthGtf ) {
         if ( not( defined( $discard{$k} ) ) ) {
             foreach ( @{$v} ) {
@@ -6812,5 +6806,5 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    close(FILTEREDGTH) or die("Could not close file $gth_filtered_gtf!\n");
+    close(FILTEREDGTH) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_filtered_gtf!\n");
 }
