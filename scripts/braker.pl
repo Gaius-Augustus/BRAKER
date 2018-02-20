@@ -2972,15 +2972,18 @@ sub training {
             }
         }
         close (TRAINGB3) or die ( "Could not close file $trainGb3!\n" );
-        open (TRAINGB3TXLST, ">", "$otherfilesDir/ingb3.lst") or die ("Could not open file $otherfilesDir/ingb3.lst!\n");
-        foreach ( keys %txInGb3 ) {
-            print TRAINGB3TXLST "transcript_id \"$_\"\n";
+        # filter in those genes that are good
+        open (GTF, "<", $trainGenesGtf) or die ("Could not open file $trainGenesGtf!\n");
+        open (GOODGTF, ">", "$otherfilesDir/traingenes.good.gtf") or die ("Could not open file $otherfilesDir/traingenes.good.gtf!\n");
+        while(<GTF>){
+            if($_ =~ m/transcript_id \"(\S+)\"/){
+                if(defined($txInGb3{$1})){
+                    print GOODGTF $_;
+                }
+            }
         }
-        close (TRAINGB3TXLST) or die ("Could not close file $otherfilesDir/ingb3.lst!\n");
-        $cmdString = "grep -f $otherfilesDir/ingb3.lst $trainGenesGtf > $otherfilesDir/traingenes.good.gtf";
-        print LOG "$cmdString\n";
-        system("$cmdString") == 0
-            or die("Failed to execute: $cmdString\n");
+        close(GOODGTF) or die ("Could not close file $otherfilesDir/traingenes.good.gtf!\n");
+        close(GTF) or die ("Could not close file $trainGenesGtf!\n");
 
         # convert those training genes to protein fasta file
         gtf2fasta ($genome, "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/traingenes.good.fa");
