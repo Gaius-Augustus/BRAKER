@@ -4246,8 +4246,20 @@ sub check_upfront {
         $AUGUSTUS_SCRIPTS_PATH,      $AUGUSTUS_CONFIG_PATH
     );
     find(
+        "filterGenes.pl", $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH,      $AUGUSTUS_CONFIG_PATH
+    );
+    find(
+        "filterGenesIn.pl", $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH,      $AUGUSTUS_CONFIG_PATH
+    );
+    find(
         "join_mult_hints.pl",   $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    find(
+        "aa2nonred.pl", $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH,      $AUGUSTUS_CONFIG_PATH
     );
     find(
         "randomSplit.pl",       $AUGUSTUS_BIN_PATH,
@@ -4279,6 +4291,18 @@ sub check_upfront {
     );
     find(
         "align2hints.pl",       $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    find(
+        "splitMfasta.pl",       $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    find(
+        "createAugustusJoblist.pl",       $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    find(
+        "eval_multi_gtf.pl",       $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
 }
