@@ -2965,10 +2965,10 @@ sub training {
         my %txInGb3;
         my $txLocus;;
         while( <TRAINGB3> ) {
-            if ( $_ =~ m/LOCUS\s*(\S+)\s.*/ ) {
+            if ( $_ =~ m/LOCUS\s+(\S+)\s/ ) {
                 $txLocus = $1;
             }elsif ( $_ =~ m/\/gene=\"(\S+)\"/ ) {
-                $txInGb3{$_} = $txLocus;
+                $txInGb3{$1} = $txLocus;
             }
         }
         close (TRAINGB3) or die ( "Could not close file $trainGb3!\n" );
