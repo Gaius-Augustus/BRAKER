@@ -172,7 +172,7 @@ if ( defined($pos_file) && defined($list_file) ) {
     # check whether position file exists
     if ( !-e $pos_file ) {
         print STDERR
-        "ERROR: Position file $pos_file does not exist. Please check.\n";
+        "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nPosition file $pos_file does not exist. Please check.\n";
         exit(1);
     }
     else {
@@ -182,7 +182,7 @@ if ( defined($pos_file) && defined($list_file) ) {
     # check whether list file exists
     if ( !-e $list_file ) {
         print STDERR
-        "ERROR: List file $list_file does not exist. Please check.\n";
+        "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nList file $list_file does not exist. Please check.\n";
         exit(1);
     }
     else {
@@ -195,21 +195,21 @@ else {
 
 if ( !defined($prgsrc) ) {
     print STDERR
-    "ERROR: Please assign the source program with --prg. Possible Options are 'exonerate', 'spaln' or 'gth'.\n";
+    "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nPlease assign the source program with --prg. Possible Options are 'exonerate', 'spaln' or 'gth'.\n";
     exit(1);
 }
 
 # check program source option
 if ( $prgsrc ne "exonerate" && $prgsrc ne "spaln" && $prgsrc ne "gth" ) {
     print STDERR
-    "ERROR: Invalid value '$prgsrc' for option --prg. Possible Options are 'exonerate', 'spaln' or 'gth'. Please check.\n";
+    "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nInvalid value '$prgsrc' for option --prg. Possible Options are 'exonerate', 'spaln' or 'gth'. Please check.\n";
     exit(1);
 }
 
 if ( !defined($log) ) {
     $log = "$dir/startAlign_$prgsrc.log";
 }
-open( LOG, ">" . $log ) or die "Cannot open file: $log\n";
+open( LOG, ">" . $log ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $log\n";
 
 $tmpDir   = "$dir/tmp_$prgsrc";
 $alignDir = "$dir/align_$prgsrc";
@@ -222,7 +222,7 @@ else {
     $cmdString = "rm -r $tmpDir";
     print LOG "\# " . (localtime) . ": delete existing files from $tmpDir\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     make_path($tmpDir);
 }
 
@@ -231,7 +231,7 @@ if ( defined($genome_file) ) {
 
     # check whether genome file exists
     if ( !-e $genome_file ) {
-        print STDERR "ERROR: Genome file $genome_file does not exist!\n";
+        print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nGenome file $genome_file does not exist!\n";
         exit(1);
     }
     else {
@@ -250,7 +250,7 @@ my @pathParts = split( /\//, $linkName );
 $linkName = $tmpDir . "/" . $pathParts[ scalar(@pathParts) - 1 ];
 if ( !-e $linkName ) {
     $cmdString = "ln -s $genome_file $linkName";
-    system($cmdString) == 0 or die("Failed to execute $cmdString!\n");
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
     print LOG "\# " . (localtime) . ": $cmdString\n";
 }
 else {
@@ -262,7 +262,7 @@ $genome_file = $linkName;
 }
 }
 else {
-    print STDERR "ERROR: No genome file specified!\n";
+    print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nNo genome file specified!\n";
     exit(1);
 }
 
@@ -271,7 +271,7 @@ if ( defined($prot_file) ) {
 
     # check whether protein file exists
     if ( !-e $prot_file ) {
-        print STDERR "ERROR: Protein file $prot_file does not exist!\n";
+        print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nProtein file $prot_file does not exist!\n";
         exit(1);
     }
     else {
@@ -288,7 +288,7 @@ if ( defined($prot_file) ) {
         $linkName = $tmpDir . "/" . $pathParts[ scalar(@pathParts) - 1 ];
         if ( !-e $linkName ) {
             $cmdString = "ln -s $prot_file $linkName";
-            system($cmdString) == 0 or die("Failed to execute $cmdString!\n");
+            system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
             print LOG "\# " . (localtime) . ": $cmdString\n";
         }
         else {
@@ -307,12 +307,12 @@ if ( defined($prot_file) ) {
             $prot_addstop_file = $pathParts[0] . "_addstop." . $pathParts[1];
         }
         else {
-            die("Unexpected error in prot_addstop_file name definition\n");
+            die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nUnexpected error in prot_addstop_file name definition\n");
         }
     }
 }
 else {
-    print STDERR "ERROR: No protein file specified!\n";
+    print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nNo protein file specified!\n";
     exit(1);
 }
 
@@ -326,13 +326,13 @@ if ( $prgsrc eq "spaln" ) {
     # check for spaln2 environment variables
     if ( !$ENV{'ALN_DBS'} ) {
         print STDERR
-        "ERROR: The environment variable ALN_DBS for spaln2 is not defined. Please export an environment variable with:' export ALN_DBS=/path/to/spaln2/seqdb'\n";
+        "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nThe environment variable ALN_DBS for spaln2 is not defined. Please export an environment variable with:' export ALN_DBS=/path/to/spaln2/seqdb'\n";
         exit(1);
     }
 
     if ( !$ENV{'ALN_TAB'} ) {
         print STDERR
-        "ERROR: The environment variable ALN_TAB for spaln2 is not defined. Please export an environment variable with:' export ALN_TAB=/path/to/spaln2/table'\n";
+        "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nThe environment variable ALN_TAB for spaln2 is not defined. Please export an environment variable with:' export ALN_TAB=/path/to/spaln2/table'\n";
         exit(1);
     }
 }
@@ -357,13 +357,13 @@ if ( $CPU > 1 || ( $CPU == 1 && !$protWhole ) ) {
 start_align();
 clean_up();
 
-close(LOG) or die("Could not close file $log!\n");
+close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $log!\n");
 
 ############### sub functions ##############
 
 # get protein sequences from files
 sub read_files {
-    open( POS, $pos_file ) or die "Cannot open file: $pos_file\n";
+    open( POS, $pos_file ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $pos_file\n";
     print LOG "\# " . (localtime) . ": read in positions from $pos_file\n";
     while (<POS>) {
         chomp;
@@ -376,9 +376,9 @@ sub read_files {
                 $contigIDs{ $line[0] }{"seq"} = $seqname[0];
             }
         }
-        close(POS) or die("Could not close file $pos_file!\n");
+        close(POS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $pos_file!\n");
 
-        open( LIST, $list_file ) or die "Cannot open file: $list_file\n";
+        open( LIST, $list_file ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $list_file\n";
         print LOG "\# " . (localtime) . ": read in positions from $list_file\n";
         while (<LIST>) {
             chomp;
@@ -399,11 +399,11 @@ sub read_files {
                 }
             }
         }
-        close(LIST) or die("Could not close file $list_file!\n");
+        close(LIST) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $list_file!\n");
     }
 
     sub get_seqs {
-        open( FASTA, $genome_file ) or die("Cannot open file: $genome_file\n");
+        open( FASTA, $genome_file ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $genome_file\n");
         print LOG "\# "
         . (localtime)
         . ": read in DNA sequence from $genome_file\n";
@@ -420,11 +420,11 @@ sub read_files {
         $seq{$seqname} = $sequencepart;
     }
     $/ = "\n";
-    close(FASTA) or die("Could not close file $genome_file!\n");
+    close(FASTA) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genome_file!\n");
 }
 
 sub prots {
-    open( PROT, $prot_file ) or die "Cannot open file: $prot_file\n";
+    open( PROT, $prot_file ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $prot_file\n";
     print LOG "\# "
     . (localtime)
     . ": read in fasta sequences from $prot_file\n";
@@ -501,7 +501,7 @@ sub prots {
             }
         }
     }
-    close(PROT) or die("Could not close file $prot_file!\n");
+    close(PROT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $prot_file!\n");
 }
 
 sub start_align {
@@ -517,11 +517,11 @@ sub start_align {
         . (localtime)
         . ": working directory $alignDir already exists. Deleting files in that directory.\n";
         $cmdString = "rm -r $alignDir";
-        system($cmdString) == 0 or die("Failed to execute $cmdString\n");
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
         make_path($alignDir);
     }
 
-    chdir $tmpDir or die("Could not change to directory $tmpDir.\n");
+    chdir $tmpDir or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $tmpDir.\n");
 
     my $pm                    = new Parallel::ForkManager($CPU);
     my $whole_prediction_file = "$alignDir/$prgsrc.concat.aln";
@@ -572,8 +572,8 @@ sub start_align {
             . ": add prediction from file $stdAdjusted to file $whole_prediction_file\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-            or die("failed to execute: $cmdString!\n");
-            unlink ( $stdAdjusted ) or die ("Failed to delete file $stdAdjusted!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+            unlink ( $stdAdjusted ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $stdAdjusted!\n");
             $pm->finish;
         }
     }
@@ -625,8 +625,8 @@ sub start_align {
                 . ": add prediction from file $stdoutfile to file $whole_prediction_file\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                or die("failed to execute: $cmdString!\n");
-                unlink( $stdoutfile ) or die ("Failed to delete file $stdoutfile!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+                unlink( $stdoutfile ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $stdoutfile!\n");
                 $pm->finish;
             }
         }
@@ -659,12 +659,12 @@ sub start_align {
             . ": add prediction from file $stdoutfile to file $whole_prediction_file\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-            or die("failed to execute: $cmdString!\n");
-            unlink( $stdoutfile ) or die ("Failed to delete $stdoutfile!\n");
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+            unlink( $stdoutfile ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $stdoutfile!\n");
         }
     }
     $pm->wait_all_children;
-    chdir $dir or die("Could not change to directory $dir.\n");
+    chdir $dir or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $dir.\n");
 
     #for version spaln2.2.0 and versions with same error
     if ( $prgsrc eq "spaln" ) {
@@ -691,7 +691,7 @@ sub call_exonerate {
     . (localtime)
     . ": run exonerate for target '$tFile' and query '$qFile'\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 }
 
 sub call_gth {
@@ -711,12 +711,12 @@ my @genomePath = split( /\//, $genomic );
 $proteinStemPath
 .= "protFileFor_" . $genomePath[ ( scalar(@genomePath) - 1 ) ];
 mkdir $proteinStemPath;
-die "Cannot create directory $proteinStemPath : $!\n"
+die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot create directory $proteinStemPath : $!\n"
 unless -d $proteinStemPath;
 $cmdString = "ln -s ../$protein $proteinStemPath/"
 . $proteinPath[ ( scalar(@proteinPath) - 1 ) ];
 print LOG "\# " . (localtime) . ": $cmdString\n";
-system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 $protein = $proteinStemPath . "/"
 . $proteinPath[ ( scalar(@proteinPath) - 1 ) ];
 my $stdoutfile = shift;
@@ -736,10 +736,10 @@ print LOG "\# "
 . (localtime)
 . ": run GenomeThreader for genome '$genomic' and protein '$protein'\n";
 print LOG "$cmdString\n\n";
-system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 $cmdString = "rm -r $proteinStemPath";
 print LOG "\# " . (localtime) . ": $cmdString\n";
-system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 }
 
 sub call_spaln {
@@ -766,7 +766,7 @@ sub call_spaln {
         . (localtime)
         . ": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for target '$tFile' \n";
         print LOG "$cmdString\n\n";
-        system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
     if ( !-f "$split[0].bkp" ) {
         $cmdString = "";
@@ -779,7 +779,7 @@ sub call_spaln {
         . (localtime)
         . ": create *.bkp file for target '$tFile'\n";
         print LOG "$cmdString\n\n";
-        system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
     @split = split( /\./, $qFile );
     if ( !-f "$split[0].idx" ) {
@@ -796,7 +796,7 @@ sub call_spaln {
         . (localtime)
         . ": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for query '$qFile' \n";
         print LOG "$cmdString\n\n";
-        system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
     if ( !-f "$split[0].bka" ) {
         $cmdString = "";
@@ -810,7 +810,7 @@ sub call_spaln {
         . ": create *.bka file for query '$qFile'\n";
         print LOG "$cmdString\n\n";
         print LOG "\# OUTPUT OF makblk.pl STARTING #\n";
-        system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
     $cmdString = "";
     if ($nice) {
@@ -828,14 +828,14 @@ sub call_spaln {
     . (localtime)
     . ": run spaln for target '$tFile' and query '$qFile'\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString") == 0 or die("failed to execute: $cmdString!\n");
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 }
 
 sub print_prot {
     my $outfile = shift;
     my $Sname   = shift;
     my $seqpart = shift;
-    open( OUT, ">>$outfile" ) or die "Cannot open file: $outfile\n";
+    open( OUT, ">>$outfile" ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $outfile\n";
     print OUT ">$Sname\n";
 
 # add '*' for GenomeThreader (gth) [instead of 'gt seqtransform -addstopaminos ...' since this is not part
@@ -851,7 +851,7 @@ if ( $prgsrc eq "gth" ) {
 else {
     print OUT "$seqpart\n";
 }
-close(OUT) or die("Could not close file $outfile!\n");
+close(OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $outfile!\n");
 }
 
 # print genome sequence part or whole sequence
@@ -859,7 +859,7 @@ sub print_seq {
     my $tFile    = shift;
     my $sequence = shift;
     my $Sname    = shift;
-    open( TARGET, ">$tFile" ) or die "Cannot open file: $tFile\n";
+    open( TARGET, ">$tFile" ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $tFile\n";
     print TARGET ">$Sname\n";
     my $start = 0;     # see getAnnoFasta.pl
     my $ret   = "";    # see getAnnoFasta.pl
@@ -871,7 +871,7 @@ sub print_seq {
     $ret .= substr( $sequence, $start, 80 ) . "\n"
     if ( $start < length($sequence) );
     print TARGET $ret;
-    close(TARGET) or die("Could not close file $tFile!\n");
+    close(TARGET) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $tFile!\n");
 }
 
 # adjust spaln and gth gff3 output
@@ -879,8 +879,8 @@ sub adjust {
     my $output     = shift;
     my $conID      = shift;
     my $output_adj = "$output.adj";
-    open( OUT, ">$output_adj" ) or die "Cannot open file: $output_adj\n";
-    open( IN,  $output )        or die "Cannot open file: $output\n";
+    open( OUT, ">$output_adj" ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $output_adj\n";
+    open( IN,  $output )        or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $output\n";
     while (<IN>) {
         chomp;
         my @f = split( /\s/, $_ );
@@ -899,8 +899,8 @@ sub adjust {
             print OUT "$_\n";
         }
     }
-    close(IN)  or die("Could not close file $output!\n");
-    close(OUT) or die("Could not close file $output_adj!\n");
+    close(IN)  or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $output!\n");
+    close(OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $output_adj!\n");
     return $output_adj;
 }
 
@@ -910,9 +910,9 @@ sub adjust_exonerate {
     my $conID                = shift;
     my $exonerate_output_adj = "$exonerate_output.adj";
     open( OUT, ">$exonerate_output_adj" )
-    or die "Cannot open file: $exonerate_output_adj\n";
+    or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $exonerate_output_adj\n";
     open( IN, $exonerate_output )
-    or die "Cannot open file: $exonerate_output\n";
+    or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $exonerate_output\n";
     my $add_space = "";
     while (<IN>) {
         chomp;
@@ -974,8 +974,8 @@ sub adjust_exonerate {
             }
         }
     }
-    close(IN)  or die("Could not close file $exonerate_output!\n");
-    close(OUT) or die("Could not close file $exonerate_output_adj!\n");
+    close(IN)  or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $exonerate_output!\n");
+    close(OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $exonerate_output_adj!\n");
     return $exonerate_output_adj;
 }
 
@@ -983,8 +983,8 @@ sub adjust_exonerate {
 sub adjust_spaln_noreg {
     my $output     = shift;
     my $output_adj = "$output.adj";
-    open( OUT, ">$output_adj" ) or die "Cannot open file: $output_adj\n";
-    open( IN,  $output )        or die "Cannot open file: $output\n";
+    open( OUT, ">$output_adj" ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $output_adj\n";
+    open( IN,  $output )        or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $output\n";
     while (<IN>) {
         chomp;
         my @f = split( /\s/, $_ );
@@ -1003,8 +1003,8 @@ sub adjust_spaln_noreg {
             print OUT "$_\n";
         }
     }
-    close(IN)  or die("Could not close file $output!\n");
-    close(OUT) or die("Could not close file $output_adj!\n");
+    close(IN)  or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $output!\n");
+    close(OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $output_adj!\n");
 }
 
 # delete empty files
