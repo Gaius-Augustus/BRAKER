@@ -572,11 +572,11 @@ sub print_gene {
     if ( ( $true_count + 1 ) != $size && $size != 1 ) {
         $bool_good = "false";
     }
-    if ( scalar(@CDS) == 1 ) {
+    if ( scalar(@CDS) == 2 ) {
         $one_exon_gene_count++;
         $bool_good = "false"; # add single CDS genes later
         my %thisCDS;
-        $thisCDS{'cds'} = $_;
+        $thisCDS{'cds'} = $CDS[0];
         if($filterOutShort){
             $thisCDS{'short'} = $boolShortBad;
         }else{
@@ -594,7 +594,7 @@ sub print_gene {
     }
 
     # all exons in intron file
-    if ( $bool_good eq "true" && $bool_complete eq "true" && !$filterOutShort && not (scalar(@CDS) == 1) ) {
+    if ( $bool_good eq "true" && $bool_complete eq "true" && !$filterOutShort && not (scalar(@CDS) == 2) ) {
         $nr_of_good++;
         $good_mults += $mults;
         if ( !defined($suppress) ) {
@@ -609,7 +609,7 @@ sub print_gene {
 
         # not all exons in intron file or gene incomplete
     }
-    elsif ($bool_good eq "true" && $bool_complete eq "true" && $filterOutShort && $boolShortBad eq "false" && not (scalar(@CDS) == 1) ) {
+    elsif ($bool_good eq "true" && $bool_complete eq "true" && $filterOutShort && $boolShortBad eq "false" && not (scalar(@CDS) == 2) ) {
         # filter for genes that do NOT have an upstream intron in close proximity
         $nr_of_good++;
         $good_mults += $mults;
@@ -622,7 +622,7 @@ sub print_gene {
         }
     }
     else {
-        if(not(scalar(@CDS) == 1)){
+        if(not(scalar(@CDS) == 2)){
             $nr_of_bad++;
             if ( !defined($suppress) ) {
                 print BAD "$start_codon";
