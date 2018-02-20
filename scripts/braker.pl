@@ -735,12 +735,10 @@ if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth ) {
         = "\# "
         . (localtime)
         . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "No RNA-Seq or hints file(s) from RNA-Seq specified. ";
-    $prtStr
-        .= "Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq ";
-    $prtStr
-        .= "(must contain intron hints from src b2h in column 2) to run BRAKER in mode for ";
-    $prtStr .= "training from RNA-Seq.\n$usage";
+        . "No RNA-Seq or hints file(s) from RNA-Seq specified. "
+        . "Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq "
+        . "(must contain intron hints from src b2h in column 2) to run BRAKER in mode for "
+        . "training from RNA-Seq.\n$usage";
     print STDERR $prtStr;
     $logString .= $prtStr;
     exit(1);
@@ -750,10 +748,9 @@ if ( $EPmode == 1 ) {
     $prtStr
         = "\# "
         . (localtime)
-        . ": BRAKER will be execute GeneMark-EP for training GeneMark and ";
-    $prtStr
-        .= "generating a training gene set for AUGUSTUS, using protein information as sole ";
-    $prtStr .= "extrinsic evidence source.\n";
+        . ": BRAKER will be execute GeneMark-EP for training GeneMark and "
+        . "generating a training gene set for AUGUSTUS, using protein information as sole ";
+        . "extrinsic evidence source.\n";
     print STDOUT $prtStr;
     $logString .= $prtStr;
 }
