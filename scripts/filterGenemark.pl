@@ -600,6 +600,7 @@ sub print_gene {
         if ( !defined($suppress) ) {
             print GOOD "$start_codon";
             foreach (@CDS) {
+                print GOOD "check1 ";
                 print GOOD "$_\n";
             }
             print GOOD "$stop_codon";
@@ -614,6 +615,7 @@ sub print_gene {
         if ( !defined($suppress) ) {
             print GOOD "$start_codon";
             foreach (@CDS) {
+                print GOOD "check2 ";
                 print GOOD "$_\n";
             }
             print GOOD "$stop_codon";
@@ -713,13 +715,14 @@ sub add_single_cds {
     foreach my $good (@printCDS) {
         if( defined ( $good ) ) {
             $good =~ s/\texon\t/\tCDS\t/;
+            print GOOD "check3 ";
             print GOOD $good."\n";
             $nr_of_good++;
         }
     }
     foreach my $bad (@badCDS) {
         if (defined ( $bad ) ) {
-            $bad =~ s/\texon\t/\tsingleCDS\t/;
+            $bad =~ s/\texon\t/\tCDS\t/;
             print BAD $bad."\n";
             $nr_of_bad++;
         }
