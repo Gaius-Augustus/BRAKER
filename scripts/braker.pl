@@ -3022,8 +3022,9 @@ sub training {
         my %nonRed;
         open (BLASTOUT, "<", "$otherfilesDir/traingenes.good.nr.fa") or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/traingenes.good.nr.fa!\n" );
         while ( <BLASTOUT> ) {
-            $_ =~ s/>//;
-            $nonRed{$_} = 1;
+            chomp;
+            if($_ =~ m/^\>(\S+)/;
+            $nonRed{$1} = 1;
         }
         close (BLASTOUT) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/traingenes.good.nr.fa!\n" );
         open ( NONREDLOCI, ">", "$otherfilesDir/nonred.loci.lst") or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/nonred.loci.lst!\n");
