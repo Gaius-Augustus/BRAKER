@@ -719,7 +719,7 @@ sub add_single_cds {
     }
     foreach my $bad (@badCDS) {
         if (defined ( $bad ) ) {
-            $good =~ s/\texon\t/\tCDS\t/;
+            $bad =~ s/\texon\t/\tCDS\t/;
             print BAD $bad."\n";
             $nr_of_bad++;
         }
