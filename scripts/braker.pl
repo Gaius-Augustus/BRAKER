@@ -2870,32 +2870,29 @@ sub training {
         gtf2gb ($trainGenesGtf, $trainGb1);
 
         # filter "good" genes from train.gb: all gth genes that are left, plus the genemark "good" genes
-        my %goodLst;
         if ( not ( $trainFromGth ) ) {
             # get good genemark genes
-            open ( GMGOOD, "<", "$genemarkDir/genemark.f.good.gtf") or die ("Could not open file $genemarkDir/genemark.f.good.gtf!\n");
-            while ( <GMGOOD> ) {
-                if ( $_ =~ m/transcript_id \"(\S+)\"/ ) {
-                    $goodLst{$1} = 1;
-                }
-            }
-            close ( GMGOOD ) or die ( "Could not close file $genemarkDir/genemark.f.good.gtf!\n" );
+            print LOG "\#  "
+                . (localtime)
+                . ": concatenating good GeneMark training genes to $goodLstFile.\n";
+            $cmdString = "cat $genemarkDir/genemark.f.good.gtf > $goodLstFile";
+            print LOG "$cmdString\n";
+            system($cmdString) == 0
+                or die("failed to execute: $cmdString!\n");
         }
         if ( $gth2traingenes ) {
             # get all remaining gth genes
+            open (GOODLST, ">>", $goodLstFile) or die ( "Could not open file $goodLstFile!\n" );
             open ( GTHGOOD, "<", $trainGenesGtf ) or die ( "Could not open file $trainGenesGtf!\n" );
             while ( <GTHGOOD> ) {
-                if ( $_ =~ m/\tgth2h\t.*transcript_id \"(\S+)\"/ ) {
-                    $goodLst{$1} = 1;
+                if ( $_ =~ m/\tgth2h\t/ ) {
+                    print GOODLST $_;
                 }
             }
            close ( GTHGOOD ) or die ( "Could not close file $trainGenesGtf!\n" );
+           close (GOODLST) or die ( "Could not close file $goodLstFile!\n" );
         }
-        open (GOODLST, ">", $goodLstFile) or die ("Could not open file $goodLstFile!\n");
-        foreach (keys %goodLst) {
-            print GOODLST $_."\n";
-        }
-        close (GOODLST) or die ("Could not open fiel $goodLstFile!\n");
+
 
         # filter good genes from trainGb1 into trainGb2
         $string = find(
