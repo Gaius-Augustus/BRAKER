@@ -213,8 +213,8 @@ open( LOG, ">" . $log ) or die "ERROR in file " . __FILE__ ." at line ". __LINE_
 
 $tmpDir   = "$dir/tmp_$prgsrc";
 $alignDir = "$dir/align_$prgsrc";
-if ( !-d $tmpDir ) {
-    make_path($tmpDir);
+if ( ! (-d $tmpDir) ) {
+    make_path($tmpDir) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot create directory $tmpDir!\n");
     print LOG "\# " . (localtime) . ": create working directory $tmpDir\n";
     print LOG "mkdir $tmpDir\n\n";
 }
@@ -1022,6 +1022,6 @@ sub clean_up {
     }
     print LOG "empty files deleted.\n";
     print LOG "NEXT STEP: deleting $tmpDir\n";
-    rmtree( ["$tmpDir"] );
+    rmtree( ["$tmpDir"] ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete folder $tmpDir!\n");
     print LOG "directory deleted.\n";
 }

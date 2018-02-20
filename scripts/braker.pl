@@ -1743,15 +1743,7 @@ sub make_prot_hints {
                 print LOG "\n\# "
                     . (localtime)
                     . ": moving startAlign output files\n";
-                $cmdString = "mv startAlign_$prg.log startAlign_$prg.log$i";
-                print LOG "$cmdString\n";
-                system("$cmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
-                $cmdString = "mv tmp_$prg tmp_$prg$i";
-                print LOG "$cmdString\n";
-                system("$cmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-                $cmdString = "mv align_$prg align_$prg$i";
+                $cmdString = "mv $otherfilesDir/align_$prg $otherfilesDir/align_$prg$i";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n\n");
@@ -1760,10 +1752,9 @@ sub make_prot_hints {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": Skipping running alignment tool ";
-                $prtStr
-                    .= "because files $prot_seq_files[$i] and $prot_hintsfile ";
-                $prtStr .= "were up to date.\n";
+                    . ": Skipping running alignment tool "
+                    . "because files $prot_seq_files[$i] and $prot_hintsfile "
+                    . "were up to date.\n";
                 print LOG $prtStr;
             }
         }
