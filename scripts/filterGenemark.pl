@@ -600,6 +600,7 @@ sub print_gene {
         if ( !defined($suppress) ) {
             print GOOD "$start_codon";
             foreach (@CDS) {
+                print GOOD "";
                 print GOOD "$_\n";
             }
             print GOOD "$stop_codon";
