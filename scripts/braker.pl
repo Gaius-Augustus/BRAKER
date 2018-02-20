@@ -1263,7 +1263,7 @@ else {
             exit(1);
         }
     }
-    elsif ($skipGeneMarkEP) {
+    elsif ($skipGeneMarkEP && not($trainFromGth)) {
         $prtStr
             = "\# "
             . (localtime)
