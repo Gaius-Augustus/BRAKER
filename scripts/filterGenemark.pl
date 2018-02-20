@@ -149,7 +149,7 @@ my %averageMult;
 my $percentMult = 0.2;
 my %maxCdsSize;    # contains max CDS size of a gene (gene is key)
 my $boolShortBad;
-my $cutoff = 15;
+my $cutoff = 0;
 my $goodOneExonGenes = 0;
 
 if ( @ARGV == 0 ) {
@@ -674,12 +674,13 @@ sub add_single_cds {
     # select genes that overlap with given CDSpart hints in @cdshints
     my @printCDS;
     my @badCDS;
+    print "Number of cds hints is ".scalar(keys %cds_hints)."\n";
     if ( ( (scalar (keys %cds_hints) ) > 0 ) && ( $available_single_cds_genes > 0 ) ) {
         while (my ($goodGeneIdx, $goodGene) = each %goodSingleCDSgenes) {
             my @t = split(/\t/, $goodGene);
             foreach ( @{$cds_hints{$t[0]}} ) {
                 # check whether cds is an exact overlap of coordinates and strand;
-                if ( ( $_->{'start'} == $t[3] ) && ( $_->{'end'} == $t[4] ) && ( $_->{'strand'} eq $t[6] ) ) {
+                if ( ( $_->{'start'} >= $t[3] ) && ($_->{'start'} <= $t[4]) && ( $_->{'end'} <= $t[4] ) && ($_->{'end'} >= $t[3]) && ( $_->{'strand'} eq $t[6] ) ) {
                     push @printCDS, $goodGene;
                     delete $goodSingleCDSgenes{$goodGeneIdx};
                     last;
