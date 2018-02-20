@@ -599,9 +599,10 @@ sub print_gene {
         $good_mults += $mults;
         if ( !defined($suppress) ) {
             print GOOD "$start_codon";
-            foreach (@CDS) {
-                print GOOD "check 1 ";
-                print GOOD "$_\n";
+	    my $cdsC = 0;
+	    for ( my $i=0; $i<scalar(@CDS); $i++){
+		$cdsC++;
+                print GOOD "$CDS[$i]\n";
             }
             print GOOD "$stop_codon";
         }
