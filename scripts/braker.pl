@@ -3306,7 +3306,7 @@ sub training {
         if ( !$skipoptimize ) {
             if (!uptodate(
                     [   "$otherfilesDir/train.gb.train.train",
-                        "$otherfilesDir/train.gb.test.test"
+                        "$otherfilesDir/train.gb.train.test"
                     ],
                     [   $AUGUSTUS_CONFIG_PATH
                             . "/species/$species/$species\_exon_probs.pbl",
@@ -6432,7 +6432,7 @@ sub join_aug_pred {
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString .= "cat $pred_dir/$_ >> $cat_file";
+            $cmdString .= "cat $pred_dir/".$_->{'filename'}." >> $cat_file";
             print LOG "$cmdString\n";
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
         }
@@ -6440,14 +6440,14 @@ sub join_aug_pred {
     foreach(keys %err_files){
         foreach(@{$err_files{$_}}){
             if ( !-s $_ ) {
-                $cmdString = "echo \"Contents of file $_\" >> $error_cat_file";
+                $cmdString = "echo \"Contents of file ".$_->{'filename'}."\" >> $error_cat_file";
                 print LOG "$cmdString\n";
                 system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
                 $cmdString = "";
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString .= "cat $pred_dir/$_ >> $error_cat_file";
+                $cmdString .= "cat $pred_dir/."$_->{'filename'}." >> $error_cat_file";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
             }
