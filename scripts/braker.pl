@@ -5381,18 +5381,18 @@ sub train_utr {
 sub set_AUGUSTUS_CONFIG_PATH {
 
     # get path from ENV (if available)
-    if ( defined( $ENV{'AUGUSTUS_CONFIG_PATH'} ) ) {
+    if ( defined( $ENV{'AUGUSTUS_CONFIG_PATH'} ) && not(defined($augustus_cfg_path)) ) {
         if ( -e $ENV{'AUGUSTUS_CONFIG_PATH'} ) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Found environment variable \$AUGUSTUS_CONFIG_PATH.\n";
+                . ": Found environment variable \$AUGUSTUS_CONFIG_PATH. Setting \$AUGUSTUS_CONFIG_PATH to ".$ENV{'AUGUSTUS_CONFIG_PATH'}."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
         }
     }
-    else {
+    elsif(not(defined($augustus_cfg_path))) {
         $prtStr
             = "\# "
             . (localtime)
@@ -5505,26 +5505,24 @@ sub set_AUGUSTUS_CONFIG_PATH {
 sub set_AUGUSTUS_BIN_PATH {
 
     # get path from ENV (if available)
-    if ( defined( $ENV{'AUGUSTUS_BIN_PATH'} ) ) {
+    if ( defined( $ENV{'AUGUSTUS_BIN_PATH'} ) && not (defined($augustus_bin_path) ) ) {
         if ( -e $ENV{'AUGUSTUS_BIN_PATH'} ) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Found environment variable \$AUGUSTUS_BIN_PATH.\n";
+                . ": Found environment variable \$AUGUSTUS_BIN_PATH. Setting \$AUGUSTUS_BIN_PATH to ". $ENV{'AUGUSTUS_BIN_PATH'}."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_BIN_PATH = $ENV{'AUGUSTUS_BIN_PATH'};
         }
     }
-    else {
+    elsif (not (defined($augustus_bin_path))) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Did not find environment variable \$AUGUSTUS_BIN_PATH ";
-        $prtStr
-            .= "(either variable does not exist, or the path given in variable does not exist";
-        $prtStr
-            .= "). Will try to set this variable in a different way, later.\n";
+            . ": Did not find environment variable \$AUGUSTUS_BIN_PATH "
+            . "(either variable does not exist, or the path given in variable does not exist"
+            . "). Will try to set this variable in a different way, later.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
     }
@@ -5613,26 +5611,24 @@ sub set_AUGUSTUS_BIN_PATH {
 sub set_AUGUSTUS_SCRIPTS_PATH {
 
     # first try to get path from ENV
-    if ( defined( $ENV{'AUGUSTUS_SCRIPTS_PATH'} ) ) {
+    if ( defined( $ENV{'AUGUSTUS_SCRIPTS_PATH'} ) && not(defined($augustus_scripts_path)) ) {
         if ( -e $ENV{'AUGUSTUS_SCRIPTS_PATH'} ) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Found environment variable \$AUGUSTUS_SCRIPTS_PATH.\n";
+                . ": Found environment variable \$AUGUSTUS_SCRIPTS_PATH. Setting \$AUGUSTUS_SCRIPTS_PATH to ".$ENV{'AUGUSTUS_SCRIPTS_PATH'} ."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_SCRIPTS_PATH = $ENV{'AUGUSTUS_SCRIPTS_PATH'};
         }
     }
-    else {
+    elsif(not(defined($augustus_scripts_path))) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Did not find environment variable \$AUGUSTUS_SCRIPTS_PATH";
-        $prtStr
-            .= "(either variable does not exist, or the path given in variable does not exist";
-        $prtStr
-            .= "). Will try to set this variable in a different way, later.\n";
+            . ": Did not find environment variable \$AUGUSTUS_SCRIPTS_PATH"
+            . "(either variable does not exist, or the path given in variable does not exist"
+            . "). Will try to set this variable in a different way, later.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
     }
@@ -5648,9 +5644,8 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Setting \$AUGUSTUS_SCRIPTS_PATH to command line ";
-            $prtStr
-                = "argument --AUGUSTUS_SCRIPTS_PATH value $augustus_scripts_path.\n";
+                . ": Setting \$AUGUSTUS_SCRIPTS_PATH to command line "
+                . "argument --AUGUSTUS_SCRIPTS_PATH value $augustus_scripts_path.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -5658,11 +5653,9 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Command line argument --AUGUSTUS_SCRIPTS_PATH ";
-            $prtStr
-                .= "was supplied but value $augustus_scripts_path is not a directory. Will not ";
-            $prtStr
-                .= "set \$AUGUSTUS_SCRIPTS_PATH to $augustus_scripts_path!\n";
+                . ": WARNING: Command line argument --AUGUSTUS_SCRIPTS_PATH "
+                . "was supplied but value $augustus_scripts_path is not a directory. Will not "
+                . "set \$AUGUSTUS_SCRIPTS_PATH to $augustus_scripts_path!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -5675,16 +5668,16 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Trying to guess \$AUGUSTUS_SCRIPTS_PATH from ";
-        $prtStr .= "\$AUGUSTUS_CONFIG_PATH.\n";
+            . ": Trying to guess \$AUGUSTUS_SCRIPTS_PATH from "
+            . "\$AUGUSTUS_CONFIG_PATH.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         if ( -d "$AUGUSTUS_CONFIG_PATH/../scripts" ) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Setting \$AUGUSTUS_SCRIPTS_PATH to ";
-            $prtStr .= "$AUGUSTUS_CONFIG_PATH/../scripts\n";
+                . ": Setting \$AUGUSTUS_SCRIPTS_PATH to "
+                . "$AUGUSTUS_CONFIG_PATH/../scripts\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_SCRIPTS_PATH = "$AUGUSTUS_CONFIG_PATH/../scripts";
@@ -5693,10 +5686,9 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Guessing the location of ";
-            $prtStr
-                .= "\$AUGUSTUS_SCRIPTS_PATH failed. $AUGUSTUS_CONFIG_PATH/../scripts is not a ";
-            $prtStr .= "directory!\n";
+                . ": WARNING: Guessing the location of "
+                . "\$AUGUSTUS_SCRIPTS_PATH failed. $AUGUSTUS_CONFIG_PATH/../scripts is not a "
+                . "directory!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -5729,26 +5721,24 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
 sub set_BAMTOOLS_PATH {
 
     # try to get path from ENV
-    if ( defined( $ENV{'BAMTOOLS_PATH'} ) ) {
+    if ( defined( $ENV{'BAMTOOLS_PATH'} ) && not(defined($bamtools_path))) {
         if ( -e $ENV{'BAMTOOLS_PATH'} ) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Found environment variable \$BAMTOOLS_PATH.\n";
+                . ": Found environment variable \$BAMTOOLS_PATH. Setting \$BAMTOOLS_PATH to ".$ENV{'BAMTOOLS_PATH'}."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'};
         }
     }
-    else {
+    elsif(not(defined($bamtools_path))) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Did not find environment variable \$BAMTOOLS_PATH ";
-        $prtStr
-            .= "(either variable does not exist, or the path given in variable does not ";
-        $prtStr
-            .= "exist). Will try to set this variable in a different way, later.\n";
+            . ": Did not find environment variable \$BAMTOOLS_PATH "
+            . "(either variable does not exist, or the path given in variable does not "
+            . "exist). Will try to set this variable in a different way, later.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
     }
@@ -5763,8 +5753,8 @@ sub set_BAMTOOLS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Setting \$BAMTOOLS_BIN_PATH to command line argument ";
-            $prtStr .= "--BAMTOOLS_PATH value $bamtools_path.\n";
+                . ": Setting \$BAMTOOLS_BIN_PATH to command line argument "
+                . "--BAMTOOLS_PATH value $bamtools_path.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $BAMTOOLS_BIN_PATH = $bamtools_path;
@@ -5773,10 +5763,9 @@ sub set_BAMTOOLS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Command line argument --BAMTOOLS_PATH was ";
-            $prtStr
-                .= "supplied but value $bamtools_path is not a directory. Will not set ";
-            $prtStr .= "\$BAMTOOLS_BIN_PATH to $bamtools_path!\n";
+                . ": WARNING: Command line argument --BAMTOOLS_PATH was "
+                . "supplied but value $bamtools_path is not a directory. Will not set "
+                . "\$BAMTOOLS_BIN_PATH to $bamtools_path!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -5789,8 +5778,8 @@ sub set_BAMTOOLS_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Trying to guess \$BAMTOOLS_BIN_PATH from location of bamtools";
-        $prtStr .= " executable that is available in your \$PATH.\n";
+            . ": Trying to guess \$BAMTOOLS_BIN_PATH from location of bamtools"
+            . " executable that is available in your \$PATH.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         my $epath = which 'bamtools';
@@ -5808,9 +5797,8 @@ sub set_BAMTOOLS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Guessing the location of \$BAMTOOLS_BIN_PATH ";
-            $prtStr
-                .= "failed. " . dirname($epath) . " is not a directory!\n";
+                . ": WARNING: Guessing the location of \$BAMTOOLS_BIN_PATH "
+                . "failed. " . dirname($epath) . " is not a directory!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -5845,26 +5833,25 @@ sub set_BAMTOOLS_PATH {
 sub set_GENEMARK_PATH {
 
     # try to get path from ENV
-    if ( defined( $ENV{'GENEMARK_PATH'} ) ) {
+    if ( defined( $ENV{'GENEMARK_PATH'} ) && not (defined($GMET_path))) {
         if ( -e $ENV{'GENEMARK_PATH'} ) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Found environment variable \$GENEMARK_PATH.\n";
+                . ": Found environment variable \$GENEMARK_PATH. Setting \$GENEMARK_PATH to ".$ENV{'GENEMARK_PATH'}."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}
                 ;    # path to 'gmes_petap.pl' script on system
         }
     }
-    else {
+    elsif(not(defined($GMET_path))) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Did not find environment variable \$GENEMARK_PATH  (either";
-        $prtStr
-            .= " variable does not exist, or the path given in variable does not exist). Will";
-        $prtStr .= " try to set this variable in a different way, later.\n";
+            . ": Did not find environment variable \$GENEMARK_PATH  (either"
+            . " variable does not exist, or the path given in variable does not exist). Will"
+            . " try to set this variable in a different way, later.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
     }
@@ -5879,8 +5866,8 @@ sub set_GENEMARK_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Setting \$GENEMARK_PATH to command line argument -";
-            $prtStr .= "-GENEMARK_PATH value $GMET_path.\n";
+                . ": Setting \$GENEMARK_PATH to command line argument -"
+                . "-GENEMARK_PATH value $GMET_path.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $GENEMARK_PATH = $GMET_path;
@@ -5889,10 +5876,9 @@ sub set_GENEMARK_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Command line argument --GENEMARK_PATH was ";
-            $prtStr
-                .= "supplied but value $GMET_path is not a directory. Will not set ";
-            $prtStr .= "\$GENEMARK_PATH to $GMET_path!\n";
+                . ": WARNING: Command line argument --GENEMARK_PATH was "
+                . "supplied but value $GMET_path is not a directory. Will not set "
+                . "\$GENEMARK_PATH to $GMET_path!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -5903,8 +5889,8 @@ sub set_GENEMARK_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Trying to guess \$GENEMARK_PATH from location of gmes_petap.pl ";
-        $prtStr .= "executable that is available in your \$PATH.\n";
+            . ": Trying to guess \$GENEMARK_PATH from location of gmes_petap.pl "
+            . "executable that is available in your \$PATH.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         my $epath = which 'gmes_petap.pl';
@@ -5922,9 +5908,8 @@ sub set_GENEMARK_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Guessing the location of \$GENEMARK_PATH ";
-            $prtStr
-                .= "failed. " . dirname($epath) . " is not a directory!\n";
+                . ": WARNING: Guessing the location of \$GENEMARK_PATH "
+                . "failed. " . dirname($epath) . " is not a directory!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -5958,7 +5943,7 @@ sub set_GENEMARK_PATH {
 sub set_SAMTOOLS_PATH {
 
     # try to get from ENV
-    if ( defined( $ENV{'SAMTOOLS_PATH'} ) ) {
+    if ( defined( $ENV{'SAMTOOLS_PATH'} ) && not (defined($SAMTOOLS_PATH_OP)) ) {
         if ( -e $ENV{'SAMTOOLS_PATH'} ) {
             $prtStr
                 = "\# "
@@ -5966,18 +5951,17 @@ sub set_SAMTOOLS_PATH {
                 . ": Found environment variable \$SAMTOOLS_PATH. Setting \$SAMTOOLS_PATH to ".$ENV{'SAMTOOLS_PATH'}."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
-            my $SAMTOOLS_PATH
+            $SAMTOOLS_PATH
                 = $ENV{'SAMTOOLS_PATH'};    # samtools environment variable
         }
     }
-    else {
+    elsif( not(defined($SAMTOOLS_PATH_OP)) ) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Did not find environment variable \$SAMTOOLS_PATH  (either";
-        $prtStr
-            .= " variable does not exist, or the path given in variable does not exist). Will";
-        $prtStr .= " try to set this variable in a different way, later.\n";
+            . ": Did not find environment variable \$SAMTOOLS_PATH  (either"
+            . " variable does not exist, or the path given in variable does not exist). Will"
+            . " try to set this variable in a different way, later.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
     }
@@ -5992,8 +5976,8 @@ sub set_SAMTOOLS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Setting \$SAMTOOLS_PATH to command line argument --SAMTOOLS_PATH ";
-            $prtStr .= "value $SAMTOOLS_PATH_OP.\n";
+                . ": Setting \$SAMTOOLS_PATH to command line argument --SAMTOOLS_PATH "
+                . "value $SAMTOOLS_PATH_OP.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
@@ -6002,10 +5986,9 @@ sub set_SAMTOOLS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . " WARNING: Command line argument --SAMTOOLS_PATH was supplied ";
-            $prtStr
-                .= "but value $SAMTOOLS_PATH_OP is not a directory. Will not set \$SAMTOOLS_PATH to ";
-            $prtStr .= "$SAMTOOLS_PATH_OP!\n";
+                . " WARNING: Command line argument --SAMTOOLS_PATH was supplied "
+                . "but value $SAMTOOLS_PATH_OP is not a directory. Will not set \$SAMTOOLS_PATH to "
+                . "$SAMTOOLS_PATH_OP!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -6016,8 +5999,8 @@ sub set_SAMTOOLS_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Trying to guess \$SAMTOOLS_PATH from location of samtools ";
-        $prtStr .= "executable in your \$PATH.\n";
+            . ": Trying to guess \$SAMTOOLS_PATH from location of samtools "
+            . "executable in your \$PATH.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
         my $epath = which 'samtools';
@@ -6035,9 +6018,8 @@ sub set_SAMTOOLS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Guessing the location of \$SAMTOOLS_PATH ";
-            $prtStr
-                .= "failed. " . dirname($epath) . " is not a directory!\n";
+                . ": WARNING: Guessing the location of \$SAMTOOLS_PATH "
+                . "failed. " . dirname($epath) . " is not a directory!\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -6074,26 +6056,24 @@ sub set_ALIGNMENT_TOOL_PATH {
     if (@prot_seq_files) {
 
         # try go get from ENV
-        if ( defined( $ENV{'ALIGNMENT_TOOL_PATH'} ) ) {
+        if ( defined( $ENV{'ALIGNMENT_TOOL_PATH'} ) && not (defined( $ALIGNMENT_TOOL_PATH_OP ) ) ) {
             if ( -e $ENV{'ALIGNMENT_TOOL_PATH'} ) {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": Found environment variable \$ALIGNMENT_TOOL_PATH.\n";
+                    . ": Found environment variable \$ALIGNMENT_TOOL_PATH. Setting \$ALIGNMENT_TOOL_PATH to ".$ENV{'ALIGNMENT_TOOL_PATH'}."\n";
                 print STDOUT $prtStr;
                 $logString .= $prtStr;
                 $ALIGNMENT_TOOL_PATH = $ENV{'ALIGNMENT_TOOL_PATH'};
             }
         }
-        else {
+        elsif(not(defined($ALIGNMENT_TOOL_PATH_OP))) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Did not find environment variable \$ALIGNMENT_TOOL_PATH ";
-            $prtStr
-                .= "(either variable does not exist, or the path given in variable does not ";
-            $prtStr
-                .= "exist). Will try to set this variable in a different way, later.\n";
+                . ": Did not find environment variable \$ALIGNMENT_TOOL_PATH "
+                . "(either variable does not exist, or the path given in variable does not "
+                . "exist). Will try to set this variable in a different way, later.\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
         }
@@ -6108,25 +6088,21 @@ sub set_ALIGNMENT_TOOL_PATH {
                 $prtStr
                     = "\# "
                     . (localtime)
-                    . ": Setting \$ALIGNMENT_TOOL_PATH to command line argument ";
-                $prtStr
-                    .= "--ALIGNMENT_TOOL_PATH value $ALIGNMENT_TOOL_PATH_OP.\n";
+                    . ": Setting \$ALIGNMENT_TOOL_PATH to command line argument "
+                    . "--ALIGNMENT_TOOL_PATH value $ALIGNMENT_TOOL_PATH_OP.\n";
                 print STDOUT $prtStr;
                 $logString .= $prtStr;
                 $ALIGNMENT_TOOL_PATH = $ALIGNMENT_TOOL_PATH_OP;
             }
         }
-        if ( not( defined($ALIGNMENT_TOOL_PATH) )
-            || length($ALIGNMENT_TOOL_PATH) == 0 )
-        {
+        if ( not( defined($ALIGNMENT_TOOL_PATH) ) || length($ALIGNMENT_TOOL_PATH) == 0 ) {
             if ( defined($prg) ) {
                 if ( $prg eq "gth" ) {
                     $prtStr
                         = "\# "
                         . (localtime)
-                        . ": Trying to guess \$ALIGNMENT_TOOL_PATH from location ";
-                    $prtStr
-                        .= "of GenomeThreader executable in your \$PATH.\n";
+                        . ": Trying to guess \$ALIGNMENT_TOOL_PATH from location "
+                        . "of GenomeThreader executable in your \$PATH.\n";
                     print STDOUT $prtStr;
                     $logString .= $prtStr;
                     my $epath = which 'gth';
@@ -6134,8 +6110,8 @@ sub set_ALIGNMENT_TOOL_PATH {
                         $prtStr
                             = "\# "
                             . (localtime)
-                            . ": Setting \$ALIGNMENT_TOOL_PATH to ";
-                        $prtStr .= dirname($epath) . "\n";
+                            . ": Setting \$ALIGNMENT_TOOL_PATH to "
+                            . dirname($epath) . "\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                         $ALIGNMENT_TOOL_PATH = dirname($epath);
@@ -6144,12 +6120,11 @@ sub set_ALIGNMENT_TOOL_PATH {
                         $prtStr
                             = "\# "
                             . (localtime)
-                            . ": WARNING: Guessing the location of ";
-                        $prtStr
-                            .= "\$ALIGNMENT_TOOL_PATH failed. "
+                            . ": WARNING: Guessing the location of "
+                            . "\$ALIGNMENT_TOOL_PATH failed. "
                             . dirname($epath)
-                            . " is not a ";
-                        $prtStr .= "directory!\n";
+                            . " is not a "
+                            . "directory!\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                     }
@@ -6158,9 +6133,8 @@ sub set_ALIGNMENT_TOOL_PATH {
                     $prtStr
                         = "\# "
                         . (localtime)
-                        . ": Trying to guess \$ALIGNMENT_TOOL_PATH from ";
-                    $prtStr
-                        .= "location of Exonerate executable in your \$PATH.\n";
+                        . ": Trying to guess \$ALIGNMENT_TOOL_PATH from "
+                        . "location of Exonerate executable in your \$PATH.\n";
                     print STDOUT $prtStr;
                     $logString .= $prtStr;
                     my $epath = which 'exonerate';
@@ -6168,8 +6142,8 @@ sub set_ALIGNMENT_TOOL_PATH {
                         $prtStr
                             = "\# "
                             . (localtime)
-                            . ": Setting \$ALIGNMENT_TOOL_PATH to ";
-                        $prtStr .= dirname($epath) . "\n";
+                            . ": Setting \$ALIGNMENT_TOOL_PATH to "
+                            . dirname($epath) . "\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                         $ALIGNMENT_TOOL_PATH = dirname($epath);
@@ -6178,12 +6152,11 @@ sub set_ALIGNMENT_TOOL_PATH {
                         $prtStr
                             = "\# "
                             . (localtime)
-                            . ": WARNING: Guessing the location of ";
-                        $prtStr
-                            .= "\$ALIGNMENT_TOOL_PATH failed. "
+                            . ": WARNING: Guessing the location of "
+                            . "\$ALIGNMENT_TOOL_PATH failed. "
                             . dirname($epath)
-                            . " is not a ";
-                        $prtStr .= "directory!\n";
+                            . " is not a "
+                            . "directory!\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                     }
@@ -6192,9 +6165,8 @@ sub set_ALIGNMENT_TOOL_PATH {
                     $prtStr
                         = "\# "
                         . (localtime)
-                        . ": Trying to guess \$ALIGNMENT_TOOL_PATH ";
-                    $prtStr
-                        .= "from location of Spaln executable in your \$PATH.\n";
+                        . ": Trying to guess \$ALIGNMENT_TOOL_PATH "
+                        . "from location of Spaln executable in your \$PATH.\n";
                     print STDOUT $prtStr;
                     $logString .= $prtStr;
                     my $epath = which 'spaln';
@@ -6202,8 +6174,8 @@ sub set_ALIGNMENT_TOOL_PATH {
                         $prtStr
                             = "\# "
                             . (localtime)
-                            . ": Setting \$ALIGNMENT_TOOL_PATH to ";
-                        $prtStr .= dirname($epath) . "\n";
+                            . ": Setting \$ALIGNMENT_TOOL_PATH to "
+                            . dirname($epath) . "\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                         $ALIGNMENT_TOOL_PATH = dirname($epath);
@@ -6212,10 +6184,10 @@ sub set_ALIGNMENT_TOOL_PATH {
                         $prtStr
                             = "\# "
                             . (localtime)
-                            . " WARNING: Guessing the location of ";
-                        $prtStr .= "\$ALIGNMENT_TOOL_PATH failed. "
-                            . dirname($epath) . " ";
-                        $prtStr .= "is not a directory!\n";
+                            . " WARNING: Guessing the location of "
+                            . "\$ALIGNMENT_TOOL_PATH failed. "
+                            . dirname($epath) . " "
+                            . "is not a directory!\n";
                         print STDOUT $prtStr;
                         $logString .= $prtStr;
                     }
@@ -6264,18 +6236,18 @@ sub set_ALIGNMENT_TOOL_PATH {
 
 sub set_BLAST_PATH {
     # try to get path from ENV
-    if ( defined( $ENV{'BLAST_PATH'} ) ) {
+    if ( defined( $ENV{'BLAST_PATH'} ) && not (defined($blast_path)) ) {
         if ( -e $ENV{'BLAST_PATH'} ) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Found environment variable \$BLAST_PATH.\n";
+                . ": Found environment variable \$BLAST_PATH. Setting \$BLAST_PATH to ".$ENV{'BLAST_PATH'}."\n";
             $logString .= $prtStr;
             print STDOUT $prtStr;
             $BLAST_PATH = $ENV{'BLAST_PATH'};
         }
     }
-    else {
+    elsif(not(defined($blast_path))) {
         $prtStr
             = "\# "
             . (localtime)
@@ -6304,9 +6276,8 @@ sub set_BLAST_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Command line argument --BLAST_PATH was ";
-            $prtStr
-                .= "supplied but value $blast_path is not a directory. Will not set "
+                . ": WARNING: Command line argument --BLAST_PATH was "
+                . "supplied but value $blast_path is not a directory. Will not set "
                 .  "\$BLAST_PATH to $blast_path!\n";
             $logString .= $prtStr;
             print STDOUT $prtStr;
