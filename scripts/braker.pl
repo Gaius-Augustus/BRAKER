@@ -2880,6 +2880,8 @@ sub training {
             system($cmdString) == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         }
+        print "gth2traingenes is ";
+        print "$gth2traingenes!\n";
         if ( $gth2traingenes ) {
             print LOG "\#  "
                 . (localtime)
