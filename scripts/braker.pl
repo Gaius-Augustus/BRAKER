@@ -6414,6 +6414,7 @@ sub join_aug_pred {
             $fileinfo{'start'} = $2;
             $fileinfo{'filename'} = $_;
             push @{$gff_files{$1}}, \%fileinfo;
+            print "%fileinfo has two elements:\n$fileinfo{'start'} with key start\nand $fileinfo{'filename'} with key filename\n";
         }elsif ( $file =~ m/\d+\.\d+\.(.*)\.(\d+)\.\.\d+\.err/ ){
             $fileinfo{'start'} = $2;
             $fileinfo{'filename'} = $_;
@@ -6421,13 +6422,22 @@ sub join_aug_pred {
         }
     }
     foreach(keys %gff_files){
-        @{$gff_files{$_}} = sort { $a->{start}    cmp $b->{start}} @{$gff_files{$_}};
+        print "Sorting array according to start position on scaff $_\n";
+        @{$gff_files{$_}} = sort { $a->{'start'}    cmp $b->{'start'}} @{$gff_files{$_}};
+        foreach(@{$gff_files{$_}}){
+            print $_."\n";
+            print $_->{'filename'}."\n";
+            print "another way".$_{'filename'}."\n";
+        }
     }
     foreach(keys %err_files){
-        @{$gff_files{$_}} = sort { $a->{start}    cmp $b->{start}} @{$gff_files{$_}};
+        @{$gff_files{$_}} = sort { $a->{'start'}    cmp $b->{'start'}} @{$gff_files{$_}};
     }
     foreach(keys %gff_files){
+        print LOG "We are on chromosome $_\n";
         foreach(@{$gff_files{$_}}){
+            print LOG "the hash: $_\n";
+            print LOG "the filename: ".$_->{'filename'}."\n";
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
