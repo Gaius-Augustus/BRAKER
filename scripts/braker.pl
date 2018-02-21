@@ -6662,7 +6662,7 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    print "I got behind the loop!\n";
+    print "I got behind the loop! I will try writing to $gth_filtered_gtf\n";
     open( FILTEREDGTH, ">", "$gth_filtered_gtf" ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_filtered_gtf!\n");
     print FILTEREDGTH "I am writing to the filtered gth file!\n";
     while ( my ( $k, $v ) = each %gthGtf ) {
