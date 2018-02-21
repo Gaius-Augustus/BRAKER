@@ -2267,7 +2267,7 @@ sub filterGeneMark {
     {
         print LOG "\# "
             . (localtime)
-            . ": converting GeneMark output to gtf format\n";
+            . ": filtering GeneMark genes by intron hints\n";
         $string = find(
             "filterGenemark.pl",    $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -4794,6 +4794,11 @@ sub gth2gtf {
             {
                 print GTHGTF
                     "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\ttranscript_id \"$gtfLine[0]"
+                    . "_"
+                    . $geneId . "_"
+                    . $gtfLineLastColField[1] . "\"\n";
+                print GTHGTF
+                    "$gtfLine[0]\t$gtfLine[1]\texon\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\ttranscript_id \"$gtfLine[0]"
                     . "_"
                     . $geneId . "_"
                     . $gtfLineLastColField[1] . "\"\n";
