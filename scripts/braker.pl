@@ -1563,7 +1563,6 @@ else {
     }
 
     if( $annot ) {
-        print STDOUT "Going into EVAL!\n";
         evaluate();
     }
 
@@ -3056,13 +3055,13 @@ sub training {
             . (localtime)
             . ": Deleting intermediate training gene structure files:\n"
             . "rm $trainGb2 $trainGb3 $otherfilesDir/traingenes.good.nr.fa $otherfilesDir/nonred.loci.lst $otherfilesDir/traingenes.good.gtf $otherfilesDir/etrain.bad.lst $goodLstFile\n";
-        #my $ccc=0;
-        #foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst", $goodLstFile) ) {
-        #    print "Will try to delete file: $ccc\n";
-        #    print $_."\n";
-        #   unlink ( $_ ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $_!\n");
-        #   $ccc++;
-        #}
+        my $ccc=0;
+        foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst", $goodLstFile) ) {
+           print "Will try to delete file: $ccc\n";
+           print $_."\n";
+          unlink ( $_ ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $_!\n");
+          $ccc++;
+        }
 
         # split into training and test set
         if (!uptodate(
@@ -3741,7 +3740,6 @@ sub augustus {
                     . (localtime)
                     . ": Running AUGUSTUS hints job $cHintJobs"
                     . "\n";
-                print "Trying to exectute $cHintJobs $_\n";
                 if( not (-x $_) ){
                     print "File $_ is not executable!\n";
                 }
@@ -6407,32 +6405,55 @@ sub join_aug_pred {
         . (localtime)
         . ": Concatenating AUGUSTUS output files in $pred_dir\n";
     opendir( DIR, $pred_dir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $pred_dir!\n");
+    my %gff_files;
+    my %err_files;
     while ( my $file = readdir(DIR) ) {
-        if ( $file =~ m/gff/ ) {
+        my %fileinfo;
+        if ( $file =~ m/\d+\.\d+\.(.*)\.(\d+)\.\.\d+\.gff/ ) {
+            $fileinfo{'start'} = $2;
+            $fileinfo{'filename'} = $_;
+            push @{$gff_files{$1}}, \%fileinfo;
+        }elsif ( $file =~ m/\d+\.\d+\.(.*)\.(\d+)\.\.\d+\.err/ ){
+            $fileinfo{'start'} = $2;
+            $fileinfo{'filename'} = $_;
+            push @{$err_files{$1}}, \%fileinfo;
+        }
+    }
+    foreach(keys %gff_files){
+        @{$gff_files{$_}} = sort { $a->{start}    cmp $b->{start}} @{$gff_files{$_}};
+    }
+    foreach(keys %err_files){
+        @{$gff_files{$_}} = sort { $a->{start}    cmp $b->{start}} @{$gff_files{$_}};
+    }
+    foreach(keys %gff_files){
+        foreach(@{$gff_files{$_}}){
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString .= "cat $pred_dir/$file >> $cat_file";
+            $cmdString .= "cat $pred_dir/$_ >> $cat_file";
             print LOG "$cmdString\n";
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
-        }elsif ( $file =~ m/\.err/ ){
-            if ( !-s $file ) {
-                $cmdString = "echo \"Contents of file $file\" >> $error_cat_file";
+        }
+    }
+    foreach(keys %err_files){
+        foreach(@{$err_files{$_}}){
+            if ( !-s $_ ) {
+                $cmdString = "echo \"Contents of file $_\" >> $error_cat_file";
                 print LOG "$cmdString\n";
                 system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
                 $cmdString = "";
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString .= "cat $pred_dir/$file >> $error_cat_file";
+                $cmdString .= "cat $pred_dir/$_ >> $error_cat_file";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
             }
         }
     }
-    closedir(DIR);
-    $perlCmdString = "";
+
+    closedir(DIR) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to close directory $pred_dir\n");
     if ($nice) {
         $perlCmdString .= "nice ";
     }
@@ -6443,8 +6464,8 @@ sub join_aug_pred {
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $perlCmdString\n");
-    # print LOG "\# " . (localtime) . ": Deleting $pred_dir\n";
-    # rmtree( ["$pred_dir"] ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $pred_dir!\n");
+    print LOG "\# " . (localtime) . ": Deleting $pred_dir\n";
+    rmtree( ["$pred_dir"] ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $pred_dir!\n");
     print LOG "\# " . (localtime) . ": Deleting $cat_file\n";
     unlink($cat_file);
 }
@@ -6464,19 +6485,47 @@ sub evaluate {
     }
     close(SEQLIST);
     if ( -e "$otherfilesDir/augustus.ab_initio.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $otherfilesDir/augustus.ab_initio.gtf!\n";
         eval_gene_pred("$otherfilesDir/augustus.ab_initio.gtf");
+    }else{
+         print LOG "\# "
+            . (localtime)
+            . ": did not find $otherfilesDir/augustus.ab_initio.gtf!\n"
     }
 
     if ( -e "$otherfilesDir/augustus_hints.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $otherfilesDir/augustus_hints.gtf!\n";
         eval_gene_pred("$otherfilesDir/augustus_hints.gtf");
+    }else{
+        print LOG "\# "
+            . (localtime)
+            . ": did not find $otherfilesDir/augustus_hints.gtf!\n";
     }
 
     if ( -e "$genemarkDir/genemark.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $genemarkDir/genemark.gtf!\n";
         eval_gene_pred("$genemarkDir/genemark.gtf");
+    }else{
+        print LOG "\# "
+            . (localtime)
+            . ": did not find $genemarkDir/genemark.gtf!\n";
     }
 
     if ( -e "$otherfilesDir/gthTrainGenes.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $otherfilesDir/gthTrainGenes.gtf!\n";
         eval_gene_pred("$otherfilesDir/gthTrainGenes.gtf");
+    }else{
+        print LOG "\# "
+            . (localtime)
+            . ": did not find $otherfilesDir/gthTrainGenes.gtf!\n";
     }
     my @accKeys = keys %accuracy;
     if(scalar(@accKeys) > 0){
