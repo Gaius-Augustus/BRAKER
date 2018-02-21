@@ -6624,7 +6624,7 @@ sub eval_gene_pred {
         . (localtime)
         . ": firstStepFile is $firstStepFile\n";
     my $secondStepFile = $firstStepFile;
-    $secondStepFile =~ s/\.f\.gtf/f\.fixed\.gtf/;
+    $secondStepFile =~ s/\.f\.gtf/\.f\.fixed\.gtf/;
     print LOG "\# "
         . (localtime)
         . ": secondStepFile is $secondStepFile\n";
