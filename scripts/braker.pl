@@ -6447,7 +6447,7 @@ sub join_aug_pred {
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString .= "cat $pred_dir/."$_->{'filename'}." >> $error_cat_file";
+                $cmdString .= "cat $pred_dir/".$_->{'filename'}." >> $error_cat_file";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
             }
