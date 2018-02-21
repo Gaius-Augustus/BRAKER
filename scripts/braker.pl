@@ -6649,7 +6649,7 @@ sub eval_gene_pred {
     print LOG "\# "
         . (localtime)
         . ": Validating gtf of $firstStepFile, results are written to $secondStepFile\n";
-    $cmdString = "$validate_gtf -c -f $$firstStepFile";
+    $cmdString = "$validate_gtf -c -f $firstStepFile";
     print LOG "$cmdString\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
     print LOG "\# "
