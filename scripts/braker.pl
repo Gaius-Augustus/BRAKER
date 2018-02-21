@@ -2228,7 +2228,7 @@ sub GeneMark_EP {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString
-                .= "perl $string --verbose --sequence $genome --max_intergenic 50000 --EP $genemark_hintsfile --cores=$CPU";
+                .= "perl $string --verbose --seq $genome --max_intergenic 50000 --ep_score 4 --EP $genemark_hintsfile --cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
