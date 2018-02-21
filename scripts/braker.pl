@@ -3590,8 +3590,8 @@ sub augustus {
 
             # rename files according to scaffold name
             $cmdString
-                = "cd $augustus_dir; for f in genome.split.*; do NAME=`grep \">\" \$f`; mv \$f \${NAME#>}.fa; done; cd ..";
-            print LOG $cmdString . "\n";
+                = "cd $augustus_dir; for f in genome.split.*; do NAME=`grep \">\" \$f`; mv \$f \${NAME#>}.fa; done; cd ..\n";
+            print LOG $cmdString;
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
             my @genome_files = `ls $augustus_dir`;
@@ -3661,8 +3661,8 @@ sub augustus {
                 $perlCmdString .= " $augustus_args";
             }
             $perlCmdString .= "\" &>$errorfile\n";
-            $perlCmdString .= "cd ..";
-            print LOG "$perlCmdString\n";
+            $perlCmdString .= "cd ..\n";
+            print LOG "$perlCmdString";
             system("$perlCmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             if ($ab_initio) {
@@ -3687,8 +3687,8 @@ sub augustus {
                     $perlCmdString .= " --softmasking=1";
                 }
                 $perlCmdString .= "\" &>$errorfile\n";
-                $perlCmdString .= "cd ..";
-                print LOG "$perlCmdString\n";
+                $perlCmdString .= "cd ..\n";
+                print LOG "$perlCmdString";
                 system("$perlCmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             }
@@ -4209,10 +4209,6 @@ sub check_upfront {
     );
     find(
         "optimize_augustus.pl", $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    find(
-        "splitMfasta.pl",       $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     find(
@@ -6411,12 +6407,9 @@ sub join_aug_pred {
     while ( my $file = readdir(DIR) ) {
         my %fileinfo;
         if ( $file =~ m/\d+\.\d+\.(.*)\.(\d+)\.\.\d+\.gff/ ) {
-            print "Storing $2 in key start\n";
             $fileinfo{'start'} = $2;
-            print "Storing $file in key filename\n";
             $fileinfo{'filename'} = $file;
             push @{$gff_files{$1}}, \%fileinfo;
-            print "\%fileinfo has two elements:\n$fileinfo{'start'} with key start\nand $fileinfo{'filename'} with key filename\n";
         }elsif ( $file =~ m/\d+\.\d+\.(.*)\.(\d+)\.\.\d+\.err/ ){
             $fileinfo{'start'} = $2;
             $fileinfo{'filename'} = $file;
@@ -6424,22 +6417,13 @@ sub join_aug_pred {
         }
     }
     foreach(keys %gff_files){
-        print "Sorting array according to start position on scaff $_\n";
         @{$gff_files{$_}} = sort { $a->{'start'}    cmp $b->{'start'}} @{$gff_files{$_}};
-        foreach(@{$gff_files{$_}}){
-            print $_."\n";
-            print $_->{'filename'}."\n";
-            print "another way".$_{'filename'}."\n";
-        }
     }
     foreach(keys %err_files){
         @{$gff_files{$_}} = sort { $a->{'start'}    cmp $b->{'start'}} @{$gff_files{$_}};
     }
     foreach(keys %gff_files){
-        print LOG "We are on chromosome $_\n";
         foreach(@{$gff_files{$_}}){
-            print LOG "the hash: $_\n";
-            print LOG "the filename: ".$_->{'filename'}."\n";
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
