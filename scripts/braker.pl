@@ -6665,7 +6665,7 @@ sub eval_gene_pred {
         . "grep $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'\n";
     my @eval_result
         = `grep $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'`;
-    $accuracy{$gtfFile} = @eval_result;
+    $accuracy{$gtfFile} = \@eval_result;
     unlink($firstStepFile)  or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $firstStepFile!\n");
     unlink($secondStepFile) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $secondStepFile!\n");
 }
