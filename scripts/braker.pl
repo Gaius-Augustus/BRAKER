@@ -5963,7 +5963,7 @@ sub set_SAMTOOLS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Found environment variable \$SAMTOOLS_PATH.\n";
+                . ": Found environment variable \$SAMTOOLS_PATH. Setting \$SAMTOOLS_PATH to $SAMTOOLS_PATH\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             my $SAMTOOLS_PATH
@@ -6046,32 +6046,21 @@ sub set_SAMTOOLS_PATH {
     if ( not( defined($SAMTOOLS_PATH) ) ) {
         my $samtools_err;
         $samtools_err
-            .= "Samtools is not strictly required for running braker.pl. It is a optional tool.\n";
-        $samtools_err
-            .= "In case bam files are not formatted entirely correctly, braker.pl can try fixing\n";
-        $samtools_err
-            .= "certain issues, automatically, if samtools are available.\n";
-        $samtools_err
-            .= "There are 3 alternative ways to set this variable for braker.pl:\n";
-        $samtools_err
-            .= "   a) provide command-line argument --SAMTOOLS_PATH=/your/path\n";
-        $samtools_err
-            .= "   b) use an existing environment variable \$SAMTOOLS_PATH\n";
-        $samtools_err .= "      for setting the environment variable, run\n";
-        $samtools_err .= "           export SAMTOOLS_PATH=/your/path\n";
-        $samtools_err
-            .= "      in your shell. You may append this to your .bashrc or .profile file in\n";
-        $samtools_err
-            .= "      order to make the variable available to all your bash sessions.\n";
-        $samtools_err
-            .= "   c) braker.pl can try guessing the location of \$SAMTOOLS_PATH from the\n";
-        $samtools_err
-            .= "      location a samtools executable that is available in your \$PATH variable.\n";
-        $samtools_err
-            .= "      If you try to rely on this option, you can check by typing\n";
-        $samtools_err .= "           which samtools\n";
-        $samtools_err
-            .= "      in your shell, whether there is a samtools executable in your \$PATH\n";
+            .= "Samtools is not strictly required for running braker.pl. It is a optional tool.\n"
+            . "In case bam files are not formatted entirely correctly, braker.pl can try fixing\n"
+            . "certain issues, automatically, if samtools are available.\n"
+            . "There are 3 alternative ways to set this variable for braker.pl:\n"
+            . "   a) provide command-line argument --SAMTOOLS_PATH=/your/path\n"
+            . "   b) use an existing environment variable \$SAMTOOLS_PATH\n"
+            . "      for setting the environment variable, run\n"
+            . "           export SAMTOOLS_PATH=/your/path\n"
+            . "      in your shell. You may append this to your .bashrc or .profile file in\n"
+            . "      order to make the variable available to all your bash sessions.\n"
+            . "   c) braker.pl can try guessing the location of \$SAMTOOLS_PATH from the\n"
+            . "      location a samtools executable that is available in your \$PATH variable.\n"
+            . "      If you try to rely on this option, you can check by typing\n"
+            . "           which samtools\n"
+            . "      in your shell, whether there is a samtools executable in your \$PATH\n";
         $prtStr
             = "\# " . (localtime) . ": WARNING: \$SAMTOOLS_PATH not set!\n";
         print STDOUT $prtStr;
@@ -6681,10 +6670,14 @@ sub combine_gm_and_gth_gtf {
     }
     close(GTHGTF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_gtf!\n");
     my %discard;
+    print "Number of keys in %gthGeneStarts is ".scalar(keys %gthGeneStarts)."\n";
+    print "Number of keys in %gmGeneStops is ".scalar(keys %gmGeneStops)."\n";
+    print "Number of keys in %gmGeneStarts is ".scalar(keys %gmGeneStarts)."\n";
     while ( my ( $k, $v ) = each %gthGeneStarts ) {
-
+        print "k is $k, v is $v\n";
         # check whether gene overlaps with genemark genes
         while ( my ( $gmk, $gmv ) = each %gmGeneStarts ) {
+            print "gmk is $gmk, gmv is $gmv\n";
             if ((   ( $v >= $gmv ) && ( $v <= $gmGeneStops{$gmk} )
                 )
                 or (   ( $gthGeneStops{$k} >= $gmv )
