@@ -1564,7 +1564,7 @@ else {
 
     if( $annot ) {
         print STDOUT "Going into EVAL!\n";
-        eval();
+        evaluate();
     }
 
     clean_up();         # delete all empty files
@@ -3651,7 +3651,7 @@ sub augustus {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString
-                .= "perl $string --sequences=$otherfilesDir/aug_hints.lst --wrap=\"#\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir --joblist=hints.job.lst --jobprefix=aug_hints_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsicCfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac ";
+                .= "perl $string --sequences=$otherfilesDir/aug_hints.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir --joblist=hints.job.lst --jobprefix=aug_hints_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsicCfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac ";
             if ( defined($optCfgFile) ) {
                 $perlCmdString .= " --optCfgFile=$optCfgFile";
             }
@@ -3683,7 +3683,7 @@ sub augustus {
                     $perlCmdString .= "nice ";
                 }
                 $perlCmdString
-                    .= "perl $string --sequences=$otherfilesDir/aug_ab_initio.lst --wrap=\"#\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir_ab_initio --joblist=ab_initio.job.lst --jobprefix=aug_ab_initio_ --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on ";
+                    .= "perl $string --sequences=$otherfilesDir/aug_ab_initio.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir_ab_initio --joblist=ab_initio.job.lst --jobprefix=aug_ab_initio_ --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on ";
                 if ($soft_mask) {
                     $perlCmdString .= " --softmasking=1";
                 }
@@ -6450,7 +6450,7 @@ sub join_aug_pred {
 }
 
 # evaluate available gene prediction sets
-sub eval {
+sub evaluate {
     my @results;
     my $seqlist = "$otherfilesDir/seqlist";
     print LOG "\# "
