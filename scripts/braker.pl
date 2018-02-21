@@ -6405,6 +6405,7 @@ sub join_aug_pred {
         . (localtime)
         . ": Concatenating AUGUSTUS output files in $pred_dir\n";
     opendir( DIR, $pred_dir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $pred_dir!\n");
+    # need to contenate gff files in the correct order along chromosomes for join_aug_pred.pl
     my %gff_files;
     my %err_files;
     while ( my $file = readdir(DIR) ) {
