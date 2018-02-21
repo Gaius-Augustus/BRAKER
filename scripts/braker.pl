@@ -6652,16 +6652,9 @@ sub combine_gm_and_gth_gtf {
     }
     close(GTHGTF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_gtf!\n");
     my %discard;
-    print "Number of keys in %gthGeneStarts is ".scalar(keys %gthGeneStarts)."\n";
-    print "Number of keys in %gmGeneStops is ".scalar(keys %gmGeneStops)."\n";
-    print "Number of keys in %gmGeneStarts is ".scalar(keys %gmGeneStarts)."\n";
     while ( my ( $k, $v ) = each %gthGeneStarts ) {
-        print "k is $k, v is $v\n";
         # check whether gene overlaps with genemark genes
         while ( my ( $gmk, $gmv ) = each %gmGeneStarts ) {
-            print "gmk is $gmk\n";
-            print "gmv is $gmv\n";
-            print "gmGeneStops gmk is $gmGeneStops{$gmk}\n";
             if (( ( $v >= $gmv ) && ( $v <= $gmGeneStops{$gmk} ) ) or (   ( $gthGeneStops{$k} >= $gmv ) && ( $gthGeneStops{$k} <= $gmGeneStops{$gmk} ) ) )
             {
                 $discard{$k} = 1;
@@ -6669,7 +6662,9 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
+    print "I got behind the loop!\n";
     open( FILTEREDGTH, ">", "$gth_filtered_gtf" ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_filtered_gtf!\n");
+    print FILTEREDGTH "I am writing to the filtered gth file!\n";
     while ( my ( $k, $v ) = each %gthGtf ) {
         if ( not( defined( $discard{$k} ) ) ) {
             foreach ( @{$v} ) {
