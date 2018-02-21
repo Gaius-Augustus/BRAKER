@@ -901,7 +901,7 @@ else {
     print STDOUT $prtStr;
     $logString .= $prtStr;
     if ( $EPmode == 1 ) {
-        assignExCfg("ep.cfg ");
+        assignExCfg("ep.cfg");
     }
     elsif ( defined($prg) ) {
         if (   ( $prg eq "gth" && not( defined($extrinsicCfgFile) ) )
@@ -6412,12 +6412,12 @@ sub join_aug_pred {
         my %fileinfo;
         if ( $file =~ m/\d+\.\d+\.(.*)\.(\d+)\.\.\d+\.gff/ ) {
             $fileinfo{'start'} = $2;
-            $fileinfo{'filename'} = $_;
+            $fileinfo{'filename'} = $file;
             push @{$gff_files{$1}}, \%fileinfo;
             print "%fileinfo has two elements:\n$fileinfo{'start'} with key start\nand $fileinfo{'filename'} with key filename\n";
         }elsif ( $file =~ m/\d+\.\d+\.(.*)\.(\d+)\.\.\d+\.err/ ){
             $fileinfo{'start'} = $2;
-            $fileinfo{'filename'} = $_;
+            $fileinfo{'filename'} = $file;
             push @{$err_files{$1}}, \%fileinfo;
         }
     }
