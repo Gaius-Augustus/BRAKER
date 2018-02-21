@@ -2265,6 +2265,49 @@ sub filterGeneMark {
         )
     {
         print LOG "\# "
+            . ( localtime )
+            . ": Checking whether hintsfile contains single exon CDSpart hints\n";
+        my %singleCDS;
+        open ( HINTS, "<", $hintsfile ) or die ( "Could not open file $hintsfile!\n" );
+        while ( <HINTS> ) {
+            if( $_ =~ m/\tCDSpart\t.+grp=(\S+);/ ) {
+                if (not ( defined ($singleCDS{$1}) ) ) {
+                    $singleCDS{$1} = $_;
+                }else{
+                    $singleCDS{$1} = "0";
+                }
+            }
+        }
+        close ( HINTS ) or die ( "Could not close file $hintsfile!\n" );
+        # delete non single CDS genes from hash
+        # collapse multiplicity of singleCDS hints
+        my %multSingleCDS;
+        while (my ($k, $v) = each %singleCDS ) {
+            if ($v == 0) {
+                delete $singleCDS{$k};
+            }else{
+                my @t = split(/\t/, $v);
+                if ( !defined( $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} ) ) {
+                    $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} = 1;
+                }else{
+                    $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]}++;
+                }
+            }
+        }
+        my $countSingleCDS = 0;
+        open ( SINGLECDS, ">", "$otherfilesDir/singlecds.hints" ) or die ( "Could not open file $otherfilesDir/singlecds.hints!\n" );
+        while (my ($locus, $v1) = each %multSingleCDS ) {
+            while ( my ($strand, $v2) = each %{$v1} ) {
+                while ( my ($start, $v3 ) = each %{$v2} ) {
+                    while ( my ($end, $v4) = each %{$v3} ) {
+                        print SINGLECDS "$locus\n.\nCDSpart\n$start\t$end\t.\t$strand\t0\tsrc=P;mult=$v4;\n";
+                        $countSingleCDS++;
+                    }
+                }
+            }
+        }
+        close ( SINGLECDS ) or die ( "Could not close file $otherfilesDir/singlecds.hints!\n" );
+        print LOG "\# "
             . (localtime)
             . ": filtering GeneMark genes by intron hints\n";
         $string = find(
@@ -2277,17 +2320,14 @@ sub filterGeneMark {
         if ($nice) {
             $perlCmdString .= "nice ";
         }
-        if ( !$filterOutShort ) {
-            $perlCmdString
-                .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile 1>$stdoutfile 2>$errorfile";
+        $perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile ";
+        if ($filterOutShort) {
+            $perlCmdString .= "--filterOutShort "
         }
-        else {
-            print LOG "\# "
-                . (localtime)
-                . ": Option activated: Filtering out training genes from GeneMark that are too short (upstream intron)\n";
-            $perlCmdString
-                .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile --filterOutShort 1>$stdoutfile 2>$errorfile";
+        if ($countSingleCDS > 0 ) {
+            $perlCmdString .= "--singeCDSfile=$otherfilesDir/singlecds.hints ";
         }
+        $perlCmdString .= "1>$stdoutfile 2>$errorfile";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
@@ -2821,7 +2861,6 @@ sub printCfg {
 # create genbank file and train AUGUSTUS parameters for given species
 sub training {
     if ( !$useexisting ) {
-
         my $gmGtf = "$genemarkDir/genemark.gtf";
         my $gthGtf = $gthTrainGeneFile;
         my $trainGenesGtf = "$otherfilesDir/traingenes.gtf";
@@ -6492,10 +6531,10 @@ sub evaluate {
             . ": did not find $otherfilesDir/augustus.ab_initio.gtf!\n"
     }
 
-    if ( -e "$otherfilesDir/augustus_hints.gtf" ) {
+    if ( -e "$otherfilesDir/augustus.hints.gtf" ) {
         print LOG "\# "
             . (localtime)
-            . ": evaluating $otherfilesDir/augustus_hints.gtf!\n";
+            . ": evaluating $otherfilesDir/augustus.hints.gtf!\n";
         eval_gene_pred("$otherfilesDir/augustus_hints.gtf");
     }else{
         print LOG "\# "
