@@ -3056,13 +3056,13 @@ sub training {
             . (localtime)
             . ": Deleting intermediate training gene structure files:\n"
             . "rm $trainGb2 $trainGb3 $otherfilesDir/traingenes.good.nr.fa $otherfilesDir/nonred.loci.lst $otherfilesDir/traingenes.good.gtf $otherfilesDir/etrain.bad.lst $goodLstFile\n";
-        my $ccc=0;
-        foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst", $goodLstFile) ) {
-            print "Will try to delete file: $ccc\n";
-            print $_."\n";
-           unlink ( $_ ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $_!\n");
-           $ccc++;
-        }
+        #my $ccc=0;
+        #foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst", $goodLstFile) ) {
+        #    print "Will try to delete file: $ccc\n";
+        #    print $_."\n";
+        #   unlink ( $_ ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $_!\n");
+        #   $ccc++;
+        #}
 
         # split into training and test set
         if (!uptodate(
