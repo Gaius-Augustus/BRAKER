@@ -6635,7 +6635,7 @@ sub eval_gene_pred {
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $firstStepFile!\n");
     open( AUG, "<", $gtfFile ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gtfFile!\n");
     while (<AUG>) {
-        my @t;
+        my @t = split(/\t/);
         if (   ( $t[2] eq "CDS" )
             or ( $t[2] eq "exon" )
             or ( $t[2] eq "start_codon" )
