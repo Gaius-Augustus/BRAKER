@@ -2854,7 +2854,7 @@ sub training {
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $gth2traingenes and not ($trainFromGth) ) {
             # merge gth and gm gtf files
-            combine_gm_and_gth_gtf ( $gmGtf, "$otherfilesDir/protein_alignment_$prg.gff3", $gthGtf, "$trainGenesGtf");
+            combine_gm_and_gth_gtf ( $gmGtf, "$otherfilesDir/protein_alignment_$prg.gff3", $gthGtf, $trainGenesGtf);
         } else {
             $prtStr
                 = "\# "
@@ -6662,9 +6662,7 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    print "I got behind the loop! I will try writing to $gth_filtered_gtf\n";
     open( FILTEREDGTH, ">", "$gth_filtered_gtf" ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_filtered_gtf!\n");
-    print FILTEREDGTH "I am writing to the filtered gth file!\n";
     while ( my ( $k, $v ) = each %gthGtf ) {
         if ( not( defined( $discard{$k} ) ) ) {
             foreach ( @{$v} ) {
@@ -6672,5 +6670,10 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
+    open( GMGTF, "<", $gm_gtf ) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_gtf!\n" );
+    while (<GMGTF>) {
+        print FILTEREDGTH $_;
+    }
+    close (GMGTF) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_gtf!\n");
     close(FILTEREDGTH) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_filtered_gtf!\n");
 }
