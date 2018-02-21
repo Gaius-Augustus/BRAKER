@@ -3741,7 +3741,7 @@ sub augustus {
                     . (localtime)
                     . ": Running AUGUSTUS hints job $cHintJobs"
                     . "\n";
-                print "Trying to exectute $cHintsJobs\n";
+                print "Trying to exectute $cHintJobs $_\n";
                 if( not (-x $_) ){
                     print "File $_ is not executable!\n";
                 }
