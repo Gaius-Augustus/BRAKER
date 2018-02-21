@@ -2880,18 +2880,15 @@ sub training {
             system($cmdString) == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         }
-        print "gth2traingenes is ";
-        print "$gth2traingenes!\n";
         if ( $gth2traingenes ) {
             print LOG "\#  "
                 . (localtime)
                 . ": concatenating good GenomeThreader training genes to $goodLstFile.\n";
             # get all remaining gth genes
-            print "I AM IN THE PRINTING PROCESS! appending to $goodLstFile\n";
             open (GOODLST, ">>", $goodLstFile) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $goodLstFile!\n" );
             open ( GTHGOOD, "<", $trainGenesGtf ) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGenesGtf!\n" );
             while ( <GTHGOOD> ) {
-                if ( $_ =~ m/\tgth2h\t/ ) {
+                if ( $_ =~ m/\tgth\t/ ) {
                     print GOODLST $_;
                 }
             }
