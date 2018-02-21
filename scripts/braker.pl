@@ -3053,7 +3053,7 @@ sub training {
             . (localtime)
             . ": Deleting intermediate training gene structure files:\n"
             . "rm $trainGb2 $trainGb3 $otherfilesDir/traingenes.good.nr.fa $otherfilesDir/nonred.loci.lst $otherfilesDir/traingenes.good.gtf $otherfilesDir/etrain.bad.lst $goodLstFile\n";
-        foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst $goodLstFile") ) {
+        foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst", $goodLstFile) ) {
            unlink ( $_ ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $_!\n");
         }
 
