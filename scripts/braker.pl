@@ -3831,7 +3831,7 @@ sub getAnnoFasta {
         $perlCmdString .= "nice ";
     }
     my $perlCmdString
-        .= "perl $string $AUG_pred --seqfile=$genome 2>$errorfile";
+        .= "perl $string $AUG_pred --seqfile=$genome 1> /dev/null 2>$errorfile";
     print LOG "\# "
         . (localtime)
         . ": Making a fasta file with protein sequences of $AUG_pred\n";
@@ -5083,7 +5083,7 @@ sub train_utr {
             $cmdString = "ln -s $bam[0] merged.bam";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to exectute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         }
         print LOG "\# " . (localtime) . ": Creating wiggle file...\n";
         $cmdString = "";
