@@ -1410,9 +1410,11 @@ else {
 # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS
 # can also handle other hints types
     $hintsfile          = "$otherfilesDir/hintsfile.gff";
-    $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
-    if ( $EPmode == 0 ) {
-        make_rna_seq_hints();    # make hints from RNA-Seq
+    if(! $trainFromGth ) {
+        $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
+        if ( $EPmode == 0 ) {
+            make_rna_seq_hints();    # make hints from RNA-Seq
+        }
     }
     if ( @prot_seq_files or @prot_aln_files ) {
         make_prot_hints();
@@ -1420,16 +1422,18 @@ else {
     if (@hints) {
         add_other_hints();
     }
-    if ( @prot_seq_files or @prot_aln_files or @hints ) {
-        separateHints();
-    }
-    else {
-        print LOG "\# "
-            . (localtime)
-            . ":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
-        $cmdString = "ln -s $hintsfile $genemark_hintsfile";
-        print LOG "$cmdString\n";
-        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+    if (! $trainFromGth ) {
+        if ( @prot_seq_files or @prot_aln_files or @hints) {
+            separateHints();
+        }
+        else {
+            print LOG "\# "
+                . (localtime)
+                . ":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
+            $cmdString = "ln -s $hintsfile $genemark_hintsfile";
+            print LOG "$cmdString\n";
+            system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+        }
     }
 
     if ( $skipAllTraining == 0 ) {
