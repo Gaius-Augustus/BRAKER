@@ -1559,6 +1559,7 @@ else {
     }
 
     if( $annot ) {
+        print STDOUT "Going into EVAL!\n";
         eval();
     }
 
