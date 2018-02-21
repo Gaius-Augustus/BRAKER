@@ -3136,7 +3136,7 @@ sub training {
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             print LOG "\# "
                 . (localtime)
-                . " $otherfilesDir/train.gb.train.test will be used for measuring AUGUSTUS accuracy during training with optimize_augustus.pl\n"
+                . " \n$otherfilesDir/train.gb.train.test will be used for measuring AUGUSTUS accuracy during training with optimize_augustus.pl\n"
                 . " $otherfilesDir/train.gb.train.train will be used for running etraining in optimize_augustus.pl (together with train.gb.train.test)\n"
                 . " $otherfilesDir/train.gb.train will be used for running etraining (outside of optimize_augustus.pl)\n";
 
