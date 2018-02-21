@@ -6411,10 +6411,12 @@ sub join_aug_pred {
     while ( my $file = readdir(DIR) ) {
         my %fileinfo;
         if ( $file =~ m/\d+\.\d+\.(.*)\.(\d+)\.\.\d+\.gff/ ) {
+            print "Storing $2 in key start\n";
             $fileinfo{'start'} = $2;
+            print "Storing $file in key filename\n";
             $fileinfo{'filename'} = $file;
             push @{$gff_files{$1}}, \%fileinfo;
-            print "%fileinfo has two elements:\n$fileinfo{'start'} with key start\nand $fileinfo{'filename'} with key filename\n";
+            print "\%fileinfo has two elements:\n$fileinfo{'start'} with key start\nand $fileinfo{'filename'} with key filename\n";
         }elsif ( $file =~ m/\d+\.\d+\.(.*)\.(\d+)\.\.\d+\.err/ ){
             $fileinfo{'start'} = $2;
             $fileinfo{'filename'} = $file;
