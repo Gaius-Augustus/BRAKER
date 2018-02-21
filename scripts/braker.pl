@@ -5963,7 +5963,7 @@ sub set_SAMTOOLS_PATH {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Found environment variable \$SAMTOOLS_PATH. Setting \$SAMTOOLS_PATH to $SAMTOOLS_PATH\n";
+                . ": Found environment variable \$SAMTOOLS_PATH. Setting \$SAMTOOLS_PATH to ".$ENV{'SAMTOOLS_PATH'}."\n";
             print STDOUT $prtStr;
             $logString .= $prtStr;
             my $SAMTOOLS_PATH
@@ -6634,6 +6634,17 @@ sub combine_gm_and_gth_gtf {
         }
     }
     close(GMGTF) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_gtf!\n" );
+    # delete incomplete gm gene starts and stops from hashes; they will never be used as training genes, anyways
+    foreach (keys %gmGeneStarts){
+        if(not(defined($gmGeneStops{$_}))) {
+            delete $gmGeneStarts{$_};
+        }
+    }
+    foreach (keys %gmGeneStops){
+        if(not(defined($gmGeneStarts{$_}))) {
+            delete $gmGeneStops{$_};
+        }
+    }
     open( PROTALN, "<", "$gth_gff3" ) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_gff3!\n" );
     my %gthGeneStarts;
     my %gthGeneStops;
@@ -6677,13 +6688,10 @@ sub combine_gm_and_gth_gtf {
         print "k is $k, v is $v\n";
         # check whether gene overlaps with genemark genes
         while ( my ( $gmk, $gmv ) = each %gmGeneStarts ) {
-            print "gmk is $gmk, gmv is $gmv\n";
-            if ((   ( $v >= $gmv ) && ( $v <= $gmGeneStops{$gmk} )
-                )
-                or (   ( $gthGeneStops{$k} >= $gmv )
-                    && ( $gthGeneStops{$k} <= $gmGeneStops{$gmk} )
-                )
-                )
+            print "gmk is $gmk\n";
+            print "gmv is $gmv\n";
+            print "gmGeneStops gmk is $gmGeneStops{$gmk}\n";
+            if (( ( $v >= $gmv ) && ( $v <= $gmGeneStops{$gmk} ) ) or (   ( $gthGeneStops{$k} >= $gmv ) && ( $gthGeneStops{$k} <= $gmGeneStops{$gmk} ) ) )
             {
                 $discard{$k} = 1;
                 last;
