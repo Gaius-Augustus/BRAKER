@@ -6535,7 +6535,7 @@ sub evaluate {
         print LOG "\# "
             . (localtime)
             . ": evaluating $otherfilesDir/augustus.hints.gtf!\n";
-        eval_gene_pred("$otherfilesDir/augustus_hints.gtf");
+        eval_gene_pred("$otherfilesDir/augustus.hints.gtf");
     }else{
         print LOG "\# "
             . (localtime)
