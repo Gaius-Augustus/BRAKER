@@ -6587,8 +6587,6 @@ sub evaluate {
             elsif( $i == 7 ){ print "Nucleotide_Specificity" }
             foreach(@accKeys){
                 chomp;
-                print "key is $_\n";
-                print "array as ".scalar(@{$accuracy{$_}})." elements\n";
                 print "\t".${$accuracy{$_}}[$i];
             }
             print "\n";
