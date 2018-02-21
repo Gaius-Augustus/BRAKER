@@ -3050,7 +3050,13 @@ sub training {
             . ": Moving $trainGb4 to $trainGb1:\n";
         print LOG "$cmdString\n";
         system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-
+        print LOG "\# "
+            . (localtime)
+            . ": Deleting intermediate training gene structure files:\n"
+            . "rm $trainGb2 $trainGb3 $otherfilesDir/traingenes.good.nr.fa $otherfilesDir/nonred.loci.lst $otherfilesDir/traingenes.good.gtf $otherfilesDir/etrain.bad.lst $goodLstFile\n";
+        foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst $goodLstFile") ) {
+           unlink ( $_ );
+        }
 
         # split into training and test set
         if (!uptodate(
@@ -3638,7 +3644,7 @@ sub augustus {
         print LOG "\# "
             . (localtime)
             . ": Creating directory for storing AUGUSTUS files (hints, temporarily) $augustus_dir.\n";
-        mkdir $augustus_dir;
+        mkdir $augustus_dir or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $augustus_dir!\n");
     }
 
     if ($ab_initio) {
@@ -3646,7 +3652,7 @@ sub augustus {
             print LOG "\# "
                 . (localtime)
                 . ": Creating directory for storing AUGUSTUS files (ab initio, temporarily) $augustus_dir_ab_initio.\n";
-            mkdir $augustus_dir_ab_initio;
+            mkdir $augustus_dir_ab_initio or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $augustus_dir_ab_initio!\n");
         }
     }
 
@@ -3991,8 +3997,8 @@ sub clean_up {
     opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $otherfilesDir!\n");
     while ( my $file = readdir(DIR) ) {
         if( ( $file =~ m/aug_ab_initio_/ ) || ( $file =~ m/aug_hints_/ ) || ( $file =~ m/\.lst/ ) ){
-            print LOG "rm $file\n";
-            unlink( rel2abs( $file ) );
+            print LOG "rm $otherfilesDir/$file\n";
+            unlink( "$otherfilesDir/$file" );
         }
     }
 }
@@ -6518,13 +6524,14 @@ sub join_aug_pred {
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     my $cat_file = "$otherfilesDir/augustus.tmp.gff";
-    my $error_cat_file = "$errorfilesDir/augustus.err";
+    my @t = split(/\//, $pred_dir);
+    $t[scalar(@t)-1] =~ s/\///;
+    my $error_cat_file = "$errorfilesDir/augustus_".$t[scalar(@t)-1].".err";
     print LOG "\# "
         . (localtime)
         . ": Concatenating AUGUSTUS output files in $pred_dir\n";
     opendir( DIR, $pred_dir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $pred_dir!\n");
     while ( my $file = readdir(DIR) ) {
-        print LOG "file is $file\n";
         if ( $file =~ m/gff/ ) {
             $cmdString = "";
             if ($nice) {
@@ -6534,16 +6541,18 @@ sub join_aug_pred {
             print LOG "$cmdString\n";
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
         }elsif ( $file =~ m/\.err/ ){
-            $cmdString = "echo \"Contents of file $file\" >> $error_cat_file";
-            print LOG "$cmdString\n";
-            system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
-            $cmdString = "";
-            if ($nice) {
-                $cmdString .= "nice ";
+            if ( !-s $file ) {
+                $cmdString = "echo \"Contents of file $file\" >> $error_cat_file";
+                print LOG "$cmdString\n";
+                system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
+                $cmdString = "";
+                if ($nice) {
+                    $cmdString .= "nice ";
+                }
+                $cmdString .= "cat $pred_dir/$file >> $error_cat_file";
+                print LOG "$cmdString\n";
+                system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
             }
-            $cmdString .= "cat $pred_dir/$file >> $error_cat_file";
-            print LOG "$cmdString\n";
-            system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
         }
     }
     closedir(DIR);
@@ -6558,8 +6567,8 @@ sub join_aug_pred {
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $perlCmdString\n");
-    print LOG "\# " . (localtime) . ": Deleting $pred_dir\n";
-    rmtree( ["$pred_dir"] );
+    # print LOG "\# " . (localtime) . ": Deleting $pred_dir\n";
+    # rmtree( ["$pred_dir"] ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $pred_dir!\n");
     print LOG "\# " . (localtime) . ": Deleting $cat_file\n";
     unlink($cat_file);
 }
