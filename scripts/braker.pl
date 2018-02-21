@@ -386,13 +386,8 @@ my $stdoutfile;    # stores current standard output
 my $string;        # string for storing script path
 my $augustus_args; # string that stores command line arguments to be passed to
                    # augustus
-my $testsize;   # AUGUSTUS training parameter: number of genes in a file that
-                # is used to measure accuracy during parameter estimation with
-                # optimize_augustus.pl. Default: 1000. If there are less than
-                # 1000 genes, all genes are used to measure accuracy.
-                # Decreasing this parameter speeds up braker.pl but decreases
-                # prediction accuracy.
-                # At least 300 genes are required for training AUGUSTUS.
+my $testsize1;  # number of genes to test AUGUSTUS accuracy on after trainnig
+my $testsize2;  # number of genes to test AUGUSTUS with during optimize_augustus.pl
 my $useexisting
     = 0;        # use existing species config and parameter files, no changes
                 # on those files
@@ -542,7 +537,6 @@ GetOptions(
     'skipAllTraining!'             => \$skipAllTraining,
     'species=s'                    => \$species,
     'softmasking!'                 => \$soft_mask,
-    'testsize=i'                   => \$testsize,
     'useexisting!'                 => \$useexisting,
     'UTR=s'                        => \$UTR,
     'workingdir=s'                 => \$workDir,
@@ -3055,7 +3049,7 @@ sub training {
             . ": Deleting intermediate training gene structure files:\n"
             . "rm $trainGb2 $trainGb3 $otherfilesDir/traingenes.good.nr.fa $otherfilesDir/nonred.loci.lst $otherfilesDir/traingenes.good.gtf $otherfilesDir/etrain.bad.lst $goodLstFile\n";
         foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst $goodLstFile") ) {
-           unlink ( $_ );
+           unlink ( $_ ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $_!\n");
         }
 
         # split into training and test set
@@ -3084,11 +3078,6 @@ sub training {
                 $gb_good_size
                     = `grep -c LOCUS $otherfilesDir/train.gb`;
             }
-            if ( $gb_good_size < 300 ) {
-                print LOG "\# "
-                    . (localtime)
-                    . " WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
-            }
             if ( $gb_good_size == 0 ) {
                 $prtStr
                     = "\# "
@@ -3099,24 +3088,65 @@ sub training {
                 print STDERR $prtStr;
                 exit(1);
             }
-            if ( $gb_good_size > 1000 ) {
-                $testsize      = 1000;
-                $perlCmdString = "";
-                if ($nice) {
-                    $perlCmdString .= "nice ";
+            if ( $gb_good_size < 300 ) {
+                $prtStr = "\# "
+                    . (localtime)
+                    . " WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
+                print LOG $prtStr;
+                print STDOUT $prtStr;
+                $testsize1 = floor($gb_good_size/3);
+                $testsize2 = floor($gb_good_size/3);
+                if( $testsize1 == 0 or $testsize2 == 0 or ($gb_good_size - ($testsize1 + $testsize2)) == 0 ){
+                    $prtStr
+                        = "\# "
+                        . (localtime)
+                        . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Unable to create three genbank files for optimizing AUGUSTUS (number of LOCI too low)! The provided input data is not sufficient for running braker.pl!\n";
+                    print LOG $prtStr;
+                    print STDERR $prtStr;
+                    exit(1);
                 }
-                $perlCmdString
-                    .= "perl $string $otherfilesDir/train.gb $testsize 2>$errorfile";
-                print LOG "$perlCmdString\n\n";
-                system("$perlCmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            }elsif ( $gb_good_size >= 300 && $gb_good_size <= 1000 ) {
+                $testsize1 = 200;
+                $testsize2 = 200;
+            }else{
+                $testsize1 = 300;
+                $testsize2 = 500;
             }
+            $perlCmdString = "";
+            if ($nice) {
+                $perlCmdString .= "nice ";
+            }
+            $perlCmdString
+                .= "perl $string $trainGb1 $testsize1 2>$errorfile";
+            print LOG "$perlCmdString\n\n";
+            system("$perlCmdString") == 0
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            print LOG "\# "
+                        . (localtime)
+                        . " $otherfilesDir/train.gb.test will be used for measuring AUGUSTUS accuracy after training\n";
+            $perlCmdString = "";
+            if ($nice) {
+                $perlCmdString .= "nice ";
+            }
+            $perlCmdString
+                .= "perl $string $otherfilesDir/train.gb.train $testsize2 2>$errorfile";
+            print LOG "$perlCmdString\n\n";
+            system("$perlCmdString") == 0
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            print LOG "\# "
+                . (localtime)
+                . " $otherfilesDir/train.gb.train.test will be used for measuring AUGUSTUS accuracy during training with optimize_augustus.pl\n"
+                . " $otherfilesDir/train.gb.train.train will be used for running etraining in optimize_augustus.pl (together with train.gb.train.test)\n"
+                . " $otherfilesDir/train.gb.train will be used for running etraining (outside of optimize_augustus.pl)\n";
+
+
         }
 
         # train AUGUSTUS for the first time
         if (!uptodate(
                 [   "$otherfilesDir/train.gb.train",
-                    "$otherfilesDir/train.gb"
+                    "$otherfilesDir/train.gb.test"
                 ],
                 ["$otherfilesDir/firstetraining.stdout"]
             )
@@ -3136,35 +3166,19 @@ sub training {
             $augpath    = "$AUGUSTUS_BIN_PATH/etraining";
             $errorfile  = "$errorfilesDir/firstetraining.stderr";
             $stdoutfile = "$otherfilesDir/firstetraining.stdout";
-            if ($nice) {
-                $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
-            }
-            else {
-                $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/train.gb`;
-            }
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            if ( $gb_good_size <= 1000 ) {
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
-                $testsize = $gb_good_size - 1;
-            }
-            else {
-                $testsize = 1000;
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
-            }
+            $cmdString
+                .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": first etraining\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
 
 # set "stopCodonExcludedFromCDS" to false and run etraining again if necessary
-            my $t_b_t = $gb_good_size - $testsize;
+            my $t_b_t = $gb_good_size - $testsize1;
             my $err_stopCodonExcludedFromCDS;
             if ($nice) {
                 print LOG
@@ -3250,9 +3264,7 @@ sub training {
 
         # first test
         if (!uptodate(
-                [   "$otherfilesDir/train.gb.test",
-                    "$otherfilesDir/train.gb"
-                ],
+                [   "$otherfilesDir/train.gb.test"],
                 ["$otherfilesDir/firsttest.stdout"]
             )
             || $overwrite
@@ -3261,32 +3273,12 @@ sub training {
             $augpath    = "$AUGUSTUS_BIN_PATH/augustus";
             $errorfile  = "$errorfilesDir/firsttest.stderr";
             $stdoutfile = "$otherfilesDir/firsttest.stdout";
-            if ($nice) {
-                print LOG "\# "
-                    . (localtime)
-                    . ": nice grep -c LOCUS $otherfilesDir/train.gb\n";
-                $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
-            }
-            else {
-                print LOG "\# "
-                    . (localtime)
-                    . ": grep -c LOCUS $otherfilesDir/train.gb\n";
-                $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/train.gb`;
-            }
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            if ( $gb_good_size <= 1000 ) {
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
-            }
-            else {
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test 1>$stdoutfile 2>$errorfile";
-            }
+            $cmdString
+                .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test 1>$stdoutfile 2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": First AUGUSTUS accuracy test\n";
@@ -3302,9 +3294,8 @@ sub training {
         # optimize parameters
         if ( !$skipoptimize ) {
             if (!uptodate(
-                    [   "$otherfilesDir/train.gb.train",
-                        "$otherfilesDir/train.gb.test",
-                        "$otherfilesDir/train.gb"
+                    [   "$otherfilesDir/train.gb.train.train",
+                        "$otherfilesDir/train.gb.test.test"
                     ],
                     [   $AUGUSTUS_CONFIG_PATH
                             . "/species/$species/$species\_exon_probs.pbl",
@@ -3322,43 +3313,17 @@ sub training {
                 );
                 $errorfile  = "$errorfilesDir/optimize_augustus.stderr";
                 $stdoutfile = "$otherfilesDir/optimize_augustus.stdout";
-                if ($nice) {
-                    print LOG "\# "
-                        . (localtime)
-                        . ": nice grep -c LOCUS $otherfilesDir/train.gb\n";
-                    $gb_good_size
-                        = `nice grep -c LOCUS $otherfilesDir/train.gb`;
-                }
-                else {
-                    print LOG "\# "
-                        . (localtime)
-                        . ": grep -c LOCUS $otherfilesDir/train.gb\n";
-                    $gb_good_size
-                        = `grep -c LOCUS $otherfilesDir/train.gb`;
-                }
                 $perlCmdString = "";
                 if ($nice) {
                     $perlCmdString .= "nice ";
                 }
-                if ( $gb_good_size <= 1000 ) {
-                    if ($nice) {
-                        $perlCmdString
-                            .= "perl $string --nice --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
-                    }
-                    else {
-                        $perlCmdString
-                            .= "perl $string --rounds=$rounds --species=$species --cpus=$CPU --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
-                    }
+                if ($nice) {
+                    $perlCmdString
+                        .= "perl $string --nice --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/train.gb.train.train --cpus=$CPU $otherfilesDir/train.gb.train.test 1>$stdoutfile 2>$errorfile";
                 }
                 else {
-                    if ($nice) {
-                        $perlCmdString
-                            .= "perl $string --nice --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/train.gb.train --cpus=$CPU $otherfilesDir/train.gb.test 1>$stdoutfile 2>$errorfile";
-                    }
-                    else {
-                        $perlCmdString
-                            .= "perl $string  --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/train.gb.train --cpus=$CPU $otherfilesDir/train.gb.test 1>$stdoutfile 2>$errorfile";
-                    }
+                    $perlCmdString
+                        .= "perl $string  --rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --onlytrain=$otherfilesDir/train.gb.train.train --cpus=$CPU $otherfilesDir/train.gb.train.test 1>$stdoutfile 2>$errorfile";
                 }
                 print LOG "\# "
                     . (localtime)
@@ -3374,9 +3339,7 @@ sub training {
 
         # train AUGUSTUS for the second time
         if (!uptodate(
-                [   "$otherfilesDir/train.gb.train",
-                    "$otherfilesDir/train.gb"
-                ],
+                ["$otherfilesDir/train.gb.train"],
                 ["$otherfilesDir/secondetraining.stdout"]
             )
             )
@@ -3384,26 +3347,12 @@ sub training {
             $augpath    = "$AUGUSTUS_BIN_PATH/etraining";
             $errorfile  = "$errorfilesDir/secondetraining.stderr";
             $stdoutfile = "$otherfilesDir/secondetraining.stdout";
-            if ($nice) {
-                $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
-            }
-            else {
-                $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/train.gb`;
-            }
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            if ( $gb_good_size <= 1000 ) {
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
-            }
-            else {
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
-            }
+            $cmdString
+                .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Second etraining\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
@@ -3412,9 +3361,7 @@ sub training {
 
         # second test
         if (!uptodate(
-                [   "$otherfilesDir/train.gb.test",
-                    "$otherfilesDir/train.gb"
-                ],
+                [   "$otherfilesDir/train.gb.test"],
                 ["$otherfilesDir/secondtest.out"]
             )
             || $overwrite
@@ -3423,32 +3370,12 @@ sub training {
             $augpath    = "$AUGUSTUS_BIN_PATH/augustus";
             $errorfile  = "$errorfilesDir/secondtest.stderr";
             $stdoutfile = "$otherfilesDir/secondtest.stdout";
-            if ($nice) {
-                print LOG "\# "
-                    . (localtime)
-                    . ": nice grep -c LOCUS $otherfilesDir/train.gb\n";
-                $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
-            }
-            else {
-                print LOG "\# "
-                    . (localtime)
-                    . ": grep -c LOCUS $otherfilesDir/train.gb\n";
-                $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/train.gb`;
-            }
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            if ( $gb_good_size <= 1000 ) {
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb >$stdoutfile 2>$errorfile";
-            }
-            else {
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test >$stdoutfile 2>$errorfile";
-            }
+            $cmdString
+                .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test >$stdoutfile 2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": Second AUGUSTUS accuracy test\n";
@@ -3463,9 +3390,7 @@ sub training {
         # optional CRF training
         if ($crf) {
             if (!uptodate(
-                    [   "$otherfilesDir/train.gb.test",
-                        "$otherfilesDir/train.gb"
-                    ],
+                    ["$otherfilesDir/train.gb.train"],
                     ["$otherfilesDir/crftraining.stdout"]
                 )
                 || $overwrite
@@ -3475,26 +3400,12 @@ sub training {
             }
             $errorfile  = "$errorfilesDir/crftraining.stderr";
             $stdoutfile = "$otherfilesDir/crftraining.stdout";
-            if ($nice) {
-                $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
-            }
-            else {
-                $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/train.gb`;
-            }
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            if ( $gb_good_size <= 1000 ) {
-                $cmdString
-                    .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb 1>$stdoutfile 2>$errorfile";
-            }
-            else {
-                $cmdString
-                    .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
-            }
+            $cmdString
+                .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": Third etraining - now with CRF\n";
@@ -3507,9 +3418,7 @@ sub training {
 
             # third test
             if (!uptodate(
-                    [   "$otherfilesDir/train.gb.test",
-                        "$otherfilesDir/train.gb"
-                    ],
+                    ["$otherfilesDir/train.gb.test"],
                     ["$otherfilesDir/thirdtest.out"]
                 )
                 || $overwrite
@@ -3518,26 +3427,12 @@ sub training {
                 $augpath    = "$AUGUSTUS_BIN_PATH/augustus";
                 $errorfile  = "$errorfilesDir/thirdtest.stderr";
                 $stdoutfile = "$otherfilesDir/thirdtest.stdout";
-                if ($nice) {
-                    $gb_good_size
-                        = `nice grep -c LOCUS $otherfilesDir/train.gb`;
-                }
-                else {
-                    $gb_good_size
-                        = `grep -c LOCUS $otherfilesDir/train.gb`;
-                }
                 $cmdString = "";
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                if ( $gb_good_size <= 1000 ) {
-                    $cmdString
-                        .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb >$stdoutfile 2>$errorfile";
-                }
-                else {
-                    $cmdString
-                        .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test >$stdoutfile 2>$errorfile";
-                }
+                $cmdString
+                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test >$stdoutfile 2>$errorfile";
                 print LOG "\# "
                     . (localtime)
                     . ": Third AUGUSTUS accuracy test\n";
