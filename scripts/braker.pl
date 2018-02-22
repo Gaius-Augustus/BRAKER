@@ -698,8 +698,8 @@ else {
 # this cannot go into check options because directories are not defined there, yet
 if ($skipGeneMarkET) {
     $prtStr = "\# "
-        . (localtime) ..
-        ": REMARK: The GeneMark-ET step will be skipped.\n";
+            . (localtime)
+            . ": REMARK: The GeneMark-ET step will be skipped.\n";
     $logString .= $prtStr;
     if ( not($trainFromGth) && not($useexisting)) {
         if (    not( -f "$genemarkDir/genemark.gtf" )
