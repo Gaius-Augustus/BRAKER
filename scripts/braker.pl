@@ -683,7 +683,6 @@ if (@bam) {
     }
 }
 
-print "Broken pipe 1\n";
 # check whether hints files exists
 if (@hints) {
     @hints = split( /[\s,]/, join( ',', @hints ) );
@@ -931,7 +930,6 @@ if ( !defined($genome) ) {
     exit(1);
 }
 
-print "Broken pipe 2\n";
 # check whether protein sequence file is given
 if (@prot_seq_files) {
     @prot_seq_files = split( /[\s,]/, join( ',', @prot_seq_files ) );
@@ -985,7 +983,6 @@ if (@prot_seq_files) {
     }
 }
 
-print "Broken pipe 3\n";
 # check whether reference annotation file exists
 if ($annot) {
     if ( not( -e $annot ) ) {
@@ -1001,7 +998,6 @@ if ($annot) {
     }
 }
 
-print "Broken pipe 4\n";
 # check whether protein alignment file is given
 if (@prot_aln_files) {
     @prot_aln_files = split( /[\s,]/, join( ',', @prot_aln_files ) );
@@ -1034,7 +1030,6 @@ if (@prot_aln_files) {
     }
 }
 
-print "Broken pipe 5\n";
 # check whether alignment program is given
 if ( defined($prg) ) {
     if (    not( $prg =~ m/gth/ )
@@ -1356,14 +1351,12 @@ else {
         }
     }
 
-print "Broken pipe 8\n";
     check_fasta_headers($genome);    # check fasta headers
     if (@prot_seq_files) {
         foreach (@prot_seq_files) {
             check_fasta_headers($_);
         }
     }
-print "Broken pipe 9\n";
     # count scaffold sizes and check whether the assembly is not too fragmented for parallel execution of AUGUSTUS
     open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/genome.fa");
     my $gLocus;
@@ -1416,22 +1409,19 @@ print "Broken pipe 9\n";
 # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS
 # can also handle other hints types
     $hintsfile          = "$otherfilesDir/hintsfile.gff";
-    print "Broken pipe 9\n";
     if(! $trainFromGth ) {
         $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
         if ( $EPmode == 0 ) {
             make_rna_seq_hints();    # make hints from RNA-Seq
         }
     }
-    print "Broken pipe 10\n";
     if ( @prot_seq_files or @prot_aln_files ) {
         make_prot_hints();
     }
-    print "Broken pipe 11\n";
     if (@hints) {
         add_other_hints();
     }
-    print "Broken pipe 12\n";
+
     if (! $trainFromGth ) {
         if ( @prot_seq_files or @prot_aln_files or @hints) {
             separateHints();
@@ -1445,28 +1435,22 @@ print "Broken pipe 9\n";
             system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         }
     }
-print "Broken pipe 12\n";
     if ( $skipAllTraining == 0 ) {
         if ( not($trainFromGth) ) {
             if ( $EPmode == 0 ) {
-                print "Broken pipe 13\n";
                 checkGeneMarkHints();
-                print "Broken pipe 14\n";
                 GeneMark_ET();    # run GeneMark-ET
-                print "Broken pipe 15\n";
                 filterGeneMark();
             }
             elsif ( $EPmode == 1 ) {
 
                 # remove reformatting of hintsfile, later!
-                print "Broken pipe 16\n";
                 format_ep_hints();
                 checkGeneMarkHints();
                 GeneMark_EP();
                 filterGeneMark();
             }
         }
-        print "Broken pipe 17\n";
         training()
             ; # train species-specific parameters with optimize_augustus.pl and
               # etraining
@@ -1529,7 +1513,6 @@ print "Broken pipe 12\n";
         }
     }
 
-    print "Broken pipe 18\n";
     augustus("off");    # run augustus witout UTR
     if ($ab_initio) {
         if (!uptodate(
@@ -2007,6 +1990,7 @@ sub separateHints {
         . (localtime)
         . ": Checking whether $hintsfile contains hints other than ";
     print LOG "intron\n";
+    print "Broken pipe 1\n";
     print LOG "cut -f 3 $hintsfile | grep -m 1 -v intron\n";
     my @notIntron = `cut -f 3 $hintsfile | grep -m 1 -v intron`;
     if ( not( scalar(@notIntron) == 0 ) ) {
@@ -2017,12 +2001,14 @@ sub separateHints {
 
         # if ET mode, take only RNA-Seq introns, src b2h
         if ( $EPmode == 0 ) {
+            print "Broken pipe 2\n";
             $cmdString
                 = "grep intron $hintsfile | grep b2h > $genemark_hintsfile";
         }
         else {
  # FIX THIS ONCE GENEMARK OUTPUTS CORRECT HINTS FORMAT: # FIX Intron to intron
  # if in EP mode, take ProSplign intron hints
+ print "Broken pipe 3\n";
             $cmdString
                 = "grep Intron $hintsfile | grep ProSplign > $genemark_hintsfile";
         }
