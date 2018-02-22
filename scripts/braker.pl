@@ -1990,10 +1990,16 @@ sub separateHints {
         . (localtime)
         . ": Checking whether $hintsfile contains hints other than ";
     print LOG "intron\n";
-    print "Broken pipe 1\n";
-    print LOG "cut -f 3 $hintsfile | grep -m 1 -v intron\n";
-    my @notIntron = `cut -f 3 $hintsfile | grep -m 1 -v intron`;
-    if ( not( scalar(@notIntron) == 0 ) ) {
+    my $containsOtherTypes = 0;
+    open (HINTS, "<", $hintsfile) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $hintsfile!\n");
+    while (<HINTS>) {
+        if(not ($_ =~ m/\tintron\t/) ){
+            $containsOtherTypes = 1;
+            last;
+        }
+    }
+    close (HINTS) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $hintsfile!\n");
+    if ( $containsOtherTypes > 0 ) {
         print LOG "\n\# "
             . (localtime)
             . ":  Hint types other than intron are contained in ";
@@ -2001,16 +2007,16 @@ sub separateHints {
 
         # if ET mode, take only RNA-Seq introns, src b2h
         if ( $EPmode == 0 ) {
-            print "Broken pipe 2\n";
             $cmdString
                 = "grep intron $hintsfile | grep b2h > $genemark_hintsfile";
         }
         else {
  # FIX THIS ONCE GENEMARK OUTPUTS CORRECT HINTS FORMAT: # FIX Intron to intron
  # if in EP mode, take ProSplign intron hints
- print "Broken pipe 3\n";
             $cmdString
-                = "grep Intron $hintsfile | grep ProSplign > $genemark_hintsfile";
+                = "grep Intron $hintsfile | grep ProSplign > $genemark_hintsfile\n";
+            # also append protein intron hints from other tools
+            $cmdString .= "grep intron $hintsfile | | grep -v ProSplign | grep \"src=P;\" | perl -pe 's/intron/Intron/' >> $genemark_hintsfile\n"
         }
         print LOG "$cmdString\n\n";
         system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
