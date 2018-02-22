@@ -614,27 +614,6 @@ if ( !-w $workDir ) {
     exit(1);
 }
 
-# check whether a valid set of input files is provided
-if (   ( !@bam && !@hints )
-    && ( !$trainFromGth && !@hints )
-    && ( !$trainFromGth && !@prot_seq_files )
-    && ( !$trainFromGth && !@prot_aln_files ) )
-{
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "in addition to a genome file, braker.pl requires at ";
-    $prtStr = "least one of the following files/flags as input:\n";
-    $prtStr = "    --bam=file.bam\n";
-    $prtStr = "    --hints=file.hints\n";
-    $prtStr = "    --prot_seq=file.fa --trainFromGth\n";
-    $prtStr = "    --prot_aln=file.aln --trainFromGth\n$usage";
-    print STDERR $prtStr;
-    $logString .= $prtStr;
-    exit(1);
-}
-
 # set paths to tools, in general, first try to get it from ENV, then check whether BRAKER
 # has an overriding argument, then try to guess, exit if all fails
 $prtStr
@@ -665,185 +644,6 @@ $logString .= $prtStr;
 check_upfront();
 check_options();
 
-# check whether bam files exist
-if (@bam) {
-    @bam = split( /[\s,]/, join( ',', @bam ) );
-    for ( my $i = 0; $i < scalar(@bam); $i++ ) {
-        if ( !-e $bam[$i] ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "BAM file $bam[$i] does not exist.\n";
-            print STDERR $prtStr;
-            $logString .= $prtStr;
-            exit(1);
-        }
-        $bam[$i] = rel2abs( $bam[$i] );
-    }
-}
-
-# check whether hints files exists
-if (@hints) {
-    @hints = split( /[\s,]/, join( ',', @hints ) );
-    for ( my $i = 0; $i < scalar(@hints); $i++ ) {
-        if ( !-e "$hints[$i]" ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "Hints file $hints[$i] does not exist.\n";
-            print STDERR $prtStr;
-            $logString .= $prtStr;
-            exit(1);
-        }
-        $hints[$i] = rel2abs( $hints[$i] );
-        check_gff( $hints[$i] );
-    }
-}
-
-# if hints files specified and no bam, check what sources and types of hints they contain
-# -> this will determine whether braker.pl switches into EPmode... this will work once that the ep
-# introns.gff format in the last column has been fixed. For now, require users to specify EPmode as
-#  input argument and change the last column of introns.gff file according to braker requirements.
-if ( ( !@bam && @hints ) && $EPmode == 0 ) {
-    my $foundRNASeq = 0;
-    foreach (@hints) {
-        $foundRNASeq += checkHints($_);
-    }
-    if ( $foundRNASeq == 0 ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": GeneMark-EP mode is enabled automatically due to hints ";
-        $prtStr .= "file contents!\n";
-        print STDOUT $prtStr;
-        $logString .= $prtStr;
-        $EPmode = 1;
-    }
-}
-
-# check whether RNA-Seq files are specified
-if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth ) {
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "No RNA-Seq or hints file(s) from RNA-Seq specified. "
-        . "Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq "
-        . "(must contain intron hints from src b2h in column 2) to run BRAKER in mode for "
-        . "training from RNA-Seq.\n$usage";
-    print STDERR $prtStr;
-    $logString .= $prtStr;
-    exit(1);
-}
-
-if ( $EPmode == 1 ) {
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": BRAKER will be execute GeneMark-EP for training GeneMark and "
-        . "generating a training gene set for AUGUSTUS, using protein information as sole "
-        . "extrinsic evidence source.\n";
-    print STDOUT $prtStr;
-    $logString .= $prtStr;
-}
-
-# check whether species is specified
-if ( defined($species) ) {
-    if ( $species =~ /[\s]/ ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: Species name contains invalid white space ";
-        $prtStr
-            .= "characters. Will replace white spaces with underline character '_'.\n";
-        print STDOUT $prtStr;
-        $logString .= $prtStr;
-        $species =~ s/\s/\_/g;
-    }
-    foreach my $word (@forbidden_words) {
-        if ( $species eq $word ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: $species is not allowed as a species name.\n";
-            print STDOUT $prtStr;
-            $logString .= $prtStr;
-            $bool_species = "false";
-        }
-    }
-}
-
-# use standard name when no name is assigned or when it contains invalid parts
-if ( !defined($species) || $bool_species eq "false" ) {
-    my $no = 1;
-    $species = "Sp_$no";
-    while ( $no <= $limit ) {
-        $species = "Sp_$no";
-        if ( ( !-d "$AUGUSTUS_CONFIG_PATH/species/$species" ) ) {
-            last;
-        }
-        else {
-            $no++;
-        }
-    }
-    if ( $no > $limit ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "There are already $limit species folders under ";
-        $prtStr
-            .= "$AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move "
-            . "some of those folders or assign a valid species identifier with "
-            . "--species=name.\n";
-        print STDERR $prtStr;
-        $logString .= $prtStr;
-        exit(1);
-    }
-    if ( $bool_species eq "false" ) {
-        $prtStr
-            = "\# " . (localtime) . ": Program will use $species instead.\n";
-        print STDOUT $prtStr;
-        $logString .= $prtStr;
-    }
-    else {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": No species was set. Program will use $species.\n";
-        print STDOUT $prtStr;
-        $logString .= $prtStr;
-    }
-}
-
-# check species directory
-if ( -d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting ) {
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "$AUGUSTUS_CONFIG_PATH/species/$species already exists. "
-        . "Choose another species name, delete this directory or use the existing species "
-        . "with the option --useexisting. Be aware that existing parameters will then be "
-        . "overwritten during training.\n";
-    print STDERR $prtStr;
-    $logString .= $prtStr;
-    exit(1);
-}
-
-if ( !-d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting ) {
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not ";
-    $prtStr
-        .= "exist. Braker will create the necessary files for species $species.\n";
-    print STDOUT $prtStr;
-    $logString .= $prtStr;
-    $useexisting = 0;
-}
 
 # check whether $rootDir already exists
 my $rootDir;
@@ -857,467 +657,148 @@ if ( -d "$rootDir/$species" && !$overwrite && $wdGiven == 0 ) {
     $prtStr
         = "\# "
         . (localtime)
-        . ": WARNING: $rootDir/$species already exists. Braker will use";
-    $prtStr
-        .= " existing files, if they are newer than the input files. You can choose ";
-    $prtStr
-        .= "another working directory with --workingdir=dir or overwrite it with ";
-    $prtStr .= "--overwrite.\n";
+        . ": WARNING: $rootDir/$species already exists. Braker will use"
+        . " existing files, if they are newer than the input files. You can choose "
+        . "another working directory with --workingdir=dir or overwrite it with "
+        . "--overwrite.\n";
     print STDOUT $prtStr;
     $logString .= $prtStr;
 }
 
-# set path and check whether assigned extrinsic file exists
-if ( defined($extrinsicCfgFile) ) {
-    $extrinsicCfgFile = rel2abs($extrinsicCfgFile);
-    $prtStr
-        = "\# "
+# create $rootDir
+if ( !-d $rootDir ) {
+    make_path($rootDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $rootDir!\n");
+    $prtStr = "\# "
         . (localtime)
-        . ": WARNING: Specifying an extrinsic.cfg file requires that you "
-        . "know exactly what you are doing. Make sure that \n"
-        . " a) the sources in your *.cfg file match the sources in your"
-        . " hints file,\n"
-        . " b) the scoring scheme is appropriate. This usually requires a lot"
-        . " testing, beforehand.\n"
-        . " Will use file $extrinsicCfgFile in this braker.pl run!\n";
+        . ": create working directory $rootDir.\n"
+        . "mkdir $rootDir\n\n";
     print STDOUT $prtStr;
     $logString .= $prtStr;
-    if ( !-f $extrinsicCfgFile ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: Assigned extrinsic file $extrinsicCfgFile does not ";
-        $prtStr .= "exist. Program will create extrinsic file instead.\n";
-        print STDOUT $prtStr;
-        $logString .= $prtStr;
-        $extrinsicCfgFile = undef;
-    }
 }
-else {
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": Going to assign an extrinsic.cfg file based on the type of braker.pl call.\n";
-    print STDOUT $prtStr;
-    $logString .= $prtStr;
-    if ( $EPmode == 1 ) {
-        assignExCfg("ep.cfg");
-    }
-    elsif ( defined($prg) ) {
-        if (   ( $prg eq "gth" && not( defined($extrinsicCfgFile) ) )
-            or ( $prg eq "exonerate" && not( defined($extrinsicCfgFile) ) )
-            or ( $prg eq "spaln" && not( defined($extrinsicCfgFile) ) ) )
-        {
-            assignExCfg("gth.cfg");
-        }
-    }
-    elsif ( $EPTmode == 1 ) {
-        assignExCfg("ept.cfg");
+
+# set other directories
+if ( $wdGiven == 1 ) {
+    if ( $EPmode == 0 ) {
+        $genemarkDir = "$rootDir/GeneMark-ET";
     }
     else {
-        assignExCfg("rnaseq.cfg");
+        $genemarkDir = "$rootDir/GeneMark-EP";
     }
-
-}
-
-# check whether genome file is set
-if ( !defined($genome) ) {
-    $prtStr
-        = "\# " . (localtime) . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "No genome file was specified.\n";
-    print STDERR $prtStr;
-    $logString .= $prtStr;
-    exit(1);
-}
-
-# check whether protein sequence file is given
-if (@prot_seq_files) {
-    @prot_seq_files = split( /[\s,]/, join( ',', @prot_seq_files ) );
-    for ( my $i = 0; $i < scalar(@prot_seq_files); $i++ ) {
-        if ( !-f $prot_seq_files[$i] ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "protein sequence file $prot_seq_files[$i] does "
-                . "not exist.\n";
-            print STDERR $prtStr;
-            $logString .= $prtStr;
-            exit(1);
-        }
-        $prot_seq_files[$i] = rel2abs( $prot_seq_files[$i] );
-    }
-    if ( !defined($prg) && $EPmode == 0 ) {
-
-        # if no alignment tools was specified, set Genome Threader as default
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "No alignment tool was specified for aligning protein"
-            . " sequences against genome. Setting GenomeThreader as default alignment tool.\n";
-        print STDERR $prtStr;
-        $logString .= $prtStr;
-        $prg = "gth";
-    }
-    elsif ( !defined($prg) && $EPmode == 1 ) {
-        $prg = "prosplign";
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: No alignment tool was specified for aligning ";
-        $prtStr
-            .= "protein sequences against genome. Setting ProSplign as default alignment tool ";
-        $prtStr .= "for running BRAKER in GeneMark-EP mode.\n";
-        print STDOUT $prtStr;
-        $logString .= $prtStr;
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR:  in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "Running ProSplign from within BRAKER is currently "
-            . "not supported. Aborting braker.pl!\n";
-        print STDERR $prtStr;
-        $logString .= $prtStr;
-        exit(1);
-    }
-}
-
-# check whether reference annotation file exists
-if ($annot) {
-    if ( not( -e $annot ) ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "Reference annotation file "
-            . "$annot does not exist. Cannot evaluate prediction accuracy!\n";
-        print STDERR $prtStr;
-        $logString .= $prtStr;
-        exit(1);
-    }
-}
-
-# check whether protein alignment file is given
-if (@prot_aln_files) {
-    @prot_aln_files = split( /[\s,]/, join( ',', @prot_aln_files ) );
-    for ( my $i = 0; $i < scalar(@prot_aln_files); $i++ ) {
-        if ( !-f $prot_aln_files[$i] ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "protein alignment file $prot_aln_files[$i] does"
-                . " not exist.\n";
-            print STDERR $prtStr;
-            $logString .= $prtStr;
-            exit(1);
-        }
-        $prot_aln_files[$i] = rel2abs( $prot_aln_files[$i] );
-    }
-    if ( !defined($prg) ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "if protein alignment file is specified, you must "
-            . "specify the source tool that was used to create that alignment file, i.e. "
-            . "--prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for"
-            . " Exonerate.\n";
-        print STDERR $prtStr;
-        $logString .= $prtStr;
-        exit(1);
-    }
-}
-
-# check whether alignment program is given
-if ( defined($prg) ) {
-    if (    not( $prg =~ m/gth/ )
-        and not( $prg =~ m/exonerate/ )
-        and not( $prg =~ m/spaln/ )
-        and $EPmode == 0 )
-    {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "An alignment tool other than gth, exonerate and spaln"
-            . " has been specified with option --prg=$prg. BRAKER currently only supports the "
-            . "options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and "
-            . "prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in "
-            . "GeneMark-ET mode.\n";
-        print STDERR $prtStr;
-        $logString .= $prtStr;
-        exit(1);
-    }
-    elsif ( not( $prg =~ m/prosplign/ ) and $EPmode == 1 ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "An alignment tool other than gth, exonerate and "
-            . "spaln has been specified with option --prg=$prg. BRAKER currently only "
-            . "supports the options gth, exonerate and spaln for running BRAKER in "
-            . "GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. "
-            . "BRAKER was now started in GeneMark-EP mode.\n";
-        print STDERR $prtStr;
-        $logString .= $prtStr;
-        exit(1);
-    }
-    if ( !@prot_seq_files and !@prot_aln_files ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "a protein alignment tool ($prg) has been given, "
-            . "but neither a protein sequence file, nor a protein alignment file "
-            . "generated by such a tool have been specified.\n";
-        print STDERR $prtStr;
-        $logString .= $prtStr;
-        exit(1);
-    }
-}
-
-# check whether trainFromGth option is valid
-if ( defined($gth2traingenes) && not( $prg eq "gth" ) ) {
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "Option --gth2traingenes can only be specified with "
-        . "option --prg=gth!\n";
-    print STDERR $prtStr;
-    $logString .= $prtStr;
-    exit(1);
-}
-elsif ( defined($trainFromGth) && not( $prg eq "gth" ) ) {
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "Option --trainFromGth can only be specified with "
-        . "option --prg=gth!\n";
-    print STDERR $prtStr;
-    $logString .= $prtStr;
-    exit(1);
-}
-elsif ( defined($trainFromGth) ) {
-
-    # disable genemark training
-    $skipGeneMarkET = 1;
-    $skipGeneMarkEP = 1;
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": GeneMark training has been disabled, will train AUGUSTUS from";
-    $prtStr .= " GenomeThreader alignments.\n";
-    print STDOUT $prtStr;
-    $logString .= $prtStr;
-}
-
-# check whether genome file exist
-if ( !-f "$genome" ) {
-    $prtStr
-        = "\# "
-        . (localtime)
-        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "Genome file $genome does not exist.\n";
-    print STDERR $prtStr;
-    $logString .= $prtStr;
-    exit(1);
+    $parameterDir  = "$rootDir/species";
+    $otherfilesDir = "$rootDir";
+    $errorfilesDir = "$rootDir/errors";
 }
 else {
-    # create $rootDir
-    my $bool_rootDir = "false";
-    if ( !-d $rootDir ) {
-        make_path($rootDir);
-        $bool_rootDir = "true";
-    }
-
-    # set other directories
-    if ( $wdGiven == 1 ) {
-        if ( $EPmode == 0 ) {
-            $genemarkDir = "$rootDir/GeneMark-ET";
-        }
-        else {
-            $genemarkDir = "$rootDir/GeneMark-EP";
-        }
-        $parameterDir  = "$rootDir/species";
-        $otherfilesDir = "$rootDir";
-        $errorfilesDir = "$rootDir/errors";
+    if ( $EPmode == 0 ) {
+        $genemarkDir = "$rootDir/$species/GeneMark-ET";
     }
     else {
-        if ( $EPmode == 0 ) {
-            $genemarkDir = "$rootDir/$species/GeneMark-ET";
-        }
-        else {
-            $genemarkDir = "$rootDir/$species/GeneMark-EP";
-        }
-        $parameterDir  = "$rootDir/$species/species";
-        $otherfilesDir = "$rootDir/$species";
-        $errorfilesDir = "$rootDir/$species/errors";
+        $genemarkDir = "$rootDir/$species/GeneMark-EP";
     }
+    $parameterDir  = "$rootDir/$species/species";
+    $otherfilesDir = "$rootDir/$species";
+    $errorfilesDir = "$rootDir/$species/errors";
+}
 
-    $logfile = "$otherfilesDir/braker.log";
+$logfile = "$otherfilesDir/braker.log";
 
-    # create other directories if necessary
-    my $bool_otherDir = "false";
-    if ( !-d $otherfilesDir ) {
-        make_path($otherfilesDir);
-        $bool_otherDir = "true";
-    }
-    $prtStr
-        = "\# "
+# create other directories if necessary
+if ( !-d $otherfilesDir ) {
+    $prtStr = "\# "
         . (localtime)
-        . ": Further logging information can be found in $logfile!\n";
+        . ": create working directory $otherfilesDir.\n"
+        . "mkdir $otherfilesDir\n\n";
     print STDOUT $prtStr;
-    open( LOG, ">>" . $logfile ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file $logfile!\n");
-    print LOG $logString;
-    if ( $bool_rootDir eq "true" ) {
-        print LOG "\# "
-            . (localtime)
-            . ": create working directory $rootDir.\n";
-        print LOG "mkdir $rootDir\n\n";
-    }
-    if ( $bool_otherDir eq "true" ) {
-        print LOG "\# "
-            . (localtime)
-            . ": create working directory $otherfilesDir.\n";
-        print LOG "mkdir $otherfilesDir\n\n";
-    }
-    if ( !-d $genemarkDir ) {
-        make_path($genemarkDir);
-        print LOG "\# "
-            . (localtime)
-            . ": create working directory $genemarkDir.\n";
-        print LOG "mkdir $genemarkDir\n\n";
-    }
-    if ( defined($geneMarkGtf) and not($skipGeneMarkET) )
-    {    # set skipGeneMarkET if geneMarkGtf is a
-            #command line argument
-        $skipGeneMarkET = 1;
-    }
-    if ($gth2traingenes) {
-        $gthTrainGeneFile = "$otherfilesDir/gthTrainGenes.gtf";
-    }
+    $logString .= $prtStr;
+    make_path($otherfilesDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $otherfilesDir!\n");
+}
 
-   # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
-    if ($skipGeneMarkET) {
-        print LOG "\# "
-            . (localtime) ..
-            ": REMARK: The GeneMark-ET step will be skipped.\n";
-        if ( not($trainFromGth) ) {
-            if (    not( -f "$genemarkDir/genemark.gtf" )
-                and not( -f $geneMarkGtf ) )
-            {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "The --skipGeneMark-ET option was used, but "
-                    . "there is no genemark.gtf file under $genemarkDir and no valid file "
-                    . "--geneMarkGtf=... was specified.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
-                if ( defined($geneMarkGtf) ) {
-                    $prtStr = "       The specified geneMarkGtf=... file was $geneMarkGtf. This is "
-                         . "not an accessible file.\n";
-                    print LOG $prtStr;
-                    print STDERR $prtStr;
-                }
-                exit(1);
-            }
-        }
-    }
+$prtStr
+    = "\# "
+    . (localtime)
+    . ": Further logging information can be found in $logfile!\n";
+print STDOUT $prtStr;
 
-    if ( $skipGeneMarkEP && $EPmode == 1 ) {
-        print LOG "REMARK: The GeneMark-EP step will be skipped.\n";
-        if (    not( -f "$genemarkDir/genemark.gtf" )
-            and not( -f $geneMarkGtf ) )
-        {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "The --skipGeneMark-EP option was used, but there is "
-                . "no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... "
-                . "was specified.\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
-            if ( defined($geneMarkGtf) ) {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "The specified geneMarkGtf=... file was "
-                    . "$geneMarkGtf. This is not an accessible file.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
-            }
-            exit(1);
-        }
-    }
-    elsif ($skipGeneMarkEP && not($trainFromGth)) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "Option --skipGeneMarkEP cannot be used when BRAKER is "
-            . "started in GeneMark-ET mode.\n";
-        print LOG $prtStr;
-        print STDERR $prtStr;
-        exit(1);
-    }
+open( LOG, ">>" . $logfile ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file $logfile!\n");
+print LOG $logString;
 
-    if ( defined($geneMarkGtf) ) {
-        print LOG "\#  "
-            . (localtime)
-            . ": creating softlink of $geneMarkGtf to ";
-        print LOG "$genemarkDir/genemark.gtf.\n";
-        $cmdString = "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
-        print LOG "$cmdString\n";
-        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
-    }
-
-    if ( !-d $parameterDir ) {
-        make_path($parameterDir);
-        print LOG "\# "
-            . (localtime)
-            . ": create working directory $parameterDir\n";
-        print LOG "mkdir $parameterDir\n\n";
-    }
-
-    if ( !-d $errorfilesDir ) {
-        make_path($errorfilesDir);
-        print LOG "\# "
-            . (localtime)
-            . ": create working directory $errorfilesDir\n";
-        print LOG "mkdir $errorfilesDir\n\n";
-    }
-
-    $genome    = rel2abs($genome);
-    $cmdString = "cd $rootDir;";
+if ( !-d $genemarkDir ) {
+    make_path($genemarkDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $genemarkDir!\n");
     print LOG "\# "
         . (localtime)
-        . ": changing into working directory $rootDir\n";
-    print LOG "$cmdString\n\n";
-    chdir $rootDir or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $rootDir.\n");
+        . ": create working directory $genemarkDir.\n";
+    print LOG "mkdir $genemarkDir\n\n";
+}
 
-    if ( $skipAllTraining == 0 ) {
-        new_species()
-            ; # create new species parameter files; we do this FIRST, before anything else,
-         # because if you start several processes in parallel, you might otherwise end
-         # up with those processes using the same species directory!
-    }
-    else {
+if ($gth2traingenes) {
+    $gthTrainGeneFile = "$otherfilesDir/gthTrainGenes.gtf";
+}
+
+if ( defined($geneMarkGtf) ) {
+    print LOG "\#  "
+        . (localtime)
+        . ": creating softlink of $geneMarkGtf to ";
+    print LOG "$genemarkDir/genemark.gtf.\n";
+    $cmdString = "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
+    print LOG "$cmdString\n";
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+}
+
+if ( !-d $parameterDir ) {
+    make_path($parameterDir);
+    print LOG "\# "
+        . (localtime)
+        . ": create working directory $parameterDir\n";
+    print LOG "mkdir $parameterDir\n\n";
+}
+
+if ( !-d $errorfilesDir ) {
+    make_path($errorfilesDir);
+    print LOG "\# "
+        . (localtime)
+        . ": create working directory $errorfilesDir\n";
+    print LOG "mkdir $errorfilesDir\n\n";
+}
+
+$genome    = rel2abs($genome);
+$cmdString = "cd $rootDir;";
+print LOG "\# "
+    . (localtime)
+    . ": changing into working directory $rootDir\n";
+print LOG "$cmdString\n\n";
+chdir $rootDir or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $rootDir.\n");
+
+if ( $skipAllTraining == 0 ) {
+    new_species()
+        ; # create new species parameter files; we do this FIRST, before anything else,
+     # because if you start several processes in parallel, you might otherwise end
+     # up with those processes using the same species directory!
+}
+else {
 # if no training will be executed, check whether species parameter files exist
-        my $specPath
-            = "$AUGUSTUS_CONFIG_PATH/species/$species/$species" . "_";
-        my @confFiles = (
-            "exon_probs.pbl",   "igenic_probs.pbl",
-            "intron_probs.pbl", "metapars.cfg",
-            "parameters.cfg",   "weightmatrix.txt"
-        );
+    my $specPath
+        = "$AUGUSTUS_CONFIG_PATH/species/$species/$species" . "_";
+    my @confFiles = (
+        "exon_probs.pbl",   "igenic_probs.pbl",
+        "intron_probs.pbl", "metapars.cfg",
+        "parameters.cfg",   "weightmatrix.txt"
+    );
+    foreach (@confFiles) {
+        if ( not( -e "$specPath" . "$_" ) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Config file $specPath"
+                . "$_ for species $species "
+                . "does not exist!\n";
+            print LOG $prtStr;
+            print STDERR $prtStr;
+            exit(1);
+        }
+    }
+    if ( $UTR eq "on" ) {
+        @confFiles = ( "metapars.utr.cfg", "utr_probs.pbl" );
         foreach (@confFiles) {
             if ( not( -e "$specPath" . "$_" ) ) {
                 $prtStr
@@ -1332,243 +813,227 @@ else {
                 exit(1);
             }
         }
-        if ( $UTR eq "on" ) {
-            @confFiles = ( "metapars.utr.cfg", "utr_probs.pbl" );
-            foreach (@confFiles) {
-                if ( not( -e "$specPath" . "$_" ) ) {
-                    $prtStr
-                        = "\# "
-                        . (localtime)
-                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                        . "Config file $specPath"
-                        . "$_ for species $species "
-                        . "does not exist!\n";
-                    print LOG $prtStr;
-                    print STDERR $prtStr;
-                    exit(1);
-                }
-            }
-        }
     }
+}
 
-    check_fasta_headers($genome);    # check fasta headers
-    if (@prot_seq_files) {
-        foreach (@prot_seq_files) {
-            check_fasta_headers($_);
-        }
+check_fasta_headers($genome);    # check fasta headers
+if (@prot_seq_files) {
+    foreach (@prot_seq_files) {
+        check_fasta_headers($_);
     }
-    # count scaffold sizes and check whether the assembly is not too fragmented for parallel execution of AUGUSTUS
-    open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/genome.fa");
-    my $gLocus;
-    while( <GENOME> ){
-        chomp;
-        if(m/^>(.*)/){
-            $gLocus = $1;
+}
+# count scaffold sizes and check whether the assembly is not too fragmented for parallel execution of AUGUSTUS
+open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/genome.fa");
+my $gLocus;
+while( <GENOME> ){
+    chomp;
+    if(m/^>(.*)/){
+        $gLocus = $1;
+    }else{
+        if(not(defined($scaffSizes{$gLocus}))){
+            $scaffSizes{$gLocus} = length ($_);
         }else{
-            if(not(defined($scaffSizes{$gLocus}))){
-                $scaffSizes{$gLocus} = length ($_);
-            }else{
-                $scaffSizes{$gLocus} += length ($_);
-            }
+            $scaffSizes{$gLocus} += length ($_);
         }
     }
-    close (GENOME) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/genome.fa");
-    my @nScaffs = keys %scaffSizes;
-    my $totalScaffSize = 0;
-    foreach( values %scaffSizes) {
-        $totalScaffSize += $_;
-    }
-    # I am actually not sure what is an approriate limit, because it depends on the kernel and
-    # on the stack size. Use 30000 just to be sure. This will result in ~90000 files in the
-    # augustus_tmp folder.
-    if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
-        $prtStr = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "file $genome contains a highly fragmented assembly (".scalar(@nScaffs)." scaffolds). This will lead "
-                . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
-                . "--cores=$CPU. You must run braker.pl in linear mode on such genomes, though (--cores=1). It is possible that GeneMark-EX might not work on highly fragmented assemblies, too.\n";
-        print LOG $prtStr;
-        print STDERR $prtStr;
-        exit(1);
-    }elsif( (($totalScaffSize / $chunksize) > 30000) && ($CPU > 1) ){
-        $prtStr = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "file $genome contains contains $totalScaffSize bases. "
-                . "This will lead "
-                . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
-                . "--cores=$CPU. There is a variable \$chunksize in braker.pl. Default value is currently"
-                . " $chunksize. You can adapt this to a higher number. The total base content / chunksize / 3"
-                . " should not exceed the number of possible arguments for commands like ls *, cp *, etc. "
-                . "on your system. It is possible that GeneMark-EX might not work on large and complex genomes, too.\n";
-        print LOG $prtStr;
-        print STDERR $prtStr;
-        exit(1);
-    }
+}
+close (GENOME) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/genome.fa");
+my @nScaffs = keys %scaffSizes;
+my $totalScaffSize = 0;
+foreach( values %scaffSizes) {
+    $totalScaffSize += $_;
+}
+# I am actually not sure what is an approriate limit, because it depends on the kernel and
+# on the stack size. Use 30000 just to be sure. This will result in ~90000 files in the
+# augustus_tmp folder.
+if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
+    $prtStr = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "file $genome contains a highly fragmented assembly (".scalar(@nScaffs)." scaffolds). This will lead "
+            . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
+            . "--cores=$CPU. You must run braker.pl in linear mode on such genomes, though (--cores=1). It is possible that GeneMark-EX might not work on highly fragmented assemblies, too.\n";
+    print LOG $prtStr;
+    print STDERR $prtStr;
+    exit(1);
+}elsif( (($totalScaffSize / $chunksize) > 30000) && ($CPU > 1) ){
+    $prtStr = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "file $genome contains contains $totalScaffSize bases. "
+            . "This will lead "
+            . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
+            . "--cores=$CPU. There is a variable \$chunksize in braker.pl. Default value is currently"
+            . " $chunksize. You can adapt this to a higher number. The total base content / chunksize / 3"
+            . " should not exceed the number of possible arguments for commands like ls *, cp *, etc. "
+            . "on your system. It is possible that GeneMark-EX might not work on large and complex genomes, too.\n";
+    print LOG $prtStr;
+    print STDERR $prtStr;
+    exit(1);
+}
 # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS
 # can also handle other hints types
-    $hintsfile          = "$otherfilesDir/hintsfile.gff";
-    if(! $trainFromGth ) {
-        $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
+$hintsfile          = "$otherfilesDir/hintsfile.gff";
+if(! $trainFromGth ) {
+    $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
+    if ( $EPmode == 0 ) {
+        make_rna_seq_hints();    # make hints from RNA-Seq
+    }
+}
+if ( @prot_seq_files or @prot_aln_files ) {
+    make_prot_hints();
+}
+if (@hints) {
+    add_other_hints();
+}
+
+if (! $trainFromGth ) {
+    if ( @prot_seq_files or @prot_aln_files or @hints) {
+        separateHints();
+    }
+    else {
+        print LOG "\# "
+            . (localtime)
+            . ":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
+        $cmdString = "ln -s $hintsfile $genemark_hintsfile";
+        print LOG "$cmdString\n";
+        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+    }
+}
+if ( $skipAllTraining == 0 ) {
+    if ( not($trainFromGth) ) {
         if ( $EPmode == 0 ) {
-            make_rna_seq_hints();    # make hints from RNA-Seq
+            checkGeneMarkHints();
+            GeneMark_ET();    # run GeneMark-ET
+            filterGeneMark();
         }
-    }
-    if ( @prot_seq_files or @prot_aln_files ) {
-        make_prot_hints();
-    }
-    if (@hints) {
-        add_other_hints();
-    }
+        elsif ( $EPmode == 1 ) {
 
-    if (! $trainFromGth ) {
-        if ( @prot_seq_files or @prot_aln_files or @hints) {
-            separateHints();
-        }
-        else {
-            print LOG "\# "
-                . (localtime)
-                . ":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
-            $cmdString = "ln -s $hintsfile $genemark_hintsfile";
-            print LOG "$cmdString\n";
-            system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+            # remove reformatting of hintsfile, later!
+            format_ep_hints();
+            checkGeneMarkHints();
+            GeneMark_EP();
+            filterGeneMark();
         }
     }
-    if ( $skipAllTraining == 0 ) {
-        if ( not($trainFromGth) ) {
-            if ( $EPmode == 0 ) {
-                checkGeneMarkHints();
-                GeneMark_ET();    # run GeneMark-ET
-                filterGeneMark();
-            }
-            elsif ( $EPmode == 1 ) {
-
-                # remove reformatting of hintsfile, later!
-                format_ep_hints();
-                checkGeneMarkHints();
-                GeneMark_EP();
-                filterGeneMark();
-            }
-        }
-        training()
-            ; # train species-specific parameters with optimize_augustus.pl and
-              # etraining
-    }
+    training()
+        ; # train species-specific parameters with optimize_augustus.pl and
+          # etraining
+}
 
 # no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking
 # option is used
-    if ( !defined($extrinsicCfgFile)
-        || ( !defined($extrinsicCfgFile) && $soft_mask ) )
-    {
-        extrinsic();    # use default extrinsic file
-    }
-
-    # copy extrinsic file to species parameters directory
-    if (defined($extrinsicCfgFile)
-        || ( !defined($extrinsicCfgFile)
-            && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"
-        )
-        || ( !defined($extrinsicCfgFile)
-            && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg"
-        )
-        )
-    {
-# using cfg files from AUGUSTUS_CONFIG_PATH has higher priority than from set_AUGUSTUS_BIN_PATH
-        if ( !defined($extrinsicCfgFile)
-            && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"
-            )
-        {
-            $extrinsicCfgFile
-                = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-        }
-        elsif ( !defined($extrinsicCfgFile)
-            && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg"
-            )
-        {
-            $extrinsicCfgFile
-                = "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg";
-        }
-        @_ = split( /\//, $extrinsicCfgFile );
-        if (!uptodate( [$extrinsicCfgFile],
-                [ "$parameterDir/$species/" . $_[-1] ] )
-            || $overwrite
-            )
-        {
-            $cmdString = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-            if ( not( -d "$parameterDir/$species/" ) ) {
-                mkdir "$parameterDir/$species/";
-            }
-            $cmdString
-                .= "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
-            print LOG "\# "
-                . (localtime)
-                . ": copy extrinsic file to working directory\n";
-            print LOG "$cmdString\n\n";
-            system("$cmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-        }
-    }
-
-    augustus("off");    # run augustus witout UTR
-    if ($ab_initio) {
-        if (!uptodate(
-                ["$otherfilesDir/augustus.ab_initio.gff"],
-                ["$otherfilesDir/augustus.ab_initio.aa"]
-            )
-            || $overwrite
-            )
-        {
-            getAnnoFasta("$otherfilesDir/augustus.ab_initio.gff")
-                ;       # create protein sequence file
-        }
-        if (!uptodate(
-                ["$otherfilesDir/augustus.ab_initio.gff"],
-                ["$otherfilesDir/augustus.ab_initio.gtf"]
-            )
-            || $overwrite
-            )
-        {
-            make_gtf("$otherfilesDir/augustus.ab_initio.gff")
-                ;       # convert output to gtf and gff3 (if desired) format
-        }
-    }
-    if (!uptodate(
-            ["$otherfilesDir/augustus.hints.gff"],
-            ["$otherfilesDir/augustus.hints.aa"]
-        )
-        || $overwrite
-        )
-    {
-        getAnnoFasta("$otherfilesDir/augustus.hints.gff")
-            ;           # create protein sequence file
-    }
-    if (!uptodate(
-            ["$otherfilesDir/augustus.hints.gff"],
-            ["$otherfilesDir/augustus.hints.gtf"]
-        )
-        || $overwrite
-        )
-    {
-        make_gtf("$otherfilesDir/augustus.hints.gff")
-            ;           # convert output to gtf and gff3 (if desired) format
-    }
-
-    if ( $UTR eq "on" ) {
-        train_utr();
-    }
-
-    if( $annot ) {
-        evaluate();
-    }
-
-    clean_up();         # delete all empty files
-
-    close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close log file $logfile!\n");
+if ( !defined($extrinsicCfgFile)
+    || ( !defined($extrinsicCfgFile) && $soft_mask ) )
+{
+    extrinsic();    # use default extrinsic file
 }
+
+# copy extrinsic file to species parameters directory
+if (defined($extrinsicCfgFile)
+    || ( !defined($extrinsicCfgFile)
+        && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"
+    )
+    || ( !defined($extrinsicCfgFile)
+        && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg"
+    )
+    )
+{
+# using cfg files from AUGUSTUS_CONFIG_PATH has higher priority than from set_AUGUSTUS_BIN_PATH
+    if ( !defined($extrinsicCfgFile)
+        && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"
+        )
+    {
+        $extrinsicCfgFile
+            = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
+    }
+    elsif ( !defined($extrinsicCfgFile)
+        && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg"
+        )
+    {
+        $extrinsicCfgFile
+            = "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg";
+    }
+    @_ = split( /\//, $extrinsicCfgFile );
+    if (!uptodate( [$extrinsicCfgFile],
+            [ "$parameterDir/$species/" . $_[-1] ] )
+        || $overwrite
+        )
+    {
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        if ( not( -d "$parameterDir/$species/" ) ) {
+            mkdir "$parameterDir/$species/";
+        }
+        $cmdString
+            .= "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
+        print LOG "\# "
+            . (localtime)
+            . ": copy extrinsic file to working directory\n";
+        print LOG "$cmdString\n\n";
+        system("$cmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+}
+
+augustus("off");    # run augustus witout UTR
+if ($ab_initio) {
+    if (!uptodate(
+            ["$otherfilesDir/augustus.ab_initio.gff"],
+            ["$otherfilesDir/augustus.ab_initio.aa"]
+        )
+        || $overwrite
+        )
+    {
+        getAnnoFasta("$otherfilesDir/augustus.ab_initio.gff")
+            ;       # create protein sequence file
+    }
+    if (!uptodate(
+            ["$otherfilesDir/augustus.ab_initio.gff"],
+            ["$otherfilesDir/augustus.ab_initio.gtf"]
+        )
+        || $overwrite
+        )
+    {
+        make_gtf("$otherfilesDir/augustus.ab_initio.gff")
+            ;       # convert output to gtf and gff3 (if desired) format
+    }
+}
+if (!uptodate(
+        ["$otherfilesDir/augustus.hints.gff"],
+        ["$otherfilesDir/augustus.hints.aa"]
+    )
+    || $overwrite
+    )
+{
+    getAnnoFasta("$otherfilesDir/augustus.hints.gff")
+        ;           # create protein sequence file
+}
+if (!uptodate(
+        ["$otherfilesDir/augustus.hints.gff"],
+        ["$otherfilesDir/augustus.hints.gtf"]
+    )
+    || $overwrite
+    )
+{
+    make_gtf("$otherfilesDir/augustus.hints.gff")
+        ;           # convert output to gtf and gff3 (if desired) format
+}
+
+if ( $UTR eq "on" ) {
+    train_utr();
+}
+
+if( $annot ) {
+    evaluate();
+}
+
+clean_up();         # delete all empty files
+
+close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close log file $logfile!\n");
+
 
 ############### sub functions ##############
 
@@ -4451,6 +3916,537 @@ sub check_options {
             . ": WARNING: Your system does not have $CPU cores available, only $cpus_available. Braker will use the $cpus_available available instead of the chosen $CPU.\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
+    }
+
+    # check whether bam files exist
+    if (@bam) {
+        @bam = split( /[\s,]/, join( ',', @bam ) );
+        for ( my $i = 0; $i < scalar(@bam); $i++ ) {
+            if ( !-e $bam[$i] ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "BAM file $bam[$i] does not exist.\n";
+                print STDERR $prtStr;
+                $logString .= $prtStr;
+                exit(1);
+            }
+            $bam[$i] = rel2abs( $bam[$i] );
+        }
+    }
+
+    # check whether hints files exists
+    if (@hints) {
+        @hints = split( /[\s,]/, join( ',', @hints ) );
+        for ( my $i = 0; $i < scalar(@hints); $i++ ) {
+            if ( !-e "$hints[$i]" ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Hints file $hints[$i] does not exist.\n";
+                print STDERR $prtStr;
+                $logString .= $prtStr;
+                exit(1);
+            }
+            $hints[$i] = rel2abs( $hints[$i] );
+            check_gff( $hints[$i] );
+        }
+    }
+
+    # if hints files specified and no bam, check what sources and types of hints they contain
+    # -> this will determine whether braker.pl switches into EPmode... this will work once that the ep
+    # introns.gff format in the last column has been fixed. For now, require users to specify EPmode as
+    #  input argument and change the last column of introns.gff file according to braker requirements.
+    if ( ( !@bam && @hints ) && $EPmode == 0 ) {
+        my $foundRNASeq = 0;
+        foreach (@hints) {
+            $foundRNASeq += checkHints($_);
+        }
+        if ( $foundRNASeq == 0 ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": GeneMark-EP mode is enabled automatically due to hints ";
+            $prtStr .= "file contents!\n";
+            print STDOUT $prtStr;
+            $logString .= $prtStr;
+            $EPmode = 1;
+        }
+    }
+
+    # check whether RNA-Seq files are specified
+    if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "No RNA-Seq or hints file(s) from RNA-Seq specified. "
+            . "Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq "
+            . "(must contain intron hints from src b2h in column 2) to run BRAKER in mode for "
+            . "training from RNA-Seq.\n$usage";
+        print STDERR $prtStr;
+        $logString .= $prtStr;
+        exit(1);
+    }
+
+    if ( $EPmode == 1 ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": BRAKER will be execute GeneMark-EP for training GeneMark and "
+            . "generating a training gene set for AUGUSTUS, using protein information as sole "
+            . "extrinsic evidence source.\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+    }
+
+    # check whether species is specified
+    if ( defined($species) ) {
+        if ( $species =~ /[\s]/ ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Species name contains invalid white space ";
+            $prtStr
+                .= "characters. Will replace white spaces with underline character '_'.\n";
+            print STDOUT $prtStr;
+            $logString .= $prtStr;
+            $species =~ s/\s/\_/g;
+        }
+        foreach my $word (@forbidden_words) {
+            if ( $species eq $word ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": WARNING: $species is not allowed as a species name.\n";
+                print STDOUT $prtStr;
+                $logString .= $prtStr;
+                $bool_species = "false";
+            }
+        }
+    }
+
+    # use standard name when no name is assigned or when it contains invalid parts
+    if ( !defined($species) || $bool_species eq "false" ) {
+        my $no = 1;
+        $species = "Sp_$no";
+        while ( $no <= $limit ) {
+            $species = "Sp_$no";
+            if ( ( !-d "$AUGUSTUS_CONFIG_PATH/species/$species" ) ) {
+                last;
+            }
+            else {
+                $no++;
+            }
+        }
+        if ( $no > $limit ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "There are already $limit species folders under "
+                . "$AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move "
+                . "some of those folders or assign a valid species identifier with "
+                . "--species=name.\n";
+            print STDERR $prtStr;
+            $logString .= $prtStr;
+            exit(1);
+        }
+        if ( $bool_species eq "false" ) {
+            $prtStr
+                = "\# " . (localtime) . ": Program will use $species instead.\n";
+            print STDOUT $prtStr;
+            $logString .= $prtStr;
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": No species was set. Program will use $species.\n";
+            print STDOUT $prtStr;
+            $logString .= $prtStr;
+        }
+    }
+
+    # check species directory
+    if ( -d "$AUGUSTUS_CONFIG_PATH/species/$species" && !$useexisting ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "$AUGUSTUS_CONFIG_PATH/species/$species already exists. "
+            . "Choose another species name, delete this directory or use the existing species "
+            . "with the option --useexisting. Be aware that existing parameters will then be "
+            . "overwritten during training.\n";
+        print STDERR $prtStr;
+        $logString .= $prtStr;
+        exit(1);
+    }
+
+    if ( !-d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not "
+            . "exist. Braker will create the necessary files for species $species.\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+        $useexisting = 0;
+    }
+
+    # check whether a valid set of input files is provided
+    if (   ( !@bam && !@hints )
+        && ( !$trainFromGth && !@hints )
+        && ( !$trainFromGth && !@prot_seq_files )
+        && ( !$trainFromGth && !@prot_aln_files ) )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "in addition to a genome file, braker.pl requires at ";
+        $prtStr = "least one of the following files/flags as input:\n";
+        $prtStr = "    --bam=file.bam\n";
+        $prtStr = "    --hints=file.hints\n";
+        $prtStr = "    --prot_seq=file.fa --trainFromGth\n";
+        $prtStr = "    --prot_aln=file.aln --trainFromGth\n$usage";
+        print STDERR $prtStr;
+        $logString .= $prtStr;
+        exit(1);
+    }
+    # set path and check whether assigned extrinsic file exists
+    if ( defined($extrinsicCfgFile) ) {
+        $extrinsicCfgFile = rel2abs($extrinsicCfgFile);
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": WARNING: Specifying an extrinsic.cfg file requires that you "
+            . "know exactly what you are doing. Make sure that \n"
+            . " a) the sources in your *.cfg file match the sources in your"
+            . " hints file,\n"
+            . " b) the scoring scheme is appropriate. This usually requires a lot"
+            . " testing, beforehand.\n"
+            . " Will use file $extrinsicCfgFile in this braker.pl run!\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+        if ( !-f $extrinsicCfgFile ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Assigned extrinsic file $extrinsicCfgFile does not ";
+            $prtStr .= "exist. Program will create extrinsic file instead.\n";
+            print STDOUT $prtStr;
+            $logString .= $prtStr;
+            $extrinsicCfgFile = undef;
+        }
+    }
+    else {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Going to assign an extrinsic.cfg file based on the type of braker.pl call.\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+        if ( $EPmode == 1 ) {
+            assignExCfg("ep.cfg");
+        }
+        elsif ( defined($prg) ) {
+            if (   ( $prg eq "gth" && not( defined($extrinsicCfgFile) ) )
+                or ( $prg eq "exonerate" && not( defined($extrinsicCfgFile) ) )
+                or ( $prg eq "spaln" && not( defined($extrinsicCfgFile) ) ) )
+            {
+                assignExCfg("gth.cfg");
+            }
+        }
+        elsif ( $EPTmode == 1 ) {
+            assignExCfg("ept.cfg");
+        }
+        else {
+            assignExCfg("rnaseq.cfg");
+        }
+
+    }
+
+    # check whether genome file is set
+    if ( !defined($genome) ) {
+        $prtStr
+            = "\# " . (localtime) . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "No genome file was specified.\n";
+        print STDERR $prtStr;
+        $logString .= $prtStr;
+        exit(1);
+    }
+
+    # check whether protein sequence file is given
+    if (@prot_seq_files) {
+        @prot_seq_files = split( /[\s,]/, join( ',', @prot_seq_files ) );
+        for ( my $i = 0; $i < scalar(@prot_seq_files); $i++ ) {
+            if ( !-f $prot_seq_files[$i] ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "protein sequence file $prot_seq_files[$i] does "
+                    . "not exist.\n";
+                print STDERR $prtStr;
+                $logString .= $prtStr;
+                exit(1);
+            }
+            $prot_seq_files[$i] = rel2abs( $prot_seq_files[$i] );
+        }
+        if ( !defined($prg) && $EPmode == 0 ) {
+
+            # if no alignment tools was specified, set Genome Threader as default
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "No alignment tool was specified for aligning protein"
+                . " sequences against genome. Setting GenomeThreader as default alignment tool.\n";
+            print STDERR $prtStr;
+            $logString .= $prtStr;
+            $prg = "gth";
+        }
+        elsif ( !defined($prg) && $EPmode == 1 ) {
+            $prg = "prosplign";
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: No alignment tool was specified for aligning "
+                . "protein sequences against genome. Setting ProSplign as default alignment tool "
+                . "for running BRAKER in GeneMark-EP mode.\n";
+            print STDOUT $prtStr;
+            $logString .= $prtStr;
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR:  in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Running ProSplign from within BRAKER is currently "
+                . "not supported. Aborting braker.pl!\n";
+            print STDERR $prtStr;
+            $logString .= $prtStr;
+            exit(1);
+        }
+    }
+
+    # check whether reference annotation file exists
+    if ($annot) {
+        if ( not( -e $annot ) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Reference annotation file "
+                . "$annot does not exist. Cannot evaluate prediction accuracy!\n";
+            print STDERR $prtStr;
+            $logString .= $prtStr;
+            exit(1);
+        }
+    }
+
+    # check whether protein alignment file is given
+    if (@prot_aln_files) {
+        @prot_aln_files = split( /[\s,]/, join( ',', @prot_aln_files ) );
+        for ( my $i = 0; $i < scalar(@prot_aln_files); $i++ ) {
+            if ( !-f $prot_aln_files[$i] ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "protein alignment file $prot_aln_files[$i] does"
+                    . " not exist.\n";
+                print STDERR $prtStr;
+                $logString .= $prtStr;
+                exit(1);
+            }
+            $prot_aln_files[$i] = rel2abs( $prot_aln_files[$i] );
+        }
+        if ( !defined($prg) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "if protein alignment file is specified, you must "
+                . "specify the source tool that was used to create that alignment file, i.e. "
+                . "--prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for"
+                . " Exonerate.\n";
+            print STDERR $prtStr;
+            $logString .= $prtStr;
+            exit(1);
+        }
+    }
+
+    # check whether alignment program is given
+    if ( defined($prg) ) {
+        if (    not( $prg =~ m/gth/ )
+            and not( $prg =~ m/exonerate/ )
+            and not( $prg =~ m/spaln/ )
+            and $EPmode == 0 )
+        {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "An alignment tool other than gth, exonerate and spaln"
+                . " has been specified with option --prg=$prg. BRAKER currently only supports the "
+                . "options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and "
+                . "prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in "
+                . "GeneMark-ET mode.\n";
+            print STDERR $prtStr;
+            $logString .= $prtStr;
+            exit(1);
+        }
+        elsif ( not( $prg =~ m/prosplign/ ) and $EPmode == 1 ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "An alignment tool other than gth, exonerate and "
+                . "spaln has been specified with option --prg=$prg. BRAKER currently only "
+                . "supports the options gth, exonerate and spaln for running BRAKER in "
+                . "GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. "
+                . "BRAKER was now started in GeneMark-EP mode.\n";
+            print STDERR $prtStr;
+            $logString .= $prtStr;
+            exit(1);
+        }
+        if ( !@prot_seq_files and !@prot_aln_files ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "a protein alignment tool ($prg) has been given, "
+                . "but neither a protein sequence file, nor a protein alignment file "
+                . "generated by such a tool have been specified.\n";
+            print STDERR $prtStr;
+            $logString .= $prtStr;
+            exit(1);
+        }
+    }
+
+    # check whether trainFromGth option is valid
+    if ( defined($gth2traingenes) && not( $prg eq "gth" ) ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Option --gth2traingenes can only be specified with "
+            . "option --prg=gth!\n";
+        print STDERR $prtStr;
+        $logString .= $prtStr;
+        exit(1);
+    }
+    elsif ( defined($trainFromGth) && not( $prg eq "gth" ) ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Option --trainFromGth can only be specified with "
+            . "option --prg=gth!\n";
+        print STDERR $prtStr;
+        $logString .= $prtStr;
+        exit(1);
+    }
+    elsif ( defined($trainFromGth) ) {
+
+        # disable genemark training
+        $skipGeneMarkET = 1;
+        $skipGeneMarkEP = 1;
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": GeneMark training has been disabled, will train AUGUSTUS from";
+        $prtStr .= " GenomeThreader alignments.\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+    }
+    if ( !-f "$genome" ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Genome file $genome does not exist.\n";
+        print STDERR $prtStr;
+        $logString .= $prtStr;
+        exit(1);
+    }
+
+    if ( defined($geneMarkGtf) and not($skipGeneMarkET) )
+    {    # set skipGeneMarkET if geneMarkGtf is a
+            #command line argument
+        $skipGeneMarkET = 1;
+    }
+
+    # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
+    if ($skipGeneMarkET) {
+        $prtStr = "\# "
+            . (localtime) ..
+            ": REMARK: The GeneMark-ET step will be skipped.\n";
+        $logString .= $prtStr;
+        if ( not($trainFromGth) ) {
+            if (    not( -f "$genemarkDir/genemark.gtf" )
+                and not( -f $geneMarkGtf ) )
+            {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "The --skipGeneMark-ET option was used, but "
+                    . "there is no genemark.gtf file under $genemarkDir and no valid file "
+                    . "--geneMarkGtf=... was specified.\n";
+                $logString .= $prtStr;
+                print STDERR $prtStr;
+                if ( defined($geneMarkGtf) ) {
+                    $prtStr = "       The specified geneMarkGtf=... file was $geneMarkGtf. This is "
+                         . "not an accessible file.\n";
+                    $logString .= $prtStr;
+                    print STDERR $prtStr;
+                }
+                exit(1);
+            }
+        }
+    }
+
+    if ( $skipGeneMarkEP && $EPmode == 1 ) {
+        $prtStr = "REMARK: The GeneMark-EP step will be skipped.\n";
+        $logString .= $prtStr;
+        if (    not( -f "$genemarkDir/genemark.gtf" )
+            and not( -f $geneMarkGtf ) )
+        {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The --skipGeneMark-EP option was used, but there is "
+                . "no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... "
+                . "was specified.\n";
+            $logString .= $prtStr;
+            print STDERR $prtStr;
+            if ( defined($geneMarkGtf) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "The specified geneMarkGtf=... file was "
+                    . "$geneMarkGtf. This is not an accessible file.\n";
+                $logString .= $prtStr;
+                print STDERR $prtStr;
+            }
+            exit(1);
+        }
+    }
+    elsif ($skipGeneMarkEP && not($trainFromGth)) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Option --skipGeneMarkEP cannot be used when BRAKER is "
+            . "started in GeneMark-ET mode.\n";
+        $logString .= $prtStr;
+        print STDERR $prtStr;
+        exit(1);
     }
 }
 
