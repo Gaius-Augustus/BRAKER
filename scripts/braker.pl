@@ -2283,7 +2283,7 @@ sub filterGeneMark {
         # collapse multiplicity of singleCDS hints
         my %multSingleCDS;
         while (my ($k, $v) = each %singleCDS ) {
-            if ($v == 0) {
+            if ($v eq "0") {
                 delete $singleCDS{$k};
             }else{
                 my @t = split(/\t/, $v);
