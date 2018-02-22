@@ -745,7 +745,7 @@ if ( defined($geneMarkGtf) ) {
 }
 
 if ( !-d $parameterDir ) {
-    make_path($parameterDir);
+    make_path($parameterDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $parameterDir!\n");
     print LOG "\# "
         . (localtime)
         . ": create working directory $parameterDir\n";
@@ -753,7 +753,7 @@ if ( !-d $parameterDir ) {
 }
 
 if ( !-d $errorfilesDir ) {
-    make_path($errorfilesDir);
+    make_path($errorfilesDir)or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $errorfilesDir!\n");
     print LOG "\# "
         . (localtime)
         . ": create working directory $errorfilesDir\n";
@@ -773,8 +773,7 @@ if ( $skipAllTraining == 0 ) {
         ; # create new species parameter files; we do this FIRST, before anything else,
      # because if you start several processes in parallel, you might otherwise end
      # up with those processes using the same species directory!
-}
-else {
+} else {
 # if no training will be executed, check whether species parameter files exist
     my $specPath
         = "$AUGUSTUS_CONFIG_PATH/species/$species/$species" . "_";
@@ -817,11 +816,13 @@ else {
 }
 
 check_fasta_headers($genome);    # check fasta headers
+
 if (@prot_seq_files) {
     foreach (@prot_seq_files) {
         check_fasta_headers($_);
     }
 }
+
 # count scaffold sizes and check whether the assembly is not too fragmented for parallel execution of AUGUSTUS
 open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/genome.fa");
 my $gLocus;
@@ -881,7 +882,7 @@ if(! $trainFromGth ) {
     }
 }
 if ( @prot_seq_files or @prot_aln_files ) {
-    make_prot_hints();
+    make_prot_hints(); # TODO: check whether multiplicity for introns is summarized!
 }
 if (@hints) {
     add_other_hints();
@@ -1605,21 +1606,22 @@ sub checkGeneMarkHints {
         }
     }
     close(GH) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genemark_hintsfile!\n");
-    if ( $nIntronsAboveThreshold < 1000 ) {
+    if ( $nIntronsAboveThreshold < 500 ) {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "The file $genemark_hintsfile contains less than 1000 "
+            . ": WARNING: \n"
+            . "The file $genemark_hintsfile contains less than 500 "
             . "introns with multiplicity >= $GeneMarkIntronThreshold! (In total, $nIntrons unique "
             . "introns are contained.) Possibly, you are trying to run braker.pl on data that "
             . "does not supply multiplicity information. This will e.g. happen if you try to use "
             . "introns generated from assembled RNA-Seq transcripts; or if you try to run "
             . "braker.pl in epmode with mappings from proteins without sufficient hits per "
-            . "locus.\n";
+            . "locus.\n"
+            . "A low number of intron hints with sufficient multiplicity may result in a crash of "
+            . "GeneMark-EX.\n";
         print LOG $prtStr;
         print STDERR $prtStr;
-        exit(1);
     }
 }
 
@@ -6468,7 +6470,6 @@ sub join_aug_pred {
     }
     foreach(keys %gff_files){
         foreach(@{$gff_files{$_}}){
-            print "File is $pred_dir/".$_->{'filename'}."\n";
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
@@ -6496,6 +6497,8 @@ sub join_aug_pred {
     }
 
     closedir(DIR) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to close directory $pred_dir\n");
+
+    $perlCmdString = "";
     if ($nice) {
         $perlCmdString .= "nice ";
     }
