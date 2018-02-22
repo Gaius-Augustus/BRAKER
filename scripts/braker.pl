@@ -3234,8 +3234,6 @@ sub augustus {
                         or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
                     $pm->finish;
                 }
-                $pm->wait_all_children;
-
             }
             open( HIJOBS, "<", "$otherfilesDir/hints.job.lst" )
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/hints.job.lst!\n");
@@ -3262,6 +3260,7 @@ sub augustus {
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
                 $pm2->finish;
             }
+            $pm->wait_all_children;
             $pm2->wait_all_children;
 
         }
