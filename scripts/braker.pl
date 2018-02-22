@@ -6472,6 +6472,7 @@ sub join_aug_pred {
     }
     foreach(keys %gff_files){
         foreach(@{$gff_files{$_}}){
+            print "File is $pred_dir/".$_->{'filename'}."\n";
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
@@ -6502,7 +6503,7 @@ sub join_aug_pred {
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    $perlCmdString .= "perl $string <$cat_file > $target_file";
+    $perlCmdString .= "perl $string < $cat_file > $target_file";
     print LOG "\# "
         . (localtime)
         . ": Joining AUGUSTUS output from $pred_dir\n";
