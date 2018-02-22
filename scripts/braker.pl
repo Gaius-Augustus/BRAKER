@@ -6465,10 +6465,10 @@ sub join_aug_pred {
         }
     }
     foreach(keys %gff_files){
-        @{$gff_files{$_}} = sort { $a->{'start'}    cmp $b->{'start'}} @{$gff_files{$_}};
+        @{$gff_files{$_}} = sort { $a->{'start'} <=> $b->{'start'}} @{$gff_files{$_}};
     }
     foreach(keys %err_files){
-        @{$gff_files{$_}} = sort { $a->{'start'}    cmp $b->{'start'}} @{$gff_files{$_}};
+        @{$gff_files{$_}} = sort { $a->{'start'} <=> $b->{'start'}} @{$gff_files{$_}};
     }
     foreach(keys %gff_files){
         foreach(@{$gff_files{$_}}){
