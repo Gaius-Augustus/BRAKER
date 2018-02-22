@@ -593,9 +593,8 @@ else {
     $workDir = $tmp_dir_name;
     if ( not( -d $workDir ) ) {
         $prtStr = "\# " . (localtime) . ": Creating directory $workDir.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
-        mkdir $workDir;
+        mkdir($workDir) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $workDir!\n");
     }
 }
 
@@ -605,12 +604,11 @@ if ( !-w $workDir ) {
         = "\# "
         . (localtime)
         . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "Do not have write permission for $workDir.\nPlease";
-    $prtStr
-        .= " use command 'chmod' to reset permissions, or specify another working ";
-    $prtStr .= "directory with option --workingdir=...\n";
-    print STDERR $prtStr;
+        . "Do not have write permission for $workDir.\nPlease"
+        . " use command 'chmod' to reset permissions, or specify another working "
+        . "directory with option --workingdir=...\n";
     $logString .= $prtStr;
+    print STDERR $logString;
     exit(1);
 }
 
@@ -620,7 +618,6 @@ $prtStr
     = "\# "
     . (localtime)
     . ": Configuring of BRAKER for using external tools...\n";
-print STDOUT $prtStr;
 $logString .= $prtStr;
 set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
@@ -637,7 +634,6 @@ set_SAMTOOLS_PATH();
 set_ALIGNMENT_TOOL_PATH();
 set_BLAST_PATH();
 $prtStr = "\# " . (localtime) . ": Configuring of BRAKER complete!\n";
-print STDOUT $prtStr;
 $logString .= $prtStr;
 
 # check upfront whether any common problems will occur later
@@ -661,7 +657,6 @@ if ( -d "$rootDir/$species" && !$overwrite && $wdGiven == 0 ) {
         . " existing files, if they are newer than the input files. You can choose "
         . "another working directory with --workingdir=dir or overwrite it with "
         . "--overwrite.\n";
-    print STDOUT $prtStr;
     $logString .= $prtStr;
 }
 
@@ -672,7 +667,6 @@ if ( !-d $rootDir ) {
         . (localtime)
         . ": create working directory $rootDir.\n"
         . "mkdir $rootDir\n\n";
-    print STDOUT $prtStr;
     $logString .= $prtStr;
 }
 
@@ -708,7 +702,6 @@ if ( !-d $otherfilesDir ) {
         . (localtime)
         . ": create working directory $otherfilesDir.\n"
         . "mkdir $otherfilesDir\n\n";
-    print STDOUT $prtStr;
     $logString .= $prtStr;
     make_path($otherfilesDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $otherfilesDir!\n");
 }
@@ -737,9 +730,9 @@ if ($gth2traingenes) {
 if ( defined($geneMarkGtf) ) {
     print LOG "\#  "
         . (localtime)
-        . ": creating softlink of $geneMarkGtf to ";
-    print LOG "$genemarkDir/genemark.gtf.\n";
-    $cmdString = "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
+        . ": creating softlink of $geneMarkGtf to "
+        . "$genemarkDir/genemark.gtf.\n";
+    $cmdString =  "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
     print LOG "$cmdString\n";
     system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 }
@@ -748,24 +741,24 @@ if ( !-d $parameterDir ) {
     make_path($parameterDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $parameterDir!\n");
     print LOG "\# "
         . (localtime)
-        . ": create working directory $parameterDir\n";
-    print LOG "mkdir $parameterDir\n\n";
+        . ": create working directory $parameterDir\n"
+        . "mkdir $parameterDir\n\n";
 }
 
 if ( !-d $errorfilesDir ) {
     make_path($errorfilesDir)or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $errorfilesDir!\n");
     print LOG "\# "
         . (localtime)
-        . ": create working directory $errorfilesDir\n";
-    print LOG "mkdir $errorfilesDir\n\n";
+        . ": create working directory $errorfilesDir\n"
+        . "mkdir $errorfilesDir\n\n";
 }
 
 $genome    = rel2abs($genome);
-$cmdString = "cd $rootDir;";
 print LOG "\# "
     . (localtime)
-    . ": changing into working directory $rootDir\n";
-print LOG "$cmdString\n\n";
+    . ": changing into working directory $rootDir\n"
+    . "cd $rootDir\n\n";
+
 chdir $rootDir or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $rootDir.\n");
 
 if ( $skipAllTraining == 0 ) {
@@ -1062,7 +1055,7 @@ sub make_rna_seq_hints {
                     $cmdString .= "nice ";
                 }
                 $cmdString
-                    .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
+                    .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp &>$errorfile";
                 print LOG "\# "
                     . (localtime)
                     . ": make hints from BAM file $bam[$i]\n";
@@ -3766,7 +3759,6 @@ sub check_gff {
         = "\# "
         . (localtime)
         . ": Checking if input file $gfffile is in gff format\n";
-    print STDOUT $prtStr;
     $logString .= $prtStr;
     open( GFF, $gfffile ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $gfffile\n";
     my $nIntrons            = 0;
@@ -3781,8 +3773,8 @@ sub check_gff {
                 . (localtime)
                 . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "File $gfffile is not in gff format!\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
+            print STDER $logString;
             close(GFF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close gff file $gfffile!\n");
             exit(1);
         }
@@ -3800,8 +3792,8 @@ sub check_gff {
                     . (localtime)
                     . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "File $gfffile is not in gff format!\n";
-                print STDERR $prtStr;
                 $logString .= $prtStr;
+                print STDER $logString;
                 close(GFF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close gff file $gfffile!\n");
                 exit(1);
             }
@@ -3829,17 +3821,14 @@ sub check_gff {
                         = "\# "
                         . (localtime)
                         . " WARNING: File $gfffile contains hints of a feature type $gff_line[2] that is currently not supported by BRAKER. Features of this type will be treated with neutral bonus/malus in the extrinsic.cfg file that will be used for running AUGUSTUS.\n";
-                    print STDOUT $prtStr;
                     $logString .= $prtStr;
                     $foundFeatures{ $gff_line[2] } = 1;
                 }
                 if ( $printedAllowedHints == 0 ) {
                     $prtStr = "Currently allowed hint types:\n";
-                    print STDERR $prtStr;
                     $logString .= $prtStr;
                     foreach (@allowedHints) {
                         $prtStr = $_ . "\n";
-                        print STDERR $prtStr;
                         $logString .= $prtStr;
                     }
                     $printedAllowedHints = 1;
@@ -3855,8 +3844,8 @@ sub check_gff {
                 . (localtime)
                 . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "Since no bam file was supplied, GeneMark-ET must take intron information from hints file $gfffile. This file contains only $nIntrons intron hints. GeneMark-ET training will thus likely fail. Aborting braker.pl!\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
     }
@@ -3883,8 +3872,8 @@ sub check_options {
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "\"$UTR\" is not a valid option for --UTR. Please use either 'on' or 'off'.\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
 
@@ -3896,8 +3885,8 @@ sub check_options {
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "--UTR=on has been set but --softmasking has not been enabled. A softmasked genome file and the option --softmasking and a bam file must be provided in order to run --UTR=on.\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
 
@@ -3915,7 +3904,6 @@ sub check_options {
             = "\# "
             . (localtime)
             . ": WARNING: Your system does not have $CPU cores available, only $cpus_available. Braker will use the $cpus_available available instead of the chosen $CPU.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
     }
 
@@ -3929,8 +3917,8 @@ sub check_options {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "BAM file $bam[$i] does not exist.\n";
-                print STDERR $prtStr;
                 $logString .= $prtStr;
+                print STDERR $logString;
                 exit(1);
             }
             $bam[$i] = rel2abs( $bam[$i] );
@@ -3947,8 +3935,8 @@ sub check_options {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "Hints file $hints[$i] does not exist.\n";
-                print STDERR $prtStr;
                 $logString .= $prtStr;
+                print STDERR $logString;
                 exit(1);
             }
             $hints[$i] = rel2abs( $hints[$i] );
@@ -3971,7 +3959,6 @@ sub check_options {
                 . (localtime)
                 . ": GeneMark-EP mode is enabled automatically due to hints ";
             $prtStr .= "file contents!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $EPmode = 1;
         }
@@ -3987,8 +3974,8 @@ sub check_options {
             . "Please set at least one RNAseq BAM file or at least one hints file from RNA-Seq "
             . "(must contain intron hints from src b2h in column 2) to run BRAKER in mode for "
             . "training from RNA-Seq.\n$usage";
-        print STDERR $prtStr;
         $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
 
@@ -3996,10 +3983,9 @@ sub check_options {
         $prtStr
             = "\# "
             . (localtime)
-            . ": BRAKER will be execute GeneMark-EP for training GeneMark and "
+            . ": BRAKER will execute GeneMark-EP for training GeneMark and "
             . "generating a training gene set for AUGUSTUS, using protein information as sole "
             . "extrinsic evidence source.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
     }
 
@@ -4009,10 +3995,8 @@ sub check_options {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": WARNING: Species name contains invalid white space ";
-            $prtStr
-                .= "characters. Will replace white spaces with underline character '_'.\n";
-            print STDOUT $prtStr;
+                . ": WARNING: Species name contains invalid white space "
+                . "characters. Will replace white spaces with underline character '_'.\n";
             $logString .= $prtStr;
             $species =~ s/\s/\_/g;
         }
@@ -4022,7 +4006,6 @@ sub check_options {
                     = "\# "
                     . (localtime)
                     . ": WARNING: $species is not allowed as a species name.\n";
-                print STDOUT $prtStr;
                 $logString .= $prtStr;
                 $bool_species = "false";
             }
@@ -4051,14 +4034,13 @@ sub check_options {
                 . "$AUGUSTUS_CONFIG_PATH/species/ of type 'Sp_$limit'. Please delete or move "
                 . "some of those folders or assign a valid species identifier with "
                 . "--species=name.\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
         if ( $bool_species eq "false" ) {
             $prtStr
                 = "\# " . (localtime) . ": Program will use $species instead.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
         else {
@@ -4066,7 +4048,6 @@ sub check_options {
                 = "\# "
                 . (localtime)
                 . ": No species was set. Program will use $species.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -4081,8 +4062,8 @@ sub check_options {
             . "Choose another species name, delete this directory or use the existing species "
             . "with the option --useexisting. Be aware that existing parameters will then be "
             . "overwritten during training.\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
 
@@ -4092,7 +4073,6 @@ sub check_options {
             . (localtime)
             . ": WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not "
             . "exist. Braker will create the necessary files for species $species.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         $useexisting = 0;
     }
@@ -4113,8 +4093,8 @@ sub check_options {
         $prtStr = "    --hints=file.hints\n";
         $prtStr = "    --prot_seq=file.fa --trainFromGth\n";
         $prtStr = "    --prot_aln=file.aln --trainFromGth\n$usage";
-        print STDERR $prtStr;
         $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
     # set path and check whether assigned extrinsic file exists
@@ -4130,7 +4110,6 @@ sub check_options {
             . " b) the scoring scheme is appropriate. This usually requires a lot"
             . " testing, beforehand.\n"
             . " Will use file $extrinsicCfgFile in this braker.pl run!\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         if ( !-f $extrinsicCfgFile ) {
             $prtStr
@@ -4138,7 +4117,6 @@ sub check_options {
                 . (localtime)
                 . ": WARNING: Assigned extrinsic file $extrinsicCfgFile does not ";
             $prtStr .= "exist. Program will create extrinsic file instead.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $extrinsicCfgFile = undef;
         }
@@ -4148,7 +4126,6 @@ sub check_options {
             = "\# "
             . (localtime)
             . ": Going to assign an extrinsic.cfg file based on the type of braker.pl call.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         if ( $EPmode == 1 ) {
             assignExCfg("ep.cfg");
@@ -4175,8 +4152,8 @@ sub check_options {
         $prtStr
             = "\# " . (localtime) . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "No genome file was specified.\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
 
@@ -4191,8 +4168,8 @@ sub check_options {
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "protein sequence file $prot_seq_files[$i] does "
                     . "not exist.\n";
-                print STDERR $prtStr;
-                $logString .= $prtStr;
+            $logString .= $prtStr;
+            print STDERR $logString;
                 exit(1);
             }
             $prot_seq_files[$i] = rel2abs( $prot_seq_files[$i] );
@@ -4206,7 +4183,6 @@ sub check_options {
                 . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "No alignment tool was specified for aligning protein"
                 . " sequences against genome. Setting GenomeThreader as default alignment tool.\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
             $prg = "gth";
         }
@@ -4218,7 +4194,6 @@ sub check_options {
                 . ": WARNING: No alignment tool was specified for aligning "
                 . "protein sequences against genome. Setting ProSplign as default alignment tool "
                 . "for running BRAKER in GeneMark-EP mode.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $prtStr
                 = "\# "
@@ -4226,8 +4201,8 @@ sub check_options {
                 . ": ERROR:  in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "Running ProSplign from within BRAKER is currently "
                 . "not supported. Aborting braker.pl!\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
     }
@@ -4241,8 +4216,8 @@ sub check_options {
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "Reference annotation file "
                 . "$annot does not exist. Cannot evaluate prediction accuracy!\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
     }
@@ -4258,8 +4233,8 @@ sub check_options {
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "protein alignment file $prot_aln_files[$i] does"
                     . " not exist.\n";
-                print STDERR $prtStr;
-                $logString .= $prtStr;
+            $logString .= $prtStr;
+            print STDERR $logString;
                 exit(1);
             }
             $prot_aln_files[$i] = rel2abs( $prot_aln_files[$i] );
@@ -4273,8 +4248,8 @@ sub check_options {
                 . "specify the source tool that was used to create that alignment file, i.e. "
                 . "--prg=gth for GenomeThreader, or --prg=spaln for Spaln2 or --prg=exonerate for"
                 . " Exonerate.\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
     }
@@ -4295,8 +4270,8 @@ sub check_options {
                 . "options gth, exonerate and spaln for running BRAKER in GeneMark-ET mode, and "
                 . "prosplign for running BRAKER in GeneMark-EP mode. BRAKER was now started in "
                 . "GeneMark-ET mode.\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
         elsif ( not( $prg =~ m/prosplign/ ) and $EPmode == 1 ) {
@@ -4309,8 +4284,8 @@ sub check_options {
                 . "supports the options gth, exonerate and spaln for running BRAKER in "
                 . "GeneMark-ET mode, and prosplign for running BRAKER in GeneMark-EP mode. "
                 . "BRAKER was now started in GeneMark-EP mode.\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
         if ( !@prot_seq_files and !@prot_aln_files ) {
@@ -4321,8 +4296,8 @@ sub check_options {
                 . "a protein alignment tool ($prg) has been given, "
                 . "but neither a protein sequence file, nor a protein alignment file "
                 . "generated by such a tool have been specified.\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
     }
@@ -4335,8 +4310,8 @@ sub check_options {
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "Option --gth2traingenes can only be specified with "
             . "option --prg=gth!\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
     elsif ( defined($trainFromGth) && not( $prg eq "gth" ) ) {
@@ -4346,8 +4321,8 @@ sub check_options {
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "Option --trainFromGth can only be specified with "
             . "option --prg=gth!\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
     elsif ( defined($trainFromGth) ) {
@@ -4360,7 +4335,6 @@ sub check_options {
             . (localtime)
             . ": GeneMark training has been disabled, will train AUGUSTUS from";
         $prtStr .= " GenomeThreader alignments.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
     }
     if ( !-f "$genome" ) {
@@ -4369,8 +4343,8 @@ sub check_options {
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "Genome file $genome does not exist.\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
 
@@ -4398,13 +4372,12 @@ sub check_options {
                     . "there is no genemark.gtf file under $genemarkDir and no valid file "
                     . "--geneMarkGtf=... was specified.\n";
                 $logString .= $prtStr;
-                print STDERR $prtStr;
                 if ( defined($geneMarkGtf) ) {
                     $prtStr = "       The specified geneMarkGtf=... file was $geneMarkGtf. This is "
                          . "not an accessible file.\n";
                     $logString .= $prtStr;
-                    print STDERR $prtStr;
                 }
+                print STDERR $logString;
                 exit(1);
             }
         }
@@ -4424,7 +4397,7 @@ sub check_options {
                 . "no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... "
                 . "was specified.\n";
             $logString .= $prtStr;
-            print STDERR $prtStr;
+            print STDERR $logString;
             if ( defined($geneMarkGtf) ) {
                 $prtStr
                     = "\# "
@@ -4433,7 +4406,7 @@ sub check_options {
                     . "The specified geneMarkGtf=... file was "
                     . "$geneMarkGtf. This is not an accessible file.\n";
                 $logString .= $prtStr;
-                print STDERR $prtStr;
+                print STDERR $logString;
             }
             exit(1);
         }
@@ -4446,7 +4419,7 @@ sub check_options {
             . "Option --skipGeneMarkEP cannot be used when BRAKER is "
             . "started in GeneMark-ET mode.\n";
         $logString .= $prtStr;
-        print STDERR $prtStr;
+        print STDERR $logString;
         exit(1);
     }
 }
@@ -5442,7 +5415,6 @@ sub set_AUGUSTUS_CONFIG_PATH {
                 = "\# "
                 . (localtime)
                 . ": Found environment variable \$AUGUSTUS_CONFIG_PATH. Setting \$AUGUSTUS_CONFIG_PATH to ".$ENV{'AUGUSTUS_CONFIG_PATH'}."\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_CONFIG_PATH = $ENV{'AUGUSTUS_CONFIG_PATH'};
         }
@@ -5454,7 +5426,6 @@ sub set_AUGUSTUS_CONFIG_PATH {
             . ": Did not find environment variable \$AUGUSTUS_CONFIG_PATH "
             . "(either variable does not exist, or the path given in variable does not exist"
             . "). Will try to set this variable in a different way, later.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
     }
 
@@ -5471,7 +5442,6 @@ sub set_AUGUSTUS_CONFIG_PATH {
                 . ": Command line flag --AUGUSTUS_CONFIG_PATH was provided.";
             $prtStr
                 .= " Setting \$AUGUSTUS_CONFIG_PATH in braker.pl to $augustus_cfg_path.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_CONFIG_PATH = $augustus_cfg_path;
         }
@@ -5482,7 +5452,6 @@ sub set_AUGUSTUS_CONFIG_PATH {
                 . ": WARNING: Command line flag --AUGUSTUS_CONFIG_PATH "
                 . "was provided. The given path $augustus_cfg_path is not a directory. "
                 . "Cannot use this as variable \$AUGUSTUS_CONFIG_PATH in braker.pl!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5501,7 +5470,6 @@ sub set_AUGUSTUS_CONFIG_PATH {
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "Tried guessing \$AUGUSTUS_CONFIG_PATH from "
                 . "system augustus path, but $AUGUSTUS_CONFIG_PATH is not a directory.\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5534,10 +5502,9 @@ sub set_AUGUSTUS_CONFIG_PATH {
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "\$AUGUSTUS_CONFIG_PATH is not defined!\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $aug_conf_err;
-        print STDERR $aug_conf_err;
+        print STDERR $logString;
         exit(1);
     }
     elsif ( not( -w "$AUGUSTUS_CONFIG_PATH/species" ) )
@@ -5548,10 +5515,9 @@ sub set_AUGUSTUS_CONFIG_PATH {
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "AUGUSTUS_CONFIG_PATH/species (in this case ";
         $prtStr .= "$AUGUSTUS_CONFIG_PATH/$species) is not writeable.\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $aug_conf_err;
-        print STDERR $aug_conf_err;
+        print STDERR $logString;
         exit(1);
     }
 
@@ -5566,7 +5532,6 @@ sub set_AUGUSTUS_BIN_PATH {
                 = "\# "
                 . (localtime)
                 . ": Found environment variable \$AUGUSTUS_BIN_PATH. Setting \$AUGUSTUS_BIN_PATH to ". $ENV{'AUGUSTUS_BIN_PATH'}."\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_BIN_PATH = $ENV{'AUGUSTUS_BIN_PATH'};
         }
@@ -5578,7 +5543,6 @@ sub set_AUGUSTUS_BIN_PATH {
             . ": Did not find environment variable \$AUGUSTUS_BIN_PATH "
             . "(either variable does not exist, or the path given in variable does not exist"
             . "). Will try to set this variable in a different way, later.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
     }
 
@@ -5594,7 +5558,6 @@ sub set_AUGUSTUS_BIN_PATH {
                 . (localtime)
                 . ": Setting \$AUGUSTUS_BIN_PATH to command line argument ";
             $prtStr .= "--AUGUSTUS_BIN_PATH value $augustus_bin_path.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_BIN_PATH = $augustus_bin_path;
         }
@@ -5606,7 +5569,6 @@ sub set_AUGUSTUS_BIN_PATH {
             $prtStr
                 .= "supplied but value $augustus_bin_path is not a directory. Will not set ";
             $prtStr .= "\$AUGUSTUS_BIN_PATH to $augustus_bin_path!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5620,13 +5582,11 @@ sub set_AUGUSTUS_BIN_PATH {
             . (localtime)
             . ": Trying to guess \$AUGUSTUS_BIN_PATH from ";
         $prtStr .= "\$AUGUSTUS_CONFIG_PATH.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         if ( -d "$AUGUSTUS_CONFIG_PATH/../bin" ) {
             $prtStr
                 = "\# " . (localtime) . ": Setting \$AUGUSTUS_BIN_PATH to ";
             $prtStr .= "$AUGUSTUS_CONFIG_PATH/../bin\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_BIN_PATH = "$AUGUSTUS_CONFIG_PATH/../bin";
         }
@@ -5635,7 +5595,6 @@ sub set_AUGUSTUS_BIN_PATH {
                 = "\# " . (localtime) . " WARNING: Guessing the location of "
                 . "\$AUGUSTUS_BIN_PATH failed. $AUGUSTUS_CONFIG_PATH/../bin is not a "
                 . "directory!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5655,10 +5614,9 @@ sub set_AUGUSTUS_BIN_PATH {
         $prtStr
             = "\# " . (localtime) . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "\$AUGUSTUS_BIN_PATH not set!\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $aug_bin_err;
-        print STDERR $aug_bin_err;
+        print STDERR $logString;
         exit(1);
     }
 }
@@ -5672,7 +5630,6 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
                 = "\# "
                 . (localtime)
                 . ": Found environment variable \$AUGUSTUS_SCRIPTS_PATH. Setting \$AUGUSTUS_SCRIPTS_PATH to ".$ENV{'AUGUSTUS_SCRIPTS_PATH'} ."\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_SCRIPTS_PATH = $ENV{'AUGUSTUS_SCRIPTS_PATH'};
         }
@@ -5684,7 +5641,6 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
             . ": Did not find environment variable \$AUGUSTUS_SCRIPTS_PATH"
             . "(either variable does not exist, or the path given in variable does not exist"
             . "). Will try to set this variable in a different way, later.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
     }
 
@@ -5701,7 +5657,6 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
                 . (localtime)
                 . ": Setting \$AUGUSTUS_SCRIPTS_PATH to command line "
                 . "argument --AUGUSTUS_SCRIPTS_PATH value $augustus_scripts_path.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
         else {
@@ -5711,7 +5666,6 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
                 . ": WARNING: Command line argument --AUGUSTUS_SCRIPTS_PATH "
                 . "was supplied but value $augustus_scripts_path is not a directory. Will not "
                 . "set \$AUGUSTUS_SCRIPTS_PATH to $augustus_scripts_path!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5725,7 +5679,6 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
             . (localtime)
             . ": Trying to guess \$AUGUSTUS_SCRIPTS_PATH from "
             . "\$AUGUSTUS_CONFIG_PATH.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         if ( -d "$AUGUSTUS_CONFIG_PATH/../scripts" ) {
             $prtStr
@@ -5733,7 +5686,6 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
                 . (localtime)
                 . ": Setting \$AUGUSTUS_SCRIPTS_PATH to "
                 . "$AUGUSTUS_CONFIG_PATH/../scripts\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $AUGUSTUS_SCRIPTS_PATH = "$AUGUSTUS_CONFIG_PATH/../scripts";
         }
@@ -5744,7 +5696,6 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
                 . ": WARNING: Guessing the location of "
                 . "\$AUGUSTUS_SCRIPTS_PATH failed. $AUGUSTUS_CONFIG_PATH/../scripts is not a "
                 . "directory!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5765,10 +5716,9 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "\$AUGUSTUS_SCRIPTS_PATH not set!\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $aug_scr_err;
-        print STDERR $aug_scr_err;
+        print STDERR $logString;
         exit(1);
     }
 }
@@ -5782,7 +5732,6 @@ sub set_BAMTOOLS_PATH {
                 = "\# "
                 . (localtime)
                 . ": Found environment variable \$BAMTOOLS_PATH. Setting \$BAMTOOLS_PATH to ".$ENV{'BAMTOOLS_PATH'}."\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $BAMTOOLS_BIN_PATH = $ENV{'BAMTOOLS_PATH'};
         }
@@ -5794,7 +5743,6 @@ sub set_BAMTOOLS_PATH {
             . ": Did not find environment variable \$BAMTOOLS_PATH "
             . "(either variable does not exist, or the path given in variable does not "
             . "exist). Will try to set this variable in a different way, later.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
     }
 
@@ -5810,7 +5758,6 @@ sub set_BAMTOOLS_PATH {
                 . (localtime)
                 . ": Setting \$BAMTOOLS_BIN_PATH to command line argument "
                 . "--BAMTOOLS_PATH value $bamtools_path.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $BAMTOOLS_BIN_PATH = $bamtools_path;
         }
@@ -5821,7 +5768,6 @@ sub set_BAMTOOLS_PATH {
                 . ": WARNING: Command line argument --BAMTOOLS_PATH was "
                 . "supplied but value $bamtools_path is not a directory. Will not set "
                 . "\$BAMTOOLS_BIN_PATH to $bamtools_path!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5835,7 +5781,6 @@ sub set_BAMTOOLS_PATH {
             . (localtime)
             . ": Trying to guess \$BAMTOOLS_BIN_PATH from location of bamtools"
             . " executable that is available in your \$PATH.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         my $epath = which 'bamtools';
         if ( -d dirname($epath) ) {
@@ -5844,7 +5789,6 @@ sub set_BAMTOOLS_PATH {
                 . (localtime)
                 . ": Setting \$BAMTOOLS_BIN_PATH to "
                 . dirname($epath) . "\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $BAMTOOLS_BIN_PATH = dirname($epath);
         }
@@ -5854,7 +5798,6 @@ sub set_BAMTOOLS_PATH {
                 . (localtime)
                 . ": WARNING: Guessing the location of \$BAMTOOLS_BIN_PATH "
                 . "failed. " . dirname($epath) . " is not a directory!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5877,10 +5820,9 @@ sub set_BAMTOOLS_PATH {
         $prtStr
             = "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "\$BAMTOOLS_BIN_PATH not set!\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $bamtools_err;
-        print STDERR $bamtools_err;
+        print STDERR $logString;
         exit(1);
     }
 }
@@ -5894,7 +5836,6 @@ sub set_GENEMARK_PATH {
                 = "\# "
                 . (localtime)
                 . ": Found environment variable \$GENEMARK_PATH. Setting \$GENEMARK_PATH to ".$ENV{'GENEMARK_PATH'}."\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $GENEMARK_PATH = $ENV{'GENEMARK_PATH'}
                 ;    # path to 'gmes_petap.pl' script on system
@@ -5907,7 +5848,6 @@ sub set_GENEMARK_PATH {
             . ": Did not find environment variable \$GENEMARK_PATH  (either"
             . " variable does not exist, or the path given in variable does not exist). Will"
             . " try to set this variable in a different way, later.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
     }
 
@@ -5923,7 +5863,6 @@ sub set_GENEMARK_PATH {
                 . (localtime)
                 . ": Setting \$GENEMARK_PATH to command line argument -"
                 . "-GENEMARK_PATH value $GMET_path.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $GENEMARK_PATH = $GMET_path;
         }
@@ -5934,7 +5873,6 @@ sub set_GENEMARK_PATH {
                 . ": WARNING: Command line argument --GENEMARK_PATH was "
                 . "supplied but value $GMET_path is not a directory. Will not set "
                 . "\$GENEMARK_PATH to $GMET_path!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5946,7 +5884,6 @@ sub set_GENEMARK_PATH {
             . (localtime)
             . ": Trying to guess \$GENEMARK_PATH from location of gmes_petap.pl "
             . "executable that is available in your \$PATH.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         my $epath = which 'gmes_petap.pl';
         if ( -d dirname($epath) ) {
@@ -5955,7 +5892,6 @@ sub set_GENEMARK_PATH {
                 . (localtime)
                 . ": Setting \$GENEMARK_PATH to "
                 . dirname($epath) . "\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $GENEMARK_PATH = dirname($epath);
         }
@@ -5965,7 +5901,6 @@ sub set_GENEMARK_PATH {
                 . (localtime)
                 . ": WARNING: Guessing the location of \$GENEMARK_PATH "
                 . "failed. " . dirname($epath) . " is not a directory!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -5987,10 +5922,9 @@ sub set_GENEMARK_PATH {
             . "      in your shell, whether there is a bamtools executable in your \$PATH\n";
         $prtStr = "\# " . (localtime) . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "\$GENEMARK_PATH not set!\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $gm_err;
-        print $gm_err;
+        print STDERR $logString;
         exit(1);
     }
 }
@@ -6004,7 +5938,6 @@ sub set_SAMTOOLS_PATH {
                 = "\# "
                 . (localtime)
                 . ": Found environment variable \$SAMTOOLS_PATH. Setting \$SAMTOOLS_PATH to ".$ENV{'SAMTOOLS_PATH'}."\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $SAMTOOLS_PATH
                 = $ENV{'SAMTOOLS_PATH'};    # samtools environment variable
@@ -6017,7 +5950,6 @@ sub set_SAMTOOLS_PATH {
             . ": Did not find environment variable \$SAMTOOLS_PATH  (either"
             . " variable does not exist, or the path given in variable does not exist). Will"
             . " try to set this variable in a different way, later.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
     }
 
@@ -6033,7 +5965,6 @@ sub set_SAMTOOLS_PATH {
                 . (localtime)
                 . ": Setting \$SAMTOOLS_PATH to command line argument --SAMTOOLS_PATH "
                 . "value $SAMTOOLS_PATH_OP.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
         }
@@ -6044,7 +5975,6 @@ sub set_SAMTOOLS_PATH {
                 . " WARNING: Command line argument --SAMTOOLS_PATH was supplied "
                 . "but value $SAMTOOLS_PATH_OP is not a directory. Will not set \$SAMTOOLS_PATH to "
                 . "$SAMTOOLS_PATH_OP!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -6056,7 +5986,6 @@ sub set_SAMTOOLS_PATH {
             . (localtime)
             . ": Trying to guess \$SAMTOOLS_PATH from location of samtools "
             . "executable in your \$PATH.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         my $epath = which 'samtools';
         if ( -d dirname($epath) ) {
@@ -6065,7 +5994,6 @@ sub set_SAMTOOLS_PATH {
                 . (localtime)
                 . ": Setting \$SAMTOOLS_PATH to "
                 . dirname($epath) . "\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
             $SAMTOOLS_PATH = dirname($epath);
         }
@@ -6075,7 +6003,6 @@ sub set_SAMTOOLS_PATH {
                 . (localtime)
                 . ": WARNING: Guessing the location of \$SAMTOOLS_PATH "
                 . "failed. " . dirname($epath) . " is not a directory!\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
     }
@@ -6100,10 +6027,9 @@ sub set_SAMTOOLS_PATH {
             . "      in your shell, whether there is a samtools executable in your \$PATH\n";
         $prtStr
             = "\# " . (localtime) . ": WARNING: \$SAMTOOLS_PATH not set!\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         $logString .= $samtools_err;
-        print STDOUT $samtools_err;
+        print STDERR $logString;
     }
 }
 
@@ -6117,7 +6043,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                     = "\# "
                     . (localtime)
                     . ": Found environment variable \$ALIGNMENT_TOOL_PATH. Setting \$ALIGNMENT_TOOL_PATH to ".$ENV{'ALIGNMENT_TOOL_PATH'}."\n";
-                print STDOUT $prtStr;
                 $logString .= $prtStr;
                 $ALIGNMENT_TOOL_PATH = $ENV{'ALIGNMENT_TOOL_PATH'};
             }
@@ -6129,7 +6054,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                 . ": Did not find environment variable \$ALIGNMENT_TOOL_PATH "
                 . "(either variable does not exist, or the path given in variable does not "
                 . "exist). Will try to set this variable in a different way, later.\n";
-            print STDOUT $prtStr;
             $logString .= $prtStr;
         }
 
@@ -6145,7 +6069,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                     . (localtime)
                     . ": Setting \$ALIGNMENT_TOOL_PATH to command line argument "
                     . "--ALIGNMENT_TOOL_PATH value $ALIGNMENT_TOOL_PATH_OP.\n";
-                print STDOUT $prtStr;
                 $logString .= $prtStr;
                 $ALIGNMENT_TOOL_PATH = $ALIGNMENT_TOOL_PATH_OP;
             }
@@ -6158,7 +6081,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                         . (localtime)
                         . ": Trying to guess \$ALIGNMENT_TOOL_PATH from location "
                         . "of GenomeThreader executable in your \$PATH.\n";
-                    print STDOUT $prtStr;
                     $logString .= $prtStr;
                     my $epath = which 'gth';
                     if ( -d dirname($epath) ) {
@@ -6167,7 +6089,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                             . (localtime)
                             . ": Setting \$ALIGNMENT_TOOL_PATH to "
                             . dirname($epath) . "\n";
-                        print STDOUT $prtStr;
                         $logString .= $prtStr;
                         $ALIGNMENT_TOOL_PATH = dirname($epath);
                     }
@@ -6180,7 +6101,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                             . dirname($epath)
                             . " is not a "
                             . "directory!\n";
-                        print STDOUT $prtStr;
                         $logString .= $prtStr;
                     }
                 }
@@ -6190,7 +6110,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                         . (localtime)
                         . ": Trying to guess \$ALIGNMENT_TOOL_PATH from "
                         . "location of Exonerate executable in your \$PATH.\n";
-                    print STDOUT $prtStr;
                     $logString .= $prtStr;
                     my $epath = which 'exonerate';
                     if ( -d dirname($epath) ) {
@@ -6199,7 +6118,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                             . (localtime)
                             . ": Setting \$ALIGNMENT_TOOL_PATH to "
                             . dirname($epath) . "\n";
-                        print STDOUT $prtStr;
                         $logString .= $prtStr;
                         $ALIGNMENT_TOOL_PATH = dirname($epath);
                     }
@@ -6212,7 +6130,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                             . dirname($epath)
                             . " is not a "
                             . "directory!\n";
-                        print STDOUT $prtStr;
                         $logString .= $prtStr;
                     }
                 }
@@ -6222,7 +6139,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                         . (localtime)
                         . ": Trying to guess \$ALIGNMENT_TOOL_PATH "
                         . "from location of Spaln executable in your \$PATH.\n";
-                    print STDOUT $prtStr;
                     $logString .= $prtStr;
                     my $epath = which 'spaln';
                     if ( -d dirname($epath) ) {
@@ -6231,7 +6147,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                             . (localtime)
                             . ": Setting \$ALIGNMENT_TOOL_PATH to "
                             . dirname($epath) . "\n";
-                        print STDOUT $prtStr;
                         $logString .= $prtStr;
                         $ALIGNMENT_TOOL_PATH = dirname($epath);
                     }
@@ -6243,7 +6158,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                             . "\$ALIGNMENT_TOOL_PATH failed. "
                             . dirname($epath) . " "
                             . "is not a directory!\n";
-                        print STDOUT $prtStr;
                         $logString .= $prtStr;
                     }
                 }
@@ -6276,14 +6190,12 @@ sub set_ALIGNMENT_TOOL_PATH {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "\$ALIGNMENT_TOOL_PATH not set!\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
             $prtStr
                 = "This is an obligatory argument if you provided protein sequence file(s).\n";
-            print STDERR $prtStr;
             $logString .= $prtStr;
             $logString .= $aln_err_str;
-            print STDERR $aln_err_str;
+            print STDERR $logString;
             exit(1);
         }
     }
@@ -6298,7 +6210,6 @@ sub set_BLAST_PATH {
                 . (localtime)
                 . ": Found environment variable \$BLAST_PATH. Setting \$BLAST_PATH to ".$ENV{'BLAST_PATH'}."\n";
             $logString .= $prtStr;
-            print STDOUT $prtStr;
             $BLAST_PATH = $ENV{'BLAST_PATH'};
         }
     }
@@ -6308,7 +6219,6 @@ sub set_BLAST_PATH {
             . (localtime)
             . ": Did not find environment variable \$BLAST_PATH\n";
         $logString .= $prtStr;
-        print STDOUT $prtStr;
     }
 
     # try to get path from command line
@@ -6324,7 +6234,6 @@ sub set_BLAST_PATH {
                 . ": Setting \$BLAST_PATH to command line argument "
                 . "--BLAST_PATH value $blast_path.\n";
             $logString .= $prtStr;
-            print STDOUT $prtStr;
             $BLAST_PATH = $blast_path;
         }
         else {
@@ -6335,7 +6244,6 @@ sub set_BLAST_PATH {
                 . "supplied but value $blast_path is not a directory. Will not set "
                 .  "\$BLAST_PATH to $blast_path!\n";
             $logString .= $prtStr;
-            print STDOUT $prtStr;
         }
     }
 
@@ -6349,7 +6257,6 @@ sub set_BLAST_PATH {
             . ": Trying to guess \$BLAST_PATH from location of blastp"
             . " executable that is available in your \$PATH.\n";
         $logString .= $prtStr;
-        print STDOUT $prtStr;
         my $epath = which 'blastp';
         if ( -d dirname($epath) ) {
             $prtStr
@@ -6358,7 +6265,6 @@ sub set_BLAST_PATH {
                 . ": Setting \$BLAST_PATH to "
                 . dirname($epath) . "\n";
             $logString .= $prtStr;
-            print STDOUT $prtStr;
             $BLAST_PATH = dirname($epath);
         }
         else {
@@ -6368,7 +6274,6 @@ sub set_BLAST_PATH {
                 . ": WARNING: Guessing the location of \$BLAST_PATH "
                 . "failed. " . dirname($epath) . " is not a directory!\n";
             $logString .= $prtStr;
-            print STDOUT $prtStr;
         }
     }
 
@@ -6393,21 +6298,22 @@ sub set_BLAST_PATH {
                    .  "executable in your \$PATH\n";
         $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "\$BLAST_PATH not set!\n";
-        print STDERR $prtStr;
         $logString .= $prtStr;
         $logString .= $blast_err;
-        print STDERR $blast_err;
+        print STDERR $logString;
         exit(1);
     }
     if ( not ( -x "$BLAST_PATH/blastp" ) ) {
-        $logString .= $prtStr;
-        print STDERR "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "$BLAST_PATH/blastp is not an executable file!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }elsif( not ( -x "$BLAST_PATH/makeblastdb" ) ){
-        $logString .= $prtStr;
-        print STDERR "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "$BLAST_PATH/makeblastdb is not an executable file!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
 }
@@ -6425,7 +6331,6 @@ sub assignExCfg {
             . (localtime)
             . " WARNING: tried to assign extrinsicCfgFile $thisCfg as ";
         $prtStr .= "$string but this file does not seem to exist.\n";
-        print STDOUT $prtStr;
         $logString .= $prtStr;
         $extrinsicCfgFile = undef;
     }
@@ -6585,19 +6490,19 @@ sub evaluate {
         }
         print ACC "\n";
         for( my $i = 0; $i < 8; $i ++){
-            if( $i == 0 ){ print "Gene_Sensitivity" }
-            elsif( $i == 1 ){ print "Gene_Specificity" }
-            elsif( $i == 2 ){ print "Transcript_Sensitivity" }
-            elsif( $i == 3 ){ print "Transcript_Specificity" }
-            elsif( $i == 4 ){ print "Exon_Sensitivity" }
-            elsif( $i == 5 ){ print "Exon_Specificity" }
-            elsif( $i == 6 ){ print "Nucleotide_Sensitivity" }
-            elsif( $i == 7 ){ print "Nucleotide_Specificity" }
+            if( $i == 0 ){ print ACC "Gene_Sensitivity" }
+            elsif( $i == 1 ){ print ACC "Gene_Specificity" }
+            elsif( $i == 2 ){ print ACC "Transcript_Sensitivity" }
+            elsif( $i == 3 ){ print ACC "Transcript_Specificity" }
+            elsif( $i == 4 ){ print ACC "Exon_Sensitivity" }
+            elsif( $i == 5 ){ print ACC "Exon_Specificity" }
+            elsif( $i == 6 ){ print ACC "Nucleotide_Sensitivity" }
+            elsif( $i == 7 ){ print ACC "Nucleotide_Specificity" }
             foreach(@accKeys){
                 chomp;
-                print "\t".${$accuracy{$_}}[$i];
+                print ACC "\t".chomp(${$accuracy{$_}}[$i]);
             }
-            print "\n";
+            print ACC "\n";
         }
         close(ACC) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/eval.summary");
     }
