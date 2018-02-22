@@ -683,6 +683,7 @@ if (@bam) {
     }
 }
 
+print "Broken pipe 1\n";
 # check whether hints files exists
 if (@hints) {
     @hints = split( /[\s,]/, join( ',', @hints ) );
@@ -930,6 +931,7 @@ if ( !defined($genome) ) {
     exit(1);
 }
 
+print "Broken pipe 2\n";
 # check whether protein sequence file is given
 if (@prot_seq_files) {
     @prot_seq_files = split( /[\s,]/, join( ',', @prot_seq_files ) );
@@ -983,6 +985,7 @@ if (@prot_seq_files) {
     }
 }
 
+print "Broken pipe 3\n";
 # check whether reference annotation file exists
 if ($annot) {
     if ( not( -e $annot ) ) {
@@ -998,6 +1001,7 @@ if ($annot) {
     }
 }
 
+print "Broken pipe 4\n";
 # check whether protein alignment file is given
 if (@prot_aln_files) {
     @prot_aln_files = split( /[\s,]/, join( ',', @prot_aln_files ) );
@@ -1030,6 +1034,7 @@ if (@prot_aln_files) {
     }
 }
 
+print "Broken pipe 5\n";
 # check whether alignment program is given
 if ( defined($prg) ) {
     if (    not( $prg =~ m/gth/ )
@@ -1351,13 +1356,14 @@ else {
         }
     }
 
+print "Broken pipe 8\n";
     check_fasta_headers($genome);    # check fasta headers
     if (@prot_seq_files) {
         foreach (@prot_seq_files) {
             check_fasta_headers($_);
         }
     }
-
+print "Broken pipe 9\n";
     # count scaffold sizes and check whether the assembly is not too fragmented for parallel execution of AUGUSTUS
     open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/genome.fa");
     my $gLocus;
@@ -1410,18 +1416,22 @@ else {
 # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS
 # can also handle other hints types
     $hintsfile          = "$otherfilesDir/hintsfile.gff";
+    print "Broken pipe 9\n";
     if(! $trainFromGth ) {
         $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
         if ( $EPmode == 0 ) {
             make_rna_seq_hints();    # make hints from RNA-Seq
         }
     }
+    print "Broken pipe 10\n";
     if ( @prot_seq_files or @prot_aln_files ) {
         make_prot_hints();
     }
+    print "Broken pipe 11\n";
     if (@hints) {
         add_other_hints();
     }
+    print "Broken pipe 12\n";
     if (! $trainFromGth ) {
         if ( @prot_seq_files or @prot_aln_files or @hints) {
             separateHints();
@@ -1435,23 +1445,28 @@ else {
             system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         }
     }
-
+print "Broken pipe 12\n";
     if ( $skipAllTraining == 0 ) {
         if ( not($trainFromGth) ) {
             if ( $EPmode == 0 ) {
+                print "Broken pipe 13\n";
                 checkGeneMarkHints();
+                print "Broken pipe 14\n";
                 GeneMark_ET();    # run GeneMark-ET
+                print "Broken pipe 15\n";
                 filterGeneMark();
             }
             elsif ( $EPmode == 1 ) {
 
                 # remove reformatting of hintsfile, later!
+                print "Broken pipe 16\n";
                 format_ep_hints();
                 checkGeneMarkHints();
                 GeneMark_EP();
                 filterGeneMark();
             }
         }
+        print "Broken pipe 17\n";
         training()
             ; # train species-specific parameters with optimize_augustus.pl and
               # etraining
@@ -1514,6 +1529,7 @@ else {
         }
     }
 
+    print "Broken pipe 18\n";
     augustus("off");    # run augustus witout UTR
     if ($ab_initio) {
         if (!uptodate(
@@ -2878,7 +2894,6 @@ sub training {
                 . ": creating softlink from $gmGtf to $trainGenesGtf.\n";
             $cmdString = "ln -s $gmGtf $trainGenesGtf";
             print LOG "$cmdString\n";
-            print "Broken pipe 1\n";
             system($cmdString) == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $trainFromGth ) {
@@ -2889,7 +2904,6 @@ sub training {
                 . ": creating softlink from $gthGtf to $trainGenesGtf.\n";
             $cmdString = "ln -s $gthGtf $trainGenesGtf";
             print LOG "$cmdString\n";
-            print "Broken pipe 2\n";
             system($cmdString) == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $gth2traingenes and not ($trainFromGth) ) {
@@ -2917,7 +2931,6 @@ sub training {
                 . ": concatenating good GeneMark training genes to $goodLstFile.\n";
             $cmdString = "cat $genemarkDir/genemark.f.good.gtf > $goodLstFile";
             print LOG "$cmdString\n";
-            print "Broken pipe 3\n";
             system($cmdString) == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         }
@@ -2954,7 +2967,6 @@ sub training {
             . (localtime)
             . ": Filtering train.gb for \"good\" mRNAs:\n";
         print LOG "$perlCmdString\n\n";
-        print "Broken pipe 4\n";
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
@@ -2973,7 +2985,6 @@ sub training {
             . (localtime)
             . ": Running etraining to catch gene structure inconsistencies:\n";
         print LOG "$cmdString\n\n";
-        print "Broken pipe 5\n";
         system("$cmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
         open( ERRS, "<", $errorfile )
@@ -3003,7 +3014,6 @@ sub training {
             . (localtime)
             . ": Filtering $trainGb2 file to remove inconsistent gehe structures:\n";
         print LOG "$perlCmdString\n\n";
-        print "Broken pipe 6\n";
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
@@ -3052,7 +3062,6 @@ sub training {
             . (localtime)
             . ": BLAST training gene structures against themselves:\n";
         print LOG "$perlCmdString\n\n";
-        print "Broken pipe 7\n";
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
@@ -3088,7 +3097,6 @@ sub training {
             . (localtime)
             . ": Filtering nonredundant loci into $trainGb4:\n";
         print LOG "$perlCmdString\n\n";
-        print "Broken pipe 8\n";
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
         # making trainGb4 the trainGb file
@@ -3097,7 +3105,6 @@ sub training {
             . (localtime)
             . ": Moving $trainGb4 to $trainGb1:\n";
         print LOG "$cmdString\n";
-        print "Broken pipe 9\n";
         system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         print LOG "\# "
             . (localtime)
@@ -3177,7 +3184,6 @@ sub training {
             $perlCmdString
                 .= "perl $string $trainGb1 $testsize1 2>$errorfile";
             print LOG "$perlCmdString\n\n";
-            print "Broken pipe 10\n";
             system("$perlCmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             print LOG "\# "
@@ -3190,7 +3196,6 @@ sub training {
             $perlCmdString
                 .= "perl $string $otherfilesDir/train.gb.train $testsize2 2>$errorfile";
             print LOG "$perlCmdString\n\n";
-            print "Broken pipe 11\n";
             system("$perlCmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             print LOG "\# "
@@ -3233,7 +3238,6 @@ sub training {
                 .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": first etraining\n";
             print LOG "$cmdString\n\n";
-            print "Broken pipe 12\n";
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
 
@@ -3277,7 +3281,6 @@ sub training {
                     . (localtime)
                     . ": Trying etraining again\n";
                 print LOG "$cmdString\n\n";
-                print "Broken pipe 13\n";
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
             }
@@ -3344,7 +3347,6 @@ sub training {
                 . (localtime)
                 . ": First AUGUSTUS accuracy test\n";
             print LOG "$cmdString\n\n";
-            print "Broken pipe 14\n";
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             $target_1 = accuracy_calculator($stdoutfile);
