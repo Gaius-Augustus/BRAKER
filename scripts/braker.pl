@@ -694,6 +694,75 @@ else {
     $errorfilesDir = "$rootDir/$species/errors";
 }
 
+# check whether genemark.gtf file exists, if skipGeneMark-ET option is used
+# this cannot go into check options because directories are not defined there, yet
+if ($skipGeneMarkET) {
+    $prtStr = "\# "
+        . (localtime) ..
+        ": REMARK: The GeneMark-ET step will be skipped.\n";
+    $logString .= $prtStr;
+    if ( not($trainFromGth) && not($useexisting)) {
+        if (    not( -f "$genemarkDir/genemark.gtf" )
+            and not( -f $geneMarkGtf ) )
+        {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The --skipGeneMark-ET option was used, but "
+                . "there is no genemark.gtf file under $genemarkDir and no valid file "
+                . "--geneMarkGtf=... was specified.\n";
+            $logString .= $prtStr;
+            if ( defined($geneMarkGtf) ) {
+                $prtStr = "       The specified geneMarkGtf=... file was $geneMarkGtf. This is "
+                     . "not an accessible file.\n";
+                $logString .= $prtStr;
+            }
+            print STDERR $logString;
+            exit(1);
+        }
+    }
+}
+if ( $skipGeneMarkEP && $EPmode == 1 ) {
+    $prtStr = "REMARK: The GeneMark-EP step will be skipped.\n";
+    $logString .= $prtStr;
+    if (    not( -f "$genemarkDir/genemark.gtf" )
+        and not( -f $geneMarkGtf ) )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "The --skipGeneMark-EP option was used, but there is "
+            . "no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... "
+            . "was specified.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        if ( defined($geneMarkGtf) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The specified geneMarkGtf=... file was "
+                . "$geneMarkGtf. This is not an accessible file.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+        }
+        exit(1);
+    }
+}
+elsif ($skipGeneMarkEP && not($trainFromGth)) {
+    $prtStr
+        = "\# "
+        . (localtime)
+        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "Option --skipGeneMarkEP cannot be used when BRAKER is "
+        . "started in GeneMark-ET mode.\n";
+    $logString .= $prtStr;
+    print STDERR $logString;
+    exit(1);
+}
+
 $logfile = "$otherfilesDir/braker.log";
 
 # create other directories if necessary
@@ -4354,74 +4423,6 @@ sub check_options {
         $skipGeneMarkET = 1;
     }
 
-    # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
-    if ($skipGeneMarkET) {
-        $prtStr = "\# "
-            . (localtime) ..
-            ": REMARK: The GeneMark-ET step will be skipped.\n";
-        $logString .= $prtStr;
-        if ( not($trainFromGth) ) {
-            if (    not( -f "$genemarkDir/genemark.gtf" )
-                and not( -f $geneMarkGtf ) )
-            {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "The --skipGeneMark-ET option was used, but "
-                    . "there is no genemark.gtf file under $genemarkDir and no valid file "
-                    . "--geneMarkGtf=... was specified.\n";
-                $logString .= $prtStr;
-                if ( defined($geneMarkGtf) ) {
-                    $prtStr = "       The specified geneMarkGtf=... file was $geneMarkGtf. This is "
-                         . "not an accessible file.\n";
-                    $logString .= $prtStr;
-                }
-                print STDERR $logString;
-                exit(1);
-            }
-        }
-    }
-
-    if ( $skipGeneMarkEP && $EPmode == 1 ) {
-        $prtStr = "REMARK: The GeneMark-EP step will be skipped.\n";
-        $logString .= $prtStr;
-        if (    not( -f "$genemarkDir/genemark.gtf" )
-            and not( -f $geneMarkGtf ) )
-        {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "The --skipGeneMark-EP option was used, but there is "
-                . "no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... "
-                . "was specified.\n";
-            $logString .= $prtStr;
-            print STDERR $logString;
-            if ( defined($geneMarkGtf) ) {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "The specified geneMarkGtf=... file was "
-                    . "$geneMarkGtf. This is not an accessible file.\n";
-                $logString .= $prtStr;
-                print STDERR $logString;
-            }
-            exit(1);
-        }
-    }
-    elsif ($skipGeneMarkEP && not($trainFromGth)) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "Option --skipGeneMarkEP cannot be used when BRAKER is "
-            . "started in GeneMark-ET mode.\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
-    }
 }
 
 # check fasta headers
