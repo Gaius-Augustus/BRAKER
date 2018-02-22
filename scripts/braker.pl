@@ -2878,6 +2878,7 @@ sub training {
                 . ": creating softlink from $gmGtf to $trainGenesGtf.\n";
             $cmdString = "ln -s $gmGtf $trainGenesGtf";
             print LOG "$cmdString\n";
+            print "Broken pipe 1\n";
             system($cmdString) == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $trainFromGth ) {
@@ -2888,6 +2889,7 @@ sub training {
                 . ": creating softlink from $gthGtf to $trainGenesGtf.\n";
             $cmdString = "ln -s $gthGtf $trainGenesGtf";
             print LOG "$cmdString\n";
+            print "Broken pipe 2\n";
             system($cmdString) == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $gth2traingenes and not ($trainFromGth) ) {
@@ -2915,6 +2917,7 @@ sub training {
                 . ": concatenating good GeneMark training genes to $goodLstFile.\n";
             $cmdString = "cat $genemarkDir/genemark.f.good.gtf > $goodLstFile";
             print LOG "$cmdString\n";
+            print "Broken pipe 3\n";
             system($cmdString) == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         }
@@ -2951,6 +2954,7 @@ sub training {
             . (localtime)
             . ": Filtering train.gb for \"good\" mRNAs:\n";
         print LOG "$perlCmdString\n\n";
+        print "Broken pipe 4\n";
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
@@ -2969,6 +2973,7 @@ sub training {
             . (localtime)
             . ": Running etraining to catch gene structure inconsistencies:\n";
         print LOG "$cmdString\n\n";
+        print "Broken pipe 5\n";
         system("$cmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
         open( ERRS, "<", $errorfile )
@@ -2998,6 +3003,7 @@ sub training {
             . (localtime)
             . ": Filtering $trainGb2 file to remove inconsistent gehe structures:\n";
         print LOG "$perlCmdString\n\n";
+        print "Broken pipe 6\n";
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
@@ -3046,6 +3052,7 @@ sub training {
             . (localtime)
             . ": BLAST training gene structures against themselves:\n";
         print LOG "$perlCmdString\n\n";
+        print "Broken pipe 7\n";
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
@@ -3081,6 +3088,7 @@ sub training {
             . (localtime)
             . ": Filtering nonredundant loci into $trainGb4:\n";
         print LOG "$perlCmdString\n\n";
+        print "Broken pipe 8\n";
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
         # making trainGb4 the trainGb file
@@ -3089,6 +3097,7 @@ sub training {
             . (localtime)
             . ": Moving $trainGb4 to $trainGb1:\n";
         print LOG "$cmdString\n";
+        print "Broken pipe 9\n";
         system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         print LOG "\# "
             . (localtime)
@@ -3168,6 +3177,7 @@ sub training {
             $perlCmdString
                 .= "perl $string $trainGb1 $testsize1 2>$errorfile";
             print LOG "$perlCmdString\n\n";
+            print "Broken pipe 10\n";
             system("$perlCmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             print LOG "\# "
@@ -3180,6 +3190,7 @@ sub training {
             $perlCmdString
                 .= "perl $string $otherfilesDir/train.gb.train $testsize2 2>$errorfile";
             print LOG "$perlCmdString\n\n";
+            print "Broken pipe 11\n";
             system("$perlCmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             print LOG "\# "
@@ -3222,6 +3233,7 @@ sub training {
                 .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": first etraining\n";
             print LOG "$cmdString\n\n";
+            print "Broken pipe 12\n";
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
 
@@ -3265,6 +3277,7 @@ sub training {
                     . (localtime)
                     . ": Trying etraining again\n";
                 print LOG "$cmdString\n\n";
+                print "Broken pipe 13\n";
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
             }
@@ -3331,6 +3344,7 @@ sub training {
                 . (localtime)
                 . ": First AUGUSTUS accuracy test\n";
             print LOG "$cmdString\n\n";
+            print "Broken pipe 14\n";
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             $target_1 = accuracy_calculator($stdoutfile);
