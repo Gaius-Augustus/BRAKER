@@ -662,11 +662,11 @@ if ( -d "$rootDir/$species" && !$overwrite && $wdGiven == 0 ) {
 
 # create $rootDir
 if ( !-d $rootDir ) {
-    make_path($rootDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $rootDir!\n");
     $prtStr = "\# "
         . (localtime)
         . ": create working directory $rootDir.\n"
         . "mkdir $rootDir\n\n";
+    make_path($rootDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $rootDir!\n");
     $logString .= $prtStr;
 }
 
@@ -775,13 +775,18 @@ if ( !-d $otherfilesDir ) {
     make_path($otherfilesDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $otherfilesDir!\n");
 }
 
+print STDOUT "Should have created $otherfilesDir...\n";
+if(not(-d $otherfilesDir)){
+    print STDOUT "... but I failed\n";
+}
+
 $prtStr
     = "\# "
     . (localtime)
     . ": Further logging information can be found in $logfile!\n";
 print STDOUT $prtStr;
 
-open( LOG, ">>" . $logfile ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file $logfile!\n");
+open( LOG, ">" . $logfile ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file $logfile!\n");
 print LOG $logString;
 
 if ( !-d $genemarkDir ) {
