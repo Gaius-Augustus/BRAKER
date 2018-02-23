@@ -775,11 +775,6 @@ if ( !-d $otherfilesDir ) {
     make_path($otherfilesDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $otherfilesDir!\n");
 }
 
-print STDOUT "Should have created $otherfilesDir...\n";
-if(not(-d $otherfilesDir)){
-    print STDOUT "... but I failed\n";
-}
-
 $prtStr
     = "\# "
     . (localtime)
@@ -891,7 +886,7 @@ if (@prot_seq_files) {
 }
 
 # count scaffold sizes and check whether the assembly is not too fragmented for parallel execution of AUGUSTUS
-open (GENOME, "<", "$otherfilesDir/genome.fa") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/genome.fa");
+open (GENOME, "<", "$otherfilesDir/genome.fa") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/genome.fa");
 my $gLocus;
 while( <GENOME> ){
     chomp;
@@ -905,7 +900,7 @@ while( <GENOME> ){
         }
     }
 }
-close (GENOME) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/genome.fa");
+close (GENOME) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/genome.fa");
 my @nScaffs = keys %scaffSizes;
 my $totalScaffSize = 0;
 foreach( values %scaffSizes) {
@@ -922,8 +917,7 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
             . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
             . "--cores=$CPU. You must run braker.pl in linear mode on such genomes, though (--cores=1). It is possible that GeneMark-EX might not work on highly fragmented assemblies, too.\n";
     print LOG $prtStr;
-    print STDERR $prtStr;
-    exit(1);
+    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
 }elsif( (($totalScaffSize / $chunksize) > 30000) && ($CPU > 1) ){
     $prtStr = "\# "
             . (localtime)
@@ -936,8 +930,7 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
             . " should not exceed the number of possible arguments for commands like ls *, cp *, etc. "
             . "on your system. It is possible that GeneMark-EX might not work on large and complex genomes, too.\n";
     print LOG $prtStr;
-    print STDERR $prtStr;
-    exit(1);
+    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
 }
 # define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS
 # can also handle other hints types
@@ -965,7 +958,7 @@ if (! $trainFromGth ) {
             . ":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
         $cmdString = "ln -s $hintsfile $genemark_hintsfile";
         print LOG "$cmdString\n";
-        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
 }
 if ( $skipAllTraining == 0 ) {
@@ -1135,7 +1128,7 @@ sub make_rna_seq_hints {
                     . ": make hints from BAM file $bam[$i]\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
                 $cmdString = "";
                 if ($nice) {
                     $cmdString .= "nice ";
@@ -1146,7 +1139,7 @@ sub make_rna_seq_hints {
                     . ": add hints from BAM file $bam[$i] to hints file\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+                    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
             }
         }
         unlink($bam_temp);
@@ -1172,7 +1165,7 @@ sub make_rna_seq_hints {
                 . ": filter introns, find strand and change score to \'mult\' entry\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $perlCmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $perlCmdString!\n");
             print LOG "\# " . (localtime) . ": rm $hintsfile_temp\n";
             unlink($hintsfile_temp);
         }
@@ -1184,8 +1177,7 @@ sub make_rna_seq_hints {
                 . "The hints file is empty. Maybe the genome and the "
                 . "RNA-seq file do not belong together.\n";
             print LOG $prtStr;
-            print STDERR $prtStr;
-            exit(1);
+            clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
         }
     }
 }
@@ -1200,7 +1192,7 @@ sub make_prot_hints {
     $cmdString = "cd $otherfilesDir";
     print LOG "\# " . (localtime) . ": Changing to $otherfilesDir\n";
     print LOG "$cmdString\n";
-    chdir $otherfilesDir or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
+    chdir $otherfilesDir or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
 
     # from fasta files
     if ( @prot_seq_files && $EPmode == 0 ) {
@@ -1250,7 +1242,7 @@ sub make_prot_hints {
                 $perlCmdString .= ">> $logfile 2>>$errorfile";
                 print LOG "$perlCmdString\n\n";
                 system("$perlCmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $perlCmdString!\n");
+                    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $perlCmdString!\n");
                 print LOG "\# "
                     . (localtime)
                     . ": Alignments from file $prot_seq_files[$i] created.\n";
@@ -1262,7 +1254,7 @@ sub make_prot_hints {
                         . ": concatenating alignment file to $alignment_outfile\n";
                     print LOG "$cmdString\n\n";
                     system("$cmdString") == 0
-                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
+                        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
                 }
                 else {
                     print LOG "\# " . (localtime) . ": alignment file ";
@@ -1276,7 +1268,7 @@ sub make_prot_hints {
                 $cmdString = "mv $otherfilesDir/align_$prg $otherfilesDir/align_$prg$i";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n\n");
+                    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n\n");
             }
             else {
                 $prtStr
@@ -1297,8 +1289,7 @@ sub make_prot_hints {
             . "with GeneMark-EP, please provide --hints=intronhints.gff file!"
             . " Aborting braker.pl!\n";
         print LOG $prtStr;
-        print STDERR $prtStr;
-        exit(1);
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
     }
 
     # convert pipeline created protein alignments to protein hints
@@ -1319,8 +1310,7 @@ sub make_prot_hints {
                     . "GeneMark-EP, please provide --hints=intronhints.gff! Aborting "
                     . "braker.pl!\n";
                 print LOG $prtStr;
-                print STDERR $prtStr;
-                exit(1);
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
             }
             else {
                 print LOG "\# "
@@ -1360,8 +1350,7 @@ sub make_prot_hints {
             . "braker.pl is currently not supported. To run braker.pl with GeneMark-EP, "
             . "please provide --hints=intronhints.gff! Aborting braker.pl!\n";
         print LOG $prtStr;
-        print STDERR $prtStr;
-        exit(1);
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
     }
 
   # appending protein hints to $hintsfile (combined with RNA_Seq if available)
@@ -1376,7 +1365,7 @@ sub make_prot_hints {
             $cmdString = "mv $prot_hints_file_temp $prot_hintsfile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "Deleting $prot_hints_file_temp\n";
             unlink($prot_hints_file_temp);
             print LOG "\n\# "
@@ -1386,7 +1375,7 @@ sub make_prot_hints {
             $cmdString = "cat $prot_hintsfile >> $hintsfile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "\n\# " . (localtime) . ": Deleting $prot_hintsfile\n";
             unlink($prot_hintsfile);
             my $toBeSortedHintsFile = "$otherfilesDir/hintsfile.tmp.gff";
@@ -1397,7 +1386,7 @@ sub make_prot_hints {
             $cmdString = "mv $hintsfile $toBeSortedHintsFile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "\n\# "
                 . (localtime)
                 . ": Sorting hints file $hintsfile\n";
@@ -1405,7 +1394,7 @@ sub make_prot_hints {
                 = "cat $toBeSortedHintsFile | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 > $hintsfile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "\n\# "
                 . (localtime)
                 . ": Deleting file $toBeSortedHintsFile\n";
@@ -1421,8 +1410,7 @@ sub make_prot_hints {
             . "The hints file is empty. There were no protein "
             . "alignments.\n";
         print LOG $prtStr;
-        print STDERR $prtStr;
-        exit(1);
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
     }
     if ($gth2traingenes) {
         if (@prot_aln_files) {
@@ -1434,7 +1422,7 @@ sub make_prot_hints {
                 print LOG "$alignment_outfile\n";
                 print LOG "$cmdString\n";
                 system($cmdString) == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             }
         }
         gth2gtf( $alignment_outfile, $gthTrainGeneFile );
@@ -1468,7 +1456,7 @@ sub add_other_hints {
             print LOG "entry\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $perlCmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $perlCmdString!\n");
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
@@ -1479,7 +1467,7 @@ sub add_other_hints {
                 . ": adding hints from file $filteredHintsFile to $hintsfile\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "\n\# "
                 . (localtime)
                 . ": deleting file $filteredHintsFile\n";
@@ -1524,14 +1512,14 @@ sub separateHints {
         . ": Checking whether $hintsfile contains hints other than ";
     print LOG "intron\n";
     my $containsOtherTypes = 0;
-    open (HINTS, "<", $hintsfile) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $hintsfile!\n");
+    open (HINTS, "<", $hintsfile) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $hintsfile!\n");
     while (<HINTS>) {
         if(not ($_ =~ m/\tintron\t/) ){
             $containsOtherTypes = 1;
             last;
         }
     }
-    close (HINTS) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $hintsfile!\n");
+    close (HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $hintsfile!\n");
     if ( $containsOtherTypes > 0 ) {
         print LOG "\n\# "
             . (localtime)
@@ -1552,7 +1540,7 @@ sub separateHints {
             $cmdString .= "grep intron $hintsfile | | grep -v ProSplign | grep \"src=P;\" | perl -pe 's/intron/Intron/' >> $genemark_hintsfile\n"
         }
         print LOG "$cmdString\n\n";
-        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     }
     else {
         print LOG "\n\# "
@@ -1561,7 +1549,7 @@ sub separateHints {
         print LOG "$genemark_hintsfile to $hintsfile\n";
         $cmdString = "ln -s $hintsfile $genemark_hintsfile";
         print LOG "$cmdString\n";
-        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     }
 }
 
@@ -1596,19 +1584,18 @@ sub aln2hints {
         }
         print LOG "$perlCmdString\n";
         system("$perlCmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
         $cmdString = "cat $out_file_name >> $final_out_file";
         print LOG "\n\# "
             . (localtime)
             . ": concatenating protein hints from $out_file_name to $final_out_file\n";
         print LOG $cmdString . "\n";
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+        system("$cmdString") == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     }
     else {
-        print "Alignment file $aln_file was empty!\n";
         print LOG "\# "
             . (localtime)
-            . ": Alignment file $aln_file was empty!\n";
+            . ": WARNING: Alignment file $aln_file was empty!\n";
     }
 }
 
@@ -1624,7 +1611,7 @@ sub join_mult_hints {
         .= "cat $hints_file_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
     print LOG "\n\# " . (localtime) . ": sort hints of type $type\n";
     print LOG "$cmdString\n\n";
-    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    system("$cmdString") == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     $string = find(
         "join_mult_hints.pl",   $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -1640,7 +1627,7 @@ sub join_mult_hints {
     print LOG "\# " . (localtime) . ": join multiple hints\n";
     print LOG "$perlCmdString\n\n";
     system("$perlCmdString") == 0
-        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
     unlink($hintsfile_temp_sort);
 }
 
@@ -1660,7 +1647,7 @@ sub checkGeneMarkHints {
         . ": Checking whether file $genemark_hintsfile contains ";
     print LOG "sufficient multiplicity information...\n";
     open( GH, "<", $genemark_hintsfile )
-        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $genemark_hintsfile!\n");
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $genemark_hintsfile!\n");
     while (<GH>) {
         my @line = split(/\t/);
         if ( scalar(@line) == 9 ) {
@@ -1672,7 +1659,7 @@ sub checkGeneMarkHints {
             }
         }
     }
-    close(GH) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genemark_hintsfile!\n");
+    close(GH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genemark_hintsfile!\n");
     if ( $nIntronsAboveThreshold < 500 ) {
         $prtStr
             = "\# "
@@ -1708,7 +1695,7 @@ sub GeneMark_ET {
                 . ": changing into GeneMark-ET directory $genemarkDir\n";
             print LOG "$cmdString\n\n";
             chdir $genemarkDir
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $genemarkDir.\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $genemarkDir.\n");
             $string        = "$GENEMARK_PATH/gmes_petap.pl";
             $errorfile     = "$errorfilesDir/GeneMark-ET.stderr";
             $stdoutfile    = "$otherfilesDir/GeneMark-ET.stdout";
@@ -1733,14 +1720,14 @@ sub GeneMark_ET {
             print LOG "\# " . (localtime) . ": Running GeneMark-ET\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n";
             print LOG "$cmdString\n\n";
             chdir $rootDir
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $rootDir.\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $rootDir.\n");
         }
     }
 }
@@ -1781,14 +1768,14 @@ sub GeneMark_EP {
             print LOG "\# " . (localtime) . ": Running GeneMark-EP\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n";
             print LOG "$cmdString\n\n";
             chdir $rootDir
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $rootDir.\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $rootDir.\n");
         }
     }
 }
@@ -1810,7 +1797,7 @@ sub filterGeneMark {
             . ( localtime )
             . ": Checking whether hintsfile contains single exon CDSpart hints\n";
         my %singleCDS;
-        open ( HINTS, "<", $hintsfile ) or die ( "Could not open file $hintsfile!\n" );
+        open ( HINTS, "<", $hintsfile ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "Could not open file $hintsfile!\n" );
         while ( <HINTS> ) {
             if( $_ =~ m/\tCDSpart\t.+grp=(\S+);/ ) {
                 if (not ( defined ($singleCDS{$1}) ) ) {
@@ -1820,7 +1807,7 @@ sub filterGeneMark {
                 }
             }
         }
-        close ( HINTS ) or die ( "Could not close file $hintsfile!\n" );
+        close ( HINTS ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "Could not close file $hintsfile!\n" );
         # delete non single CDS genes from hash
         # collapse multiplicity of singleCDS hints
         my %multSingleCDS;
@@ -1837,7 +1824,7 @@ sub filterGeneMark {
             }
         }
         my $countSingleCDS = 0;
-        open ( SINGLECDS, ">", "$otherfilesDir/singlecds.hints" ) or die ( "Could not open file $otherfilesDir/singlecds.hints!\n" );
+        open ( SINGLECDS, ">", "$otherfilesDir/singlecds.hints" ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "Could not open file $otherfilesDir/singlecds.hints!\n" );
         while (my ($locus, $v1) = each %multSingleCDS ) {
             while ( my ($strand, $v2) = each %{$v1} ) {
                 while ( my ($start, $v3 ) = each %{$v2} ) {
@@ -1848,7 +1835,7 @@ sub filterGeneMark {
                 }
             }
         }
-        close ( SINGLECDS ) or die ( "Could not close file $otherfilesDir/singlecds.hints!\n" );
+        close ( SINGLECDS ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "Could not close file $otherfilesDir/singlecds.hints!\n" );
         print LOG "\# "
             . (localtime)
             . ": filtering GeneMark genes by intron hints\n";
@@ -1872,7 +1859,7 @@ sub filterGeneMark {
         $perlCmdString .= "1>$stdoutfile 2>$errorfile";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
     }
 }
 
@@ -2421,7 +2408,7 @@ sub training {
             $cmdString = "ln -s $gmGtf $trainGenesGtf";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $trainFromGth ) {
             # create softlinke from gth.gtf to traingenes.gtf
              # make gth gb final
@@ -2431,7 +2418,7 @@ sub training {
             $cmdString = "ln -s $gthGtf $trainGenesGtf";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $gth2traingenes and not ($trainFromGth) ) {
             # merge gth and gm gtf files
             combine_gm_and_gth_gtf ( $gmGtf, "$otherfilesDir/protein_alignment_$prg.gff3", $gthGtf, $trainGenesGtf);
@@ -2442,8 +2429,7 @@ sub training {
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "unknown training gene generation scenario!\n";
             print STDERR $prtStr;
-            print LOG $prtStr;
-            exit(1);
+            clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
         }
 
         # convert gtf to gb
@@ -2458,22 +2444,22 @@ sub training {
             $cmdString = "cat $genemarkDir/genemark.f.good.gtf > $goodLstFile";
             print LOG "$cmdString\n";
             system($cmdString) == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         }
         if ( $gth2traingenes ) {
             print LOG "\#  "
                 . (localtime)
                 . ": concatenating good GenomeThreader training genes to $goodLstFile.\n";
             # get all remaining gth genes
-            open (GOODLST, ">>", $goodLstFile) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $goodLstFile!\n" );
-            open ( GTHGOOD, "<", $trainGenesGtf ) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGenesGtf!\n" );
+            open (GOODLST, ">>", $goodLstFile) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $goodLstFile!\n" );
+            open ( GTHGOOD, "<", $trainGenesGtf ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGenesGtf!\n" );
             while ( <GTHGOOD> ) {
                 if ( $_ =~ m/\tgth\t/ ) {
                     print GOODLST $_;
                 }
             }
-           close ( GTHGOOD ) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $trainGenesGtf!\n" );
-           close (GOODLST) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $goodLstFile!\n" );
+           close ( GTHGOOD ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $trainGenesGtf!\n" );
+           close (GOODLST) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $goodLstFile!\n" );
         }
 
 
@@ -2494,7 +2480,7 @@ sub training {
             . ": Filtering train.gb for \"good\" mRNAs:\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
         # filter out genes that lead to etraining errors
         $augpath    = "$AUGUSTUS_BIN_PATH/etraining";
@@ -2512,19 +2498,19 @@ sub training {
             . ": Running etraining to catch gene structure inconsistencies:\n";
         print LOG "$cmdString\n\n";
         system("$cmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
         open( ERRS, "<", $errorfile )
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $errorfile!\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $errorfile!\n");
         open( BADS, ">", "$otherfilesDir/etrain.bad.lst" )
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/etrain.bad.lst!\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/etrain.bad.lst!\n");
         while (<ERRS>) {
             if (m/n sequence (\S+):.*/) {
                 print BADS "$1\n";
             }
         }
         close(BADS)
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/etrain.bad.lst!\n");
-        close(ERRS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $errorfile!\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/etrain.bad.lst!\n");
+        close(ERRS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $errorfile!\n");
         $string = find(
             "filterGenes.pl",       $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -2541,10 +2527,10 @@ sub training {
             . ": Filtering $trainGb2 file to remove inconsistent gehe structures:\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
         # find those training genes in gtf that are still in gb
-        open (TRAINGB3, "<", $trainGb3) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGb3!\n" );
+        open (TRAINGB3, "<", $trainGb3) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGb3!\n" );
         my %txInGb3;
         my $txLocus;;
         while( <TRAINGB3> ) {
@@ -2554,10 +2540,10 @@ sub training {
                 $txInGb3{$1} = $txLocus;
             }
         }
-        close (TRAINGB3) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $trainGb3!\n" );
+        close (TRAINGB3) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $trainGb3!\n" );
         # filter in those genes that are good
-        open (GTF, "<", $trainGenesGtf) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGenesGtf!\n");
-        open (GOODGTF, ">", "$otherfilesDir/traingenes.good.gtf") or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/traingenes.good.gtf!\n");
+        open (GTF, "<", $trainGenesGtf) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $trainGenesGtf!\n");
+        open (GOODGTF, ">", "$otherfilesDir/traingenes.good.gtf") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/traingenes.good.gtf!\n");
         while(<GTF>){
             if($_ =~ m/transcript_id \"(\S+)\"/){
                 if(defined($txInGb3{$1})){
@@ -2565,8 +2551,8 @@ sub training {
                 }
             }
         }
-        close(GOODGTF) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/traingenes.good.gtf!\n");
-        close(GTF) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $trainGenesGtf!\n");
+        close(GOODGTF) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/traingenes.good.gtf!\n");
+        close(GTF) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $trainGenesGtf!\n");
 
         # convert those training genes to protein fasta file
         gtf2fasta ($genome, "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/traingenes.good.fa");
@@ -2589,7 +2575,7 @@ sub training {
             . ": BLAST training gene structures against themselves:\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
         # parse output of blast
         my %nonRed;
@@ -2600,12 +2586,12 @@ sub training {
                 $nonRed{$1} = 1;
             }
         }
-        close (BLASTOUT) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/traingenes.good.nr.fa!\n" );
+        close (BLASTOUT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/traingenes.good.nr.fa!\n" );
         open ( NONREDLOCI, ">", "$otherfilesDir/nonred.loci.lst") or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/nonred.loci.lst!\n");
         foreach ( keys %nonRed ) {
             print NONREDLOCI $txInGb3{$_}."\n";
         }
-        close (NONREDLOCI) or die ( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/nonred.loci.lst!\n");
+        close (NONREDLOCI) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/nonred.loci.lst!\n");
 
         # filter trainGb3 file for nonredundant loci
         $string = find(
@@ -2624,21 +2610,21 @@ sub training {
             . ": Filtering nonredundant loci into $trainGb4:\n";
         print LOG "$perlCmdString\n\n";
         system("$perlCmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
         # making trainGb4 the trainGb file
         $cmdString = "mv $trainGb4 $trainGb1";
         print LOG "\# "
             . (localtime)
             . ": Moving $trainGb4 to $trainGb1:\n";
         print LOG "$cmdString\n";
-        system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+        system ("$cmdString") == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         print LOG "\# "
             . (localtime)
             . ": Deleting intermediate training gene structure files:\n"
             . "rm $trainGb2 $trainGb3 $otherfilesDir/traingenes.good.nr.fa $otherfilesDir/nonred.loci.lst $otherfilesDir/traingenes.good.gtf $otherfilesDir/etrain.bad.lst $goodLstFile\n";
         foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst", $goodLstFile) ) {
             if (-e $_ ) {
-                unlink ( $_ ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $_!\n");
+                unlink ( $_ ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $_!\n");
             }
         }
 
@@ -2675,8 +2661,7 @@ sub training {
                     . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "Number of good genes is 0, so the parameters cannot be optimized. Recomended are at least 300 genes\n";
                 print LOG $prtStr;
-                print STDERR $prtStr;
-                exit(1);
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
             }
             if ( $gb_good_size < 300 ) {
                 $prtStr = "\# "
@@ -2693,8 +2678,7 @@ sub training {
                         . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                         . "Unable to create three genbank files for optimizing AUGUSTUS (number of LOCI too low)! The provided input data is not sufficient for running braker.pl!\n";
                     print LOG $prtStr;
-                    print STDERR $prtStr;
-                    exit(1);
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
                 }
             }elsif ( $gb_good_size >= 300 && $gb_good_size <= 1000 ) {
                 $testsize1 = 200;
@@ -2711,7 +2695,7 @@ sub training {
                 .= "perl $string $trainGb1 $testsize1 2>$errorfile";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             print LOG "\# "
                         . (localtime)
                         . " $otherfilesDir/train.gb.test will be used for measuring AUGUSTUS accuracy after training\n";
@@ -2723,7 +2707,7 @@ sub training {
                 .= "perl $string $otherfilesDir/train.gb.train $testsize2 2>$errorfile";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             print LOG "\# "
                 . (localtime)
                 . " \n$otherfilesDir/train.gb.train.test will be used for measuring AUGUSTUS accuracy during training with optimize_augustus.pl\n"
@@ -4449,11 +4433,11 @@ sub check_fasta_headers {
     {
         print LOG "\# " . (localtime) . ": Checking fasta headers\n";
         open( FASTA, "<", $fastaFile )
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open fasta file $fastaFile!\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open fasta file $fastaFile!\n");
         open( OUTPUT, ">", "$otherfilesDir/genome.fa" )
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open fasta file $otherfilesDir/genome.fa!\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open fasta file $otherfilesDir/genome.fa!\n");
         open( MAP, ">", $mapFile )
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open map file $mapFile.\n");
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open map file $mapFile.\n");
         while (<FASTA>) {
 
             # check newline character
@@ -4543,11 +4527,11 @@ sub check_fasta_headers {
                 }
             }
         }
-        close(FASTA) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close fasta file $fastaFile!\n");
+        close(FASTA) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close fasta file $fastaFile!\n");
         close(OUTPUT)
-            or die(
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
             "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close output fasta file $otherfilesDir/genome.fa!\n");
-        close(MAP) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close map file $mapFile!\n");
+        close(MAP) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close map file $mapFile!\n");
     }
     $genome = "$otherfilesDir/genome.fa";
 }
@@ -4781,11 +4765,11 @@ sub accuracy_calculator {
 sub gth2gtf {
     my $align = shift;
     my $out   = shift;    # writes to $gthTrainGeneFile
-    open( GTH,    "<", $align ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $align!\n");
-    open( GTHGTF, ">", $out )   or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $out!\n");
+    open( GTH,    "<", $align ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $align!\n");
+    open( GTHGTF, ">", $out )   or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $out!\n");
     my $geneId;
 
-# GTH may output alternative transcripts; we don't want to have any alternatives in training gene set, only print the first of any occuring alternatives
+    # GTH may output alternative transcripts; we don't want to have any alternatives in training gene set, only print the first of any occuring alternatives
     my %seen;
     while (<GTH>) {
         chomp;
@@ -4811,20 +4795,20 @@ sub gth2gtf {
                 . $gtfLineLastColField[1] )
             {
                 print GTHGTF
-                    "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\ttranscript_id \"$gtfLine[0]"
+                    "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\tgene_id \"$gtfLine[0]_g\"; transcript_id \"$gtfLine[0]_t"
                     . "_"
                     . $geneId . "_"
                     . $gtfLineLastColField[1] . "\"\n";
                 print GTHGTF
-                    "$gtfLine[0]\t$gtfLine[1]\texon\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\ttranscript_id \"$gtfLine[0]"
+                    "$gtfLine[0]\t$gtfLine[1]\texon\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\tgene_id \"$gtfLine[0]_g\"; transcript_id \"$gtfLine[0]_t"
                     . "_"
                     . $geneId . "_"
                     . $gtfLineLastColField[1] . "\"\n";
             }
         }
     }
-    close(GTHGTF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $out!\n");
-    close(GTH)    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $align!\n");
+    close(GTHGTF) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $out!\n");
+    close(GTH)    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $align!\n");
 }
 
 sub computeFlankingRegion {
@@ -6505,8 +6489,8 @@ sub evaluate {
             elsif( $i == 6 ){ print ACC "Nucleotide_Sensitivity" }
             elsif( $i == 7 ){ print ACC "Nucleotide_Specificity" }
             foreach(@accKeys){
-                chomp;
-                print ACC "\t".chomp(${$accuracy{$_}}[$i]);
+                chomp(${$accuracy{$_}}[$i]);
+                print ACC "\t".${$accuracy{$_}}[$i];
             }
             print ACC "\n";
         }
@@ -6599,7 +6583,7 @@ sub combine_gm_and_gth_gtf {
     my $gth_filtered_gtf = shift; # $gth_gtf.f
     my %gmGeneStarts;
     my %gmGeneStops;
-    open( GMGTF, "<", $gm_gtf ) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_gtf!\n" );
+    open( GMGTF, "<", $gm_gtf ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_gtf!\n" );
     while (<GMGTF>) {
         chomp;
         my @gtfLine = split(/\t/);
@@ -6624,7 +6608,7 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    close(GMGTF) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_gtf!\n" );
+    close(GMGTF) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_gtf!\n" );
     # delete incomplete gm gene starts and stops from hashes; they will never be used as training genes, anyways
     foreach (keys %gmGeneStarts){
         if(not(defined($gmGeneStops{$_}))) {
@@ -6636,7 +6620,7 @@ sub combine_gm_and_gth_gtf {
             delete $gmGeneStops{$_};
         }
     }
-    open( PROTALN, "<", "$gth_gff3" ) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_gff3!\n" );
+    open( PROTALN, "<", "$gth_gff3" ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_gff3!\n" );
     my %gthGeneStarts;
     my %gthGeneStops;
     my $gthGeneId;
@@ -6661,16 +6645,16 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    close(PROTALN) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_gff3!\n" );
+    close(PROTALN) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_gff3!\n" );
 
     # read gth gtf to be filtered later
-    open( GTHGTF, "<", $gth_gtf ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_gtf!\n");
+    open( GTHGTF, "<", $gth_gtf ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_gtf!\n");
     my %gthGtf;
     while (<GTHGTF>) {
         my @gtfLine = split(/"/);
         push( @{ $gthGtf{ $gtfLine[1] } }, $_ );
     }
-    close(GTHGTF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_gtf!\n");
+    close(GTHGTF) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_gtf!\n");
     my %discard;
     while ( my ( $k, $v ) = each %gthGeneStarts ) {
         # check whether gene overlaps with genemark genes
@@ -6682,7 +6666,7 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    open( FILTEREDGTH, ">", "$gth_filtered_gtf" ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_filtered_gtf!\n");
+    open( FILTEREDGTH, ">", "$gth_filtered_gtf" ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gth_filtered_gtf!\n");
     while ( my ( $k, $v ) = each %gthGtf ) {
         if ( not( defined( $discard{$k} ) ) ) {
             foreach ( @{$v} ) {
@@ -6690,10 +6674,11 @@ sub combine_gm_and_gth_gtf {
             }
         }
     }
-    open( GMGTF, "<", $gm_gtf ) or die( "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_gtf!\n" );
+    open( GMGTF, "<", $gm_gtf ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,  "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_gtf!\n" );
     while (<GMGTF>) {
         print FILTEREDGTH $_;
     }
-    close (GMGTF) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_gtf!\n");
-    close(FILTEREDGTH) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_filtered_gtf!\n");
+    close (GMGTF) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_gtf!\n");
+    close(FILTEREDGTH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_filtered_gtf!\n");
 }
+

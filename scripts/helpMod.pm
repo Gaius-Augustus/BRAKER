@@ -13,7 +13,7 @@ use Cwd;
 use Cwd 'abs_path';
 use File::Spec::Functions qw(rel2abs);
 use File::Basename qw(dirname);
-
+use File::Path qw(rmtree);
 ######################################################################################
 # extract DNA sequence of CDS in gtf from genome fasta file, write to CDS fasta file #
 ######################################################################################
@@ -459,5 +459,20 @@ sub uptodate {
     return ( $latestInMtime <= $earliestOutMtime );
 }
 
+##########################################################
+# exit braker after deleting AUGUSTUS parameter directory
+# use instead of exit(1) and die() after creating of
+# directory and before first real etraining
+##########################################################
+sub clean_abort {
+    my $configDir = shift;
+    my $useexisting = shift;
+    my $message = shift;
+    if (-d $configDir && not($useexisting)) {
+        rmtree( ["$configDir"] ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $configDir!\n");
+    }
+    print STDERR $message;
+    exit(1);
+}
 
 1;
