@@ -69,12 +69,14 @@ sub PrintGenes {
                 $transcripts{$tx}->{'found'} = 1;
                 my $inJg = 0;
                 foreach my $jgid (keys %jg){
-                    if( ( $transcripts{$tx}->{'start'} == $jg{$jgid}->{'start'} ) && ( $transcripts{$tx}->{'end'} == $jg{$jgid}->{'end'} ) ) {
-                        $inJg = 1;
-                        last;
+                    if(defined($jg{$jgid}->{'start'}) && defined($jg{$jgid}->{'end'})){
+                        if( ( $transcripts{$tx}->{'start'} == $jg{$jgid}->{'start'} ) && ( $transcripts{$tx}->{'end'} == $jg{$jgid}->{'end'} ) ) {
+                            $inJg = 1;
+                            last;
+                        }
                     }
                 }
-                if ($inJg == 1 ) {
+                if ($inJg == 0 ) {
                     foreach (@{$transcripts{$tx}->{'lines'}}){
                         print $OUT $_;
                         print "I got it\n";
