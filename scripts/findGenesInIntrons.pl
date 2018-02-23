@@ -54,8 +54,22 @@ ParseCMD();
 CheckBeforeRun();
 ReadGff();
 
-
-
+# ------------------------------------------------
+sub PrintGenes {
+    open (my $OUT, ">", $out_gff_file)
+        or die("$!, error on open file $out_gff_file!\n");
+    foreach my $tx ( keys %transcripts){
+        foreach(@{$introns{$transcripts{$tx}->{'locus'}}}){
+            if ( ( $transcripts{$tx}->{'start'} >= $_->{'start'} )&& ($transcripts{$tx}->{'end'} <= $_->{'end'} ) && ($transcripts{$tx}->{'found'} == 0) ) {
+                $transcripts{$tx}->{'found'} = 1;
+                foreach (@{$transcripts{$tx}->{'lines'}}){
+                    print $OUT $_;
+                }
+            }
+        }
+    }
+    close($OUT) or die("$!, error on close file $out_gff_file!\n");
+}
 
 # ------------------------------------------------
 sub ReadGff {
@@ -65,12 +79,15 @@ sub ReadGff {
         if( $_ =~ m/transcript_id \"(\S+)\"/){
             my @t = split(/\t/);
             if($t[2] eq 'start_codon' && $t[6] eq '+') {
-                $transcripts{$t[0]}{'start'} = $t[3];
+                $transcripts{$1}{'start'} = $t[3];
             }elsif($t[2] eq 'start_codon' && $t[6] eq '-'){
-                $transcripts{$t[0]}{'end'} = $t[4];
+                $transcripts{$1}{'end'} = $t[4];
             }
-            if(not(defined($transcripts{$t[0]}{'locus'}))){
-                $transcripts{$t[0]}{'locus'} = $t[0];
+            if(not(defined($transcripts{$1}{'locus'}))){
+                $transcripts{$1}{'locus'} = $t[0];
+            }
+            if(not(defined($transcripts{$1}{'found'}))){
+                $transcripts{$1}{'found'} = 0;
             }
             if($t[2] eq 'intron'){
                 my %intron;
@@ -78,7 +95,7 @@ sub ReadGff {
                 $intron{'end'} = $t[4];
                 push( @{$introns{$t[0]}}, \%intron);
             }
-            push (@{$transcripts{$t[0]}{'lines'}}, $_);
+            push (@{$transcripts{$1}{'lines'}}, $_);
         }
 
     }
