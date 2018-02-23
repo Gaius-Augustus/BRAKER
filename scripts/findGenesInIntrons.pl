@@ -53,6 +53,7 @@ Usage() if ( @ARGV < 1 );
 ParseCMD();
 CheckBeforeRun();
 ReadGff();
+PrintGenes();
 
 # ------------------------------------------------
 sub PrintGenes {
