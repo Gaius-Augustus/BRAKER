@@ -63,7 +63,22 @@ sub ReadGff {
         or die("$!, error on open file $in_gff_file!\n");
     while (<$IN>) {
         if( $_ =~ m/transcript_id \"(\S+)\"/){
-            my @t = split(/\t/;)
+            my @t = split(/\t/);
+            if($t[2] eq 'start_codon' && $t[6] eq '+') {
+                $transcripts{$t[0]}{'start'} = $t[3];
+            }elsif($t[2] eq 'start_codon' && $t[6] eq '-'){
+                $transcripts{$t[0]}{'end'} = $t[4];
+            }
+            if(not(defined($transcripts{$t[0]}{'locus'}))){
+                $transcripts{$t[0]}{'locus'} = $t[0];
+            }
+            if($t[2] eq 'intron'){
+                my %intron;
+                $intron{'start'} = $t[3];
+                $intron{'end'} = $t[4];
+                push( @{$introns{$t[0]}}, \%intron);
+            }
+            push (@{$transcripts{$t[0]}{'lines'}}, $_);
         }
 
     }
