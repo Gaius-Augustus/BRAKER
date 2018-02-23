@@ -60,10 +60,12 @@ sub PrintGenes {
         or die("$!, error on open file $out_gff_file!\n");
     foreach my $tx ( keys %transcripts){
         foreach(@{$introns{$transcripts{$tx}->{'locus'}}}){
+            print "Intron is ".$_->{'start'}."\t".$_->{'end'}."\n";
             if ( ( $transcripts{$tx}->{'start'} >= $_->{'start'} )&& ($transcripts{$tx}->{'end'} <= $_->{'end'} ) && ($transcripts{$tx}->{'found'} == 0) ) {
                 $transcripts{$tx}->{'found'} = 1;
                 foreach (@{$transcripts{$tx}->{'lines'}}){
                     print $OUT $_;
+                    print "I got it\n";
                 }
             }
         }
