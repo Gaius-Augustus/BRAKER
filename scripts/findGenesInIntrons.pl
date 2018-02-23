@@ -77,9 +77,9 @@ sub PrintGenes {
                     }
                 }
                 if ($inJg == 0 ) {
+                    print "I got it\n";
                     foreach (@{$transcripts{$tx}->{'lines'}}){
                         print $OUT $_;
-                        print "I got it\n";
                     }
                 }
             }
