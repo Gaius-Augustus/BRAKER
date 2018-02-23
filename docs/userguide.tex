@@ -55,7 +55,7 @@ BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq or p
  \item genome and RNA-Seq file from the same species (see figure \ref{braker-main}A); this approach is suitable for RNA-Seq libraries with a good coverage of the transcriptome,
  \item genome file and database of proteins that may be of longer evolutionary distance to the target species (see figure \ref{braker-main}B; this approach is suitable if no RNA-Seq data is available, and if not protein data from a very closely related species is available,
  \item genome file and file with proteins of short evolutionary distance (see figure \ref{braker2-sidetrack}D); this approach is suitable if RNA-Seq data is not available and if the reference species is very closely related,
- \item genome and RNA-Seq file and proteins for short evolutionary distance (see figures \ref{braker2-sidetrack}C and \ref{braker2-sidetrack}E). In both cases, GeneMark-ET is trained supported by RNA-Seq data, and the resulting gene predictions are used for training AUGUSTUS. In approach C), protein alignment information is used in the gene prediction step with AUGUSTUS, only. In approach E), protein spliced alignment data is used to complement the training set for AUGUSTUS. The latter approach is in particular suitable if RNA-Seq data does not produce a sufficiently high number of training gene structures for AUGUSTUS, and if a very closely related and already annotated species is available.
+ \item genome and RNA-Seq file and proteins of short evolutionary distance (see figures \ref{braker2-sidetrack}C and \ref{braker2-sidetrack}E). In both cases, GeneMark-ET is trained supported by RNA-Seq data, and the resulting gene predictions are used for training AUGUSTUS. In approach C), protein alignment information is used in the gene prediction step with AUGUSTUS, only. In approach E), protein spliced alignment data is used to complement the training set for AUGUSTUS. The latter approach is in particular suitable if RNA-Seq data does not produce a sufficiently high number of training gene structures for AUGUSTUS, and if a very closely related and already annotated species is available.
 \end{itemize}
 
 \begin{figure}
@@ -93,6 +93,7 @@ At the time of release, this BRAKER2 version was tested with:
    \item  GenomeThreader 1.1.6
    \item  Spaln 2.3.1
    \item  Exonerate 2.2.0
+   \item  NCBI BLAST+ xxx
 \end{itemize}
 
 \section{BRAKER2}
@@ -113,7 +114,7 @@ BRAKER2 is implemented in Perl. Running BRAKER2 requires a Linux-system with \te
 				\item \texttt{YAML}
 \end{itemize}
 
-   	On Ubuntu, for example, install the modules with CPANminus: \texttt{cpanm [Module::Name]}.
+   	On Ubuntu, for example, install the modules with CPANminus\footnote{install with \texttt{sudo apt-get install cpanminus}}: \texttt{sudo cpanm [Module::Name]}, e.g. \texttt{sudo cpanm Hash::Merge}.
 
    BRAKER2 also uses a Perl module \texttt{helpMod.pm} that is not available on CPAN. This module is 
    part of the BRAKER2 release and does not require separate installation.  
@@ -248,14 +249,30 @@ Download BAMTOOLS (e.g.~\texttt{git clone \url{https://github.com/pezmaster31/ba
    make
  \end{verbatim}
 
- If already in your \texttt{\$PATH} variable, BRAKER2 will find bamtools, automatically. Otherwise, BRAKER2 can locate the bamtools binary either by using an environment variable \texttt{\$BAMTOOLS\_PATH}, or by taking a command line argument (\texttt{--BAMTOOLS\_PATH=/your\_path\_to\_bamtools/bin/}). In order to set the environment variable e.g.~for your current bash session, type:
+ If already in your \texttt{\$PATH} variable, BRAKER2 will find bamtools, automatically. Otherwise, BRAKER2 can locate the bamtools binary either by using an environment variable \texttt{\$BAMTOOLS\_PATH}, or by taking a command line argument (\texttt{--BAMTOOLS\_PATH=/your\_path\_to\_bamtools/bin/}\footnote{The binary may e.g.~reside in bamtools/build/src/toolkit}). In order to set the environment variable e.g.~for your current bash session, type:
 
     \begin{verbatim}
         export BAMTOOLS_PATH=/your_path_to_bamtools/bin/ 
     \end{verbatim} 
 
     Add the above line to a startup script (e.g.~\texttt{$\sim$/.bashrc}) in order to set the environment variable for all bash sessions.
+
     
+\subsubsection{NCBI BLAST+}
+
+On Ubuntu, install with \texttt{sudo apt-get install ncbi-blast+}.
+
+If already in your \texttt{\$PATH} variable, BRAKER2 will find blastp, automatically. Otherwise, BRAKER2 can locate the blastp binary either by using an environment variable \texttt{\$BLAST\_PATH}, or by taking a command line argument (\texttt{--BLAST\_PATH=/your\_path\_to\_blast/}). In order to set the environment variable e.g.~for your current bash session, type:
+
+    \begin{verbatim}
+        export BLAST_PATH=/your_path_to_blast/ 
+    \end{verbatim} 
+
+    Add the above line to a startup script (e.g.~\texttt{$\sim$/.bashrc}) in order to set the environment variable for all bash sessions.
+
+
+
+
 \subsection{Optional tools}
 
 \subsubsection{Samtools}
