@@ -311,7 +311,7 @@ braker.pl [OPTIONS] --genome=genome.fa --prot_seq=proteins.fa --prg=gth \
 
 ENDUSAGE
 
-my $version = 2.0.5;    # braker.pl version number
+my $version = 2.0.6;    # braker.pl version number
 my $logString;          # stores log messages produced before opening log file
 my $prtStr;
 my $alternatives_from_evidence
