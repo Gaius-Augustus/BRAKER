@@ -77,8 +77,8 @@ sub PrintGenes {
 
 sub RemoveIncompletes {
     foreach my $tx ( keys %transcripts){
-        if(not(defined($transcripts{$gx}->{'start'})) or not(defined($transcripts{$gx}->{'end'}))) {
-            delete $transcripts{$gx};
+        if(not(defined($transcripts{$tx}->{'start'})) or not(defined($transcripts{$tx}->{'end'}))) {
+            delete $transcripts{$tx};
         }
     }
 }
