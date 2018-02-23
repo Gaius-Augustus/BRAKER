@@ -3109,7 +3109,7 @@ sub augustus {
     my $cHintJobs              = 0;
     my $cInitJobs              = 0;
 
-    if ( not( -d $augustus_dir ) ) {
+    if ( not( -d $augustus_dir ) && $CPU > 1) {
         print LOG "\# "
             . (localtime)
             . ": Creating directory for storing AUGUSTUS files (hints, temporarily) $augustus_dir.\n";
@@ -3117,7 +3117,7 @@ sub augustus {
     }
 
     if ($ab_initio) {
-        if ( not( -d $augustus_dir_ab_initio ) ) {
+        if ( not( -d $augustus_dir_ab_initio ) && $CPU > 1) {
             print LOG "\# "
                 . (localtime)
                 . ": Creating directory for storing AUGUSTUS files (ab initio, temporarily) $augustus_dir_ab_initio.\n";
@@ -6552,7 +6552,7 @@ sub eval_gene_pred {
     print LOG "\# "
         . (localtime)
         . ": Validating gtf of $firstStepFile, results are written to $secondStepFile\n";
-    $cmdString = "$validate_gtf -c -f $firstStepFile";
+    $cmdString = "$validate_gtf -c -f $firstStepFile &> /dev/null";
     print LOG "$cmdString\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
     print LOG "\# "
