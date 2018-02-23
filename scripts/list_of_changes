@@ -1,4 +1,12 @@
 # ----------------------------------------------------------------------
+# | parallelized AUGUSTUS better   | braker.pl            | 23.2.2018  |
+# | filter training genes for      |                      |            |
+# | redundancy                     |                      |            |
+# | improve flanking noncoding     |                      |            |
+# | region of AUGUSTUS training    |                      |            |
+# | genes                          |                      |            |
+# | fixing various user reported   |                      |            |
+# | bugs                           |                      |            |
 # | added ab initio predictions    | braker.pl            | 9.2.2018   |
 # | fixed usage bugs with gth      | (Hoff)               |            |
 # | changed code arrangement for   |                      |            |
