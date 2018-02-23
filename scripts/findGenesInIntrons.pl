@@ -53,6 +53,7 @@ Usage() if ( @ARGV < 1 );
 ParseCMD();
 CheckBeforeRun();
 ReadGff();
+RemoveIncompletes();
 PrintGenes();
 
 # ------------------------------------------------
@@ -74,6 +75,14 @@ sub PrintGenes {
     close($OUT) or die("$!, error on close file $out_gff_file!\n");
 }
 
+sub RemoveIncompletes {
+    foreach my $tx ( keys %transcripts){
+        if(not(defined($transcripts{$gx}->{'start'})) or not(defined($transcripts{$gx}->{'end'}))) {
+            delete $transcripts{$gx};
+        }
+    }
+}
+
 # ------------------------------------------------
 sub ReadGff {
     open( my $IN, "<", $in_gff_file )
@@ -85,6 +94,11 @@ sub ReadGff {
                 $transcripts{$1}{'start'} = $t[3];
             }elsif($t[2] eq 'start_codon' && $t[6] eq '-'){
                 $transcripts{$1}{'end'} = $t[4];
+            }
+            if($t[2] eq 'stop_codon' && $t[6] eq '+') {
+                $transcripts{$1}{'end'} = $t[4];
+            }elsif($t[2] eq 'stop_codon' && $t[6] eq '-'){
+                $transcripts{$1}{'start'} = $t[3];
             }
             if(not(defined($transcripts{$1}{'locus'}))){
                 $transcripts{$1}{'locus'} = $t[0];
