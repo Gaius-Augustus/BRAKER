@@ -31,6 +31,7 @@ my $work_dir = cwd;
 
 # ------------------------------------------------
 my $in_gff_file              = '';
+my $jg_gff_file              = '';
 my $out_gff_file             = '';
 
 # ------------------------------------------------
@@ -48,11 +49,13 @@ my %introns;
 #                 end
 #                 locus
 my %transcripts;
+my %jg;
 
 Usage() if ( @ARGV < 1 );
 ParseCMD();
 CheckBeforeRun();
 ReadGff();
+ReadJg();
 RemoveIncompletes();
 PrintGenes();
 
@@ -64,6 +67,13 @@ sub PrintGenes {
         foreach(@{$introns{$transcripts{$tx}->{'locus'}}}){
             if ( ( $transcripts{$tx}->{'start'} >= $_->{'start'} )&& ($transcripts{$tx}->{'end'} <= $_->{'end'} ) && ($transcripts{$tx}->{'found'} == 0) ) {
                 $transcripts{$tx}->{'found'} = 1;
+                my $inJg = 0;
+                foreach my $jgid (keys %jg){
+                    if( ( $transcripts{$tx}->{'start'} == $jg{$jgid}->{'start'} ) && ( $transcripts{$tx}->{'end'} == $jg{$jgid}->{'end'} ) ) {
+                        $inJg = 1;
+                        last;
+                    }
+                }
                 foreach (@{$transcripts{$tx}->{'lines'}}){
                     print $OUT $_;
                     print "I got it\n";
@@ -119,6 +129,32 @@ sub ReadGff {
 }
 
 # ------------------------------------------------
+sub ReadJg {
+    open( my $IN, "<", $jg_gff_file )
+        or die("$!, error on open file $jg_gff_file!\n");
+    while (<$IN>) {
+        if( $_ =~ m/transcript_id \"(\S+)\"/){
+            my @t = split(/\t/);
+            if($t[2] eq 'start_codon' && $t[6] eq '+') {
+                $jg{$1}{'start'} = $t[3];
+            }elsif($t[2] eq 'start_codon' && $t[6] eq '-'){
+                $jg{$1}{'end'} = $t[4];
+            }
+            if($t[2] eq 'stop_codon' && $t[6] eq '+') {
+                $jg{$1}{'end'} = $t[4];
+            }elsif($t[2] eq 'stop_codon' && $t[6] eq '-'){
+                $jg{$1}{'start'} = $t[3];
+            }
+            if(not(defined($jg{$1}{'locus'}))){
+                $jg{$1}{'locus'} = $t[0];
+            }
+        }
+
+    }
+    close($IN) or die("$!, error on close file $jg_gff_file!\n");
+}
+
+# ------------------------------------------------
 sub CheckBeforeRun {
     print "check before run\n" if $debug;
 
@@ -157,6 +193,7 @@ sub ParseCMD {
     my $opt_results = GetOptions(
         'in_gff=s'                   => \$in_gff_file,
         'out_gff=s'                  => \$out_gff_file,
+        'jg_gff=s'                   => \$jg_gff_file,
         'verbose'                    => \$v,
         'debug'                      => \$debug
     );
@@ -171,6 +208,7 @@ sub ParseCMD {
     # save informaton for debug
     $cfg->{'d'}->{'in_gff_file'}              = $in_gff_file;
     $cfg->{'d'}->{'out_gff_file'}             = $out_gff_file;
+    $cfg->{'d'}->{'jg_gff_file'}             = $jg_gff_file;
     $cfg->{'d'}->{'v'}                        = $v;
     $cfg->{'d'}->{'debug'}                    = $debug;
     $cfg->{'d'}->{'cmd'}                      = $cmd;
@@ -185,6 +223,7 @@ Usage:  $0
 
 Required options:
   --in_gff                     [name] name of file with gtf format gene predictions
+  --jg_gff                     [name] name of file with corresponding joingenes predictions
   --out_gff                    [name] output (gtf format)
 
 Developer options:
