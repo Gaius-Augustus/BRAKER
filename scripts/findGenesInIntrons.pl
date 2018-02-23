@@ -171,6 +171,10 @@ sub CheckBeforeRun {
         print STDERR "Error: required file name is missing $0:  option --out_gff\n";
         exit 1;
     }
+    if ( !$jg_gff_file ) {
+        print STDERR "Error: required file name is missing $0:  option --jg_gff\n";
+        exit 1;
+    }
 }
 
 # ------------------------------------------------
