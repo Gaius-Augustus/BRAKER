@@ -70,7 +70,7 @@ sub PrintGenes {
                 my $inJg = 0;
                 foreach my $jgid (keys %jg){
                     if(defined($jg{$jgid}->{'start'}) && defined($jg{$jgid}->{'end'})){
-                        if( ( $transcripts{$tx}->{'start'} == $jg{$jgid}->{'start'} ) && ( $transcripts{$tx}->{'end'} == $jg{$jgid}->{'end'} ) ) {
+                        if( ( $transcripts{$tx}->{'start'} == $jg{$transcripts{$tx}->{'locus'}}{$jgid}->{'start'} ) && ( $transcripts{$tx}->{'end'} == $jg{$transcripts{$tx}->{'locus'}}{$jgid}->{'end'} ) ) {
                             $inJg = 1;
                             last;
                         }
@@ -140,17 +140,17 @@ sub ReadJg {
         if( $_ =~ m/transcript_id \"(\S+)\"/){
             my @t = split(/\t/);
             if($t[2] eq 'start_codon' && $t[6] eq '+') {
-                $jg{$1}{'start'} = $t[3];
+                $jg{$t[0]}{$1}{'start'} = $t[3];
             }elsif($t[2] eq 'start_codon' && $t[6] eq '-'){
-                $jg{$1}{'end'} = $t[4];
+                $jg{$t[0]}{$1}{'end'} = $t[4];
             }
             if($t[2] eq 'stop_codon' && $t[6] eq '+') {
-                $jg{$1}{'end'} = $t[4];
+                $jg{$t[0]}{$1}{'end'} = $t[4];
             }elsif($t[2] eq 'stop_codon' && $t[6] eq '-'){
-                $jg{$1}{'start'} = $t[3];
+                $jg{$t[0]}{$1}{'start'} = $t[3];
             }
             if(not(defined($jg{$1}{'locus'}))){
-                $jg{$1}{'locus'} = $t[0];
+                $jg{$t[0]}{$1}{'locus'} = $t[0];
             }
         }
 
