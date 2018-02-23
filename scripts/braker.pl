@@ -4795,15 +4795,21 @@ sub gth2gtf {
                 . $gtfLineLastColField[1] )
             {
                 print GTHGTF
-                    "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\tgene_id \"$gtfLine[0]_g\"; transcript_id \"$gtfLine[0]_t"
-                    . "_"
-                    . $geneId . "_"
-                    . $gtfLineLastColField[1] . "\"\n";
+                    "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\tgene_id \"$gtfLine[0]_g"
+                        . "_"
+                        . $geneId . "_"
+                        . $gtfLineLastColField[1] . "\"; transcript_id \"$gtfLine[0]_t"
+                        . "_"
+                        . $geneId . "_"
+                        . $gtfLineLastColField[1] . "\";\n";
                 print GTHGTF
-                    "$gtfLine[0]\t$gtfLine[1]\texon\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\tgene_id \"$gtfLine[0]_g\"; transcript_id \"$gtfLine[0]_t"
-                    . "_"
-                    . $geneId . "_"
-                    . $gtfLineLastColField[1] . "\"\n";
+                    "$gtfLine[0]\t$gtfLine[1]\texon\t$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t$gtfLine[7]\tgene_id \"$gtfLine[0]_g"
+                        . "_"
+                        .   $geneId . "_"
+                        . $gtfLineLastColField[1] . "\"; transcript_id \"$gtfLine[0]_t"
+                        . "_"
+                        . $geneId . "_"
+                        . $gtfLineLastColField[1] . "\";\n";
             }
         }
     }
@@ -6539,12 +6545,14 @@ sub eval_gene_pred {
     open( AUG, "<", $gtfFile ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gtfFile!\n");
     while (<AUG>) {
         my @t = split(/\t/);
-        if (   ( $t[2] eq "CDS" )
-            or ( $t[2] eq "exon" )
-            or ( $t[2] eq "start_codon" )
-            or ( $t[2] eq "UTR" ) )
-        {
-            print FIRST $_;
+        if(scalar(@t)==9){
+            if (   ( $t[2] eq "CDS" )
+                or ( $t[2] eq "exon" )
+                or ( $t[2] eq "start_codon" )
+                or ( $t[2] eq "UTR" ) )
+            {
+                print FIRST $_;
+            }
         }
     }
     close(AUG)   or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gtfFile!\n");
