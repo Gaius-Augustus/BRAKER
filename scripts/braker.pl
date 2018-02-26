@@ -114,7 +114,9 @@ FREQUENTLY USED OPTIONS
 --softmasking                       Softmasking option for soft masked genome
                                     files. Set to 'on' or '1'
 --epmode                            Run GeneMark-EP with intron hints provided
-                                    from --hints=proteinhints.gff
+                                    from protein data
+--etpmode                           Run GeneMark-ETP with hints provided from
+                                    proteins and RNA-Seq data
 --gff3                              Output in GFF3 format (default is gtf
                                     format)
 --cores                             Specifies the maximum number of cores that
@@ -239,6 +241,9 @@ EXPERT OPTIONS
                                     source)
 --skipGeneMark-EP                   Skip GeneMark-EP and use provided
                                     GeneMark-EP output (e.g. provided with
+                                    --geneMarkGtf=genemark.gtf)
+--skipGeneMark-ETP                  Skip GeneMark-ETP and use provided
+                                    GeneMark-ETP output (e.g. provided with
                                     --geneMarkGtf=genemark.gtf)
 --geneMarkGtf=file.gtf              If skipGeneMark-ET is used, braker will by
                                     default look in the working directory in
@@ -375,6 +380,7 @@ my $SAMTOOLS_PATH_OP;    # path to samtools executable
 my $scriptPath = dirname($0); # path of directory where this script is located
 my $skipGeneMarkET = 0; # skip GeneMark-ET and use provided GeneMark-ET output
 my $skipGeneMarkEP = 0; # skip GeneMark-EP and use provided GeneMark-EP output
+my $skipGeneMarkETP = 0;
 my $skipoptimize   = 0; # skip optimize parameter step
 my $skipAllTraining = 0;    # skip all training (including no GeneMark-EX run)
 my $species;                # species name
@@ -405,8 +411,8 @@ my @allowedHints = (
     "ass",     "dss",     "exonpart", "exon",
     "CDSpart", "UTRpart", "nonexonpart"
 );
-
 # REMOVE Intron when GeneMark introns format has been fixed!
+
 my $crf;     # flag that determines whether CRF training should be tried
 my $nice;    # flag that determines whether system calls should be executed
              # with bash nice (default nice value)
@@ -435,8 +441,7 @@ my $trainFromGth;   # No GeneMark-Training, train AUGUSTUS from GenomeThreader
                     # alignments, automatically sets --gth2traingenes
 my $gthTrainGeneFile;    # gobally accessible file name variable
 my $EPmode  = 0;    # flag for executing GeneMark-EP instead of GeneMark-ET
-my $EPTmode = 0
-    ;  # flag for executing GeneMark-EPT instead of GeneMark-EP or GeneMark-ET
+my $ETPmode = 0;  # flag for executing GeneMark-EPT
 my $GeneMarkIntronThreshold
     ;    # use this value to screen hintsfile for GeneMark-EX. If few
          # hints with multiplicity higher than this value are
@@ -533,6 +538,7 @@ GetOptions(
     'SAMTOOLS_PATH=s'              => \$SAMTOOLS_PATH_OP,
     'skipGeneMark-ET!'             => \$skipGeneMarkET,
     'skipGeneMark-EP!'             => \$skipGeneMarkEP,
+    'skipGeneMark-ETP!'            => \$skipGeneMarkETP,
     'skipOptimize!'                => \$skipoptimize,
     'skipAllTraining!'             => \$skipAllTraining,
     'species=s'                    => \$species,
@@ -554,6 +560,7 @@ GetOptions(
     'gth2traingenes!'              => \$gth2traingenes,
     'trainFromGth!'                => \$trainFromGth,
     'epmode!'                      => \$EPmode,
+    'etpmode!'                     => \$ETPmode,
     'AUGUSTUS_ab_initio!'          => \$ab_initio,
     'eval=s'                       => \$annot,
     'version!'                     => \$printVersion
@@ -627,7 +634,14 @@ if ( not($trainFromGth) ) {
         ; # skip setting GeneMark path if no GeneMark training will be performed
 }
 else {
-    $gth2traingenes = 1;    # enable if no genemark training is performed
+    if ( not ( defined ($gth2traingenes) ) ) {
+            $prtStr
+            = "\# "
+            . (localtime)
+            . ": WARNING: --gth2traingenes was not enabled, will enable this flag, now, because no GeneMark training will be performed!\n";
+        $logString .= $prtStr;
+        $gth2traingenes = 1;    # enable if no genemark training is performed
+    }
 }
 set_BAMTOOLS_PATH();
 set_SAMTOOLS_PATH();
@@ -672,10 +686,11 @@ if ( !-d $rootDir ) {
 
 # set other directories
 if ( $wdGiven == 1 ) {
-    if ( $EPmode == 0 ) {
+    if ( $EPmode == 0 && $ETPmode == 0) {
         $genemarkDir = "$rootDir/GeneMark-ET";
-    }
-    else {
+    }elsif ( $ETPmode == 1 ) {
+        $genemarkDir = "$rootDir/GeneMark-ETP"
+    } else {
         $genemarkDir = "$rootDir/GeneMark-EP";
     }
     $parameterDir  = "$rootDir/species";
@@ -683,10 +698,11 @@ if ( $wdGiven == 1 ) {
     $errorfilesDir = "$rootDir/errors";
 }
 else {
-    if ( $EPmode == 0 ) {
+    if ( $EPmode == 0 && $ETPmode == 0) {
         $genemarkDir = "$rootDir/$species/GeneMark-ET";
-    }
-    else {
+    } elsif ( $ETPmode == 1 ) {
+        $genemarkDir = "$rootDir/$species/GeneMark-ETP"
+    } else {
         $genemarkDir = "$rootDir/$species/GeneMark-EP";
     }
     $parameterDir  = "$rootDir/$species/species";
@@ -696,7 +712,7 @@ else {
 
 # check whether genemark.gtf file exists, if skipGeneMark-ET option is used
 # this cannot go into check options because directories are not defined there, yet
-if ($skipGeneMarkET) {
+if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 ) {
     $prtStr = "\# "
             . (localtime)
             . ": REMARK: The GeneMark-ET step will be skipped.\n";
@@ -722,8 +738,7 @@ if ($skipGeneMarkET) {
             exit(1);
         }
     }
-}
-if ( $skipGeneMarkEP && $EPmode == 1 ) {
+}elsif ( $skipGeneMarkEP && $EPmode == 1 && $ETPmode == 0) {
     $prtStr = "REMARK: The GeneMark-EP step will be skipped.\n";
     $logString .= $prtStr;
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -750,14 +765,51 @@ if ( $skipGeneMarkEP && $EPmode == 1 ) {
         }
         exit(1);
     }
-}
-elsif ($skipGeneMarkEP && not($trainFromGth)) {
+}elsif( $skipGeneMarkETP && $EPmode == 0 && $ETPmode == 1 ){
+    $prtStr = "REMARK: The GeneMark-ETP step will be skipped.\n";
+    $logString .= $prtStr;
+    if (    not( -f "$genemarkDir/genemark.gtf" )
+        and not( -f $geneMarkGtf ) )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "The --skipGeneMark-ETP option was used, but there is "
+            . "no genemark.gtf file under $genemarkDir and no valid file --geneMarkGtf=... "
+            . "was specified.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        if ( defined($geneMarkGtf) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The specified geneMarkGtf=... file was "
+                . "$geneMarkGtf. This is not an accessible file.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+        }
+        exit(1);
+    }
+}elsif ( ( $skipGeneMarkEP && not($trainFromGth) ) || ( $skipGeneMarkETP && not ($trainFromGth) ) ) {
     $prtStr
         = "\# "
         . (localtime)
         . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "Option --skipGeneMarkEP cannot be used when BRAKER is "
+        . "Option --skipGeneMarkEP/--skipGeneMarkETP cannot be used when BRAKER is "
         . "started in GeneMark-ET mode.\n";
+    $logString .= $prtStr;
+    print STDERR $logString;
+    exit(1);
+}
+
+if( $EPmode == 1 && $ETPmode == 1 ) {
+    $prtStr
+        = "\# "
+        . (localtime)
+        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        . "--epmode and --eptmode cannot be set simultaneously!\n";
     $logString .= $prtStr;
     print STDERR $logString;
     exit(1);
@@ -942,25 +994,16 @@ if(! $trainFromGth ) {
     }
 }
 if ( @prot_seq_files or @prot_aln_files ) {
-    make_prot_hints(); # TODO: check whether multiplicity for introns is summarized!
+    make_prot_hints();
 }
 if (@hints) {
     add_other_hints();
 }
 
 if (! $trainFromGth ) {
-    if ( @prot_seq_files or @prot_aln_files or @hints) {
-        separateHints();
-    }
-    else {
-        print LOG "\# "
-            . (localtime)
-            . ":  Creating softlink from $genemark_hintsfile to $hintsfile\n";
-        $cmdString = "ln -s $hintsfile $genemark_hintsfile";
-        print LOG "$cmdString\n";
-        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
-    }
+    getGeneMarkHints();
 }
+
 if ( $skipAllTraining == 0 ) {
     if ( not($trainFromGth) ) {
         if ( $EPmode == 0 ) {
@@ -969,11 +1012,15 @@ if ( $skipAllTraining == 0 ) {
             filterGeneMark();
         }
         elsif ( $EPmode == 1 ) {
-
             # remove reformatting of hintsfile, later!
             format_ep_hints();
             checkGeneMarkHints();
             GeneMark_EP();
+            filterGeneMark();
+        }elsif ( $ETPmode == 1 ) {
+            createEvidenceGff();
+            checkGeneMarkHints();
+            GeneMark_ETP();
             filterGeneMark();
         }
     }
@@ -1040,48 +1087,6 @@ if (defined($extrinsicCfgFile)
 }
 
 augustus("off");    # run augustus witout UTR
-if ($ab_initio) {
-    if (!uptodate(
-            ["$otherfilesDir/augustus.ab_initio.gff"],
-            ["$otherfilesDir/augustus.ab_initio.aa"]
-        )
-        || $overwrite
-        )
-    {
-        getAnnoFasta("$otherfilesDir/augustus.ab_initio.gff")
-            ;       # create protein sequence file
-    }
-    if (!uptodate(
-            ["$otherfilesDir/augustus.ab_initio.gff"],
-            ["$otherfilesDir/augustus.ab_initio.gtf"]
-        )
-        || $overwrite
-        )
-    {
-        make_gtf("$otherfilesDir/augustus.ab_initio.gff")
-            ;       # convert output to gtf and gff3 (if desired) format
-    }
-}
-if (!uptodate(
-        ["$otherfilesDir/augustus.hints.gff"],
-        ["$otherfilesDir/augustus.hints.aa"]
-    )
-    || $overwrite
-    )
-{
-    getAnnoFasta("$otherfilesDir/augustus.hints.gff")
-        ;           # create protein sequence file
-}
-if (!uptodate(
-        ["$otherfilesDir/augustus.hints.gff"],
-        ["$otherfilesDir/augustus.hints.gtf"]
-    )
-    || $overwrite
-    )
-{
-    make_gtf("$otherfilesDir/augustus.hints.gff")
-        ;           # convert output to gtf and gff3 (if desired) format
-}
 
 if ( $UTR eq "on" ) {
     train_utr();
@@ -1502,54 +1507,85 @@ sub checkHints {
     return $ret;
 }
 
-# split into two hints files: one for GeneMark with intron hints, only, and one for AUGUSTUS with
-# all hints
-sub separateHints {
-
-    # Find out whether $hintsfile contains anything but intron hints
+# GeneMark-EX only needs intron hints, AUGUSTUS may use all hints. This function creates a file
+# $genemark_hintsfile with intron hints only for GeneMark-EX
+sub getGeneMarkHints {
+    my $gm_hints_rnaseq = "$genemark_hintsfile.rnaseq";
+    my $gm_hints_prot = "$genemark_hintsfile.prot";
     print LOG "\n\# "
         . (localtime)
-        . ": Checking whether $hintsfile contains hints other than ";
-    print LOG "intron\n";
-    my $containsOtherTypes = 0;
+        . ": Filteringe intron hints for GeneMark from $hintsfile...\n";
     open (HINTS, "<", $hintsfile) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $hintsfile!\n");
+    open (OUTRNASEQ, ">", $gm_hints_rnaseq) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_hints_rnaseq!\n");
+    open (OUTPROT, ">", $gm_hints_prot) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_hints_prot!\n");
     while (<HINTS>) {
-        if(not ($_ =~ m/\tintron\t/) ){
-            $containsOtherTypes = 1;
-            last;
+        if ( $_ =~ m/\tintron\t.*src=E/ ) {
+            print OUTRNASEQ $_;
+        }elsif ( $_ =~ m/\tintron\t/i && $_ =~ m/src=P/ ) {
+            $_ =~ s/intron/Intron/;
+            print OUTPROT $_;
         }
     }
+    close (OUTRNASEQ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_hints_rnaseq!\n");
+    close (OUTPROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_hints_prot!\n");
     close (HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $hintsfile!\n");
-    if ( $containsOtherTypes > 0 ) {
-        print LOG "\n\# "
-            . (localtime)
-            . ":  Hint types other than intron are contained in ";
-        print LOG "$hintsfile\nExtracting intron hints for GeneMark.\n";
-
-        # if ET mode, take only RNA-Seq introns, src b2h
-        if ( $EPmode == 0 ) {
-            $cmdString
-                = "grep intron $hintsfile | grep b2h > $genemark_hintsfile";
+    if ( -s $gm_hints_rnaseq ) {
+        $perlCmdString = "perl ";
+        if ($nice) {
+            $perlCmdString .= "nice ";
         }
-        else {
- # FIX THIS ONCE GENEMARK OUTPUTS CORRECT HINTS FORMAT: # FIX Intron to intron
- # if in EP mode, take ProSplign intron hints
-            $cmdString
-                = "grep Intron $hintsfile | grep ProSplign > $genemark_hintsfile\n";
-            # also append protein intron hints from other tools
-            $cmdString .= "grep intron $hintsfile | | grep -v ProSplign | grep \"src=P;\" | perl -pe 's/intron/Intron/' >> $genemark_hintsfile\n"
-        }
-        print LOG "$cmdString\n\n";
-        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+        $string = find(
+            "join_mult_hints.pl",       $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $perlCmdString .= "cat $gm_hints_rnaseq | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -k 3,3 | sort -s -k 1,1 | $string > $gm_hints_rnaseq.tmp";
+        print LOG "$perlCmdString\n";
+        system($perlCmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
     }
-    else {
-        print LOG "\n\# "
-            . (localtime)
-            . ":  No other hint types found. Creating softlink from ";
-        print LOG "$genemark_hintsfile to $hintsfile\n";
-        $cmdString = "ln -s $hintsfile $genemark_hintsfile";
+    if( -s $gm_hints_prot ) {
+        $perlCmdString = "perl ";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $string = find(
+            "join_mult_hints.pl",       $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $perlCmdString .= "cat $gm_hints_prot | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -k 3,3 | sort -s -k 1,1 | $string > $gm_hints_prot.tmp";
+        print LOG "$perlCmdString\n";
+        system($perlCmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+    }
+
+    if( $EPmode == 0 && $ETPmode == 0 ) {
+        $cmdString = "mv $gm_hints_rnaseq.tmp $genemark_hintsfile";
         print LOG "$cmdString\n";
         system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+    }elsif ( $EPmode == 1 ) {
+        $cmdString = "mv $gm_hints_prot.tmp $genemark_hintsfile";
+        print LOG "$cmdString\n";
+        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+    }elsif ( $ETPmode == 1 ) {
+        $cmdString = "mv $gm_hints_rnaseq.tmp $genemark_hintsfile";
+        print LOG "$cmdString\n";
+        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+        $cmdString = "cat $gm_hints_prot.tmp >> $genemark_hintsfile";
+        print LOG "$cmdString\n";
+        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+    } else {
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\n");
+    }
+
+    if( -e $gm_hints_rnaseq ) {
+            unlink ($gm_hints_rnaseq) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $gm_hints_rnaseq\n");
+    }
+    if( -e $gm_hints_prot ) {
+        unlink ($gm_hints_prot) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $gm_hints_prot\n");
+    }
+    if( -e "$gm_hints_prot.tmp"){
+        unlink ("$gm_hints_prot.tmp") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $gm_hints_prot.tmp\n");
+    }
+    if( -e "$gm_hints_rnaseq.tmp"){
+        unlink ("$gm_hints_rnaseq.tmp") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $gm_hints_rnaseq.tmp\n");
     }
 }
 
@@ -1636,7 +1672,7 @@ sub join_mult_hints {
 sub checkGeneMarkHints {
     my $nIntrons               = 0;
     my $nIntronsAboveThreshold = 0;
-    if ( $EPmode == 1 ) {
+    if ( $EPmode == 1 || $ETPmode == 1 ) {
         $GeneMarkIntronThreshold = 4;
     }
     else {
@@ -1766,6 +1802,54 @@ sub GeneMark_EP {
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running GeneMark-EP\n";
+            print LOG "$perlCmdString\n\n";
+            system("$perlCmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            $cmdString = "cd $rootDir";
+            print LOG "\# "
+                . (localtime)
+                . ": change to working directory $rootDir\n";
+            print LOG "$cmdString\n\n";
+            chdir $rootDir
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $rootDir.\n");
+        }
+    }
+}
+
+sub GeneMark_ETP {
+    if ( !$skipGeneMarkETP ) {
+        if (!uptodate(
+                [ $genome, $genemark_hintsfile ],
+                ["$genemarkDir/genemark.gtf", "$genemarkDir/evidence.gtf"]
+            )
+            || $overwrite
+            )
+        {
+            $cmdString = "cd $genemarkDir";
+            print LOG "\n\# "
+                . (localtime)
+                . ": changing into GeneMark-ETP directory $genemarkDir\n";
+            print LOG "$cmdString\n\n";
+            chdir $genemarkDir
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $genemarkDir.\n");
+            $string        = "$GENEMARK_PATH/gmes_petap.pl";
+            $errorfile     = "$errorfilesDir/GeneMark-ETP.stderr";
+            $stdoutfile    = "$otherfilesDir/GeneMark-ETP.stdout";
+            $perlCmdString = "";
+
+            if ($nice) {
+                $perlCmdString .= "nice ";
+            }
+            $perlCmdString
+                .= "perl $string --verbose --seq $genome --max_intergenic 50000 --evidence $genemarkDir/evidence.gff --et_score 4 --ET $genemark_hintsfile --cores=$CPU";
+            if ($fungus) {
+                $perlCmdString .= " --fungus";
+            }
+            if ($soft_mask) {
+                $perlCmdString .= " --soft 1000";
+            }
+            $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
+            print LOG "\# " . (localtime) . ": Running GeneMark-ETP\n";
             print LOG "$perlCmdString\n\n";
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
@@ -3097,285 +3181,96 @@ sub training {
 sub augustus {
     my $localUTR = shift;
     $augpath = "$AUGUSTUS_BIN_PATH/augustus";
+    my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
     my @genome_files;
-    my $pm;
-    my $pm2;
-    my $aug_hints_out;
-    my $aug_hints_err;
-    my $aug_ab_initio_out;
-    my $aug_ab_initio_err;
+    my $genome_dir = "$otherfilesDir/genome_split";
     my $augustus_dir           = "$otherfilesDir/augustus_tmp";
     my $augustus_dir_ab_initio = "$otherfilesDir/augustus_ab_initio_tmp";
-    my $cHintJobs              = 0;
-    my $cInitJobs              = 0;
-
-    if ( not( -d $augustus_dir ) && $CPU > 1) {
-        print LOG "\# "
-            . (localtime)
-            . ": Creating directory for storing AUGUSTUS files (hints, temporarily) $augustus_dir.\n";
-        mkdir $augustus_dir or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $augustus_dir!\n");
-    }
-
-    if ($ab_initio) {
-        if ( not( -d $augustus_dir_ab_initio ) && $CPU > 1) {
-            print LOG "\# "
-                . (localtime)
-                . ": Creating directory for storing AUGUSTUS files (ab initio, temporarily) $augustus_dir_ab_initio.\n";
-            mkdir $augustus_dir_ab_initio or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $augustus_dir_ab_initio!\n");
-        }
-    }
-
+    my $hintId; # if several augustus runs, change this for each run
     if (!uptodate( [ $extrinsicCfgFile, $hintsfile, $genome ],
             ["$otherfilesDir/augustus.gff"] )
         || $overwrite
         )
     {
-# split genome file in smaller parts and use multiple parallel runs of augustus for prediction
         if ( $CPU > 1 ) {
-            print LOG "\# "
-                . (localtime)
-                . ": splitting genome file in smaller parts for parallel execution of AUGUSTUS prediction\n";
-            $string = find(
-                "splitMfasta.pl",       $AUGUSTUS_BIN_PATH,
-                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-            );
-            $errorfile = "$errorfilesDir/splitMfasta.stderr";
-
-            $perlCmdString = "";
-            if ($nice) {
-                $perlCmdString .= "nice ";
-            }
-            $perlCmdString
-                .= "perl $string $genome --outputpath=$augustus_dir 2>$errorfile";
-            print LOG "$perlCmdString\n";
-            system("$perlCmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
-
-            # rename files according to scaffold name
-            $cmdString
-                = "cd $augustus_dir; for f in genome.split.*; do NAME=`grep \">\" \$f`; mv \$f \${NAME#>}.fa; done; cd ..\n";
-            print LOG $cmdString;
-            system("$cmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
-            my @genome_files = `ls $augustus_dir`;
-            my %scaffFileNames;
-            foreach (@genome_files) {
-                chomp;
-                $_ =~ m/(.*)\.\w+$/;
-                $scaffFileNames{$1} = "$augustus_dir/$_";
-            }
-            print LOG "\# "
-                . (localtime)
-                . ": Split genome file in "
-                . scalar(@genome_files)
-                . " parts, finished.\n";
-            print LOG "\# "
-                . (localtime)
-                . ": creating $otherfilesDir/aug_hints.lst for AUGUSTUS jobs\n";
-            open( ALIST, ">", "$otherfilesDir/aug_hints.lst" )
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/aug_hints.lst!\n");
-            # make list for creating augustus jobs
-            while ( my ( $locus, $size ) = each %scaffSizes ) {
-                print ALIST "$scaffFileNames{$locus}\t$hintsfile\t1\t$size\n";
-            }
-            close(ALIST)
-                or
-                die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/aug_hints.lst!\n");
+            prepareGenome( $genome_dir );
             if ($ab_initio) {
-                print LOG "\# "
-                    . (localtime)
-                    . ": creating $otherfilesDir/aug_ab_initio.lst for AUGUSTUS jobs\n";
-                open( ILIST, ">", "$otherfilesDir/aug_ab_initio.lst" )
-                    or die(
-                    "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/aug_ab_initio.lst!\n"
-                    );
-                while ( my ( $locus, $size ) = each %scaffSizes ) {
-                    print ILIST "$scaffFileNames{$locus}\t1\t$size\n";
+                make_ab_initio_jobs( $augustus_dir_ab_initio, $genome_dir, $localUTR );
+                run_augustus_jobs( "$otherfilesDir/ab_initio.job.lst" );
+                join_aug_pred( $augustus_dir_ab_initio, "$otherfilesDir/augustus.ab_initio.gff" );
+                make_gtf("$otherfilesDir/augustus.ab_initio.gff");
+            }
+            # single ex.cfg scenarios are:
+            # EPmode == 1 -> ep.cfg
+            # EPmode == 0 && !prg -> rnaseq.cfg
+            # trainFromGth -> gth.cfg
+            if ( $EPmode == 1 || ( $EPmode == 0 && not( defined($prg) ) ) || defined( $trainFromGth )) {
+                $hintId = "hints";
+                make_hints_jobs( $augustus_dir, $genome_dir, $hintsfile, $extrinsicCfgFile, $localUTR, $hintId );
+                run_augustus_jobs( "$otherfilesDir/hints.job.lst" );
+                join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
+                clean_aug_jobs($hintId);
+                make_gtf("$otherfilesDir/augustus.$hintId.gff");
+            }elsif(  ( ($EPmode == 0 ) && defined ($prg) && not (defined ( $trainFromGth ) ) ) || $ETPmode == 1 ) {
+                # if RNASeq and protein hints are given
+                $hintId = "Ppri5";
+                my $adjustedHintsFile = "$hintsfile.Ppri5";
+                adjustPri($hintsfile, $adjustedHintsFile, "P", 5 );
+                if ( $ETPmode == 1 ) {
+                    $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+                    print LOG "$cmdString\n";
+                    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
                 }
-                close(ILIST)
-                    or die(
-                    "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/aug_ab_initio.lst!\n"
-                    );
-            }
-
-            print LOG "\# "
-                . (localtime)
-                . ": creating AUGUSTUS jobs (with hints)\n";
-            $string = find(
-                "createAugustusJoblist.pl", $AUGUSTUS_BIN_PATH,
-                $AUGUSTUS_SCRIPTS_PATH,     $AUGUSTUS_CONFIG_PATH
-            );
-            $errorfile = "$errorfilesDir/createAugustusJoblist_hints.stderr";
-
-            $perlCmdString = "";
-            $perlCmdString .= "cd $otherfilesDir\n";
-            if ($nice) {
-                $perlCmdString .= "nice ";
-            }
-            $perlCmdString
-                .= "perl $string --sequences=$otherfilesDir/aug_hints.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir --joblist=hints.job.lst --jobprefix=aug_hints_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsicCfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac ";
-            if ( defined($optCfgFile) ) {
-                $perlCmdString .= " --optCfgFile=$optCfgFile";
-            }
-            if ($soft_mask) {
-                $perlCmdString .= " --softmasking=1";
-            }
-            if ($augustus_args) {
-                $perlCmdString .= " $augustus_args";
-            }
-            $perlCmdString .= "\" &>$errorfile\n";
-            $perlCmdString .= "cd ..\n";
-            print LOG "$perlCmdString";
-            system("$perlCmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
-            if ($ab_initio) {
-                print LOG "\# "
-                    . (localtime)
-                    . ": creating AUGUSTUS jobs (ab initio)\n";
-                $string = find(
-                    "createAugustusJoblist.pl", $AUGUSTUS_BIN_PATH,
-                    $AUGUSTUS_SCRIPTS_PATH,     $AUGUSTUS_CONFIG_PATH
-                );
-                $errorfile
-                    = "$errorfilesDir/createAugustusJoblist_ab_initio.stderr";
-
-                $perlCmdString = "";
-                $perlCmdString = "cd $otherfilesDir\n";
-                if ($nice) {
-                    $perlCmdString .= "nice ";
+                assignExCfg("gth.cfg");
+                make_hints_jobs( $augustus_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "Ppri5");
+                join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5.gff" );
+                clean_aug_jobs("Ppri5");
+                make_gtf("$otherfilesDir/augustus.Ppri5.gff");
+                $hintId = "E";
+                $adjustedHintsFile = "$hintsfile.E";
+                getRnaseqHints($hintsfile, $adjustedHintsFile);
+                if ( $ETPmode == 1 ) {
+                    $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+                    print LOG "$cmdString\n";
+                    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
                 }
-                $perlCmdString
-                    .= "perl $string --sequences=$otherfilesDir/aug_ab_initio.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir_ab_initio --joblist=ab_initio.job.lst --jobprefix=aug_ab_initio_ --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on ";
-                if ($soft_mask) {
-                    $perlCmdString .= " --softmasking=1";
+                assignExCfg("rnaseq.cfg");
+                make_hints_jobs( $augustus_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
+                join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E.gff" );
+                clean_aug_jobs("E");
+                make_gtf("$otherfilesDir/augustus.E.gff");
+                $cmdString = "";
+                if($nice){
+                    $cmdString .= "nice ";
                 }
-                $perlCmdString .= "\" &>$errorfile\n";
-                $perlCmdString .= "cd ..\n";
-                print LOG "$perlCmdString";
-                system("$perlCmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+                $cmdString .= "$joingenespath --genesets=$otherfilesDir/augustus.Ppri5.gtf,$otherfilesDir/augustus.E.gtf ";
+                if( $ETPmode == 0 ){
+                    $cmdString .= "--priorities=1,2 "
+                }else{
+                    $cmdString .= "--priorities=2,1 "
+                }
+                $cmdString .= "--output=join.gtf";
+                print LOG "$cmdString\n";
+                system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+
             }
         }
         else {
             push( @genome_files, $genome );
+             if ($ab_initio) {
+                run_augustus_single_core_ab_initio( $localUTR );
+                make_gtf("$otherfilesDir/augustus.ab_initio.gff");
+            }
+            run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile, $localUTR, $hintId );
+            make_gtf("$otherfilesDir/augustus.$hintId.gff");
         }
-
-        if ( $CPU > 1 ) {
-            $pm = new Parallel::ForkManager($CPU);
-            if ($ab_initio) {
-                open( AIJOBS, "<", "$otherfilesDir/ab_initio.job.lst" )
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/ab_initio.job.lst!\n");
-                my @aiJobs;
-                while (<AIJOBS>) {
-                    chomp;
-                    push @aiJobs, "$otherfilesDir/$_";
-                }
-                close(AIJOBS)
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/ab_initio.job.lst!\n");
-                foreach(@aiJobs){
-                    $cInitJobs++;
-                    print LOG "\# "
-                        . (localtime)
-                        . ": Running AUGUSTUS ab initio job $cInitJobs"
-                        . "\n";
-                    $cmdString = "$_";
-                    print LOG "$cmdString\n";
-                    my $pid = $pm->start and next;
-                    system("$cmdString") == 0
-                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-                    $pm->finish;
-                }
-            }
-            open( HIJOBS, "<", "$otherfilesDir/hints.job.lst" )
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/hints.job.lst!\n");
-            my @hintJobs;
-            while(<HIJOBS>){
-                chomp;
-                push @hintJobs, "$otherfilesDir/$_";
-            }
-            close(HIJOBS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/hints.job.lst!\n");
-            $pm2 = new Parallel::ForkManager($CPU);
-            foreach(@hintJobs){
-                $cHintJobs++;
-                print LOG "\# "
-                    . (localtime)
-                    . ": Running AUGUSTUS hints job $cHintJobs"
-                    . "\n";
-                if( not (-x $_) ){
-                    print "File $_ is not executable!\n";
-                }
-                $cmdString = $_;
-                print LOG "$cmdString\n";
-                my $pid = $pm2->start and next;
-                system("$cmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-                $pm2->finish;
-            }
-            $pm->wait_all_children;
-            $pm2->wait_all_children;
-
-        }
-        else {
-            if ($ab_initio) {
-                $aug_ab_initio_err
-                    = "$errorfilesDir/augustus.ab_initio.stderr";
-                $aug_ab_initio_out = "$otherfilesDir/augustus.ab_initio.gff";
-                $cmdString         = "";
-                if ($nice) {
-                    $cmdString .= "nice ";
-                }
-                $cmdString
-                    .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on";
-                if ($soft_mask) {
-                    $cmdString .= " --softmasking=1";
-                }
-                $cmdString
-                    .= " $genome 1>$aug_ab_initio_out 2>$aug_ab_initio_err";
-                print LOG "\# "
-                    . (localtime)
-                    . ": Running AUGUSTUS in ab initio mode for file $genome\n";
-                print LOG "$cmdString\n\n";
-                system("$cmdString") == 0
-                    or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-            }
-            $aug_hints_err = "$errorfilesDir/augustus.hints.stderr";
-            $aug_hints_out = "$otherfilesDir/augustus.hints.gff";
-            $cmdString     = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-            $cmdString
-                .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$extrinsicCfgFile --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$hintsfile --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac";
-            if ( defined($optCfgFile) ) {
-                $cmdString .= " --optCfgFile=$optCfgFile";
-            }
-            if ($soft_mask) {
-                $cmdString .= " --softmasking=1";
-            }
-            if ( defined($augustus_args) ) {
-                $cmdString .= " $augustus_args";
-            }
-            $cmdString .= " $genome 1>$aug_hints_out 2>$aug_hints_err";
-            print LOG "\# "
-                . (localtime)
-                . ": Running AUGUSTUS with hints for file $genome\n";
-            print LOG "$cmdString\n\n";
-            system("$cmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-        }
-
         print LOG "\# " . (localtime) . ": AUGUSTUS prediction complete\n";
 
-        # join prediction files to one file
-        if ( $CPU > 1 ) {
-            if ($ab_initio) {
-                join_aug_pred( $augustus_dir_ab_initio,
-                    "$otherfilesDir/augustus.ab_initio.gff" );
-            }
-            join_aug_pred( $augustus_dir,
-                "$otherfilesDir/augustus.hints.gff" );
-        }
     }
+    if ($ab_initio) {
+        getAnnoFasta("$otherfilesDir/augustus.ab_initio.gff");
+    }
+    getAnnoFasta("$otherfilesDir/augustus.hints.gff");
 }
 
 # call getAnnoFasta.pl
@@ -3477,6 +3372,20 @@ sub clean_up {
     }
 }
 
+sub clean_aug_jobs {
+    my $hintId = shift;
+    # deleting files from AUGUSTUS parallelization
+    print LOG "\# " . (localtime) . ": deleting files from AUGUSTUS parallelization\n";
+    opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $otherfilesDir!\n");
+    while ( my $file = readdir(DIR) ) {
+        if( $file =~ m/aug_$hintId/){
+            print LOG "rm $otherfilesDir/$file\n";
+            unlink( "$otherfilesDir/$file" ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $otherfilesDir/$file!\n");
+        }
+    }
+    closedir(DIR) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to close directory $otherfilesDir!\n");
+}
+
 ########################### some checks beforehand ############################
 # check upfront whether any common problems will occur later
 # find out if some programs are not installed.
@@ -3528,6 +3437,30 @@ sub check_upfront {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "$augpath not executable on this machine.\n";
+            print LOG $prtStr;
+            print STDERR $prtStr;
+        }
+        exit(1);
+    }
+
+    # check for joingenes executable
+    $augpath = "$AUGUSTUS_BIN_PATH/joingenes";
+    if ( system("$augpath > /dev/null 2> /dev/null") != 0 ) {
+        if ( !-f $augpath ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "joingenes executable not found at $augpath. Please compile joingenes (augustus/auxprogs/joingenes)!\n";
+            print LOG $prtStr;
+            print STDERR $prtStr;
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "$augpath not executable on this machine.  Please compile joingenes (augustus/auxprogs/joingenes)!n";
             print LOG $prtStr;
             print STDERR $prtStr;
         }
@@ -4196,7 +4129,7 @@ sub check_options {
                 assignExCfg("gth.cfg");
             }
         }
-        elsif ( $EPTmode == 1 ) {
+        elsif ( $ETPmode == 1 ) {
             assignExCfg("ept.cfg");
         }
         else {
@@ -6690,3 +6623,323 @@ sub combine_gm_and_gth_gtf {
     close(FILTEREDGTH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gth_filtered_gtf!\n");
 }
 
+sub prepareGenome{
+    my $augustus_dir = shift;
+    if ( not( -d $augustus_dir ) ) {
+        print LOG "\# "
+            . (localtime)
+            . ": Creating directory for storing AUGUSTUS files (hints, temporarily) $augustus_dir.\n";
+        mkdir $augustus_dir or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $augustus_dir!\n");
+    }
+    print LOG "\# "
+        . (localtime)
+        . ": splitting genome file in smaller parts for parallel execution of AUGUSTUS prediction\n";
+    $string = find(
+        "splitMfasta.pl",       $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    $errorfile = "$errorfilesDir/splitMfasta.stderr";
+
+    $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString
+        .= "perl $string $genome --outputpath=$augustus_dir 2>$errorfile";
+    print LOG "$perlCmdString\n";
+    system("$perlCmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+
+    # rename files according to scaffold name
+    $cmdString
+        = "cd $augustus_dir; for f in genome.split.*; do NAME=`grep \">\" \$f`; mv \$f \${NAME#>}.fa; done; cd ..\n";
+    print LOG $cmdString;
+    system("$cmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+    my @genome_files = `ls $augustus_dir`;
+    print LOG "\# "
+        . (localtime)
+        . ": Split genome file in "
+        . scalar(@genome_files)
+        . " parts, finished.\n";
+}
+
+sub make_hints_jobs{
+    my $augustus_dir = shift;
+    my $genome_dir = shift;
+    my $thisHintsfile = shift;
+    my $cfgFile = shift;
+    my $localUTR = shift;
+    my $hintId = shift;
+    my @genome_files = `ls $genome_dir`;
+    my %scaffFileNames;
+    foreach (@genome_files) {
+        chomp;
+        $_ =~ m/(.*)\.\w+$/;
+        $scaffFileNames{$1} = "$genome_dir/$_";
+    }
+    print LOG "\# "
+        . (localtime)
+        . ": creating $otherfilesDir/aug_$hintId.lst for AUGUSTUS jobs\n";
+    open( ALIST, ">", "$otherfilesDir/aug_$hintId.lst" )
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/aug_$hintId.lst!\n");
+    # make list for creating augustus jobs
+    while ( my ( $locus, $size ) = each %scaffSizes ) {
+        print ALIST "$scaffFileNames{$locus}\t$thisHintsfile\t1\t$size\n";
+    }
+    close(ALIST)
+        or
+    die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/aug_$hintId.lst!\n");
+    print LOG "\# "
+        . (localtime)
+        . ": creating AUGUSTUS jobs (with $hintId)\n";
+    $string = find(
+        "createAugustusJoblist.pl", $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH,     $AUGUSTUS_CONFIG_PATH
+    );
+    $errorfile = "$errorfilesDir/createAugustusJoblist_$hintId.stderr";
+
+    $perlCmdString = "";
+    $perlCmdString .= "cd $otherfilesDir\n";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString
+        .= "perl $string --sequences=$otherfilesDir/aug_$hintId.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir --joblist=$hintId.job.lst --jobprefix=aug_hints_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$cfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac ";
+    if ( defined($optCfgFile) ) {
+        $perlCmdString .= " --optCfgFile=$optCfgFile";
+    }
+    if ($soft_mask) {
+        $perlCmdString .= " --softmasking=1";
+    }
+    if ($augustus_args) {
+        $perlCmdString .= " $augustus_args";
+    }
+    $perlCmdString .= "\" &>$errorfile\n";
+    $perlCmdString .= "cd ..\n";
+    print LOG "$perlCmdString";
+    system("$perlCmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+}
+
+sub make_ab_initio_jobs{
+    my $augustus_dir_ab_initio = shift;
+    my $augustus_dir = shift;
+    my $localUTR = shift;
+    my @genome_files = `ls $augustus_dir`;
+    my %scaffFileNames;
+    foreach (@genome_files) {
+        chomp;
+        $_ =~ m/(.*)\.\w+$/;
+        $scaffFileNames{$1} = "$augustus_dir/$_";
+    }
+    if ( not( -d $augustus_dir_ab_initio ) && $CPU > 1) {
+        print LOG "\# "
+            . (localtime)
+            . ": Creating directory for storing AUGUSTUS files (ab initio, temporarily) $augustus_dir_ab_initio.\n";
+        mkdir $augustus_dir_ab_initio or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $augustus_dir_ab_initio!\n");
+    }
+    print LOG "\# "
+        . (localtime)
+        . ": creating $otherfilesDir/aug_ab_initio.lst for AUGUSTUS jobs\n";
+    open( ILIST, ">", "$otherfilesDir/aug_ab_initio.lst" )
+        or die(
+        "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/aug_ab_initio.lst!\n"
+        );
+    while ( my ( $locus, $size ) = each %scaffSizes ) {
+        print ILIST "$scaffFileNames{$locus}\t1\t$size\n";
+    }
+    close(ILIST)
+        or die(
+        "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/aug_ab_initio.lst!\n"
+        );
+    print LOG "\# "
+        . (localtime)
+        . ": creating AUGUSTUS jobs (ab initio)\n";
+    $string = find(
+        "createAugustusJoblist.pl", $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH,     $AUGUSTUS_CONFIG_PATH
+    );
+    $errorfile
+        = "$errorfilesDir/createAugustusJoblist_ab_initio.stderr";
+
+    $perlCmdString = "";
+    $perlCmdString = "cd $otherfilesDir\n";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString
+        .= "perl $string --sequences=$otherfilesDir/aug_ab_initio.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir_ab_initio --joblist=ab_initio.job.lst --jobprefix=aug_ab_initio_ --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on ";
+    if ($soft_mask) {
+        $perlCmdString .= " --softmasking=1";
+    }
+    $perlCmdString .= "\" &>$errorfile\n";
+    $perlCmdString .= "cd ..\n";
+    print LOG "$perlCmdString";
+    system("$perlCmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+}
+
+sub run_augustus_jobs {
+    my $jobLst = shift;
+    my $pm = new Parallel::ForkManager($CPU);
+    my $cJobs = 0;
+    open( AIJOBS, "<", $jobLst )
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $jobLst!\n");
+    my @aiJobs;
+    while (<AIJOBS>) {
+        chomp;
+        push @aiJobs, "$otherfilesDir/$_";
+    }
+    close(AIJOBS)
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $jobLst!\n");
+    foreach(@aiJobs){
+        $cJobs++;
+        print LOG "\# "
+            . (localtime)
+            . ": Running AUGUSTUS job $cJobs"
+            . "\n";
+        $cmdString = "$_";
+        print LOG "$cmdString\n";
+        my $pid = $pm->start and next;
+        system("$cmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+        $pm->finish;
+    }
+    $pm->wait_all_children;
+}
+
+sub run_augustus_single_core_ab_initio{
+    my $localUTR = shift;
+    my $aug_ab_initio_err
+        = "$errorfilesDir/augustus.ab_initio.stderr";
+    my $aug_ab_initio_out = "$otherfilesDir/augustus.ab_initio.gff";
+    $cmdString         = "";
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    $cmdString
+        .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on";
+    if ($soft_mask) {
+        $cmdString .= " --softmasking=1";
+    }
+    $cmdString
+        .= " $genome 1>$aug_ab_initio_out 2>$aug_ab_initio_err";
+    print LOG "\# "
+        . (localtime)
+        . ": Running AUGUSTUS in ab initio mode for file $genome\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
+sub run_augustus_single_core_hints{
+    my $thisHintsfile = shift;
+    my $cfgFile = shift;
+    my $localUTR = shift;
+    my $hintId = shift;
+    my $aug_hints_err = "$errorfilesDir/augustus.$hintId.stderr";
+    my $aug_hints_out = "$otherfilesDir/augustus.$hintId.gff";
+    $cmdString     = "";
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    $cmdString
+        .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$cfgFile --alternatives-from-evidence=$alternatives_from_evidence --hintsfile=$thisHintsfile --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac";
+    if ( defined($optCfgFile) ) {
+        $cmdString .= " --optCfgFile=$optCfgFile";
+    }
+    if ($soft_mask) {
+        $cmdString .= " --softmasking=1";
+    }
+    if ( defined($augustus_args) ) {
+        $cmdString .= " $augustus_args";
+    }
+    $cmdString .= " $genome 1>$aug_hints_out 2>$aug_hints_err";
+    print LOG "\# "
+        . (localtime)
+        . ": Running AUGUSTUS with $hintId for file $genome\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
+sub createEvidenceGff {
+    my $evidenceFile = "$genemarkDir/evidence.gff";
+    my %rnaseq;
+    my %prot;
+    open ( HINTS, "<", $genemark_hintsfile ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $genemark_hintsfile!\n");
+    while (<HINTS>) {
+        if($_ =~ m/(\S+)\t(\S+)\t(\S+)\t(\d+)\t(\d+)\t(\S+)\t(\S+)\t(\S+)\t(.*)/){
+            my %hint;
+            $hint{'locus'} = $1;
+            $hint{'source'} = $2;
+            $hint{'feature'} = $3;
+            $hint{'start'} = $4;
+            $hint{'stop'} = $5;
+            $hint{'score'} = $6;
+            $hint{'strand'} = $7;
+            $hint{'frame'} = $8;
+            $hint{'lastCol'} = $9;
+            if( $9 =~ m/src=P/) {
+                push ( @{$prot{$1}}, \%hint);
+            }elsif ( $9 =~ m/src=E/ ) {
+                push (@{$rnaseq{$1}}, \%hint);
+            }
+        }
+    }
+    close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genemark_hintsfile!\n");
+
+    open ( EV, ">", $evidenceFile ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $evidenceFile!\n");
+
+    foreach my $locus (keys %rnaseq) {
+        if( defined ($prot{$locus}) ) {
+            foreach my $hint (@{$rnaseq{$locus}}) {
+                foreach my $otherHint (@{$prot{$locus}}) {
+                    if( $$hint->{'start'} == $$otherHint->{'start'} && $$hint->{'stop'} == $$otherHint->{'stop'} && $$hint->{'strand'} eq $$otherHint->{'strand'} ) {
+                        print EV $locus."\tboth\t".$$hint->{'feature'}."\t".$$hint->{'start'}."\t".$$hint->{'stop'}
+                        ."\t1000\t".$$hint->{'strand'}."\t".$$hint->{'frame'}."\tsrc=M;pri=6\n";
+                    }
+                }
+            }
+        }
+    }
+
+    close(EV) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $evidenceFile!\n");
+}
+
+sub adjustPri {
+    my $hints = shift;
+    my $adjusted = shift;
+    my $source = shift;
+    my $value = shift;
+    open ( HINTS, "<", $hints ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $hints!\n");
+    open (OUT, ">", $adjusted) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $adjusted!\n");
+    while(<HINTS>){
+        if ( $_ =~ m/src=E/ ) {
+            $_ =~ s/pri=(\d)/pri=4/;
+            print OUT $_;
+        }elsif ( $_ =~ m/src=P/ ) {
+            $_ =~ s/pri=(\d)/pri=5/;
+            print OUT $_;
+        }else{
+            print OUT $_;
+        }
+    }
+    close (OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $adjusted!\n");
+    close (HINTS) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $hints!\n");
+}
+
+sub getRnaseqHints {
+    my $hints = shift;
+    my $adjusted = shift;
+    open ( HINTS, "<", $hints ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $hints!\n");
+    open (OUT, ">", $adjusted) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $adjusted!\n");
+    while(<HINTS>){
+        if ( $_ =~ m/src=E/ ) {
+            print OUT $_;
+        }
+    }
+    close (OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $adjusted!\n");
+    close (HINTS) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $hints!\n");
+}
