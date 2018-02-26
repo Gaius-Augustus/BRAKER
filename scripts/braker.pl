@@ -3041,7 +3041,7 @@ sub training {
                 )
             {
                 $cmdString
-                    = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ cp $AUGUSTUS_CONFIG_PATH/species/$species/$_"
+                    = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ $AUGUSTUS_CONFIG_PATH/species/$species/$_"
                     . ".CRF";
                 print LOG "$cmdString\n";
                 system("$cmdString") == 0
