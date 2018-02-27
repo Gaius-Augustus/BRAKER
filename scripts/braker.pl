@@ -6929,7 +6929,7 @@ sub run_augustus_with_joingenes_parallel{
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E.gff" );
     clean_aug_jobs("E");
     make_gtf("$otherfilesDir/augustus.E.gff");
-    joingenes();
+    joingenes("$otherfilesDir/augustus.Ppri5.gtf","$otherfilesDir/augustus.E.gtf");
 }
 
 sub run_augustus_with_joingenes_single_core{
@@ -6955,16 +6955,18 @@ sub run_augustus_with_joingenes_single_core{
     assignExCfg("rnaseq.cfg");
     run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
     make_gtf("$otherfilesDir/augustus.E.gff");
-    joingenes();
+    joingenes("$otherfilesDir/augustus.Ppri5.gtf","$otherfilesDir/augustus.E.gtf");
 }
 
 sub joingenes {
+    my $file1 = shift;
+    my $file2 = shift;
     my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
     $cmdString = "";
     if($nice){
         $cmdString .= "nice ";
     }
-    $cmdString .= "$joingenespath --genesets=$otherfilesDir/augustus.Ppri5.gtf,$otherfilesDir/augustus.E.gtf ";
+    $cmdString .= "$joingenespath --genesets=$file1,$file2 ";
     if( $ETPmode == 0 ){
         $cmdString .= "--priorities=1,2 "
     }else{
@@ -6981,7 +6983,7 @@ sub joingenes {
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    $perlCmdString .= "perl $string --in_gff=$otherfilesDir/augustus.Ppri5.gtf --jg_gff=$otherfilesDir/join.gtf --out_gtf=$otherfilesDir/missed.genes.gtf";
+    $perlCmdString .= "perl $string --in_gff=$file1 --jg_gff=$otherfilesDir/join.gtf --out_gtf=$otherfilesDir/missed.genes.gtf";
     print LOG "$perlCmdString\n";
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
     if (-e "$otherfilesDir/missed.genes.gtf") {
