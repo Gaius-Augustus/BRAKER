@@ -1000,7 +1000,7 @@ if (@hints) {
     add_other_hints();
 }
 
-if (! $trainFromGth ) {
+if (! $trainFromGth || not($skipAllTraining==0) ) {
     getGeneMarkHints();
 }
 
