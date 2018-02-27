@@ -448,6 +448,8 @@ my $GeneMarkIntronThreshold
    # contained, braker will be aborted. Default value is determined by mode of
    # GeneMark-EX: currently 10 for ET and 4 for EP/EPT
 my $ab_initio;    # flag for output of AUGUSTUS ab initio predictions
+my $foundRNASeq = 0; # stores whether hintsfile contains src=E
+my $foundProt = 0; # stores whether hintsfile contains src=P
 
 ############################################################
 # Variables for modification of template extrinsic.cfg file
@@ -1499,10 +1501,14 @@ sub identifyHintTypes {
 # returns 1, otherwise 0.
 sub checkHints {
     my $thisHintsFile = shift;
-    my @areb2h        = `cut -f 2 $thisHintsFile | grep b2h`;
+    my @areb2h        = `cut -f 9 $thisHintsFile | grep src=E`;
     my $ret           = 0;
-    if ( scalar( @areb2h > 0 ) ) {
+    if ( scalar( @areb2h ) > 0 ) {
         $ret = 1;
+    }
+    my @areP = `cut -f 9 $thisHintsFile | grep src=P`;
+    if( scalar( @areP ) > 0 ) {
+        $foundProt++;
     }
     return $ret;
 }
@@ -3202,14 +3208,14 @@ sub augustus {
             # EPmode == 1 -> ep.cfg
             # EPmode == 0 && !prg -> rnaseq.cfg
             # trainFromGth -> gth.cfg
-            if ( $EPmode == 1 || ( $EPmode == 0 && not( defined($prg) ) ) || defined( $trainFromGth )) {
+            if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
                 my $hintId = "hints";
                 make_hints_jobs( $augustus_dir, $genome_dir, $hintsfile, $extrinsicCfgFile, $localUTR, $hintId );
                 run_augustus_jobs( "$otherfilesDir/hints.job.lst" );
                 join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
                 clean_aug_jobs($hintId);
                 make_gtf("$otherfilesDir/augustus.$hintId.gff");
-            }elsif(  ( ($EPmode == 0 ) && defined ($prg) && not (defined ( $trainFromGth ) ) ) || $ETPmode == 1 ) {
+            }else{
                 run_augustus_with_joingenes_parallel($augustus_dir, $genome_dir, $localUTR);
             }
         }
@@ -3219,10 +3225,10 @@ sub augustus {
                 run_augustus_single_core_ab_initio( $localUTR );
                 make_gtf("$otherfilesDir/augustus.ab_initio.gff");
             }
-            if ( $EPmode == 1 || ( $EPmode == 0 && not( defined($prg) ) ) || defined( $trainFromGth )) {
+            if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
                 run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile, $localUTR, "hints");
                 make_gtf("$otherfilesDir/augustus.hints.gff");
-            }elsif( ( ($EPmode == 0 ) && defined ($prg) && not (defined ( $trainFromGth ) ) ) || $ETPmode == 1 ){
+            }else{
                 run_augustus_with_joingenes_single_core($localUTR);
             }
         }
@@ -3524,9 +3530,14 @@ sub check_upfront {
         }
     }
 
+    if(@prot_aln_files) {
+        $foundProt++;
+    }
+
 # check for alignment executable and in case of SPALN for environment variables
     my $prot_aligner;
     if (@prot_seq_files) {
+        $foundProt++;
         if ( $prg eq 'gth' ) {
             $prot_aligner = "$ALIGNMENT_TOOL_PATH/gth";
             if ( !-f $prot_aligner ) {
@@ -3895,20 +3906,22 @@ sub check_options {
     # -> this will determine whether braker.pl switches into EPmode... this will work once that the ep
     # introns.gff format in the last column has been fixed. For now, require users to specify EPmode as
     #  input argument and change the last column of introns.gff file according to braker requirements.
-    if ( ( !@bam && @hints ) && $EPmode == 0 ) {
-        my $foundRNASeq = 0;
-        foreach (@hints) {
+    if(@bam){
+        $foundRNASeq = 1;
+    }elsif(@hints){
+         foreach (@hints) {
             $foundRNASeq += checkHints($_);
         }
-        if ( $foundRNASeq == 0 ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": GeneMark-EP mode is enabled automatically due to hints ";
-            $prtStr .= "file contents!\n";
-            $logString .= $prtStr;
-            $EPmode = 1;
-        }
+    }
+
+    if ( $foundRNASeq==0 && $EPmode == 0 ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": GeneMark-EP mode is enabled automatically due to hints ";
+        $prtStr .= "file contents!\n";
+        $logString .= $prtStr;
+        $EPmode = 1;
     }
 
     # check whether RNA-Seq files are specified
@@ -6667,7 +6680,7 @@ sub make_hints_jobs{
         $perlCmdString .= "nice ";
     }
     $perlCmdString
-        .= "perl $string --sequences=$otherfilesDir/aug_$hintId.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir --joblist=$hintId.job.lst --jobprefix=aug_hints_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$cfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac ";
+        .= "perl $string --sequences=$otherfilesDir/aug_$hintId.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir --joblist=$hintId.job.lst --jobprefix=aug_".$hintId."_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$cfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac ";
     if ( defined($optCfgFile) ) {
         $perlCmdString .= " --optCfgFile=$optCfgFile";
     }
