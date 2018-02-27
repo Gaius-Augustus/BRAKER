@@ -3216,7 +3216,7 @@ sub augustus {
                 clean_aug_jobs($hintId);
                 make_gtf("$otherfilesDir/augustus.$hintId.gff");
             }else{
-                run_augustus_with_joingenes_parallel($augustus_dir, $genome_dir, $localUTR);
+                run_augustus_with_joingenes_parallel($genome_dir, $localUTR);
             }
         }
         else {
@@ -6908,7 +6908,6 @@ sub getRnaseqHints {
 }
 
 sub run_augustus_with_joingenes_parallel{
-    my $augustus_dir = shift;
     my $genome_dir = shift;
     my $localUTR = shift;
     # if RNASeq and protein hints are given
@@ -6922,6 +6921,7 @@ sub run_augustus_with_joingenes_parallel{
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
     assignExCfg("gth.cfg");
+    my $augustus_dir = "$otherfilesDir/augustus_tmp_Ppri5";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "Ppri5");
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5.gff" );
     clean_aug_jobs("Ppri5");
@@ -6934,6 +6934,7 @@ sub run_augustus_with_joingenes_parallel{
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
     assignExCfg("rnaseq.cfg");
+    $augustus_dir = "$otherfilesDir/augustus_tmp_E";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E.gff" );
     clean_aug_jobs("E");
