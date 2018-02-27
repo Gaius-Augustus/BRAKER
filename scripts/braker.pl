@@ -37,7 +37,7 @@ use File::Basename qw(dirname basename);
 use File::Copy;
 
 use helpMod
-    qw(find checkFile formatDetector relToAbs setParInConfig uptodate gtf2fasta clean_abort);
+    qw( find checkFile formatDetector relToAbs setParInConfig uptodate gtf2fasta clean_abort );
 use Term::ANSIColor qw(:constants);
 
 use strict;
