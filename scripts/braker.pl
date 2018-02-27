@@ -3912,7 +3912,7 @@ sub check_options {
     }
 
     # check whether RNA-Seq files are specified
-    if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth ) {
+    if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth & !$skipAllTraining) {
         $prtStr
             = "\# "
             . (localtime)
