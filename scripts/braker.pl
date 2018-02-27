@@ -3185,7 +3185,6 @@ sub augustus {
     my $genome_dir = "$otherfilesDir/genome_split";
     my $augustus_dir           = "$otherfilesDir/augustus_tmp";
     my $augustus_dir_ab_initio = "$otherfilesDir/augustus_ab_initio_tmp";
-    my $hintId; # if several augustus runs, change this for each run
     if (!uptodate( [ $extrinsicCfgFile, $hintsfile, $genome ],
             ["$otherfilesDir/augustus.gff"] )
         || $overwrite
@@ -3204,7 +3203,7 @@ sub augustus {
             # EPmode == 0 && !prg -> rnaseq.cfg
             # trainFromGth -> gth.cfg
             if ( $EPmode == 1 || ( $EPmode == 0 && not( defined($prg) ) ) || defined( $trainFromGth )) {
-                $hintId = "hints";
+                my $hintId = "hints";
                 make_hints_jobs( $augustus_dir, $genome_dir, $hintsfile, $extrinsicCfgFile, $localUTR, $hintId );
                 run_augustus_jobs( "$otherfilesDir/hints.job.lst" );
                 join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
@@ -3221,8 +3220,8 @@ sub augustus {
                 make_gtf("$otherfilesDir/augustus.ab_initio.gff");
             }
             if ( $EPmode == 1 || ( $EPmode == 0 && not( defined($prg) ) ) || defined( $trainFromGth )) {
-                run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile, $localUTR, $hintId );
-                make_gtf("$otherfilesDir/augustus.$hintId.gff");
+                run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile, $localUTR, "hints");
+                make_gtf("$otherfilesDir/augustus.hints.gff");
             }elsif( ( ($EPmode == 0 ) && defined ($prg) && not (defined ( $trainFromGth ) ) ) || $ETPmode == 1 ){
                 run_augustus_with_joingenes_single_core($localUTR);
             }
@@ -6905,7 +6904,6 @@ sub run_augustus_with_joingenes_parallel{
     my $augustus_dir = shift;
     my $genome_dir = shift;
     my $localUTR = shift;
-    my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
     # if RNASeq and protein hints are given
     my $adjustedHintsFile = "$hintsfile.Ppri5";
     adjustPri($hintsfile, $adjustedHintsFile, "P", 5 );
@@ -6931,35 +6929,11 @@ sub run_augustus_with_joingenes_parallel{
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E.gff" );
     clean_aug_jobs("E");
     make_gtf("$otherfilesDir/augustus.E.gff");
-    $cmdString = "";
-    if($nice){
-        $cmdString .= "nice ";
-    }
-    $cmdString .= "$joingenespath --genesets=$otherfilesDir/augustus.Ppri5.gtf,$otherfilesDir/augustus.E.gtf ";
-    if( $ETPmode == 0 ){
-        $cmdString .= "--priorities=1,2 "
-    }else{
-        $cmdString .= "--priorities=2,1 "
-    }
-    $cmdString .= "--output=join.gtf";
-    print LOG "$cmdString\n";
-    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-    my $string = find(
-        "findGenesInIntrons.pl",      $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    $perlCmdString = "";
-    if ($nice) {
-        $perlCmdString .= "nice ";
-    }
-    $perlCmdString .= "$string --in_gff=$otherfilesDir/augustus.Ppri5.gtf --jg_gff=join.gtf --out_gtf=augustus.hints.gtf";
-    print LOG "$perlCmdString\n";
-    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    joingenes();
 }
 
 sub run_augustus_with_joingenes_single_core{
     my $localUTR = shift;
-    my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
     # if RNASeq and protein hints are given
     my $adjustedHintsFile = "$hintsfile.Ppri5";
     adjustPri($hintsfile, $adjustedHintsFile, "P", 5 );
@@ -6981,6 +6955,11 @@ sub run_augustus_with_joingenes_single_core{
     assignExCfg("rnaseq.cfg");
     run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
     make_gtf("$otherfilesDir/augustus.E.gff");
+    joingenes();
+}
+
+sub joingenes {
+    my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
     $cmdString = "";
     if($nice){
         $cmdString .= "nice ";
@@ -6991,7 +6970,7 @@ sub run_augustus_with_joingenes_single_core{
     }else{
         $cmdString .= "--priorities=2,1 "
     }
-    $cmdString .= "--output=join.gtf";
+    $cmdString .= "--output=$otherfilesDir/join.gtf";
     print LOG "$cmdString\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     my $string = find(
@@ -7002,7 +6981,15 @@ sub run_augustus_with_joingenes_single_core{
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    $perlCmdString .= "$string --in_gff=$otherfilesDir/augustus.Ppri5.gtf --jg_gff=join.gtf --out_gtf=augustus.hints.gtf";
+    $perlCmdString .= "perl $string --in_gff=$otherfilesDir/augustus.Ppri5.gtf --jg_gff=$otherfilesDir/join.gtf --out_gtf=$otherfilesDir/missed.genes.gtf";
     print LOG "$perlCmdString\n";
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    if (-e "$otherfilesDir/missed.genes.gtf") {
+        $cmdString = "cat $otherfilesDir/missed.genes.gtf >> $otherfilesDir/join.gtf";
+        print LOG "$cmdString\n";
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+    $cmdString = "mv $otherfilesDir/join.gtf $otherfilesDir/augustus.hints.gtf";
+    print Log "$cmdString\n";
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
 }

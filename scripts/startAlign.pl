@@ -71,7 +71,8 @@ contigID nr_of_prots_mapped start end strand chrID
 Path to alignment tool binary, either exonerate or Splan or Genome Threader.
 By default, if no path is given, script assumes they are in the current
 $PATH bash variable.
-
+--args=s                     additional command line parameters for alignment tool to be executed,
+                             example: --args="--p=5 --x=4"
 --nice                       Execute all system calls within braker.pl and its submodules with bash "nice"
 (default nice value)
 
@@ -85,6 +86,7 @@ startAlign.pl [OPTIONS] --genome=genome.fa --prot=db.fa --list=BLAST.hit.list --
 
 ENDUSAGE
 
+my $alnArgs;
 my $alignDir;    # directory for alignment output files
 my $errorfile;   # error file name
 my $cmdString;   # to store shell commands
@@ -145,7 +147,8 @@ my $prseedlength
         'prot=s'                => \$prot_file,
         'help!'                 => \$help,
         'nice!'                 => \$nice,
-        'ALIGNMENT_TOOL_PATH=s' => \$ALIGNMENT_TOOL_PATH
+        'ALIGNMENT_TOOL_PATH=s' => \$ALIGNMENT_TOOL_PATH,
+        'args=s'                => \$alnArgs
         );
 
     if ($help) {
@@ -686,7 +689,11 @@ sub call_exonerate {
         $cmdString .= $ALIGNMENT_TOOL_PATH . "/";
     }
     $cmdString
-    .= "exonerate --model protein2genome --maxintron $maxintronlen --showtargetgff --showalignment no --query $qFile -t   $tFile > $stdoutfile 2> $errorfile";
+    .= "exonerate --model protein2genome --maxintron $maxintronlen --showtargetgff --showalignment no --query $qFile -t   $tFile ";
+    if (defined($alnArgs)){
+        $cmdString .= "$alnArgs ";
+    }
+    $cmdString .= "> $stdoutfile 2> $errorfile";
     print LOG "\# "
     . (localtime)
     . ": run exonerate for target '$tFile' and query '$qFile'\n";
@@ -729,8 +736,13 @@ if ($nice) {
 if ( defined($ALIGNMENT_TOOL_PATH) ) {
     $cmdString .= $ALIGNMENT_TOOL_PATH . "/";
 }
+if(not(defined($alnArgs))){
+    $alnArgs = "-prseedlength $prseedlength -prminmatchlen $prminmatchlen";
+}
 $cmdString
-.= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -prseedlength $prseedlength -prhdist $prhdist -gcmincoverage $gcmincoverage -prminmatchlen $prminmatchlen -o  $stdoutfile 2>$errorfile";
+.= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -prhdist $prhdist -gcmincoverage $gcmincoverage ";
+$cmdString .= $alnArgs;
+$cmdString .= " -o  $stdoutfile 2>$errorfile";
 print "CmdString: $cmdString\n";
 print LOG "\# "
 . (localtime)
@@ -823,7 +835,11 @@ sub call_spaln {
     if ( $cpus > 1 ) {
         $cmdString .= "-t[$cpus] ";
     }
-    $cmdString .= "-Q7 -O0 $tFile $qFile > $stdoutfile 2>$errorfile";
+    $cmdString .= "-Q7 -O0 ";
+    if(defined($alnArgs)){
+        $cmdString .=  "$alnArgs ";
+    }
+    $cmdString .= "$tFile $qFile > $stdoutfile 2>$errorfile";
     print LOG "\# "
     . (localtime)
     . ": run spaln for target '$tFile' and query '$qFile'\n";
