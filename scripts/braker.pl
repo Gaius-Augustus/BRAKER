@@ -1000,7 +1000,7 @@ if (@hints) {
     add_other_hints();
 }
 
-if (! $trainFromGth || not($skipAllTraining==0) ) {
+if (! $trainFromGth && not($skipAllTraining==0) ) {
     getGeneMarkHints();
 }
 
@@ -3324,7 +3324,7 @@ sub clean_up {
     print LOG "\# " . (localtime) . ": deleting job lst files (if existing)\n";
     opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $otherfilesDir!\n");
     while ( my $file = readdir(DIR) ) {
-        if( $file =~ m/\.lst/ ){
+        if( $file =~ m/\.lst/ || $file =~ m/aug_ab_initio_/ ){
             print LOG "rm $otherfilesDir/$file\n";
             unlink( "$otherfilesDir/$file" );
         }
