@@ -40,6 +40,8 @@ BRAKER2 can also combine RNA-Seq and protein homology information. This is in an
 \section{Keys to successful gene prediction}
 
 \begin{itemize}
+ \item Use a high quality genome assembly. If you have a huge number of very short scaffolds in your genome assembly, those short scaffolds will likely increase runtime dramatically but will not increase prediction accuracy. 
+ \item Use simple scaffold names in the genome file (e.g.~\texttt{>contig1} will work better than \texttt{>contig1|my custom species name|some putative function|/more/information/ | and lots of special characters \%\^\&!*()\{\}}). Make the scaffold names in all your fasta files simple before running any alignment program.
  \item In order to predict genes accurately in a novel genome, the genome should be masked for repeats. This will avoid the prediction of false positive gene structures in repetitive and low complexitiy regions. Repeat masking is also essential for mapping RNA-Seq data to a genome. In case of GeneMark-EX and AUGUSTUS, softmasking (i.e.~putting repeat regions into lower case letters and all other regions into upper case letters) leads to better results than hardmasking (i.e.~replacing letters in repetitive regions by the letter \texttt{N} for unknown nucleotide).
  
  \item Many genomes have gene structures that will be predicted accurately with standard parameters of GeneMark-ET and AUGUSTUS within BRAKER2. However, some genomes have clade-specific features, i.e.~special branch point model in fungi, or non-standard splice-site patterns. Please read the options section \ref{options} in order to determine whether any of the custom options may improve gene prediction accuracy in the genome of your target species.
@@ -49,13 +51,13 @@ BRAKER2 can also combine RNA-Seq and protein homology information. This is in an
 
 \section{Overview of modes for running BRAKER2}
 
-BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq or protein spliced alignment information) supported training of GeneMark-EX and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER2. In the following, we give an overview:
+BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq \textbf{or} protein spliced alignment information\footnote{using both sources of evidence for GeneMark-EX is not supported by this release of BRAKER2.}) supported training of GeneMark-EX and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER2. In the following, we give an overview:
 
 \begin{itemize}
  \item genome and RNA-Seq file from the same species (see figure \ref{braker-main}A); this approach is suitable for RNA-Seq libraries with a good coverage of the transcriptome,
- \item genome file and database of proteins that may be of longer evolutionary distance to the target species (see figure \ref{braker-main}B; this approach is suitable if no RNA-Seq data is available, and if not protein data from a very closely related species is available,
+ \item genome file and database of proteins that may be of longer evolutionary distance to the target species (see figure \ref{braker-main}B; this approach is suitable if no RNA-Seq data is available, and if no protein data from a very closely related species is available,
  \item genome file and file with proteins of short evolutionary distance (see figure \ref{braker2-sidetrack}D); this approach is suitable if RNA-Seq data is not available and if the reference species is very closely related,
- \item genome and RNA-Seq file and proteins of short evolutionary distance (see figures \ref{braker2-sidetrack}C and \ref{braker2-sidetrack}E). In both cases, GeneMark-ET is trained supported by RNA-Seq data, and the resulting gene predictions are used for training AUGUSTUS. In approach C), protein alignment information is used in the gene prediction step with AUGUSTUS, only. In approach E), protein spliced alignment data is used to complement the training set for AUGUSTUS. The latter approach is in particular suitable if RNA-Seq data does not produce a sufficiently high number of training gene structures for AUGUSTUS, and if a very closely related and already annotated species is available.
+ \item genome and RNA-Seq file and proteins of short evolutionary distance (see figures \ref{braker2-sidetrack}C and \ref{braker2-sidetrack}E). In both cases, GeneMark-ET is trained supported by RNA-Seq data, and the resulting gene predictions are used for training AUGUSTUS. In approach C), protein alignment information is used in the gene prediction step with AUGUSTUS, only. In approach E), protein spliced alignment data is used to complement the training set for AUGUSTUS. The latter approach is in particular suitable if RNA-Seq data does not produce a sufficiently high number of training gene structures for AUGUSTUS, and if a very closely related and already annotated species is available. \textbf{Carefully inspect results of BRAKER2 runs with RNA-Seq and protein data! Compare to runs with only one of those data sources. The optimal result is not always the one from integrating both sources of evidence. (This will change in future versions of BRAKER2.)}
 \end{itemize}
 
 \begin{figure}
@@ -86,7 +88,7 @@ BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq or p
 At the time of release, this BRAKER2 version was tested with:
 
 \begin{itemize}
-\item AUGUSTUS 3.2.2
+\item AUGUSTUS xxx
    \item  GeneMark-EX xxx
    \item  BAMTOOLS 2.4.1
    \item  SAMTOOLS 0.1.19-96b5f2294a
@@ -459,157 +461,27 @@ to the BRAKER2 call that is described in section \ref{braker1}. This may result 
       --prot_seq=proteins.fa --prg=gth --gth2traingenes
 \end{verbatim}
 
-\section{Description of BRAKER2 command line options}\label{options}
+\section{Description of selected BRAKER2 command line options}\label{options}
 
-\subsection{\texttt{--help}}                               
-
-Print usage of braker.pl
-
-\subsection{\texttt{--nice}}
-
-Execute (almost) all system calls within braker.pl and its submodules with bash "nice" (default nice value).
-
-\subsection{\texttt{--alternatives-from-evidence=true}}    
-
-Output alternative transcripts based on explicit evidence from hints (default is true).
+Please run \texttt{braker.pl --help} to obtain a full list of options.
 
 \subsection{\texttt{--ab\_initio}}
 
-Compute AUGUSTUS \textit{ab initio} predictions in addition to AUGUSTUS predictions with hints (additional output files: \texttt{augustus.ab\_initio.*}.
+Compute AUGUSTUS \textit{ab initio} predictions in addition to AUGUSTUS predictions with hints (additional output files: \texttt{augustus.ab\_initio.*}. This may be useful for estimating the quality of training gene parameters when inspecting predictions in a Browser.
 
 \subsection{\texttt{--augustus-args=``--some\_arg=bla''}}     
-One or several command line arguments to be passed to AUGUSTUS, if several arguments are given, separated by whitespace, i.e.~\texttt{``--first\_arg=sth --second\_arg=sth''}. 
+One or several command line arguments to be passed to AUGUSTUS, if several arguments are given, separated by whitespace, i.e.~\texttt{``--first\_arg=sth --second\_arg=sth''}. This may be be useful if you know that gene prediction in your particular species benefits from a particular AUGUSTUS argument during the prediction step.  
     
-\subsection{\texttt{--AUGUSTUS\_CONFIG\_PATH=/path/}}
-Set path to config directory of AUGUSTUS (if not specified as 
-                                         environment variable). BRAKER1 will assume that the directories
-                                         ../bin and ../scripts of AUGUSTUS are located relative to
-                                         the \texttt{AUGUSTUS\_CONFIG\_PATH}. If this is not the case, please
-                                         specify \texttt{AUGUSTUS\_BIN\_PATH} (and \texttt{AUGUSTUS\_SCRIPTS\_PATH} if required).
-                                         The Perl commandline argument \texttt{--AUGUSTUS\_CONFIG\_PATH} has higher
-                                         priority than the environment variable with the same name.
-                                         
-\subsection{\texttt{--AUGUSTUS\_BIN\_PATH=/path/}}           Set path to the AUGUSTUS directory that contains binaries, i.e.~
-    					 augustus and etraining. This variable must only be set if 
-    					 \texttt{AUGUSTUS\_CONFIG\_PATH} does not have \texttt{../bin} and \texttt{../scripts} of
-    					 AUGUSTUS relative to its location i.e. for global AUGUSTUS 
-    					 installations. BRAKER1 will assume that the directory
-    					 \texttt{../scripts} of AUGUSTUS is located relative to the \texttt{AUGUSTUS\_BIN\_PATH}.
-If this is not the case, please specify \texttt{AUGUSTUS\_SCRIPTS\_PATH}.
-
-\subsection{\texttt{--AUGUSTUS\_SCRIPTS\_PATH=/path/}}       Set path to AUGUSTUS directory that contains scripts, i.e.~
-    				         \texttt{splitMfasta.pl}. This variable most only be set if
-    				         \texttt{AUGUSTUS\_CONFIG\_PATH} or \texttt{AUGUSTUS\_BIN\_PATH} do not contains the
-    				         \texttt{../scripts} directory of AUGUSTUS relative to their location, i.e.~
-    				         for special cases of a global AUGUSTUS installation.
-    				         
-\subsection{\texttt{--BAMTOOLS\_PATH=/path/to/bamtools}}
-Set path to bamtools (if not specified as environment 
-variable). Has higher priority than the environment variable.
-\subsection{\texttt{--cores}}                              Specifies the maximum number of cores that can be used during 
-                                         computation
-\subsection{\texttt{--extrinsicCfgFile=file}}              Optional. This file contains the list of used sources for the 
-                                         hints and their boni and mali. If not specified the file ``extrinsic.cfg'' 
-                                         in the config directory \texttt{\$AUGUSTUS\_CONFIG\_PATH} is copied and adjusted.
-\subsection{\texttt{--fungus}}                             GeneMark-EX option: run algorithm with branch point model (most 
-                                         useful for fungal genomes)
-\subsection{\texttt{--GENEMARK\_PATH=/path/to/gmes\_petap.pl/}}            
-
-Set path to GeneMark-EX (if not specified as environment variable). Has higher priority than environment variable.
-\subsection{\texttt{--gff3}}                               Output in GFF3 format.
-\subsection{\texttt{--hints=hints.gff}}                    Alternatively to calling braker.pl with a bam file, it is 
-                                         possible to call it with a file that contains introns extracted 
-                                         from RNA-Seq (or other data) in gff format. This flag also allows the usage
-                                         of hints from additional extrinsic sources for gene prediction 
-                                         with AUGUSTUS. To consider such additional extrinsic information,
-                                         you need to use the flag \texttt{--extrinsicCfgFile} to specify parameters for 
-                                         all sources in the hints file
-                                         (including the source ``E'' for intron hints from RNA-Seq).
-\subsection{\texttt{--optCfgFile=ppx.cfg}}                 Optional custom config file for AUGUSTUS (see \texttt{--hints}).
-\subsection{\texttt{--overwrite}}                          Overwrite existing files (except for species parameter files)
-\subsection{\texttt{--SAMTOOLS\_PATH=/path/to/samtools}}            Optionally set path to samtools (if not specified as environment 
-variable) to fix BAM files automatically, if necessary. Has higher     
-                                         priority than environment variable.
-\subsection{\texttt{--skipGeneMark-ET}}                    Skip GeneMark-ET and use provided GeneMark-ET output (e.g.~from a
-                                         different source) 
-\subsection{\texttt{--geneMarkGtf=file.gtf}}               If \texttt{skipGeneMark-ET} is used, braker will by default look in the 
-                                         working directory in folder \texttt{GeneMarkET} for an already existing gtf
-                                         file. Instead, you may provide such a file from another location.
-                                         If \texttt{geneMarkGtf} option is set, skipGeneMark-ET is automatically also set.
-\subsection{\texttt{--skipOptimize}}                       Skip optimize parameter step for AUGUSTUS (not recommended).
-\subsection{\texttt{--rounds}}                             The number of optimization rounds used in \texttt{optimize\_augustus.pl} (default 5).
-
-\subsection{\texttt{--skipAllTraining}}                    Skip GeneMark-EX (training and prediction), skip AUGUSTUS training,
-                                         only runs AUGUSTUS with pre-trained and already
-                                         existing parameters (not recommended). Hints from input are still generated.
-                                         This option automatically sets \texttt{--useexisting} to true.
+\subsection{\texttt{--cores}}                              Specifies the maximum number of cores that can be used during computation. BRAKER2 has to run some steps on a single core, others can take advantage of multiple cores. The optimal core number of all steps is 8. If you use more than 8 cores, this will not speed up all parallelized steps, in particular, the time consuming \texttt{optimize\_augustus.pl} will not use more than 8 cores. However, if you don't mind some cores being idle, using more than 8 cores will speed up other steps.
+\subsection{\texttt{--fungus}}                             GeneMark-EX option: run algorithm with branch point model. Use this option if you genome is a fungus.
     \subsection{\texttt{--softmasking}}                        Softmasking option for soft masked genome files. Set to 'on' or '1'. Recommended to use this option!
-    \subsection{\texttt{--species=sname}}                      Species name. Existing species will not be overwritten. 
-                                         Uses Sp\_1 etc., if no species is assigned.                          
+   
     \subsection{\texttt{--useexisting}}                        Use the present config and parameter files if they exist for 
-                                         'species'.
-    \subsection{\texttt{--workingdir=/path/to/wd/}}            Set path to working directory. In the working directory results
-                                         and temporary files are stored.
-    \subsection{\texttt{--filterOutShort}}                     It may happen that a ``good'' training gene, i.e.~one that has intron
-                                         support from RNA-Seq in all introns predicted by GeneMark, is in fact
-                                         too short. This flag will discard such genes that have supported introns
-                                         and a neighboring RNA-Seq supported intron upstream of the start codon 
-                                         within the range of the maximum CDS size of that gene and with a 
-                                         multiplicity that is at least as high as 20\% of the average intron 
-                                         multiplicity of that gene.
+                                         'species'. This step will skip training AUGUSTUS and instead use pre-trained parameters.
+  
     \subsection{\texttt{--crf}}                                Execute CRF training for AUGUSTUS; resulting parameters are only kept for
                                          final predictions if they show higher accuracy than HMM parameters. This increases runtime!
-    \subsection{\texttt{--prot\_seq=prot.fa}}                   A protein sequence file in multiple fasta format. This file will be used
-                                         to generate protein hints for AUGUSTUS by running one of the three
-                                         alignment tools Exonerate (\texttt{--prg=exonerate}), Spaln (\texttt{--prg=spaln}) or 
-                                         GenomeThreader (\texttt{--prg=gth}). Default is GenomeThreader if the tool is not 
-                                         specified.
-                                         Currently, hints from proteins are only used in the prediction step with
-                                         AUGUSTUS. 
-    \subsection{\texttt{--prot\_aln=prot.aln}}                  Alignment file generated from aligning protein sequences against the 
-                                         genome with either Exonerate (\texttt{--prg=exonerate}), or Spaln (\texttt{--prg=spaln}), or
-                                         GenomeThreader (\texttt{--prg=gth}).
-                                         
-                                         To prepare alignment file, run Spaln2 with the following command:
-                                         
-                                         \begin{verbatim}
-   spaln -O0 ... > spalnfile
-                                            \end{verbatim}
-                                            
-                                         To prepare alignment file, run Exonerate with the following command:
-                                         
-                                         \begin{verbatim}
-   exonerate --model protein2genome --showtargetgff T ... > exfile
-                                            \end{verbatim}
-                                            
-                                         To prepare alignment file, run GenomeThreader with the following command:
-                                         
-                                         \begin{verbatim}
-   gth -genomic genome.fa  -protein protein.fa -gff3out -skipalignmentout ... -o gthfile
-                                         \end{verbatim}
-                                         
-                                         A valid option \texttt{prg=...} must be specified in combination with 
-                                         \texttt{--prot\_aln}. Generating tool will not be guessed.
-                                         Currently, hints from proteins are only used in the prediction step with
-                                         AUGUSTUS.
-    \subsection{\texttt{--prg=gth|exonerate|spaln}}            Alignment tool \texttt{gth} (GenomeThreader), \texttt{exonerate} (Exonerate) or Spaln2
-                                         (\texttt{spaln}) that will be used to generate protein alignments that will be the 
-                                         basis for hints generation for gene prediction with AUGUSTUS (if specified
-                                         in combination with \texttt{--prot\_seq}) or that was used to externally
-                                         generate an alignment file with the commands listed in description of 
-                                         \texttt{--prot\_aln} (if used in combination with \texttt{--prot\_aln}).
-    \subsection{\texttt{--ALIGNMENT\_TOOL\_PATH=/path/to/tool}}  Set path to alignment tool (GenomeThreader, Spaln, or Exonerate) if not 
-                                         specified as environment variable. Has higher priority than environment
-                                         variable.
-    \subsection{\texttt{--gth2traingenes}}                     Generate training gene structures for AUGUSTUS from GenomeThreader
-                                         alignments. (These genes can either be used for training AUGUSTUS
-					 alone with \texttt{--trainFromGth}; or in addition to GeneMark-ET training genes if 
-					 also a bam-file is supplied.)
-    \subsection{\texttt{--trainFromGth}}                       No GeneMark-Training, train AUGUSTUS from GenomeThreader alignments.
-    \subsection{\texttt{--epmode}}                             Run GeneMark-EP with intron hints provided from \texttt{--hints=proteinhints.gff}.
-    \subsection{\texttt{--skipGeneMark-EP}}                    Skip GeneMark-EP and use provided GeneMark-EP output (e.g.~provided with
-                                         \texttt{--geneMarkGtf=genemark.gtf}.
-    \subsection{\texttt{--version}}                            Print version number of \texttt{braker.pl}.                          
+              
 
 
 \chapter{Output of BRAKER2}

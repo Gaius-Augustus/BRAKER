@@ -6634,6 +6634,12 @@ sub make_hints_jobs{
         $_ =~ m/(.*)\.\w+$/;
         $scaffFileNames{$1} = "$genome_dir/$_";
     }
+    if ( not( -d $augustus_dir ) && $CPU > 1) {
+        print LOG "\# "
+            . (localtime)
+            . ": Creating directory for storing AUGUSTUS files (ab initio, temporarily) $augustus_dir.\n";
+        mkdir $augustus_dir or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $augustus_dir!\n");
+    }
     print LOG "\# "
         . (localtime)
         . ": creating $otherfilesDir/aug_$hintId.lst for AUGUSTUS jobs\n";

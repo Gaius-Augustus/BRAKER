@@ -72,7 +72,7 @@ Path to alignment tool binary, either exonerate or Splan or Genome Threader.
 By default, if no path is given, script assumes they are in the current
 $PATH bash variable.
 --args=s                     additional command line parameters for alignment tool to be executed,
-                             example: --args="--p=5 --x=4"
+                             example: --args="-prinmatchlen 24 -prseedlength 10 -prhdist 4"
 --nice                       Execute all system calls within braker.pl and its submodules with bash "nice"
 (default nice value)
 
