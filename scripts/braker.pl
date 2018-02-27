@@ -3378,8 +3378,9 @@ sub check_upfront {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "Perl module '$module' is required but not installed yet.\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
         }
     }
 
@@ -3392,8 +3393,7 @@ sub check_upfront {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "augustus executable not found at $augpath.\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
+            $logString .= $prtStr;
         }
         else {
             $prtStr
@@ -3401,9 +3401,9 @@ sub check_upfront {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "$augpath not executable on this machine.\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
+            $logString .= $prtStr;
         }
+        print STDERR $logString;
         exit(1);
     }
 
@@ -3416,8 +3416,7 @@ sub check_upfront {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "joingenes executable not found at $augpath. Please compile joingenes (augustus/auxprogs/joingenes)!\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
+            $logString .= $prtStr;
         }
         else {
             $prtStr
@@ -3425,9 +3424,9 @@ sub check_upfront {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "$augpath not executable on this machine.  Please compile joingenes (augustus/auxprogs/joingenes)!n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
+            $logString .= $prtStr;
         }
+        print STDERR $logString;
         exit(1);
     }
 
@@ -3438,8 +3437,8 @@ sub check_upfront {
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "bamtools not installed. Please install it first.\n";
-        print LOG $prtStr;
-        print STDERR $prtStr;
+        $logString .= $prtStr;
+        print STDERR $logString;
         exit(1);
     }
 
@@ -3453,8 +3452,7 @@ sub check_upfront {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "etraining executable not found at $etrainpath.\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
+            $logString .= $prtStr;
         }
         else {
             $prtStr
@@ -3462,9 +3460,9 @@ sub check_upfront {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "$etrainpath not executable on this machine.\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
+            $logString .= $prtStr;
         }
+        print STDERR $logString;
         exit(1);
     }
 
@@ -3479,8 +3477,7 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "bam2wig executable not found at $bam2wigPath.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
             }
             else {
                 $prtStr
@@ -3488,13 +3485,12 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "$bam2wigPath not executable on this machine.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
             }
             $prtStr
                 = "       UTR training from RNA-Seq is enabled. This requires bam2wig. Please check README.TXT of AUGUSTUS to compile bam2wig correctly.\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
+            $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
     }
@@ -3511,8 +3507,7 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "rnaseq2utr executable not found at $rnaseq2utrPath.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
             }
             else {
                 $prtStr
@@ -3520,13 +3515,12 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "$rnaseq2utrPath not executable on this machine.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
             }
             $prtStr
                 = "       UTR training from RNA-Seq is enabled. This requires rnaseq2utr. Please check README.TXT of AUGUSTUS to compile rnaseq2utr correctly.\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
+            $logString .= $prtStr;
+            print STDERR $logString;
             exit(1);
         }
     }
@@ -3542,8 +3536,8 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "GenomeThreader executable not found at $prot_aligner.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
+                print STDERR $logString;
                 exit(1);
             }
             elsif ( !-x $prot_aligner ) {
@@ -3552,8 +3546,8 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "$prot_aligner not executable on this machine.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
+                print STDERR $logString;
                 exit(1);
             }
         }
@@ -3565,8 +3559,8 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "Spaln executable not found at $prot_aligner.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
+                print STDERR $logString;
                 exit(1);
             }
             elsif ( !-x $prot_aligner ) {
@@ -3575,8 +3569,8 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "$prot_aligner not executable on this machine.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
+                print STDERR $logString;
                 exit(1);
             }
 
@@ -3588,8 +3582,7 @@ sub check_upfront {
                         . (localtime)
                         . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                         . "The environment variable ALN_DBS for spaln is not defined. Please export an environment variable with:' export ALN_DBS=/path/to/spaln/seqdb'\n";
-                    print LOG $prtStr;
-                    print STDERR $prtStr;
+                    $logString .= $prtStr;
                 }
                 if ( !$ENV{'ALN_TAB'} ) {
                     $prtStr
@@ -3597,9 +3590,9 @@ sub check_upfront {
                         . (localtime)
                         . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                         . "The environment variable ALN_TAB for spaln is not defined. Please export an environment variable with:' export ALN_TAB=/path/to/spaln/table'\n";
-                    print LOG $prtStr;
-                    print STDERR $prtStr;
+                    $logString .= $prtStr;
                 }
+                print STDERR $logString;
                 exit(1);
             }
         }
@@ -3611,8 +3604,8 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "Exonerate executable not found at $prot_aligner.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
+                print STDERR $logString;
                 exit(1);
             }
             elsif ( !-x $prot_aligner ) {
@@ -3621,8 +3614,8 @@ sub check_upfront {
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "$prot_aligner not executable on this machine.\n";
-                print LOG $prtStr;
-                print STDERR $prtStr;
+                $logString .= $prtStr;
+                print STDERR $logString;
                 exit(1);
             }
         }
