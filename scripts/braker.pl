@@ -6915,10 +6915,12 @@ sub run_augustus_with_joingenes_parallel{
     $cmdString = "cp $hintsfile $adjustedHintsFile";
     print LOG "$cmdString\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-    if ( $ETPmode == 1 ) {
+    if ( $ETPmode == 1 && -e "$genemarkDir/evidence.gff") {
         $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
         print LOG "$cmdString\n";
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    } else {
+        print LOG "WARNING: ETPmode enabled but $genemarkDir/evidence.gff does not exist!\n";
     }
     assignExCfg("gth.cfg");
     my $augustus_dir = "$otherfilesDir/augustus_tmp_Ppri5";
