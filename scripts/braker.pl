@@ -3409,7 +3409,7 @@ sub check_upfront {
 
     # check for joingenes executable
     $augpath = "$AUGUSTUS_BIN_PATH/joingenes";
-    if ( system("$augpath > /dev/null 2> /dev/null") != 0 ) {
+    if ( not (-x $augpath ) or not (-e $augpath ) ) {
         if ( !-f $augpath ) {
             $prtStr
                 = "\# "
@@ -3418,7 +3418,7 @@ sub check_upfront {
                 . "joingenes executable not found at $augpath. Please compile joingenes (augustus/auxprogs/joingenes)!\n";
             $logString .= $prtStr;
         }
-        else {
+        elsif(! -x $augpath){
             $prtStr
                 = "\# "
                 . (localtime)
