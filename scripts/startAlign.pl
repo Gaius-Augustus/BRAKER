@@ -737,10 +737,10 @@ if ( defined($ALIGNMENT_TOOL_PATH) ) {
     $cmdString .= $ALIGNMENT_TOOL_PATH . "/";
 }
 if(not(defined($alnArgs))){
-    $alnArgs = "-prseedlength $prseedlength -prminmatchlen $prminmatchlen";
+    $alnArgs = "-prseedlength $prseedlength -prminmatchlen $prminmatchlen -prhdist $prhdist";
 }
 $cmdString
-.= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -prhdist $prhdist -gcmincoverage $gcmincoverage ";
+.= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -gcmincoverage $gcmincoverage ";
 $cmdString .= $alnArgs;
 $cmdString .= " -o  $stdoutfile 2>$errorfile";
 print "CmdString: $cmdString\n";
