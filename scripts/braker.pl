@@ -6925,6 +6925,7 @@ sub run_augustus_with_joingenes_parallel{
     assignExCfg("gth.cfg");
     my $augustus_dir = "$otherfilesDir/augustus_tmp_Ppri5";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "Ppri5");
+    run_augustus_jobs( "$otherfilesDir/Ppri5.job.lst" );
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5.gff" );
     clean_aug_jobs("Ppri5");
     make_gtf("$otherfilesDir/augustus.Ppri5.gff");
@@ -6938,6 +6939,7 @@ sub run_augustus_with_joingenes_parallel{
     assignExCfg("rnaseq.cfg");
     $augustus_dir = "$otherfilesDir/augustus_tmp_E";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
+    run_augustus_jobs( "$otherfilesDir/E.job.lst" );
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E.gff" );
     clean_aug_jobs("E");
     make_gtf("$otherfilesDir/augustus.E.gff");
