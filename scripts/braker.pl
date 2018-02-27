@@ -1000,8 +1000,7 @@ if (@hints) {
     add_other_hints();
 }
 
-if (! $trainFromGth && not($skipAllTraining==0) ) {
-    print "skipAllTraining is $skipAllTraining\n";
+if (! $trainFromGth && $skipAllTraining==0 ) {
     getGeneMarkHints();
 }
 
