@@ -3181,7 +3181,6 @@ sub training {
 sub augustus {
     my $localUTR = shift;
     $augpath = "$AUGUSTUS_BIN_PATH/augustus";
-    my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
     my @genome_files;
     my $genome_dir = "$otherfilesDir/genome_split";
     my $augustus_dir           = "$otherfilesDir/augustus_tmp";
@@ -3212,47 +3211,7 @@ sub augustus {
                 clean_aug_jobs($hintId);
                 make_gtf("$otherfilesDir/augustus.$hintId.gff");
             }elsif(  ( ($EPmode == 0 ) && defined ($prg) && not (defined ( $trainFromGth ) ) ) || $ETPmode == 1 ) {
-                # if RNASeq and protein hints are given
-                $hintId = "Ppri5";
-                my $adjustedHintsFile = "$hintsfile.Ppri5";
-                adjustPri($hintsfile, $adjustedHintsFile, "P", 5 );
-                if ( $ETPmode == 1 ) {
-                    $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
-                    print LOG "$cmdString\n";
-                    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-                }
-                assignExCfg("gth.cfg");
-                make_hints_jobs( $augustus_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "Ppri5");
-                join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5.gff" );
-                clean_aug_jobs("Ppri5");
-                make_gtf("$otherfilesDir/augustus.Ppri5.gff");
-                $hintId = "E";
-                $adjustedHintsFile = "$hintsfile.E";
-                getRnaseqHints($hintsfile, $adjustedHintsFile);
-                if ( $ETPmode == 1 ) {
-                    $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
-                    print LOG "$cmdString\n";
-                    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-                }
-                assignExCfg("rnaseq.cfg");
-                make_hints_jobs( $augustus_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
-                join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E.gff" );
-                clean_aug_jobs("E");
-                make_gtf("$otherfilesDir/augustus.E.gff");
-                $cmdString = "";
-                if($nice){
-                    $cmdString .= "nice ";
-                }
-                $cmdString .= "$joingenespath --genesets=$otherfilesDir/augustus.Ppri5.gtf,$otherfilesDir/augustus.E.gtf ";
-                if( $ETPmode == 0 ){
-                    $cmdString .= "--priorities=1,2 "
-                }else{
-                    $cmdString .= "--priorities=2,1 "
-                }
-                $cmdString .= "--output=join.gtf";
-                print LOG "$cmdString\n";
-                system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-
+                run_augustus_with_joingenes_parallel($augustus_dir, $genome_dir, $localUTR);
             }
         }
         else {
@@ -3261,16 +3220,20 @@ sub augustus {
                 run_augustus_single_core_ab_initio( $localUTR );
                 make_gtf("$otherfilesDir/augustus.ab_initio.gff");
             }
-            run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile, $localUTR, $hintId );
-            make_gtf("$otherfilesDir/augustus.$hintId.gff");
+            if ( $EPmode == 1 || ( $EPmode == 0 && not( defined($prg) ) ) || defined( $trainFromGth )) {
+                run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile, $localUTR, $hintId );
+                make_gtf("$otherfilesDir/augustus.$hintId.gff");
+            }elsif( ( ($EPmode == 0 ) && defined ($prg) && not (defined ( $trainFromGth ) ) ) || $ETPmode == 1 ){
+                run_augustus_with_joingenes_single_core($localUTR);
+            }
         }
         print LOG "\# " . (localtime) . ": AUGUSTUS prediction complete\n";
 
     }
-    if ($ab_initio) {
-        getAnnoFasta("$otherfilesDir/augustus.ab_initio.gff");
-    }
-    getAnnoFasta("$otherfilesDir/augustus.hints.gff");
+    #if ($ab_initio) {
+    #    getAnnoFasta("$otherfilesDir/augustus.ab_initio.gff");
+    #}
+    #getAnnoFasta("$otherfilesDir/augustus.hints.gff");
 }
 
 # call getAnnoFasta.pl
@@ -3359,10 +3322,10 @@ sub clean_up {
         }
     }
     # deleting files from AUGUSTUS parallelization
-    print LOG "\# " . (localtime) . ": deleting files from AUGUSTUS parallelization\n";
+    print LOG "\# " . (localtime) . ": deleting job lst files (if existing)\n";
     opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $otherfilesDir!\n");
     while ( my $file = readdir(DIR) ) {
-        if( ( $file =~ m/aug_ab_initio_/ ) || ( $file =~ m/aug_hints_/ ) || ( $file =~ m/\.lst/ ) ){
+        if( $file =~ m/\.lst/ ){
             print LOG "rm $otherfilesDir/$file\n";
             unlink( "$otherfilesDir/$file" );
         }
@@ -3378,7 +3341,8 @@ sub clean_aug_jobs {
     print LOG "\# " . (localtime) . ": deleting files from AUGUSTUS parallelization\n";
     opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $otherfilesDir!\n");
     while ( my $file = readdir(DIR) ) {
-        if( $file =~ m/aug_$hintId/){
+        my $searchStr = "aug_".$hintId."_";
+        if( $file =~ m/$searchStr/){
             print LOG "rm $otherfilesDir/$file\n";
             unlink( "$otherfilesDir/$file" ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $otherfilesDir/$file!\n");
         }
@@ -6942,4 +6906,110 @@ sub getRnaseqHints {
     }
     close (OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $adjusted!\n");
     close (HINTS) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $hints!\n");
+}
+
+sub run_augustus_with_joingenes_parallel{
+    my $augustus_dir = shift;
+    my $genome_dir = shift;
+    my $localUTR = shift;
+    my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
+    # if RNASeq and protein hints are given
+    my $adjustedHintsFile = "$hintsfile.Ppri5";
+    adjustPri($hintsfile, $adjustedHintsFile, "P", 5 );
+    if ( $ETPmode == 1 ) {
+        $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+        print LOG "$cmdString\n";
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+    assignExCfg("gth.cfg");
+    make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "Ppri5");
+    join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5.gff" );
+    clean_aug_jobs("Ppri5");
+    make_gtf("$otherfilesDir/augustus.Ppri5.gff");
+    $adjustedHintsFile = "$hintsfile.E";
+    getRnaseqHints($hintsfile, $adjustedHintsFile);
+    if ( $ETPmode == 1 ) {
+        $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+        print LOG "$cmdString\n";
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+    assignExCfg("rnaseq.cfg");
+    make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
+    join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E.gff" );
+    clean_aug_jobs("E");
+    make_gtf("$otherfilesDir/augustus.E.gff");
+    $cmdString = "";
+    if($nice){
+        $cmdString .= "nice ";
+    }
+    $cmdString .= "$joingenespath --genesets=$otherfilesDir/augustus.Ppri5.gtf,$otherfilesDir/augustus.E.gtf ";
+    if( $ETPmode == 0 ){
+        $cmdString .= "--priorities=1,2 "
+    }else{
+        $cmdString .= "--priorities=2,1 "
+    }
+    $cmdString .= "--output=join.gtf";
+    print LOG "$cmdString\n";
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    my $string = find(
+        "findGenesInIntrons.pl",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "$string --in_gff=$otherfilesDir/augustus.Ppri5.gtf --jg_gff=join.gtf --out_gtf=augustus.hints.gtf";
+    print LOG "$perlCmdString\n";
+    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+}
+
+sub run_augustus_with_joingenes_single_core{
+    my $localUTR = shift;
+    my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
+    # if RNASeq and protein hints are given
+    my $adjustedHintsFile = "$hintsfile.Ppri5";
+    adjustPri($hintsfile, $adjustedHintsFile, "P", 5 );
+    if ( $ETPmode == 1 ) {
+        $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+        print LOG "$cmdString\n";
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+    assignExCfg("gth.cfg");
+    run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile, $localUTR, "Ppri5");
+    make_gtf("$otherfilesDir/augustus.Ppri5.gff");
+    $adjustedHintsFile = "$hintsfile.E";
+    getRnaseqHints($hintsfile, $adjustedHintsFile);
+    if ( $ETPmode == 1 ) {
+        $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+        print LOG "$cmdString\n";
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+    assignExCfg("rnaseq.cfg");
+    run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
+    make_gtf("$otherfilesDir/augustus.E.gff");
+    $cmdString = "";
+    if($nice){
+        $cmdString .= "nice ";
+    }
+    $cmdString .= "$joingenespath --genesets=$otherfilesDir/augustus.Ppri5.gtf,$otherfilesDir/augustus.E.gtf ";
+    if( $ETPmode == 0 ){
+        $cmdString .= "--priorities=1,2 "
+    }else{
+        $cmdString .= "--priorities=2,1 "
+    }
+    $cmdString .= "--output=join.gtf";
+    print LOG "$cmdString\n";
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    my $string = find(
+        "findGenesInIntrons.pl",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "$string --in_gff=$otherfilesDir/augustus.Ppri5.gtf --jg_gff=join.gtf --out_gtf=augustus.hints.gtf";
+    print LOG "$perlCmdString\n";
+    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
 }
