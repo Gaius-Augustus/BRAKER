@@ -6992,6 +6992,6 @@ sub joingenes {
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
     $cmdString = "mv $otherfilesDir/join.gtf $otherfilesDir/augustus.hints.gtf";
-    print Log "$cmdString\n";
+    print LOG "$cmdString\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
 }
