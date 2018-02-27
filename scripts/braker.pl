@@ -3902,10 +3902,7 @@ sub check_options {
         }
     }
 
-    # if hints files specified and no bam, check what sources and types of hints they contain
-    # -> this will determine whether braker.pl switches into EPmode... this will work once that the ep
-    # introns.gff format in the last column has been fixed. For now, require users to specify EPmode as
-    #  input argument and change the last column of introns.gff file according to braker requirements.
+    # check what what hint sources are in hints file
     if(@bam){
         $foundRNASeq = 1;
     }elsif(@hints){
@@ -3914,15 +3911,6 @@ sub check_options {
         }
     }
 
-    if ( $foundRNASeq==0 && $EPmode == 0 ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": GeneMark-EP mode is enabled automatically due to hints ";
-        $prtStr .= "file contents!\n";
-        $logString .= $prtStr;
-        $EPmode = 1;
-    }
 
     # check whether RNA-Seq files are specified
     if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth & !$skipAllTraining) {
