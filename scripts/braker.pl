@@ -1001,6 +1001,7 @@ if (@hints) {
 }
 
 if (! $trainFromGth && not($skipAllTraining==0) ) {
+    print "skipAllTraining is $skipAllTraining\n";
     getGeneMarkHints();
 }
 
