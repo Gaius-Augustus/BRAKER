@@ -1514,7 +1514,7 @@ sub getGeneMarkHints {
     my $gm_hints_prot = "$genemark_hintsfile.prot";
     print LOG "\n\# "
         . (localtime)
-        . ": Filteringe intron hints for GeneMark from $hintsfile...\n";
+        . ": Filtering intron hints for GeneMark from $hintsfile...\n";
     open (HINTS, "<", $hintsfile) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $hintsfile!\n");
     open (OUTRNASEQ, ">", $gm_hints_rnaseq) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_hints_rnaseq!\n");
     open (OUTPROT, ">", $gm_hints_prot) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $gm_hints_prot!\n");
@@ -1530,30 +1530,30 @@ sub getGeneMarkHints {
     close (OUTPROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gm_hints_prot!\n");
     close (HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $hintsfile!\n");
     if ( -s $gm_hints_rnaseq ) {
-        $perlCmdString = "perl ";
+        $cmdString = "";
         if ($nice) {
-            $perlCmdString .= "nice ";
+            $cmdString .= "nice ";
         }
         $string = find(
             "join_mult_hints.pl",       $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
         );
-        $perlCmdString .= "cat $gm_hints_rnaseq | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -k 3,3 | sort -s -k 1,1 | $string > $gm_hints_rnaseq.tmp";
-        print LOG "$perlCmdString\n";
-        system($perlCmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+        $cmdString .= "cat $gm_hints_rnaseq | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -k 3,3 | sort -s -k 1,1 | $string > $gm_hints_rnaseq.tmp";
+        print LOG "$cmdString\n";
+        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     }
     if( -s $gm_hints_prot ) {
-        $perlCmdString = "perl ";
+        $cmdString = "";
         if ($nice) {
-            $perlCmdString .= "nice ";
+            $cmdString .= "nice ";
         }
         $string = find(
             "join_mult_hints.pl",       $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
         );
-        $perlCmdString .= "cat $gm_hints_prot | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -k 3,3 | sort -s -k 1,1 | $string > $gm_hints_prot.tmp";
-        print LOG "$perlCmdString\n";
-        system($perlCmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+        $cmdString .= "cat $gm_hints_prot | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -k 3,3 | sort -s -k 1,1 | $string > $gm_hints_prot.tmp";
+        print LOG "$cmdString\n";
+        system($cmdString) == 0 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
     }
 
     if( $EPmode == 0 && $ETPmode == 0 ) {
