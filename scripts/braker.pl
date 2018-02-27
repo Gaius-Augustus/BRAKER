@@ -6912,7 +6912,9 @@ sub run_augustus_with_joingenes_parallel{
     my $localUTR = shift;
     # if RNASeq and protein hints are given
     my $adjustedHintsFile = "$hintsfile.Ppri5";
-    adjustPri($hintsfile, $adjustedHintsFile, "P", 5 );
+    $cmdString = "cp $hintsfile $adjustedHintsFile";
+    print LOG "$cmdString\n";
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     if ( $ETPmode == 1 ) {
         $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
         print LOG "$cmdString\n";
