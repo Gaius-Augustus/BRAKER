@@ -3270,6 +3270,7 @@ sub make_gtf {
     my $AUG_pred = shift;
     @_ = split( /\//, $AUG_pred );
     my $name_base = substr( $_[-1],    0, -4 );
+    my $gtf_file_tmp = substr( $AUG_pred, 0, -4 ) . ".tmp.gtf";
     my $gtf_file  = substr( $AUG_pred, 0, -4 ) . ".gtf";
     my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gtf.stderr";
     my $perlstring = find(
@@ -3281,10 +3282,19 @@ sub make_gtf {
         $cmdString .= "nice ";
     }
     my $cmdString
-        .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon --out=$gtf_file 2>$errorfile";
+        .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon --out=$gtf_file_tmp 2>$errorfile";
     print LOG "\# " . (localtime) . ": Making a gtf file from $AUG_pred\n";
     print LOG "$cmdString\n\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+    open (GTF, "<", $gtf_file_tmp) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file $gtf_file_tmp\n");
+    open (FINALGTF, ">", $gtf_file) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file $gtf_file\n");
+    while(<GTF>){
+      if(not($_ =~ m/\tterminal\t/) && not($_ =~ m/\tinternal\t/) && not ($_ =~ m/\tinitial\t/) && not ($_ =~ m/\tsingle\t/)) {
+            print FINALGTF $_;
+      }
+    }
+    close (FINALGTF) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot close file $gtf_file\n");
+    close(GTF) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot close file $gtf_file_tmp\n");
     if ($gff3) {
         my $gff3_file  = substr( $AUG_pred, 0, -4 ) . ".gff3";
         my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
