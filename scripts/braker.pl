@@ -6928,9 +6928,13 @@ sub run_augustus_with_joingenes_parallel{
     my $localUTR = shift;
     # if RNASeq and protein hints are given
     my $adjustedHintsFile = "$hintsfile.Ppri5";
-    $cmdString = "cp $hintsfile $adjustedHintsFile";
-    print LOG "$cmdString\n";
-    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    if( ! $ETPmode ) {
+        $cmdString = "cp $hintsfile $adjustedHintsFile";
+        print LOG "$cmdString\n";
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }else{
+        adjustPri( $hintsfile, $adjustedHintsFile, "P", 5);
+    }
     if ( $ETPmode == 1 && -e "$genemarkDir/evidence.gff") {
         $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
         print LOG "$cmdString\n";
@@ -6966,7 +6970,13 @@ sub run_augustus_with_joingenes_single_core{
     my $localUTR = shift;
     # if RNASeq and protein hints are given
     my $adjustedHintsFile = "$hintsfile.Ppri5";
-    adjustPri($hintsfile, $adjustedHintsFile, "P", 5 );
+    if( ! $ETPmode ) {
+        $cmdString = "cp $hintsfile $adjustedHintsFile";
+        print LOG "$cmdString\n";
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }else{
+        adjustPri( $hintsfile, $adjustedHintsFile, "P", 5)
+    }
     if ( $ETPmode == 1 && (-e  "$genemarkDir/evidence.gff" )) {
         $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
         print LOG "$cmdString\n";
