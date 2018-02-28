@@ -7007,7 +7007,7 @@ sub joingenes {
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    $perlCmdString .= "perl $string --in_gff=$file1 --jg_gff=$otherfilesDir/join.gtf --out_gtf=$otherfilesDir/missed.genes.gtf";
+    $perlCmdString .= "perl $string --in_gff=$file1 --jg_gff=$otherfilesDir/join.gtf --out_gff=$otherfilesDir/missed.genes.gtf";
     print LOG "$perlCmdString\n";
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
     if (-e "$otherfilesDir/missed.genes.gtf") {
