@@ -6941,7 +6941,7 @@ sub run_augustus_with_joingenes_parallel{
     make_gtf("$otherfilesDir/augustus.Ppri5.gff");
     $adjustedHintsFile = "$hintsfile.E";
     getRnaseqHints($hintsfile, $adjustedHintsFile);
-    if ( $ETPmode == 1 ) {
+    if ( $ETPmode == 1 && ( -e "$genemarkDir/evidence.gff" ) ) {
         $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
         print LOG "$cmdString\n";
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
