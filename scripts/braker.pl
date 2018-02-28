@@ -6281,7 +6281,7 @@ sub join_aug_pred {
     }
     foreach(keys %err_files){
         foreach(@{$err_files{$_}}){
-            if ( !-s $_ ) {
+            if ( -s $_ ) {
                 $cmdString = "echo \"Contents of file ".$_->{'filename'}."\" >> $error_cat_file";
                 print LOG "$cmdString\n";
                 system ("$cmdString") == 0 or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
