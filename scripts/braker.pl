@@ -4103,7 +4103,7 @@ sub check_options {
             }
         }
         elsif ( $ETPmode == 1 ) {
-            assignExCfg("ept.cfg");
+            assignExCfg("etp.cfg");
         }
         else {
             assignExCfg("rnaseq.cfg");
@@ -6975,7 +6975,7 @@ sub run_augustus_with_joingenes_single_core{
         print LOG "$cmdString\n";
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }else{
-        adjustPri( $hintsfile, $adjustedHintsFile, "P", 5)
+        adjustPri( $hintsfile, $adjustedHintsFile, "P", 5);
     }
     if ( $ETPmode == 1 && (-e  "$genemarkDir/evidence.gff" )) {
         $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
