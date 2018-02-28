@@ -40,8 +40,8 @@ filterIntronsFindStrand.pl genome.fa introns.gff [OPTIONS] > introns.s.f.gff
 
   genome.fa           DNA file in fasta format
   introns.gff         corresponding introns file in gff format
-    
-    
+
+
 OPTIONS
 
     --help                          Print this help message
@@ -49,12 +49,12 @@ OPTIONS
     --score                         Set score to 'mult' entry or '1', if the last column does not contain a 'mult' entry
     --genome=genome.fa              see above
     --introns=introns.gff           see above
-                                    
 
-                          
+
+
 
 DESCRIPTION
-      
+
   Example:
 
     filterIntronsFindStrand.pl genome.fa introns.gff [OPTIONS] > introns.s.f.gff
@@ -68,7 +68,7 @@ my $seqname;
 my $seq;
 
 if(@ARGV==0){
-  print "$usage\n"; 
+  print "$usage\n";
   exit(0);
 }
 
@@ -118,7 +118,7 @@ while(<FASTA>) {
   /[>]*(.*)\n/;
   $seqname = $1;
   $seq = $';
-  $seq =~ s/>//; 
+  $seq =~ s/>//;
   $seq =~ s/\n//g;
   $annos{$seqname} = $seq;
 }
@@ -128,18 +128,18 @@ close(FASTA) or die("Could not close fasta file $genome!\n");
 open (INTRONS, "<".$introns) or die "Cannot open file: $introns\n";
 $/="\n";
 while(<INTRONS>){
-  chomp;
-  my @line = split(/\t/, $_);
-  my $strand = findStrand($line[0], $line[3], $line[4]);
-  my $score;
-  if($mult_score){
-    $score = getScore($line[8]);
-  }else{
-    $score = $line[5];
-  }
-  if($strand){
-    print "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$score\t$strand\t$line[7]\t$line[8]\n";
-  }
+    chomp;
+    my @line = split(/\t/, $_);
+    my $strand = findStrand($line[0], $line[3], $line[4]);
+    if( $strand eq "+" || $strand eq "-") {
+        my $score;
+        if($mult_score){
+            $score = getScore($line[8]);
+        }else{
+            $score = $line[5];
+        }
+        print "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$score\t$strand\t$line[7]\t$line[8]\n";
+    }
 }
 close(INTRONS) or die("Could not close introns file $introns!\n");
 
@@ -148,30 +148,29 @@ close(INTRONS) or die("Could not close introns file $introns!\n");
 
 
 # find strand for introns
-# look up start and end position and check if it matches allowed splice site patterns 
+# look up start and end position and check if it matches allowed splice site patterns
 sub findStrand{
-  my $seqname = shift;
-  my $start = shift;
-  my $end = shift;
-  my $type;
-  my $reverse;
-  if(defined($annos{$seqname})){
-    $type = lc(substr($annos{$seqname}, $start-1,2)).lc(substr($annos{$seqname}, $end-2,2));
-    $reverse = reverse($type);
-    $reverse =~ tr/agct/tcga/;
-    foreach (@allowed){
-      if($_ eq $type){
-        return "+";
-      }elsif($_ eq $reverse){
-        return "-";
-      }
+    my $seqname = shift;
+    my $start = shift;
+    my $end = shift;
+    my $type;
+    my $reverse;
+    if(defined($annos{$seqname})){
+        $type = lc(substr($annos{$seqname}, $start-1,2)).lc(substr($annos{$seqname}, $end-2,2));
+        $reverse = reverse($type);
+        $reverse =~ tr/agct/tcga/;
+        foreach (@allowed){
+            if($_ eq $type){
+                return "+";
+            }elsif($_ eq $reverse){
+                    return "-";
+            }
+        }
+        return ".";
+    }else{
+        print STDERR "WARNING: '$seqname' does not match any sequence in the fasta file. Maybe the two files do not belong together.\n";
+        return ".";
     }
-    return 0;
-  }else{
-    print STDERR "WARNING: '$seqname' does not match any sequence in the fasta file. Maybe the two files do not belong together.\n";
-  #  print STDERR "The program terminates here.\n";
-  #  exit(1)
-  }
 }
 
 # get score from mult entry
@@ -182,9 +181,9 @@ sub getScore{
     $score = $1;
   }else{
     $score = 1;
-  } 
+  }
   return $score;
 }
-  
+
 
 
