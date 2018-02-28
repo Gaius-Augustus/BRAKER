@@ -141,7 +141,8 @@ FREQUENTLY USED OPTIONS
                                     resulting parameters are only kept for
                                     final predictions if they show higher
                                     accuracy than HMM parameters.
-
+--keepCrf                           keep CRF parameters even if they are not
+                                    better than HMM parameters
 --prg=gth|exonerate|spaln           Alignment tool gth (GenomeThreader),
                                     exonerate (Exonerate) or Spaln2
                                     (spaln) that will be used to generate
@@ -414,6 +415,7 @@ my @allowedHints = (
 # REMOVE Intron when GeneMark introns format has been fixed!
 
 my $crf;     # flag that determines whether CRF training should be tried
+my $keepCrf;
 my $nice;    # flag that determines whether system calls should be executed
              # with bash nice (default nice value)
 my ( $target_1, $target_2, $target_3 )
@@ -550,6 +552,7 @@ GetOptions(
     'workingdir=s'                 => \$workDir,
     'filterOutShort!'              => \$filterOutShort,
     'crf!'                         => \$crf,
+    'keepCrf!'                     => \$keepCrf,
     'nice!'                        => \$nice,
     'help!'                        => \$help,
     'prg=s'                        => \$prg,
@@ -3138,8 +3141,8 @@ sub training {
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString\n");
             }
 
-# if the accuracy doesn't improve with CRF, overwrite the config files with the HMM parameters from last etraining
-            if ( $target_2 > $target_3 ) {
+            # if the accuracy doesn't improve with CRF, overwrite the config files with the HMM parameters from last etraining
+            if ( ( $target_2 > $target_3 ) && !$keepCrf ) {
                 print LOG "\# "
                     . (localtime)
                     . ": overwriting parameter files resulting from CRF training with original HMM files\n";
