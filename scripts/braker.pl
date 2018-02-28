@@ -3340,13 +3340,16 @@ sub clean_up {
     print LOG "\# " . (localtime) . ": deleting job lst files (if existing)\n";
     opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to open directory $otherfilesDir!\n");
     while ( my $file = readdir(DIR) ) {
-        if( $file =~ m/\.lst/ || $file =~ m/aug_ab_initio_/ ){
+        if( $file =~ m/\.lst/ || $file =~ m/aug_ab_initio_/ || $file =~ m/Ppri5/ || $file =~ m/augustus\.E/ || $file =~ m/gff\.E/ || $file =~ m/missed/ || $file =~ m/prot_hintsfile\.aln2hints\.temp\.gff/){
             print LOG "rm $otherfilesDir/$file\n";
             unlink( "$otherfilesDir/$file" );
         }
     }
     if(-e "$otherfilesDir/seqlist"){
         unlink ( "$otherfilesDir/seqlist" );
+    }
+    if(-d "$otherfilesDir/genome_split" ) {
+        rmtree( ["$otherfilesDir/genome_split"] ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $otherfilesDir/genome_split!\n");
     }
 }
 
@@ -6996,7 +6999,7 @@ sub joingenes {
     }else{
         $cmdString .= "--priorities=2,1 "
     }
-    $cmdString .= "--output=$otherfilesDir/join.gtf";
+    $cmdString .= "--output=$otherfilesDir/join.gtf 1> /dev/null 2> $errorfilesDir/joingenes.err";
     print LOG "$cmdString\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     my $string = find(
@@ -7007,7 +7010,7 @@ sub joingenes {
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    $perlCmdString .= "perl $string --in_gff=$file1 --jg_gff=$otherfilesDir/join.gtf --out_gff=$otherfilesDir/missed.genes.gtf";
+    $perlCmdString .= "perl $string --in_gff=$file1 --jg_gff=$otherfilesDir/join.gtf --out_gff=$otherfilesDir/missed.genes.gtf 1> /dev/null 2> $errorfilesDir/findGenesInIntrons.err";
     print LOG "$perlCmdString\n";
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
     if (-e "$otherfilesDir/missed.genes.gtf") {
