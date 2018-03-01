@@ -6909,12 +6909,33 @@ sub createEvidenceGff {
         if( defined ($prot{$locus}) ) {
             foreach my $hint (@{$rnaseq{$locus}}) {
                 foreach my $otherHint (@{$prot{$locus}}) {
+                    print "Trying to access hint-> start:\n";
+                    print $hint->{'start'};
+                    print "\n";
                     print "Trying to access otherHint-> start:\n";
                     print $otherHint->{'start'};
                     print "\n";
+                     print "Trying to access hint-> stop:\n";
+                    print $hint->{'stop'};
+                    print "\n";
+                    print "Trying to access otherHint-> stop:\n";
+                    print $otherHint->{'stop'};
+                    print "\n";
+                    print "Trying to access hint-> strand:\n";
+                    print $hint->{'strand'};
+                    print "\n";
+                    print "Trying to access otherHint-> strand:\n";
+                    print $otherHint->{'strand'};
+                    print "\n";
+                    print "Trying to access hint-> feature:\n";
+                    print $hint->{'feature'};
+                    print "\n";
+                    print "Trying to access hint-> frame:\n";
+                    print $otherHint->{'frame'};
+                    print "\n";
                     if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
                         print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
-                        ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6\n";
+                        ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
                     }
                 }
             }
