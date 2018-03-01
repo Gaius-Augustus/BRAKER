@@ -6909,8 +6909,8 @@ sub createEvidenceGff {
         if( defined ($prot{$locus}) ) {
             foreach my $hint (@{$rnaseq{$locus}}) {
                 foreach my $otherHint (@{$prot{$locus}}) {
-                    print "Trying to access hint-> start:\n";
-                    print $hint->{'start'};
+                    print "Trying to access otherHint-> start:\n";
+                    print $otherHint->{'start'};
                     print "\n";
                     if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
                         print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
