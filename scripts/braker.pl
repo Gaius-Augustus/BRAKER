@@ -578,8 +578,6 @@ GetOptions(
     'version!'                     => \$printVersion
 );
 
-print "ETPmode at the beginning is $ETPmode\n";
-
 if ($help) {
     print $usage;
     exit(0);
@@ -1020,21 +1018,18 @@ if (! $trainFromGth && $skipAllTraining==0 ) {
 
 if ( $skipAllTraining == 0 ) {
     if ( not($trainFromGth) ) {
-        if ( $EPmode == 0 ) {
-            print STDOUT "braker thinks that it is in et mode\n";
+        if ( $EPmode == 0 && $ETPmode==0 ) {
             checkGeneMarkHints();
             GeneMark_ET();    # run GeneMark-ET
             filterGeneMark();
         }
         elsif ( $EPmode == 1 ) {
             # remove reformatting of hintsfile, later!
-            print STDOUT "braker thinks that it is in ep mode\n";
             format_ep_hints();
             checkGeneMarkHints();
             GeneMark_EP();
             filterGeneMark();
         }elsif ( $ETPmode == 1 ) {
-            print STDOUT "braker thinks that it is in etp mode\n";
             createEvidenceGff();
             checkGeneMarkHints();
             GeneMark_ETP();
