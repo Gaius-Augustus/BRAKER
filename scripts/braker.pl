@@ -1517,7 +1517,8 @@ sub identifyHintTypes {
 # checks whether hints files contain RNA-Seq or protein hints; if file does contain RNA-Seq, it
 # returns 1, otherwise 0.
 sub checkHints {
-    print LOG "\# ". (localtime) . ": Checking whether hints from RNA-Seq and/or proteins are present in hintsfile\n" if ($v > 2);
+    $prtStr = "\# ". (localtime) . ": Checking whether hints from RNA-Seq and/or proteins are present in hintsfile\n";
+    $logString .= $prtStr if ($v > 2);
     my $thisHintsFile = shift;
     my @areb2h        = `cut -f 9 $thisHintsFile | grep src=E`;
     my $ret           = 0;
