@@ -1540,7 +1540,7 @@ sub checkHints {
 # GeneMark-EX only needs intron hints, AUGUSTUS may use all hints. This function creates a file
 # $genemark_hintsfile with intron hints only for GeneMark-EX
 sub getGeneMarkHints {
-    pritn LOG "\# ". (localtime) . ": Preparing hints for running GeneMark\n" if ($v > 2);
+    print LOG "\# ". (localtime) . ": Preparing hints for running GeneMark\n" if ($v > 2);
     my $gm_hints_rnaseq = "$genemark_hintsfile.rnaseq";
     my $gm_hints_prot = "$genemark_hintsfile.prot";
     print LOG "\n\# "
