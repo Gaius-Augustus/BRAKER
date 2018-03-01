@@ -6895,9 +6895,9 @@ sub createEvidenceGff {
             $hint{'frame'} = $8;
             $hint{'lastCol'} = $9;
             if( $9 =~ m/src=P/) {
-                push ( @{$prot{$1}}, \%hint);
+                push ( @{$prot{$hint{'locus'}}}, \%hint);
             }elsif ( $9 =~ m/src=E/ ) {
-                push (@{$rnaseq{$1}}, \%hint);
+                push (@{$rnaseq{$hint{'locus'}}}, \%hint);
             }
         }
     }
