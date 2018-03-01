@@ -2781,10 +2781,10 @@ sub training {
                 print LOG $prtStr;
                 clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
             }
-            if ( $gb_good_size < 300 ) {
+            if ( $gb_good_size < 600 ) {
                 $prtStr = "\# "
                     . (localtime)
-                    . " WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 300 genes\n";
+                    . " WARNING: Number of good genes is low ($gb_good_size). Recomended are at least 600 genes\n";
                 print LOG $prtStr if ($v > 0);
                 print STDOUT $prtStr if ($v > 0);
                 $testsize1 = floor($gb_good_size/3);
@@ -2798,19 +2798,19 @@ sub training {
                     print LOG $prtStr;
                     clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
                 }
-            }elsif ( $gb_good_size >= 300 && $gb_good_size <= 1000 ) {
+            }elsif ( $gb_good_size >= 600 && $gb_good_size <= 1000 ) {
                 $testsize1 = 200;
                 $testsize2 = 200;
             }else{
                 $testsize1 = 300;
-                $testsize2 = 500;
+                $testsize2 = 300;
             }
             $perlCmdString = "";
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString
-                .= "perl $string $trainGb1 $testsize1 2>$errorfile";
+                .= "perl $string $trainGb1 $testsize1 &>$errorfile";
             print LOG "$perlCmdString\n\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
@@ -2822,7 +2822,7 @@ sub training {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString
-                .= "perl $string $otherfilesDir/train.gb.train $testsize2 2>$errorfile";
+                .= "perl $string $otherfilesDir/train.gb.train $testsize2 &>$errorfile";
             print LOG "$perlCmdString\n\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
