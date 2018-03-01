@@ -6904,36 +6904,37 @@ sub createEvidenceGff {
     close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genemark_hintsfile!\n");
 
     open ( EV, ">", $evidenceFile ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $evidenceFile!\n");
-
+    print EV "This is the file I am trying to print to!\n";
     foreach my $locus (keys %rnaseq) {
         if( defined ($prot{$locus}) ) {
             foreach my $hint (@{$rnaseq{$locus}}) {
                 foreach my $otherHint (@{$prot{$locus}}) {
-                    print "Trying to access hint-> start:\n";
-                    print $hint->{'start'};
-                    print "\n";
-                    print "Trying to access otherHint-> start:\n";
-                    print $otherHint->{'start'};
-                    print "\n";
-                     print "Trying to access hint-> stop:\n";
-                    print $hint->{'stop'};
-                    print "\n";
-                    print "Trying to access otherHint-> stop:\n";
-                    print $otherHint->{'stop'};
-                    print "\n";
-                    print "Trying to access hint-> strand:\n";
-                    print $hint->{'strand'};
-                    print "\n";
-                    print "Trying to access otherHint-> strand:\n";
-                    print $otherHint->{'strand'};
-                    print "\n";
-                    print "Trying to access hint-> feature:\n";
-                    print $hint->{'feature'};
-                    print "\n";
-                    print "Trying to access hint-> frame:\n";
-                    print $otherHint->{'frame'};
-                    print "\n";
+                    # print "Trying to access hint-> start:\n";
+                    # print $hint->{'start'};
+                    # print "\n";
+                    # print "Trying to access otherHint-> start:\n";
+                    # print $otherHint->{'start'};
+                    # print "\n";
+                    #  print "Trying to access hint-> stop:\n";
+                    # print $hint->{'stop'};
+                    # print "\n";
+                    # print "Trying to access otherHint-> stop:\n";
+                    # print $otherHint->{'stop'};
+                    # print "\n";
+                    # print "Trying to access hint-> strand:\n";
+                    # print $hint->{'strand'};
+                    # print "\n";
+                    # print "Trying to access otherHint-> strand:\n";
+                    # print $otherHint->{'strand'};
+                    # print "\n";
+                    # print "Trying to access hint-> feature:\n";
+                    # print $hint->{'feature'};
+                    # print "\n";
+                    # print "Trying to access hint-> frame:\n";
+                    # print $otherHint->{'frame'};
+                    # print "\n";
                     if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
+                        print EV "This should have been a hint\n";
                         print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
                         ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
                     }
