@@ -229,12 +229,6 @@ EXPERT OPTIONS
                                     arguments are given, separated by
                                     whitespace, i.e.
                                     "--first_arg=sth --second_arg=sth".
---extrinsicCfgFile=file             Optional. This file contains the list of
-                                    used sources for the hints and their boni
-                                    and mali. If not specified the file
-                                    "extrinsic.cfg" in the config directory
-                                    $AUGUSTUS_CONFIG_PATH is copied and
-                                    adjusted.
 --overwrite                         Overwrite existing files (except for
                                     species parameter files)
 --skipGeneMark-ET                   Skip GeneMark-ET and use provided
@@ -299,6 +293,10 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     2 -> also log configuration
                                     3 -> log all major steps
                                     4 -> very verbose, log also small steps
+--extrinsicCfgFiles=file1,file2     Depending on the mode in which braker.pl
+                                    is executed, it may require one ore several
+                                    extrinsicCfgFiles. Don't use this option
+                                    unless you know what you are doing!
 
 DESCRIPTION
 
@@ -322,12 +320,15 @@ braker.pl [OPTIONS] --genome=genome.fa --prot_seq=proteins.fa --prg=gth \
 
 ENDUSAGE
 
+# Declartion of global variables ###############################################
+
 my $v = 4; # determines what is printed to log
 my $version = 2.1.0;    # braker.pl version number
+my $rootDir;
 my $logString;          # stores log messages produced before opening log file
 my $prtStr;
-my $alternatives_from_evidence
-    = "true";    # output alternative transcripts based on explicit evidence
+my $alternatives_from_evidence = "true";
+                 # output alternative transcripts based on explicit evidence
                  # from hints
 my $augpath;     # path to augustus
 my $augustus_cfg_path;        # augustus config path, higher priority than
@@ -340,15 +341,16 @@ my $AUGUSTUS_SCRIPTS_PATH;
 my @bam;                      # bam file names
 my $bamtools_path;
 my $BAMTOOLS_BIN_PATH;
-my @bonus;                    # array of bonus values for extrinsic file
-my $bool_species
-    = "true";     # false, if $species contains forbidden words (e.g. chmod)
+my $bool_species = "true";     # false, if $species contains forbidden words
 my $cmdString;    # to store shell commands
 my $CPU        = 1;      # number of CPUs that can be used
 my $currentDir = cwd();  # working superdirectory where program is called from
 my $errorfile;           # stores current error file name
 my $errorfilesDir;       # directory for error files
-my $extrinsicCfgFile;    # assigned extrinsic file
+my @extrinsicCfgFiles;    # assigned extrinsic files
+my $extrinsicCfgFile;    # file to be used for running AUGUSTUS
+my $extrinsicCfgFile1;   # user supplied file 1
+my $extrinsicCfgFile2;   # user supplied file 2
 my @files;               # contains all files in $rootDir
 my $flanking_DNA;        # length of flanking DNA, default value is
                          # min{ave. gene length/2, 10000}
@@ -366,19 +368,16 @@ my $help;                # print usage
 my @hints;               # input hints file names
 my $hintsfile;           # hints file (all hints)
 my $prot_hintsfile;      # hints file with protein hints
-my $genemark_hintsfile
-    ;    # contains only intron hints in case $hintsfile also contains
-         # other hints types
+my $genemark_hintsfile;  # contains only intron hints in case $hintsfile also
+                         # contains other hints types
 my $limit = 10000000;    # maximum for generic species Sp_$limit
 my $logfile;             # contains used shell commands
-my @malus;               # array of malus values for extrinsic file
 my $optCfgFile;          # optinonal extrinsic config file for AUGUSTUS
 my $otherfilesDir;  # directory for other files besides GeneMark-ET output and
                     # parameter files
 my $annot;          # reference annotation to compare predictions to
 my %accuracy;       # stores accuracy results of gene prediction runs
-my $overwrite
-    = 0;    # overwrite existing files (except for species parameter files)
+my $overwrite = 0; # overwrite existing files (except for species parameter files)
 my $parameterDir;     # directory of parameter files for species
 my $perlCmdString;    # stores perl commands
 my $printVersion = 0; # print version number, if set
@@ -410,9 +409,9 @@ my $workDir;        # in the working directory results and temporary files are
                     # stored
 my $filterOutShort; # filterOutShort option (see help)
 
-# Hint type from input hintsfile will be checked; concers a) GeneMark-ET (requires
-# intron hints) and b) writing of extrinsic.cfg from BRAKER2: other hint types will be set to
-# neutral. If an extrinsic file is specified, this does not matter.
+# Hint type from input hintsfile will be checked
+# a) GeneMark-ET (requires intron hints) and
+# b) selection of exrinsic.cfg file is affected by hint types
 my @allowedHints = (
     "Intron",  "intron",  "start",    "stop",
     "ass",     "dss",     "exonpart", "exon",
@@ -424,14 +423,14 @@ my $crf;     # flag that determines whether CRF training should be tried
 my $keepCrf;
 my $nice;    # flag that determines whether system calls should be executed
              # with bash nice (default nice value)
-my ( $target_1, $target_2, $target_3 )
-    = 0;              # variables that store AUGUSTUS accuracy after different
+my ( $target_1, $target_2, $target_3 ) = 0;
+                      # variables that store AUGUSTUS accuracy after different
                       # training steps
 my $prg;              # variable to store protein alignment tool
 my @prot_seq_files;   # variable to store protein sequence file name
 my @prot_aln_files;   # variable to store protein alingment file name
-my $ALIGNMENT_TOOL_PATH
-    ;    # stores path to binary of gth, spaln or exonerate for running
+my $ALIGNMENT_TOOL_PATH;
+         # stores path to binary of gth, spaln or exonerate for running
          # protein alignments
 my $ALIGNMENT_TOOL_PATH_OP;    # higher priority than environment variable
 my $BLAST_PATH; # path to blastall and formatdb ncbi blast executable
@@ -450,64 +449,14 @@ my $trainFromGth;   # No GeneMark-Training, train AUGUSTUS from GenomeThreader
 my $gthTrainGeneFile;    # gobally accessible file name variable
 my $EPmode  = 0;    # flag for executing GeneMark-EP instead of GeneMark-ET
 my $ETPmode = 0;  # flag for executing GeneMark-EPT
-my $GeneMarkIntronThreshold
-    ;    # use this value to screen hintsfile for GeneMark-EX. If few
-         # hints with multiplicity higher than this value are
+my $GeneMarkIntronThreshold;
+   # use this value to screen hintsfile for GeneMark-EX. If few
+   # hints with multiplicity higher than this value are
    # contained, braker will be aborted. Default value is determined by mode of
    # GeneMark-EX: currently 10 for ET and 4 for EP/EPT
 my $ab_initio;    # flag for output of AUGUSTUS ab initio predictions
 my $foundRNASeq = 0; # stores whether hintsfile contains src=E
 my $foundProt = 0; # stores whether hintsfile contains src=P
-
-############################################################
-# Variables for modification of template extrinsic.cfg file
-my @start_malus              = ( 0.8, 0.8, 1 );
-my @start_p_bonus            = ("1e3");
-my $idx_start_p_malus        = 0;
-my $idx_start_p_bonus        = 0;
-my @stop_malus               = ( 0.8, 0.8, 1 );
-my @stop_p_bonus             = ("1e3");
-my $idx_stop_p_malus         = 0;
-my $idx_stop_p_bonus         = 0;
-my @ass_malus                = (0.1);
-my $idx_ass_malus            = 0;
-my @ass_local_malus          = (0.95);
-my $idx_ass_local_malus      = 0;
-my @ass_p_bonus              = (100);
-my $idx_ass_p_bonus          = 0;
-my @dss_malus                = (0.1);
-my $idx_dss_malus            = 0;
-my @dss_local_malus          = (0.95);
-my $idx_dss_local_malus      = 0;
-my @dss_p_bonus              = (100);
-my $idx_dss_p_bonus          = 0;
-my @exonpart_local_malus     = (0.992);
-my $idx_exonpart_local_malus = 0;
-my @exonpart_malus           = (0.985);
-my $idx_exonpart_malus       = 0;
-my @exonpart_w_bonus         = (1.02);
-my $idx_exonpart_w_bonus     = 0;
-my @exon_malus               = (0);
-my $idx_exon_malus           = 0;
-my @exon_p_bonus             = (1);
-my $idx_exon_p_bonus         = 0;
-my @intron_malus             = (0.116);
-my $idx_intron_malus         = 0;
-my @intron_e_bonus           = ("1e6");
-my $idx_intron_e_bonus       = 0;
-my @intron_p_bonus           = ("1e6");
-my $idx_intron_p_bonus       = 0;
-my @cdspart_malus            = (0.985);
-my $idx_cdspart_malus        = 0;
-my @cdspart_p_bonus          = ("1e5");
-my $idx_cdspart_p_bonus      = 0;
-my @utrpart_malus            = (0.985);
-my $idx_utrpart_malus        = 0;
-my @utrpart_w_bonus          = ("1e5");
-my $idx_utrpart_w_bonus      = 0;
-my $bam2wigPath;       # make tool variable global
-my $rnaseq2utrPath;    # make tool variable global
-#############################################################
 
 # list of forbidden words for species name
 @forbidden_words = (
@@ -515,12 +464,8 @@ my $rnaseq2utrPath;    # make tool variable global
     "backticks", "chmod", "chown",    "chroot", "unlink", "do",
     "eval",      "kill",  "rm",       "mv",     "grep",   "cd",
     "top",       "cp",    "for",      "done",   "passwd", "while",
-    "nice"
+    "nice", "ln"
 );
-
-# lists for extrinsic files
-@bonus = ( "1e1", "1e0", "1e2", "1e3", "1e4", "1e5" );
-@malus = ( "0.1", "0.2", "0.4", "1.0" );
 
 if ( @ARGV == 0 ) {
     print "$usage\n";
@@ -538,7 +483,7 @@ GetOptions(
     'BAMTOOLS_PATH=s'              => \$bamtools_path,
     'cores=i'                      => \$CPU,
     'fungus!'                      => \$fungus,
-    'extrinsicCfgFile=s'           => \$extrinsicCfgFile,
+    'extrinsicCfgFiles=s'           => \@extrinsicCfgFiles,
     'GENEMARK_PATH=s'              => \$GMET_path,
     'genome=s'                     => \$genome,
     'gff3'                         => \$gff3,
@@ -588,21 +533,14 @@ if ($printVersion) {
     exit(0);
 }
 
-if ($skipAllTraining)
-{    # if no training is performed, existing parameters must be used
-    $useexisting = 1;
-}
+# Set working directory ########################################################
 
-############ make some regular checks ##############
-
-my $wdGiven; # defines whether a working directory was given as input argument
-
+my $wdGiven;
 # if no working directory is set, use current directory
 if ( !defined $workDir ) {
     $wdGiven = 0;
     $workDir = $currentDir;
-}
-else {
+}else {
     $wdGiven = 1;
     my $last_char = substr( $workDir, -1 );
     if ( $last_char eq "\/" ) {
@@ -613,11 +551,12 @@ else {
     if ( not( -d $workDir ) ) {
         $prtStr = "\# " . (localtime) . ": Creating directory $workDir.\n";
         $logString .= $prtStr if ( $v > 2 );
-        mkdir($workDir) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $workDir!\n");
+        mkdir($workDir) or die ("ERROR: in file " . __FILE__ ." at line "
+            . __LINE__ ."\nFailed to create directory $workDir!\n");
     }
 }
 
-# check the write permission of $workDir before building of the work directory
+# check the write permission of $workDir #######################################
 if ( !-w $workDir ) {
     $prtStr
         = "\# "
@@ -631,8 +570,11 @@ if ( !-w $workDir ) {
     exit(1);
 }
 
-# set paths to tools, in general, first try to get it from ENV, then check whether BRAKER
-# has an overriding argument, then try to guess, exit if all fails
+# configure which tools BRAKER is going to run #################################
+# * use command line argument if given
+# * else use environment variable if present
+# * else try to guess (might fail)
+
 $prtStr
     = "\# "
     . (localtime)
@@ -644,31 +586,37 @@ set_AUGUSTUS_SCRIPTS_PATH();
 if ( not($trainFromGth) ) {
     set_GENEMARK_PATH()
         ; # skip setting GeneMark path if no GeneMark training will be performed
-}
-else {
+} else {
     if ( not ( defined ($gth2traingenes) ) ) {
             $prtStr
             = "\# "
             . (localtime)
-            . ": WARNING: --gth2traingenes was not enabled, will enable this flag, now, because no GeneMark training will be performed!\n";
+            . ": WARNING: --gth2traingenes was not enabled, will enable this "
+            . "flag, now, because no GeneMark training will be performed!\n";
         $logString .= $prtStr if ( $v > 0 );
         $gth2traingenes = 1;    # enable if no genemark training is performed
     }
 }
 set_BAMTOOLS_PATH();
 set_SAMTOOLS_PATH();
-set_ALIGNMENT_TOOL_PATH();
-set_BLAST_PATH();
+if (@prot_seq_files){
+    set_ALIGNMENT_TOOL_PATH();
+}
+if (not ($skipAllTraining)){
+    set_BLAST_PATH();
+}
 $prtStr = "\# " . (localtime) . ": Configuring of BRAKER complete!\n";
 $logString .= $prtStr if ( $v > 2 );
 
-# check upfront whether any common problems will occur later
+# check for known issues that may cause problems with braker.pl ################
 check_upfront();
+
+# check whether braker.pl options are set in a compatible way ##################
 check_options();
 
+# Starting braker pipeline #####################################################
 
 # check whether $rootDir already exists
-my $rootDir;
 if ( $wdGiven == 1 ) {
     $rootDir = $workDir;
 }
@@ -680,9 +628,9 @@ if ( -d "$rootDir/$species" && !$overwrite && $wdGiven == 0 ) {
         = "\# "
         . (localtime)
         . ": WARNING: $rootDir/$species already exists. Braker will use"
-        . " existing files, if they are newer than the input files. You can choose "
-        . "another working directory with --workingdir=dir or overwrite it with "
-        . "--overwrite.\n";
+        . " existing files, if they are newer than the input files. You can "
+        . "choose another working directory with --workingdir=dir or overwrite "
+        . "it with --overwrite.\n";
     $logString .= $prtStr if ( $v > 0 );
 }
 
@@ -692,7 +640,8 @@ if ( !-d $rootDir ) {
         . (localtime)
         . ": create working directory $rootDir.\n"
         . "mkdir $rootDir\n\n";
-    make_path($rootDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $rootDir!\n");
+    make_path($rootDir) or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to create direcotry $rootDir!\n");
     $logString .= $prtStr if ( $v > 2 );
 }
 
@@ -722,8 +671,11 @@ else {
     $errorfilesDir = "$rootDir/$species/errors";
 }
 
-# check whether genemark.gtf file exists, if skipGeneMark-ET option is used
-# this cannot go into check options because directories are not defined there, yet
+# check whether genemark.gtf file exists
+# this is not in check_options because it is possible to use a genemark.gtf
+# file that resides in the working directory genemark folder implicitely with
+# skipGeneMark options without giving --genemarkgtf, and directories are not
+# set in check_options, yet.
 if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 ) {
     $prtStr = "\# "
             . (localtime)
@@ -750,7 +702,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 ) {
             exit(1);
         }
     }
-}elsif ( $skipGeneMarkEP && $EPmode == 1 && $ETPmode == 0) {
+} elsif ( $skipGeneMarkEP && $EPmode == 1 && $ETPmode == 0) {
     $prtStr = "REMARK: The GeneMark-EP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -777,7 +729,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 ) {
         }
         exit(1);
     }
-}elsif( $skipGeneMarkETP && $EPmode == 0 && $ETPmode == 1 ){
+} elsif ( $skipGeneMarkETP && $EPmode == 0 && $ETPmode == 1 ){
     $prtStr = "REMARK: The GeneMark-ETP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -804,19 +756,19 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 ) {
         }
         exit(1);
     }
-}elsif ( ( $skipGeneMarkEP && not($trainFromGth) ) || ( $skipGeneMarkETP && not ($trainFromGth) ) ) {
+} elsif ( ( $skipGeneMarkEP && not($trainFromGth) ) || ( $skipGeneMarkETP && not ($trainFromGth) ) ) {
     $prtStr
         = "\# "
         . (localtime)
         . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-        . "Option --skipGeneMarkEP/--skipGeneMarkETP cannot be used when BRAKER is "
-        . "started in GeneMark-ET mode.\n";
+        . "Option --skipGeneMarkEP/--skipGeneMarkETP cannot be used when "
+        . "BRAKER is started in GeneMark-ET mode.\n";
     $logString .= $prtStr;
     print STDERR $logString;
     exit(1);
 }
 
-if( $EPmode == 1 && $ETPmode == 1 ) {
+if ( $EPmode == 1 && $ETPmode == 1 ) {
     $prtStr
         = "\# "
         . (localtime)
@@ -829,37 +781,42 @@ if( $EPmode == 1 && $ETPmode == 1 ) {
 
 $logfile = "$otherfilesDir/braker.log";
 
-# create other directories if necessary
+# create directory $otherfilesDir
 if ( !-d $otherfilesDir ) {
     $prtStr = "\# "
         . (localtime)
         . ": create working directory $otherfilesDir.\n"
         . "mkdir $otherfilesDir\n\n";
     $logString .= $prtStr if ( $v > 2 );
-    make_path($otherfilesDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create directory $otherfilesDir!\n");
+    make_path($otherfilesDir) or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to create directory $otherfilesDir!\n");
 }
 
-$prtStr
-    = "\# "
-    . (localtime)
-    . ": Further logging information can be found in $logfile!\n";
+# open log file
+$prtStr = "\# "
+        . (localtime)
+        . ": Further logging information can be found in $logfile!\n";
 print STDOUT $prtStr;
 
-open( LOG, ">" . $logfile ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file $logfile!\n");
+open( LOG, ">" . $logfile ) or die("ERROR in file " . __FILE__ ." at line "
+    . __LINE__ ."\nCannot open file $logfile!\n");
 print LOG $logString;
 
 if ( !-d $genemarkDir ) {
-    make_path($genemarkDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $genemarkDir!\n");
+    make_path($genemarkDir) or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to create direcotry $genemarkDir!\n");
     print LOG "\# "
         . (localtime)
         . ": create working directory $genemarkDir.\n" if ($v > 2);
     print LOG "mkdir $genemarkDir\n\n" if ($v > 2);
 }
 
+# check gthTrainGeneFile
 if ($gth2traingenes) {
     $gthTrainGeneFile = "$otherfilesDir/gthTrainGenes.gtf";
 }
 
+# softlink genemark.gtf file
 if ( defined($geneMarkGtf) ) {
     print LOG "\#  "
         . (localtime)
@@ -867,40 +824,48 @@ if ( defined($geneMarkGtf) ) {
         . "$genemarkDir/genemark.gtf.\n" if ($v > 2);
     $cmdString =  "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
     print LOG "$cmdString\n" if ($v > 2);
-    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to execute: $cmdString!\n");
 }
 
+# create parameter directory
 if ( !-d $parameterDir ) {
-    make_path($parameterDir) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $parameterDir!\n");
+    make_path($parameterDir) or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to create direcotry $parameterDir!\n");
     print LOG "\# "
         . (localtime)
         . ": create working directory $parameterDir\n"
         . "mkdir $parameterDir\n\n" if ($v > 2);
 }
 
+# create error file directory
 if ( !-d $errorfilesDir ) {
-    make_path($errorfilesDir)or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to create direcotry $errorfilesDir!\n");
+    make_path($errorfilesDir)or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to create direcotry $errorfilesDir!\n");
     print LOG "\# "
         . (localtime)
         . ": create working directory $errorfilesDir\n"
         . "mkdir $errorfilesDir\n\n" if ($v > 2);
 }
 
-$genome    = rel2abs($genome);
 print LOG "\# "
     . (localtime)
     . ": changing into working directory $rootDir\n"
     . "cd $rootDir\n\n" if ($v > 2);
 
-chdir $rootDir or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change into directory $rootDir.\n");
+chdir $rootDir or die("ERROR in file " . __FILE__ ." at line ".
+    __LINE__ ."\nCould not change into directory $rootDir.\n");
+
+# make genome path absolute
+$genome    = rel2abs($genome);
 
 if ( $skipAllTraining == 0 ) {
-    new_species()
-        ; # create new species parameter files; we do this FIRST, before anything else,
-     # because if you start several processes in parallel, you might otherwise end
-     # up with those processes using the same species directory!
+    # create new species parameter files; we do this FIRST, before anything else,
+    # because if you start several processes in parallel, you might otherwise end
+    # up with those processes using the same species directory!
+    new_species();
 } else {
-# if no training will be executed, check whether species parameter files exist
+    # if no training will be executed, check whether species parameter files exist
     my $specPath
         = "$AUGUSTUS_CONFIG_PATH/species/$species/$species" . "_";
     my @confFiles = (
@@ -941,16 +906,20 @@ if ( $skipAllTraining == 0 ) {
     }
 }
 
-check_fasta_headers($genome);    # check fasta headers
-
+ # check fasta headers
+check_fasta_headers($genome);
 if (@prot_seq_files) {
     foreach (@prot_seq_files) {
         check_fasta_headers($_);
     }
 }
 
-# count scaffold sizes and check whether the assembly is not too fragmented for parallel execution of AUGUSTUS
-open (GENOME, "<", "$otherfilesDir/genome.fa") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $otherfilesDir/genome.fa");
+# count scaffold sizes and check whether the assembly is not too fragmented for
+#  parallel execution of AUGUSTUS
+open (GENOME, "<", "$otherfilesDir/genome.fa") or clean_abort(
+    "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file "
+    . __FILE__ ." at line ". __LINE__
+    ."\nCould not open file $otherfilesDir/genome.fa");
 my $gLocus;
 while( <GENOME> ){
     chomp;
@@ -964,58 +933,73 @@ while( <GENOME> ){
         }
     }
 }
-close (GENOME) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $otherfilesDir/genome.fa");
+close (GENOME) or clean_abort(
+    "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file "
+    . __FILE__ ." at line ". __LINE__
+    . "\nCould not close file $otherfilesDir/genome.fa");
 my @nScaffs = keys %scaffSizes;
 my $totalScaffSize = 0;
 foreach( values %scaffSizes) {
     $totalScaffSize += $_;
 }
-# I am actually not sure what is an approriate limit, because it depends on the kernel and
+# unsure what is an approriate limit, because it depends on the kernel and
 # on the stack size. Use 30000 just to be sure. This will result in ~90000 files in the
 # augustus_tmp folder.
 if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
     $prtStr = "\# "
             . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "file $genome contains a highly fragmented assembly (".scalar(@nScaffs)." scaffolds). This will lead "
-            . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
-            . "--cores=$CPU. You must run braker.pl in linear mode on such genomes, though (--cores=1). It is possible that GeneMark-EX might not work on highly fragmented assemblies, too.\n";
+            . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "file $genome contains a highly fragmented assembly ("
+            . scalar(@nScaffs)." scaffolds). This may lead "
+            . "to problems when running AUGUSTUS via braker in parallelized "
+            . "mode. You set --cores=$CPU. You should run braker.pl in linear "
+            . "mode on such genomes, though (--cores=1).\n";
+    print STDOUT $prtStr;
     print LOG $prtStr;
-    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
 }elsif( (($totalScaffSize / $chunksize) > 30000) && ($CPU > 1) ){
     $prtStr = "\# "
             . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "file $genome contains contains $totalScaffSize bases. "
-            . "This will lead "
-            . "to problems when running AUGUSTUS via braker in parallelized mode. You set "
-            . "--cores=$CPU. There is a variable \$chunksize in braker.pl. Default value is currently"
-            . " $chunksize. You can adapt this to a higher number. The total base content / chunksize / 3"
-            . " should not exceed the number of possible arguments for commands like ls *, cp *, etc. "
-            . "on your system. It is possible that GeneMark-EX might not work on large and complex genomes, too.\n";
+            . "This may lead "
+            . "to problems when running AUGUSTUS via braker in parallelized "
+            . "mode. You set --cores=$CPU. There is a variable \$chunksize in "
+            . "braker.pl. Default value is currently $chunksize. You can adapt "
+            . "this to a higher number. The total base content / chunksize * 3 "
+            . "should not exceed the number of possible arguments for commands "
+            . "like ls *, cp *, etc. on your system.\n";
+    print STDOUT $prtStr;
     print LOG $prtStr;
-    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
 }
-# define $genemark_hintsfile: is needed because genemark can only handle intron hints, AUGUSTUS
-# can also handle other hints types
+
+# define $genemark_hintsfile: is needed because genemark can only handle intron
+# hints in braker.pl, AUGUSTUS can also handle other hints types
 $hintsfile          = "$otherfilesDir/hintsfile.gff";
 if(! $trainFromGth ) {
     $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
 }
+
+# make hints from RNA-Seq
 if ( @bam ) {
-    make_rnaseq_hints();    # make hints from RNA-Seq
+    make_rnaseq_hints();
 }
+
+# make hints from protein sequence data
 if ( @prot_seq_files or @prot_aln_files ) {
     make_prot_hints();
 }
+
+# add other user supplied hints
 if (@hints) {
     add_other_hints();
 }
 
+# extract intron hints from hintsfile.gff for GeneMark
 if (! $trainFromGth && $skipAllTraining==0 ) {
     getGeneMarkHints();
 }
 
+# train gene predictors
 if ( $skipAllTraining == 0 ) {
     if ( not($trainFromGth) ) {
         if ( $EPmode == 0 && $ETPmode==0 ) {
@@ -1036,66 +1020,8 @@ if ( $skipAllTraining == 0 ) {
             filterGeneMark();
         }
     }
-    training()
-        ; # train species-specific parameters with optimize_augustus.pl and
-          # etraining
-}
-
-# no extrinsic file is defined, extrinsic step is skipped or no file defined and softmasking
-# option is used
-if ( !defined($extrinsicCfgFile)
-    || ( !defined($extrinsicCfgFile) && $soft_mask ) )
-{
-    extrinsic();    # use default extrinsic file
-}
-
-# copy extrinsic file to species parameters directory
-if (defined($extrinsicCfgFile)
-    || ( !defined($extrinsicCfgFile)
-        && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"
-    )
-    || ( !defined($extrinsicCfgFile)
-        && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg"
-    )
-    )
-{
-# using cfg files from AUGUSTUS_CONFIG_PATH has higher priority than from set_AUGUSTUS_BIN_PATH
-    if ( !defined($extrinsicCfgFile)
-        && -e "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg"
-        )
-    {
-        $extrinsicCfgFile
-            = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-    }
-    elsif ( !defined($extrinsicCfgFile)
-        && -e "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg"
-        )
-    {
-        $extrinsicCfgFile
-            = "$AUGUSTUS_BIN_PATH/../species/$species/extrinsic.$species.cfg";
-    }
-    @_ = split( /\//, $extrinsicCfgFile );
-    if (!uptodate( [$extrinsicCfgFile],
-            [ "$parameterDir/$species/" . $_[-1] ] )
-        || $overwrite
-        )
-    {
-        $cmdString = "";
-        if ($nice) {
-            $cmdString .= "nice ";
-        }
-        if ( not( -d "$parameterDir/$species/" ) ) {
-            mkdir "$parameterDir/$species/";
-        }
-        $cmdString
-            .= "cp $extrinsicCfgFile $parameterDir/$species/$_[-1]";
-        print LOG "\# "
-            . (localtime)
-            . ": copy extrinsic file to working directory\n" if ($v > 2);
-        print LOG "$cmdString\n\n" if ($v > 2);
-        system("$cmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-    }
+    # train AUGUSTUS
+    training_augustus();
 }
 
 augustus("off");    # run augustus witout UTR
@@ -1879,14 +1805,16 @@ sub GeneMark_ETP {
             print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" if ($v > 3);
             print LOG "$perlCmdString\n\n" if ($v > 3);
             system("$perlCmdString") == 0
-                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file "
+                    . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $perlCmdString\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n" if ($v > 3);
             print LOG "$cmdString\n\n" if ($v > 3);
             chdir $rootDir
-                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $rootDir.\n");
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file "
+                    . __FILE__ ." at line ". __LINE__ ."\nCould not change to directory $rootDir.\n");
         }
     }
 }
@@ -2036,472 +1964,9 @@ sub new_species {
     }
 }
 
-# create default extrinsic file (without BLAST)
-
-sub extrinsic {
-    print LOG "\# " . (localtime) . "Creating an extrinsic file for AUGUSTUS\n" if ($v > 2);
-    my $extrinsic;
-    my $string = find(
-        "extrinsic.M.RM.E.W.P.cfg",        $AUGUSTUS_BIN_PATH,
-        "$AUGUSTUS_CONFIG_PATH/extrinsic", $AUGUSTUS_CONFIG_PATH
-    );
-    if ( -e $string ) {
-        $extrinsic = $string;
-        print LOG "\# "
-            . (localtime)
-            . ": Will use $string as template for this project's extrinsic.cfg\n" if ($v > 3);
-    }
-    else {
-        print LOG "\# "
-            . (localtime)
-            . " ERROR: Cannot find extrinsic template file extrinsic.M.RM.E.W.P.cfg in BRAKER2 directory or $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg.\n";
-        die
-            "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot find extrinsic template file extrinsic.M.RM.E.W.P.cfg in BRAKER2 directory or $AUGUSTUS_CONFIG_PATH/extrinsic/extrinsic.M.RM.E.W.P.cfg.\n";
-    }
-    my $extrinsic_cp
-        = "$AUGUSTUS_CONFIG_PATH/species/$species/extrinsic.$species.cfg";
-    if ( !defined($extrinsicCfgFile)
-        || ( defined($extrinsicCfgFile) && !-e $extrinsicCfgFile ) )
-    {
-        if ( !defined($extrinsicCfgFile) ) {
-            print LOG "\# "
-                . (localtime)
-                . ": No extrinsic file assigned. Program will create one.\n" if ($v > 3);
-            identifyHintTypes()
-                ; # checks which hint types occur in the hintsfile for AUGUSTUS $hintsfile, stores in %hintTypes
-        }
-        if ( !-e $extrinsic_cp ) {
-
-# braker.pl heavily depends on the correct format of the template extrinsic.cfg file (e.g. order of columns,
-# number of bonus per source, etc.
-            print LOG "\# " . (localtime) . ": create extrinsic file\n" if ($v > 3);
-            open( EXTRINSIC, "<", $extrinsic )
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $extrinsic!\n");
-            open( OUT, ">", $extrinsic_cp )
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $extrinsic_cp!\n");
-            my $GENERAL     = "false";
-            my $bonus_idx   = $standard;    # 0 => 1e1  (currently standard)
-            my $malus_idx   = $standard;    # 0 => 0.1  (currently standard)
-            my $sourcesSeen = 0;
-            while (<EXTRINSIC>) {
-
-                if ( ( $_ =~ m/^\#/ ) or ( $_ =~ m/^\n$/ ) ) {
-                    print OUT $_;
-                }
-                elsif ( $_ =~ m/^\[SOURCES\]/ ) {
-                    $sourcesSeen = 1;
-                    print OUT $_;
-                }
-                elsif ( $sourcesSeen == 1 ) {
-                    chomp;
-
-# checking whether all hint types (e.g. E, W, P) that are present in the hints file to be used are also present in the config template file. Currently, braker.pl supports hints of type E, W, and P (and M).
-                    my @typesInCfg = split( " ", $_ );
-                    my %typesInCfgHash;
-                    foreach (@typesInCfg) {
-                        chomp;
-                        if ( not( defined( $typesInCfgHash{$_} ) ) ) {
-                            $typesInCfgHash{$_} = 1;
-                        }
-                    }
-                    foreach my $key ( keys(%hintTypes) ) {
-                        if ( not( defined( $typesInCfgHash{$key} ) ) ) {
-                            $prtStr
-                                = "\# "
-                                . (localtime)
-                                . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                                . "Hints file contains hints from type $key. BRAKER is currently not able to print an extrinsic.cfg file for this hint type. Please run braker.pl with flag --extrinsicCfgFile=customExtrinsicFile.cfg where customExtrinsicFile.cfg is a file tailored to your hint types. Aborting program.\n";
-                            print LOG $prtStr;
-                            print STDERR $prtStr;
-                            exit(1);
-                        }
-                    }
-                    $sourcesSeen = 0;
-                    print OUT $_ . "\n";
-                }
-                elsif (( $_ =~ m/^\[SOURCE-PARAMETERS\]/ )
-                    or ( $_ =~ m/^\[GENERAL\]/ ) )
-                {
-                    print OUT $_;
-                }
-                else {    # actual parameter lines
-                    $_ =~ s/^\s+//;    # remove whitespace before first field
-                    my @line = split( /\s+/, $_ );
-
-# check whether order and number of columns in template extrinsic file are compatible with braker.pl of this version
-                    if ( scalar(@line) == 18 ) {    # no local malus present
-                        if (not(    ( $line[3] =~ m/^M$/ )
-                                and ( $line[6] =~ m/RM/ )
-                                and ( $line[9] =~ m/E/ )
-                                and ( $line[12] =~ m/W/ )
-                                and ( $line[15] =~ m/P/ ) )
-                            )
-                        {
-                            $prtStr
-                                = "\# "
-                                . (localtime)
-                                . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                                . "In extrinsic template file $extrinsic, column 4 does not contain M, and/or column 7 does not contain RM, and/or column 11 does not contain E and/or column 13 does not contain W and/or column 16 does not contain P. Aborting braker! (line without local malus)\n";
-                            print LOG $prtStr;
-                            print STDERR $prtStr;
-                            exit(1);
-                        }
-                    }
-                    else {    # local malus present, 19 columns
-                        if (not(    ( $line[4] =~ m/^M$/ )
-                                and ( $line[7] =~ m/RM/ )
-                                and ( $line[10] =~ m/E/ )
-                                and ( $line[13] =~ m/W/ )
-                                and ( $line[16] =~ m/P/ ) )
-                            )
-                        {
-                            $prtStr
-                                = "\# "
-                                . (localtime)
-                                . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                                . "In extrinsic template file $extrinsic, column 5 does not contain M, and/or column 8 does not contain RM, and/or column 111 does not contain E and/or column 14 does not contain W and/or column 17 does not contain P. Aborting braker! (line with local malus)\n";
-                            print LOG $prtStr;
-                            print STDERR $prtStr;
-                            exit(1);
-                        }
-                    }
-
-# print template based parameter lines depending on combination of input hint types
-                    if ( $line[0] =~ m/start/ ) {
-                        if ( defined( $hintTypes{P} ) ) {    # protein hints
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $start_malus[$idx_start_p_malus],
-                                12 );
-                            for ( my $i = 3; $i <= 16; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $start_p_bonus[$idx_start_p_bonus], 8 );
-                            print OUT "\n";
-                        }
-                        else {    # no protein hints
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( 1,        12 );
-                            for ( my $i = 3; $i <= 16; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            print OUT "\n";
-                        }
-                    }
-                    elsif ( $line[0] =~ m/stop/ ) {
-                        if ( defined( $hintTypes{P} ) ) {    # protein hints
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $stop_malus[$idx_stop_p_malus],
-                                12 );
-                            for ( my $i = 3; $i <= 16; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $stop_p_bonus[$idx_stop_p_bonus], 8 );
-                            print OUT "\n";
-                        }
-                        else {    # no protein hints
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( 1,        12 );
-                            for ( my $i = 3; $i <= 16; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            print OUT "\n";
-                        }
-                    }
-                    elsif ( $line[0] =~ m/ass/ ) {
-                        if ( defined( $hintTypes{P} ) ) {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg(
-                                $ass_local_malus[$idx_ass_local_malus], 6 )
-                                . printCfg( $ass_malus[$idx_ass_malus], 6 );
-                            for ( my $i = 4; $i <= 17; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $ass_p_bonus[$idx_ass_p_bonus], 8 );
-                            print OUT "\n";
-                        }
-                        else {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( 1,        6 )
-                                . printCfg( 1,        6 );
-                            for ( my $i = 4; $i <= 17; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            print OUT "\n";
-                        }
-                    }
-                    elsif ( $line[0] =~ m/dss/ ) {
-                        if ( defined( $hintTypes{P} ) ) {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg(
-                                $dss_local_malus[$idx_dss_local_malus], 6 )
-                                . printCfg( $dss_malus[$idx_dss_malus], 6 );
-                            for ( my $i = 4; $i <= 17; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $dss_p_bonus[$idx_dss_p_bonus], 8 );
-                            print OUT "\n";
-                        }
-                        else {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( 1,        6 )
-                                . printCfg( 1,        6 );
-                            for ( my $i = 4; $i <= 17; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            print OUT "\n";
-                        }
-                    }
-                    elsif ( $line[0] =~ m/^exonpart$/ ) {
-                        if ( defined( $hintTypes{W} ) ) {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg(
-                                $exonpart_local_malus
-                                    [$idx_exonpart_local_malus], 6
-                                )
-                                . printCfg(
-                                $exonpart_malus[$idx_exonpart_malus], 6 );
-                            for ( my $i = 4; $i <= 14; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $exonpart_w_bonus[$idx_exonpart_w_bonus], 8 );
-                            for ( my $i = 16; $i <= 18; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT "\n";
-                        }
-                        else {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( 1,        6 )
-                                . printCfg( 1,        6 );
-                            for ( my $i = 4; $i <= 14; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            for ( my $i = 16; $i <= 18; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT "\n";
-                        }
-                    }
-                    elsif ( $line[0] =~ m/^exon$/ ) {
-                        if ( defined( $hintTypes{P} ) ) {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $exon_malus[$idx_exon_malus],
-                                12 );
-                            for ( my $i = 3; $i <= 16; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $exon_p_bonus[$idx_exon_p_bonus], 8 );
-                            print OUT "\n";
-                        }
-                        else {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( 1,        12 );
-                            for ( my $i = 3; $i <= 16; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            print OUT "\n";
-                        }
-                    }
-                    elsif ( $line[0] =~ m/^intron$/ ) {
-                        if (   defined( $hintTypes{E} )
-                            && defined( $hintTypes{P} ) )
-                        {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $intron_malus[$idx_intron_malus],
-                                12 );
-                            for ( my $i = 3; $i <= 10; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $intron_e_bonus[$idx_intron_e_bonus], 8 );
-                            for ( my $i = 12; $i <= 16; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $intron_p_bonus[$idx_intron_p_bonus], 8 );
-                            print OUT "\n";
-                        }
-                        elsif ( defined( $hintTypes{P} ) ) {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $intron_malus[$idx_intron_malus],
-                                12 );
-                            for ( my $i = 3; $i <= 10; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            for ( my $i = 12; $i <= 16; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $intron_p_bonus[$idx_intron_p_bonus], 8 );
-                            print OUT "\n";
-                        }
-                        else {    # only hintTypes{E}
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $intron_malus[$idx_intron_malus],
-                                12 );
-                            for ( my $i = 3; $i <= 10; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $intron_e_bonus[$idx_intron_e_bonus], 8 );
-                            for ( my $i = 12; $i <= 16; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            print OUT "\n";
-                        }
-                    }
-                    elsif ( $line[0] =~ m/CDSpart/ ) {
-                        if ( defined( $hintTypes{P} ) ) {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $line[2], 6 )
-                                . printCfg(
-                                $cdspart_malus[$idx_cdspart_malus], 6 );
-                            for ( my $i = 4; $i <= 17; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $cdspart_p_bonus[$idx_cdspart_p_bonus], 8 );
-                            print OUT "\n";
-                        }
-                        else {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $line[2], 6 )
-                                . printCfg( 1,        6 );
-                            for ( my $i = 4; $i <= 17; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            print OUT "\n";
-                        }
-                    }
-                    elsif ( $line[0] =~ m/UTRpart/ ) {
-                        if ( defined( $hintTypes{W} ) ) {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $line[2], 6 )
-                                . printCfg(
-                                $utrpart_malus[$idx_utrpart_malus], 6 );
-                            for ( my $i = 4; $i <= 14; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg(
-                                $utrpart_w_bonus[$idx_utrpart_w_bonus], 8 );
-                            for ( my $i = 16; $i <= 18; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT "\n";
-                        }
-                        else {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $line[2], 6 )
-                                . printCfg( 1,        6 );
-                            for ( my $i = 4; $i <= 14; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT printCfg( 1, 8 );
-                            for ( my $i = 16; $i <= 18; $i++ ) {
-                                print OUT printCfg( $line[$i], 8 );
-                            }
-                            print OUT "\n";
-                        }
-                    }
-                    else {
-                        if ( scalar(@line) == 18 ) {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $line[2], 12 );
-                        }
-                        else {
-                            print OUT printCfg( $line[0], 11 )
-                                . printCfg( $line[1], 7 )
-                                . printCfg( $line[2], 6 )
-                                . printCfg( $line[3], 6 );
-                        }
-                        my $from;
-                        if ( scalar(@line) == 18 ) {
-                            $from = 3;
-                        }
-                        else {
-                            $from = 4;
-                        }
-                        for ( my $i = $from; $i <= ( $from + 14 ); $i++ ) {
-                            print OUT printCfg( $line[$i], 8 );
-                        }
-                        print OUT "\n";
-                    }
-                }
-            }
-            close(OUT)
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close extrinsic file $extrinsic_cp!\n");
-            close(EXTRINSIC)
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close extrinsic file $extrinsic!\n");
-            $extrinsicCfgFile = $extrinsic_cp;
-        }
-        else {
-            $extrinsicCfgFile = $extrinsic_cp;
-            print LOG "\# "
-                . (localtime)
-                . ": Found extrinsic.cfg $extrinsic_cp, will use this file!\n" if ($v > 3);
-        }
-    }
-    else {
-        print LOG "\# "
-            . (localtime)
-            . ": No extrinsic file was created. Program uses assigned extrinsic file: $extrinsicCfgFile\n" if ($v > 3);
-    }
-}
-
-# subroutine for printing extrinsic.cfg pretty
-sub printCfg {
-    my $field   = shift;
-    my $length  = shift;
-    my $nSpaces = $length - length($field);
-    if ( $nSpaces < 0 ) {
-        print LOG "\# "
-            . (localtime)
-            . ": WARNING: Format error in extrinsic.cfg file. File will still be functional, but may look messy to human reader!\n" if ($v > 0);
-        $nSpaces = 1;
-    }
-    my $returnString = " " x $nSpaces;
-    $returnString .= $field;
-    return $returnString;
-}
-
 ####################### train AUGUSTUS #########################
 # create genbank file and train AUGUSTUS parameters for given species
-sub training {
+sub training_augustus {
     print LOG "\# " . (localtime) . ": training AUGUSTUS\n" if ($v > 2);
     if ( !$useexisting ) {
         my $gmGtf = "$genemarkDir/genemark.gtf";
@@ -3234,6 +2699,20 @@ sub augustus {
             # EPmode == 0 && !prg -> rnaseq.cfg
             # trainFromGth -> gth.cfg
             if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
+                if(defined($extrinsicCfgFile1)){
+                    $extrinsicCfgFile = $extrinsicCfgFile1;
+                }else{
+                    if ( $foundProt>0 && $foundRNASeq==0 ){
+                        if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
+                            assignExCfg ("gth.cfg");
+                        }else{
+                            assignExCfg ("ep.cfg");
+                        }
+                    }elsif( $foundProt==0 && $foundRNASeq > 0){
+                        assignExCfg ("rnaseq.cfg");
+                    }
+                }
+                copyExCfg($extrinsicCfgFile, "ex1.cfg");
                 my $hintId = "hints";
                 make_hints_jobs( $augustus_dir, $genome_dir, $hintsfile, $extrinsicCfgFile, $localUTR, $hintId );
                 run_augustus_jobs( "$otherfilesDir/hints.job.lst" );
@@ -3251,6 +2730,20 @@ sub augustus {
                 make_gtf("$otherfilesDir/augustus.ab_initio.gff");
             }
             if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
+                if(defined($extrinsicCfgFile1)){
+                    $extrinsicCfgFile = $extrinsicCfgFile1;
+                }else{
+                    if ( ($foundProt>0 && $foundRNASeq==0) ){
+                        if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
+                            assignExCfg ("gth.cfg");
+                        }else{
+                            assignExCfg ("ep.cfg");
+                        }
+                    }elsif( $foundProt==0 && $foundRNASeq > 0) {
+                        assignExCfg ("rnaseq.cfg");
+                    }
+                }
+                copyExCfg($extrinsicCfgFile, "ex1.cfg");
                 run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile, $localUTR, "hints");
                 make_gtf("$otherfilesDir/augustus.hints.gff");
             }else{
@@ -3747,6 +3240,12 @@ sub check_upfront {
         "eval_multi_gtf.pl",       $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
+
+    # check whether all extrinsic cfg files are available
+    findExCfg ("rnaseq.cfg");
+    findExCfg ("ep.cfg");
+    findExCfg ("gth.cfg");
+    findExCfg ("etp.cfg");
 }
 
 # check whether hints file is in gff format
@@ -3850,6 +3349,32 @@ sub check_gff {
 
 # check whether all options are set correctly
 sub check_options {
+    # Set implicit options:
+
+    if ($skipAllTraining) {
+        $useexisting = 1;
+    }
+
+    if ($trainFromGth) {
+        $gth2traingenes = 1;
+        $skipGeneMarkET = 1;
+        $skipGeneMarkEP = 1;
+        $skipGeneMarkETP = 1;
+    }
+
+    if ($skipAllTraining) {
+        $skipOptimize = 1;
+        $skipGeneMarkET = 1;
+        $skipGeneMarkEP = 1;
+        $skipGeneMarkETP = 1;
+    }
+
+    if ( defined($geneMarkGtf) ) {
+        $skipGeneMarkET = 1;
+        $skipGeneMarkEP = 1;
+        $skipGeneMarkETP = 1;
+    }
+
     if (   $alternatives_from_evidence ne "true"
         && $alternatives_from_evidence ne "false" )
     {
@@ -4084,54 +3609,39 @@ sub check_options {
         print STDERR $logString;
         exit(1);
     }
-    # set path and check whether assigned extrinsic file exists
-    if ( defined($extrinsicCfgFile) ) {
-        $extrinsicCfgFile = rel2abs($extrinsicCfgFile);
-        $prtStr
-            = "\# "
+    # set extrinsic.cfg files if provided
+    if (@extrinsicCfgFiles) {
+        if(-f $extrinsicCfgFiles[0]) {
+            $extrinsicCfgFile1 = rel2abs ($extrinsicCfgFiles[0]);
+        }else{
+            $printStr = "\# "
             . (localtime)
-            . ": WARNING: Specifying an extrinsic.cfg file requires that you "
-            . "know exactly what you are doing. Make sure that \n"
-            . " a) the sources in your *.cfg file match the sources in your"
-            . " hints file,\n"
-            . " b) the scoring scheme is appropriate. This usually requires a lot"
-            . " testing, beforehand.\n"
-            . " Will use file $extrinsicCfgFile in this braker.pl run!\n";
-        $logString .= $prtStr if ($v > 0);
-        if ( !-f $extrinsicCfgFile ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Assigned extrinsic file $extrinsicCfgFile does not ";
-            $prtStr .= "exist. Program will create extrinsic file instead.\n";
-            $logString .= $prtStr if ($v > 0);
-            $extrinsicCfgFile = undef;
+            . ": ERROR: specified extrinsic.cfg file $extrinsicCfgFiles[0] does "
+            . "not exist!\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
         }
-    }
-    else {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": Going to assign an extrinsic.cfg file based on the type of braker.pl call.\n";
-        $logString .= $prtStr if ($v > 2);
-        if ( $EPmode == 1 ) {
-            assignExCfg("ep.cfg");
-        }
-        elsif ( defined($prg) ) {
-            if (   ( $prg eq "gth" && not( defined($extrinsicCfgFile) ) )
-                or ( $prg eq "exonerate" && not( defined($extrinsicCfgFile) ) )
-                or ( $prg eq "spaln" && not( defined($extrinsicCfgFile) ) ) )
-            {
-                assignExCfg("gth.cfg");
+        if (scalar(@extrinsicCfgFiles) > 1) {
+            if (-f $extrinsicCfgFiles[1] ) {
+                $extrinsicCfgFile2 = rel2abs($extrinsicCfgFiles[1]);
+            }else{
+                 $printStr = "\# "
+                    . (localtime)
+                    . ": ERROR: specified extrinsic.cfg file "
+                    . "$extrinsicCfgFiles[1] does not exist!\n";
+                    $logString .= $prtStr;
+                    print STDERR $logString;
+                    exit(1);
             }
+        } elsif (scalar (@extrinsicCfgFiles) > 2) {
+            $printStr = "\# "
+                . (localtime)
+                . ": ERROR: more than two extrinsic.cfg files provided!\n";
+                $logString .= $prtStr;
+                print STDERR $logString;
+                exit(1);
         }
-        elsif ( $ETPmode == 1 ) {
-            assignExCfg("etp.cfg");
-        }
-        else {
-            assignExCfg("rnaseq.cfg");
-        }
-
     }
 
     # check whether genome file is set
@@ -4312,18 +3822,7 @@ sub check_options {
         print STDERR $logString;
         exit(1);
     }
-    elsif ( defined($trainFromGth) ) {
 
-        # disable genemark training
-        $skipGeneMarkET = 1;
-        $skipGeneMarkEP = 1;
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": GeneMark training has been disabled, will train AUGUSTUS from";
-        $prtStr .= " GenomeThreader alignments.\n";
-        $logString .= $prtStr if ($v > 1);
-    }
     if ( !-f "$genome" ) {
         $prtStr
             = "\# "
@@ -4333,12 +3832,6 @@ sub check_options {
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
-    }
-
-    if ( defined($geneMarkGtf) and not($skipGeneMarkET) )
-    {    # set skipGeneMarkET if geneMarkGtf is a
-            #command line argument
-        $skipGeneMarkET = 1;
     }
 
 }
@@ -6249,6 +5742,23 @@ sub set_BLAST_PATH {
     }
 }
 
+
+sub findExCfg {
+    my $thisCfg = shift;
+    $string = find( $thisCfg, $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH,
+        $AUGUSTUS_CONFIG_PATH );
+    if ( not ( -e $string ) ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . " ERROR: tried to find braker's extrinsic.cfg file $thisCfg ";
+        $prtStr .= "$string but this file does not seem to exist.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+}
+
 sub assignExCfg {
     my $thisCfg = shift;
     $string = find( $thisCfg, $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH,
@@ -6673,7 +6183,7 @@ sub make_hints_jobs{
     my $cfgFile = shift;
     my $localUTR = shift;
     my $hintId = shift;
-    print "\# " . (localtime) . ": Making AUGUSTUS jobs with hintsfile $thisHintsfile, cfgFile $cfgFile, UTR status $localUTR, and hintId $hintId\n" if ($v > 2);
+    print LOG "\# " . (localtime) . ": Making AUGUSTUS jobs with hintsfile $thisHintsfile, cfgFile $cfgFile, UTR status $localUTR, and hintId $hintId\n" if ($v > 2);
     my @genome_files = `ls $genome_dir`;
     my %scaffFileNames;
     foreach (@genome_files) {
@@ -6955,7 +6465,7 @@ sub getRnaseqHints {
 }
 
 sub run_augustus_with_joingenes_parallel{
-    print "\# " . (localtime) . ": Running AUGUSTUS with joingenes in parallel mode\n" if ($v > 2);
+    print LOG "\# " . (localtime) . ": Running AUGUSTUS with joingenes in parallel mode\n" if ($v > 2);
     my $genome_dir = shift;
     my $localUTR = shift;
     # if RNASeq and protein hints are given
@@ -6974,7 +6484,12 @@ sub run_augustus_with_joingenes_parallel{
     } else {
         print LOG "WARNING: ETPmode enabled but $genemarkDir/evidence.gff does not exist!\n" if ($v > 0);
     }
-    assignExCfg("gth.cfg");
+    if( defined ($extrinsicCfgFile1) ) {
+        $extrinsicCfgFile = $extrinsicCfgFile1;
+    }else{
+        assignExCfg("gth.cfg");
+    }
+    copyExCfg($extrinsicCfgFile, "ex1.cfg");
     my $augustus_dir = "$otherfilesDir/augustus_tmp_Ppri5";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "Ppri5");
     run_augustus_jobs( "$otherfilesDir/Ppri5.job.lst" );
@@ -6988,7 +6503,12 @@ sub run_augustus_with_joingenes_parallel{
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
-    assignExCfg("rnaseq.cfg");
+    if (defined ($extrinsicCfgFile2)) {
+        $extrinsicCfgFile = $extrinsicCfgFile2;
+    }else{
+        assignExCfg("rnaseq.cfg");
+    }
+    copyExCfg$extrinsicCfgFile, "ex2.cfg");
     $augustus_dir = "$otherfilesDir/augustus_tmp_E";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
     run_augustus_jobs( "$otherfilesDir/E.job.lst" );
@@ -7015,7 +6535,12 @@ sub run_augustus_with_joingenes_single_core{
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
-    assignExCfg("gth.cfg");
+    if( defined ($extrinsicCfgFile1)_) {
+        $extrinsicCfgFile = $extrinsicCfgFile1;
+    }else{
+        assignExCfg("gth.cfg");
+    }
+    copy($extrinsicCfgFile, "ex1.cfg");
     run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile, $localUTR, "Ppri5");
     make_gtf("$otherfilesDir/augustus.Ppri5.gff");
     $adjustedHintsFile = "$hintsfile.E";
@@ -7025,7 +6550,12 @@ sub run_augustus_with_joingenes_single_core{
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
-    assignExCfg("rnaseq.cfg");
+    if (defined ($extrsinsicCfgFile2)) {
+        $extrinsicCfgFile = $extrinsicCfgFile2;
+    }else{
+        assignExCfg("rnaseq.cfg");
+    }
+    copyExCfg($extrinsicCfgFile, "ex2.cfg");
     run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile, $localUTR, "E");
     make_gtf("$otherfilesDir/augustus.E.gff");
     joingenes("$otherfilesDir/augustus.Ppri5.gtf","$otherfilesDir/augustus.E.gtf");
@@ -7068,4 +6598,21 @@ sub joingenes {
     $cmdString = "mv $otherfilesDir/join.gtf $otherfilesDir/augustus.hints.gtf";
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
+
+sub copyExCfg {
+    my $thisCfg = shift;
+    my $target = shift;
+    if ( not( -d "$parameterDir/$species/" ) ) {
+        mkdir "$parameterDir/$species/";
+    }
+    $cmdString = "cp $thisCfg $parameterDir/$species/$target";
+    print LOG "\# "
+        . (localtime)
+        . ": copy extrinsic file $thisCfg to working directory\n" if ($v > 2);
+    print LOG "$cmdString\n\n" if ($v > 2);
+    system("$cmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nFailed to execute: $cmdString!\n");
 }
