@@ -1001,9 +1001,9 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
 $hintsfile          = "$otherfilesDir/hintsfile.gff";
 if(! $trainFromGth ) {
     $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
-    if ( $EPmode == 0 ) {
-        make_rna_seq_hints();    # make hints from RNA-Seq
-    }
+}
+if ( @bam ) {
+    make_rnaseq_hints();    # make hints from RNA-Seq
 }
 if ( @prot_seq_files or @prot_aln_files ) {
     make_prot_hints();
@@ -1122,53 +1122,49 @@ close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould n
 # * add strand information to hint
 ################################################################################
 
-sub make_rna_seq_hints {
+sub make_rnaseq_hints {
     print LOG "\# "
         . (localtime)
         . ": Converting bam files to hints\n" if ($v > 2);
     my $bam_hints;
     my $hintsfile_temp = "$otherfilesDir/hintsfile.temp.gff";
-
-    # from RNA-Seq data in bam format
-    if (@bam) {
-        my $bam_temp = "$otherfilesDir/bam2hints.temp.gff";
-        for ( my $i = 0; $i < scalar(@bam); $i++ ) {
-            $errorfile = "$errorfilesDir/bam2hints.$i.stderr";
-            if ( !uptodate( [ $bam[$i] ], [$hintsfile] ) || $overwrite ) {
-                $bam[$i] = check_bam_headers( $bam[$i] );
-                if ( -e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints" ) {
-                    $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
-                }
-                else {
-                    $augpath = "$AUGUSTUS_BIN_PATH/bam2hints";
-                }
-                $cmdString = "";
-                if ($nice) {
-                    $cmdString .= "nice ";
-                }
-                $cmdString
-                    .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp &>$errorfile";
-                print LOG "\# "
-                    . (localtime)
-                    . ": make hints from BAM file $bam[$i]\n" if ($v > 3);
-                print LOG "$cmdString\n\n" if ($v > 3);
-                system("$cmdString") == 0
-                    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-                $cmdString = "";
-                if ($nice) {
-                    $cmdString .= "nice ";
-                }
-                $cmdString .= "cat $bam_temp >>$hintsfile_temp";
-                print LOG "\n\# "
-                    . (localtime)
-                    . ": add hints from BAM file $bam[$i] to hints file\n" if ($v > 3);
-                print LOG "$cmdString\n\n" if ($v > 3);
-                system("$cmdString") == 0
-                    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+    my $bam_temp = "$otherfilesDir/bam2hints.temp.gff";
+    for ( my $i = 0; $i < scalar(@bam); $i++ ) {
+        $errorfile = "$errorfilesDir/bam2hints.$i.stderr";
+        if ( !uptodate( [ $bam[$i] ], [$hintsfile] ) || $overwrite ) {
+            $bam[$i] = check_bam_headers( $bam[$i] );
+            if ( -e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints" ) {
+                $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
             }
+            else {
+                $augpath = "$AUGUSTUS_BIN_PATH/bam2hints";
+            }
+            $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            $cmdString
+                .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp &>$errorfile";
+            print LOG "\# "
+                . (localtime)
+                . ": make hints from BAM file $bam[$i]\n" if ($v > 3);
+            print LOG "$cmdString\n\n" if ($v > 3);
+            system("$cmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+            $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            $cmdString .= "cat $bam_temp >>$hintsfile_temp";
+            print LOG "\n\# "
+                . (localtime)
+                . ": add hints from BAM file $bam[$i] to hints file\n" if ($v > 3);
+            print LOG "$cmdString\n\n" if ($v > 3);
+            system("$cmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
         }
-        unlink($bam_temp);
     }
+    unlink($bam_temp);
     if ( -f $hintsfile_temp || $overwrite ) {
         if ( !uptodate( [$hintsfile_temp], [$hintsfile] ) || $overwrite ) {
             join_mult_hints( $hintsfile_temp, "rnaseq" );
@@ -1664,7 +1660,7 @@ sub aln2hints {
 
 sub join_mult_hints {
     my $hints_file_temp = shift;
-    print LOG "\# " . (localtime) . ": Joining hints that are identical into multiplicity hints (input file $hints_file_temp)\n" if ($v > 2);
+    print LOG "\# " . (localtime) . ": Joining hints that are identical (& from the same source) into multiplicity hints (input file $hints_file_temp)\n" if ($v > 2);
     my $type            = shift;    # rnaseq or prot or whatever will follow
     my $hintsfile_temp_sort = "$otherfilesDir/hints.$type.temp.sort.gff";
     $cmdString = "";
@@ -6904,37 +6900,11 @@ sub createEvidenceGff {
     close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genemark_hintsfile!\n");
 
     open ( EV, ">", $evidenceFile ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open file $evidenceFile!\n");
-    print EV "This is the file I am trying to print to!\n";
     foreach my $locus (keys %rnaseq) {
         if( defined ($prot{$locus}) ) {
             foreach my $hint (@{$rnaseq{$locus}}) {
                 foreach my $otherHint (@{$prot{$locus}}) {
-                    # print "Trying to access hint-> start:\n";
-                    # print $hint->{'start'};
-                    # print "\n";
-                    # print "Trying to access otherHint-> start:\n";
-                    # print $otherHint->{'start'};
-                    # print "\n";
-                    #  print "Trying to access hint-> stop:\n";
-                    # print $hint->{'stop'};
-                    # print "\n";
-                    # print "Trying to access otherHint-> stop:\n";
-                    # print $otherHint->{'stop'};
-                    # print "\n";
-                    # print "Trying to access hint-> strand:\n";
-                    # print $hint->{'strand'};
-                    # print "\n";
-                    # print "Trying to access otherHint-> strand:\n";
-                    # print $otherHint->{'strand'};
-                    # print "\n";
-                    # print "Trying to access hint-> feature:\n";
-                    # print $hint->{'feature'};
-                    # print "\n";
-                    # print "Trying to access hint-> frame:\n";
-                    # print $otherHint->{'frame'};
-                    # print "\n";
                     if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
-                        print EV "This should have been a hint\n";
                         print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
                         ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
                     }
