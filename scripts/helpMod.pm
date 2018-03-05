@@ -1,12 +1,24 @@
+####################################################################################################
+#                                                                                                  #
+# helpMod.pm                                                                                       #
+#                                                                                                  #
+# Component of braker.pl                                                                           #
+#                                                                                                  #
+# Authors: Katharina Hoff, Simone Lange, Mario Stanke, Alexandre Lomsadze, Mark Borodovsky         #
+#                                                                                                  #
+# Contact: katharina.hoff@uni-greifswald.de                                                        #
+#                                                                                                  #                                                             #
+# This script is under the Artistic Licence                                                        #
+# (http://www.opensource.org/licenses/artistic-license.php)                                        #
+#                                                                                                  #
+####################################################################################################
+
 package helpMod;
 
-###########################
-# Some help sub functions #
-###########################
-
 use Exporter 'import';
-@EXPORT_OK
-    = qw( find tildeConvert checkFile formatDetector relToAbs setParInConfig uptodate gtf2fasta clean_abort );
+
+@EXPORT_OK = qw( find tildeConvert checkFile formatDetector relToAbs setParInConfig uptodate
+    gtf2fasta clean_abort );
 
 use strict;
 use Cwd;
@@ -14,13 +26,10 @@ use Cwd 'abs_path';
 use File::Spec::Functions qw(rel2abs);
 use File::Basename qw(dirname);
 use File::Path qw(rmtree);
-######################################################################################
-# extract DNA sequence of CDS in gtf from genome fasta file, write to CDS fasta file #
-######################################################################################
 
-##############################################################################################################
-# genetic code (use only one because the purpose is training gene blast all-against-all, not gene prediction)#
-##############################################################################################################
+####################################################################################################
+# genetic code (use only one for training gene blast all-against-all, not gene prediction)         #
+####################################################################################################
 my(%genetic_code) = (
     'TCA' => 'S', # Serine
     'TCC' => 'S', # Serine
@@ -88,13 +97,17 @@ my(%genetic_code) = (
     'GGT' => 'G'  # Glycine
 );
 
+####################################################################################################
+# extract DNA sequence of CDS in gtf from genome fasta file, write to CDS fasta file               #
+####################################################################################################
 sub gtf2fasta {
     my $genome_file = shift;
     my $gtf_file = shift;
     my $fasta_file = shift;
     my %gtf;
     my %genome;
-    open (GTF, "<", $gtf_file ) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gtf_file!\n");
+    open (GTF, "<", $gtf_file ) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not close file $gtf_file!\n");
     while ( <GTF> ) {
         if ( $_ =~ m/\tCDS\t/ ) {
             $_ =~ m/transcript_id \"(\S+)\"/;
@@ -103,8 +116,10 @@ sub gtf2fasta {
             push @{$gtf{$line[0]}{$txid}}, $_;
         }
     }
-    close (GTF) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $gtf_file!\n");
-    open (GENOME, "<", $genome_file ) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genome_file!\n");
+    close (GTF) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not close file $gtf_file!\n");
+    open (GENOME, "<", $genome_file ) or die ("ERROR: in file " . __FILE__
+        . " at line ". __LINE__ ."\nCould not close file $genome_file!\n");
     my $seq = "";
     my $locus;
     my %cds_seq;
@@ -118,15 +133,19 @@ sub gtf2fasta {
                     foreach ( @{$txgtf} ) {
                         my @line = split(/\t/);
                         if ( not( defined( $cds_seq{$txid} ) ) ) {
-                            $cds_seq{$txid} = substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) );
+                            $cds_seq{$txid} = substr ( $seq, ( $line[3] -1 ),
+                                ( $line[4] - $line[3] + 1 ) );
                             if ( $line[6] eq '-' ) {
                                 $cds_seq{$txid} = reverse_complement ( $cds_seq{$txid} );
                             }
                         }else {
                             if ( $line[6] eq '+') {
-                                $cds_seq{$txid} .= substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) );
+                                $cds_seq{$txid} .= substr ( $seq, ( $line[3] -1 ),
+                                    ( $line[4] - $line[3] + 1 ) );
                             } else {
-                                $cds_seq{$txid} = reverse_complement( substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) ) ).$cds_seq{$txid};
+                                $cds_seq{$txid} = reverse_complement(
+                                    substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) ) )
+                                    . $cds_seq{$txid};
                             }
                         }
                     }
@@ -148,25 +167,31 @@ sub gtf2fasta {
                     }
                 }else {
                     if ( $line[6] eq '+') {
-                        $cds_seq{$txid} .= substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) );
+                        $cds_seq{$txid} .= substr ( $seq, ( $line[3] -1 ),
+                            ( $line[4] - $line[3] + 1 ) );
                     } else {
-                        $cds_seq{$txid} = reverse_complement( substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) ) ).$cds_seq{$txid}
+                        $cds_seq{$txid} = reverse_complement(
+                            substr ( $seq, ( $line[3] -1 ), ( $line[4] - $line[3] + 1 ) ) )
+                            . $cds_seq{$txid}
                     }
                 }
             }
         }
     }
-    close(GENOME) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $genome_file!\n");
-    open (FASTA, ">", $fasta_file) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $fasta_file!\n");
+    close(GENOME) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not close file $genome_file!\n");
+    open (FASTA, ">", $fasta_file) or die ("ERROR: in file " . __FILE__ ." at line " . __LINE__
+        . "\nCould not close file $fasta_file!\n");
     while ( my ( $txid, $dna ) = each %cds_seq ) {
         print FASTA ">$txid\n".dna2aa($dna)."\n";
     }
-    close (FASTA) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $fasta_file!\n");
+    close (FASTA) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not close file $fasta_file!\n");
 }
 
-######################################
-# reverse complement of DNA sequence #
-######################################
+####################################################################################################
+# reverse complement of DNA sequence                                                               #
+####################################################################################################
 
 sub reverse_complement {
     my $in = shift;
@@ -175,9 +200,9 @@ sub reverse_complement {
     return $in;
 }
 
-######################################
-# Translate DNA to protein sequence  #
-######################################
+####################################################################################################
+# Translate DNA to protein sequence                                                                #
+####################################################################################################
 
 sub dna2aa {
     my $seq = shift;
@@ -190,11 +215,9 @@ sub dna2aa {
     return $aa;
 }
 
-###################################################################################################
-# search a script under $AUGUSTUS_CONFIG_PATH and the directory where this script placed  in turn #
-# return the name with absolute path of this script                                               #
-# usage: $absNameOfScript=find("script")                                                          #
-###################################################################################################
+####################################################################################################
+# find a script a script that is used by braker.pl                                                 #
+####################################################################################################
 
 sub find {
     my $script                = shift;    # script to find
@@ -215,7 +238,8 @@ sub find {
     # paths can be redundant, remove redundancies:
     my @unique;
     my %seen;
-    foreach my $value ( ( "$path_1/$script", "$path_2/$script", "$path_3/$script", "$path_4/$script" ) )
+    foreach my $value ( ( "$path_1/$script", "$path_2/$script", "$path_3/$script",
+        "$path_4/$script" ) )
     {
         if ( !$seen{$value}++ ) {
             push @unique, $value;
@@ -235,14 +259,18 @@ sub find {
     }
     else {
         # if not found, output error
-        die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n found neither $path_1/$script nor $path_2/$script nor $path_3/$script nor $path_4/$script!\nPlease Check the environment variables AUGUSTUS_CONFIG_PATH and command line options AUGUSTUS_BIN_PATH and AUGUSTUS_SCRIPTS_PATH or install AUGUSTUS, again!\n"
+        die("ERROR: in file " . __FILE__ ." at line ". __LINE__
+            . "\n found neither $path_1/$script nor $path_2/$script nor $path_3/$script nor "
+            . "$path_4/$script!\nPlease Check the environment variables AUGUSTUS_CONFIG_PATH and "
+            . "command line options AUGUSTUS_BIN_PATH and AUGUSTUS_SCRIPTS_PATH or install "
+            . "AUGUSTUS, again!\n"
         );
     }
 }
 
-######################################################################
-# convert a file name which begins with ~ to name with absolute path #
-######################################################################
+####################################################################################################
+# convert a file name which begins with ~ to name with absolute path                               #
+####################################################################################################
 
 sub tildeConvert {
     my $file = shift;
@@ -253,9 +281,9 @@ sub tildeConvert {
     return $file;
 }
 
-##################################################################
-# check if $file exists and replace $file with its absolute path #
-##################################################################
+####################################################################################################
+# check if $file exists and replace $file with its absolute path                                   #
+####################################################################################################
 
 sub checkFile {
     my $file = shift;           # file which to be checked
@@ -263,20 +291,22 @@ sub checkFile {
         ;   # type of file, used by error outputting if the file doesn't exist
     my $usage = shift;    # usage to be outputted if the file doesn't exist
 
-    die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nmissing $type file!\n$usage") if ( !$file );
+    die("ERROR: in file " . __FILE__ ." at line ". __LINE__
+        . "\nmissing $type file!\n$usage") if ( !$file );
 
     # overwrite $file with absolute path
     $file = tildeConvert($file);
     $file = rel2abs($file);        # overwrite $file with absolute path
     if ( !( -f $file ) ) {
-        die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n $type file $file not found!\n");
+        die("ERROR: in file " . __FILE__ ." at line ". __LINE__
+            . "\n $type file $file not found!\n");
     }
     return $file;
 }
 
-##################################################
-# detect if a file has gff or gb or fasta format #
-##################################################
+####################################################################################################
+# detect if a file has gff or gb or fasta format                                                   #
+####################################################################################################
 
 sub formatDetector {
     my $file      = shift;         # file to be detected
@@ -286,7 +316,8 @@ sub formatDetector {
     #
     # check if file has GENBANK format
     #
-    open( DFILE, $file ) or die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open $file!\n");
+    open( DFILE, $file ) or die("ERROR: in file " . __FILE__ ." at line ". __LINE__ .
+        "\nCould not open $file!\n");
     $i = 0;
     my $haveLOCUS    = 0;
     my $haveSource   = 0;
@@ -308,23 +339,27 @@ sub formatDetector {
         )
     {
         print STDERR
-            "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt Genbank format. 'LOCUS' missing\n"
+            "ERROR: in file " . __FILE__ ." at line ". __LINE__
+            . "\n$file appears to be in corrupt Genbank format. 'LOCUS' missing\n"
             if ( !$haveLOCUS );
         print STDERR
-            "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt Genbank format. ' source ' line missing\n"
+            "ERROR: in file " . __FILE__ ." at line ". __LINE__
+            . "\n$file appears to be in corrupt Genbank format. ' source ' line missing\n"
             if ( !$haveSource );
         print STDERR
             "$file appears to be in corrupt Genbank format. 'ORIGIN' missing\n"
             if ( !$haveOrigin );
         print STDERR
-            "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt Genbank format. '//' missing\n"
+            "ERROR: in file " . __FILE__ ." at line ". __LINE__
+            . "\n$file appears to be in corrupt Genbank format. '//' missing\n"
             if ( !$haveTermSymb );
         return "gb";
     }
     #
     # check if file has GFF format
     #
-    open( DFILE, $file ) or die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open $file!\n");
+    open( DFILE, $file ) or die("ERROR: in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not open $file!\n");
     $i = 0;
     my $badGFFlines  = 0;
     my $goodGFFlines = 0;
@@ -347,7 +382,8 @@ sub formatDetector {
     close(DFILE);
     if ( $goodGFFlines > 0 ) {
         if ( $badGFFlines > 0 ) {
-            print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt GFF format.\n";
+            print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__
+            . "\n$file appears to be in corrupt GFF format.\n";
             return "";
         }
         else {
@@ -357,7 +393,8 @@ sub formatDetector {
     #
     # check if file has FASTA format and whether it is DNA or protein
     #
-    open( DFILE, $file ) or die("ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nCould not open $file!\n");
+    open( DFILE, $file ) or die("ERROR: in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not open $file!\n");
     $i = 0;
     my $greaterLines = 0;
     my $concatseq    = "";
@@ -384,16 +421,17 @@ sub formatDetector {
             return "fasta-dna";
         }
         else {
-            print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n$file appears to be in corrupt FASTA format.\n";
+            print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__
+            . "\n$file appears to be in corrupt FASTA format.\n";
             return "";
         }
     }
     return "";
 }
 
-##########################################
-# convert relative path to absolute path #
-##########################################
+####################################################################################################
+# convert relative path to absolute path                                                           #
+####################################################################################################
 
 sub relToAbs {
     my $name = shift;
@@ -401,11 +439,11 @@ sub relToAbs {
     return rel2abs($name);          # with absolute path
 }
 
-##########################################
-# change a parameter in a config file    #
-# assume the format                      #
-# parName    value   # comment           #
-##########################################
+####################################################################################################
+# change a parameter in a config file                                                              #
+# assume the format                                                                                #
+# parName    value   # comment                                                                     #
+####################################################################################################
 
 sub setParInConfig {
     my $configFileName = shift;
@@ -423,11 +461,11 @@ sub setParInConfig {
     close(CFGFILE);
 }
 
-##################################################
-# uptodate
-# check whether output files are up to date with respect to input files
-# all output files must exist and not be older than any input file
-##################################################
+####################################################################################################
+# uptodate                                                                                         #
+# check whether output files are up to date with respect to input files                            #
+# all output files must exist and not be older than any input file                                 #
+####################################################################################################
 
 sub uptodate {
     my $input  = shift;    # reference to list of input file names
@@ -459,17 +497,18 @@ sub uptodate {
     return ( $latestInMtime <= $earliestOutMtime );
 }
 
-##########################################################
-# exit braker after deleting AUGUSTUS parameter directory
-# use instead of exit(1) and die() after creating of
-# directory and before first real etraining
-##########################################################
+####################################################################################################
+# exit braker after deleting AUGUSTUS parameter directory                                          #
+# use instead of exit(1) and die() after creating of                                               #
+# directory and before first real etraining                                                        #
+####################################################################################################
 sub clean_abort {
     my $configDir = shift;
     my $useexisting = shift;
     my $message = shift;
     if (-d $configDir && not($useexisting)) {
-        rmtree( ["$configDir"] ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $configDir!\n");
+        rmtree( ["$configDir"] ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to delete $configDir!\n");
     }
     print STDERR $message;
     exit(1);
