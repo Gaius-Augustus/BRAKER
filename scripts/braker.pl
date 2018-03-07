@@ -4274,7 +4274,6 @@ sub format_ep_hints {
     print LOG "$cmdString\n\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString\n");
-    exit(1);
 }
 
 ####################### create_evidence_gff ####################################
