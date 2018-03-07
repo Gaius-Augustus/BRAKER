@@ -731,7 +731,6 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && not ( $skipAllTraining) 
         exit(1);
     }
 } elsif ( $skipGeneMarkETP && $EPmode == 0 && $ETPmode == 1 && not($skipAllTraining)){
-    print "skipAllTraining is $skipAllTraining\n";
     $prtStr = "REMARK: The GeneMark-ETP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -757,7 +756,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && not ( $skipAllTraining) 
         }
         exit(1);
     }
-} elsif ( ( $skipGeneMarkEP && not($trainFromGth) ) || ( $skipGeneMarkETP && not ($trainFromGth) ) ) {
+} elsif ( ( ( $skipGeneMarkEP && not($trainFromGth) ) || ( $skipGeneMarkETP && not ($trainFromGth) ) ) && not ($skipAllTraining) ) {
     $prtStr = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
