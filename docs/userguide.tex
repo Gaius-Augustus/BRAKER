@@ -522,13 +522,75 @@ Due to file size, example data for testing BRAKER2 is separately available for d
 \url{http://bioinf.uni-greifswald.de/augustus/downloads/index.php} and \url{http://exon.gatech.edu/} as archive
 \texttt{BRAKER2examples.tar.gz}.
 
+Testing BRAKER2 is time consuming because a full test requires the assembly of sufficient training data and subsequent training of gene predictors. Consider running braker threaded (e.g.~\texttt{--cores=8}) for testing. You can also select the \texttt{--skipOptimize} option for all tests that include training of AUGUSTUS in order to speed up testing. 
+
+\section{Testing BRAKER2 with RNA-Seq (only) data}
+
+\subsection{Testing Training \& Prediction}
+
+The following command will test the pipeline according to figure \ref{braker-main}A:
+
+\begin{verbatim}
+braker.pl --genome=genome.fa --bam=RNAseq.bam
+\end{verbatim}
+
+\subsection{Prediction only}
+
+The following command will test the AUGUSTUS prediction module of braker.pl with pre-trained parameters (e.g.~the \texttt{fly} parameters from AUGUSTUS release):
+
+\begin{verbatim}
+braker.pl --genome=genome.fa --bam=RNAseq.bam --species=fly --skipAllTraining
+\end{verbatim}
+
+\section{Testing BRAKER2 with hints from proteins of remote homology (only)}
+
+The following command will test the pipeline according to figure \ref{braker-main}B (training and prediction):
+
+\begin{verbatim}
+braker.pl --genome=genome.fa --hints=ep.hints --epmode
+\end{verbatim}
+
+\section{Testing BRAKER2 with hints from proteins of remote homology and RNA-Seq}
+
+The following command will test a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources.
+
+\begin{verbatim}
+braker.pl --genome=genome.fa --hints=ep.hints --bam=RNAseq.bam --etpmode
+\end{verbatim}
+
+\section{Testing BRAKER2 with proteins of close homology (only)}
+
+\subsection{Testing Training \& Prediction}
+
+The following command will test the pipeline according to figure \ref{braker2-sidetrack}D (training and prediction):
+
+\begin{verbatim}
+braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --trainFromGth
+\end{verbatim}
+
+\subsection{Prediction only}
+
+The following command will test the AUGUSTUS prediction module of braker.pl with pre-trained parameters (e.g.~the \texttt{fly} parameters from AUGUSTUS release):
+
+\begin{verbatim}
+braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --species=fly --skipAllTraining
+\end{verbatim}
+
+\section{Testing BRAKER2 
+
+
+
+
+
+
+
+The following command 
+
 After extraction, test BRAKER2 with the following commands:
 
 1) For usage with RNA-Seq, only (BRAKER1 functionality):
 
-\begin{verbatim}
-   perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam
-\end{verbatim}
+
 
 2) For usage with RNA-Seq and proteins (BRAKER2 functionaliy, adapt command to aligner of your 
    choice):

@@ -681,7 +681,7 @@ else {
 # set in check_options, yet.                                                   #
 ################################################################################
 
-if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 ) {
+if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && not ( $skipAllTraining) ) {
     $prtStr = "\# "
             . (localtime)
             . ": REMARK: The GeneMark-ET step will be skipped.\n";
@@ -706,7 +706,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 ) {
             exit(1);
         }
     }
-} elsif ( $skipGeneMarkEP && $EPmode == 1 && $ETPmode == 0) {
+} elsif ( $skipGeneMarkEP && $EPmode == 1 && $ETPmode == 0 && not ($skipAllTraining) ) {
     $prtStr = "REMARK: The GeneMark-EP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -730,7 +730,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 ) {
         }
         exit(1);
     }
-} elsif ( $skipGeneMarkETP && $EPmode == 0 && $ETPmode == 1 ){
+} elsif ( $skipGeneMarkETP && $EPmode == 0 && $ETPmode == 1 && not($skipAllTraining)){
     $prtStr = "REMARK: The GeneMark-ETP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
