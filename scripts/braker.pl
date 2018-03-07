@@ -4168,7 +4168,6 @@ sub get_genemark_hints {
             . "\nFailed to execute: $cmdString\n");
     }
 
-    exit(1);
 
     if( $EPmode == 0 && $ETPmode == 0 ) {
         $cmdString = "mv $gm_hints_rnaseq.tmp $genemark_hintsfile";
@@ -4227,6 +4226,7 @@ sub get_genemark_hints {
         "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nFailed to delete file $gm_hints_rnaseq.tmp\n");
     }
+    exit(1);
 }
 
 ####################### format_ep_hints ########################################
