@@ -5911,8 +5911,14 @@ sub augustus {
                     $extrinsicCfgFile = $extrinsicCfgFile1;
                 }else{
                     if ( $foundProt>0 && $foundRNASeq==0 ){
-                        if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
-                            assign_ex_cfg ("gth.cfg");
+                        if(defined($prg)){
+                            if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
+                                assign_ex_cfg ("gth.cfg");
+                            }else{
+                                $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
+                                    ." at line " . __LINE__
+                                    . "\nunsupported alignment program $prg given!\n";
+                            }
                         }else{
                             assign_ex_cfg ("ep.cfg");
                         }
