@@ -991,19 +991,24 @@ if (! $trainFromGth && $skipAllTraining==0 ) {
 if ( $skipAllTraining == 0 ) {
     if ( not($trainFromGth) ) {
         if ( $EPmode == 0 && $ETPmode==0 ) {
+            print "I am wrongly in the first one!\n";
             check_genemark_hints();
             GeneMark_ET();    # run GeneMark-ET
             filter_genemark();
         }
         elsif ( $EPmode == 1 ) {
+            print "I am wrongly in this one\n";
             # remove reformatting of hintsfile, later!
             format_ep_hints();
             check_genemark_hints();
             GeneMark_EP();
             filter_genemark();
         }elsif ( $ETPmode == 1 ) {
+            print "I get here!\n";
             format_ep_hints();
+            print "I get here!\n";
             create_evidence_gff();
+            print "I get here!\n";
             check_genemark_hints();
             GeneMark_ETP();
             filter_genemark();
@@ -4226,7 +4231,6 @@ sub get_genemark_hints {
         "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nFailed to delete file $gm_hints_rnaseq.tmp\n");
     }
-    exit(1);
 }
 
 ####################### format_ep_hints ########################################
