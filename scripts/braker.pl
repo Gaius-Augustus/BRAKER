@@ -4256,6 +4256,8 @@ sub format_ep_hints {
             } else {
                 print OUT "mult=$t[5];pri=4;src=P\n";
             }
+        }elsif( $t[8] =~ m/src=/ && $t[8] =~ m/pri/ ){
+            print OUT $t[8];
         }elsif( not ( $t[8] =~ m/src=/) || not ( $t[8] =~ m/pri/ ) ) {
             $prtStr = "WARNING: Format of hintsfile $genemark_hintsfile is "
                     . "incorrect in the last column, possibly mult= or pri= "
