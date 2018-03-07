@@ -991,24 +991,19 @@ if (! $trainFromGth && $skipAllTraining==0 ) {
 if ( $skipAllTraining == 0 ) {
     if ( not($trainFromGth) ) {
         if ( $EPmode == 0 && $ETPmode==0 ) {
-            print "I am wrongly in the first one!\n";
             check_genemark_hints();
             GeneMark_ET();    # run GeneMark-ET
             filter_genemark();
         }
         elsif ( $EPmode == 1 ) {
-            print "I am wrongly in this one\n";
             # remove reformatting of hintsfile, later!
             format_ep_hints();
             check_genemark_hints();
             GeneMark_EP();
             filter_genemark();
         }elsif ( $ETPmode == 1 ) {
-            print "I get here!\n";
             format_ep_hints();
-            print "I get here!\n";
             create_evidence_gff();
-            print "I get here!\n";
             check_genemark_hints();
             GeneMark_ETP();
             filter_genemark();
@@ -4262,9 +4257,11 @@ sub format_ep_hints {
                 print OUT "mult=$t[5];pri=4;src=P\n";
             }
         }elsif( not ( $t[8] =~ m/src=/) || not ( $t[8] =~ m/pri/ ) ) {
-            print "WARNING: Format of hintsfile $genemark_hintsfile is "
-                . "incorrect in the last column, possibly mult= or pri= "
-                . "tags are missing!\n";
+            $prtStr = "WARNING: Format of hintsfile $genemark_hintsfile is "
+                    . "incorrect in the last column, possibly mult= or pri= "
+                    . "tags are missing!\n";
+            print STDOUT $prtStr;
+            print LOG $prtStr;
         }
     }
     close (OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -4275,6 +4272,7 @@ sub format_ep_hints {
     print LOG "$cmdString\n\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString\n");
+    exit(1);
 }
 
 ####################### create_evidence_gff ####################################
