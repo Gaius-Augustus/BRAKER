@@ -4135,6 +4135,7 @@ sub get_genemark_hints {
     close (HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $hintsfile!\n");
+    exit(1);
     if ( -s $gm_hints_rnaseq ) {
         $cmdString = "";
         if ($nice) {
