@@ -535,8 +535,9 @@ if ($printVersion) {
     exit(0);
 }
 
-# make genome path absolute
-$genome    = rel2abs($genome);
+# Make paths to input files absolute ###########################################
+
+make_paths_absolute();
 
 # Set working directory ########################################################
 
@@ -1030,6 +1031,57 @@ close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
 
 
 ############### sub functions ##################################################
+
+####################### make_paths_absolute ####################################
+# make paths to all input files absolute
+################################################################################
+
+sub make_paths_absolute {
+
+    # make genome path absolute
+    $genome    = rel2abs($genome);
+
+    # make bam paths absolute
+    if (@bam) {
+        @bam = split( /[\s,]/, join( ',', @bam ) );
+        for ( my $i = 0; $i < scalar(@bam); $i++ ) {
+            $bam[$i] = rel2abs( $bam[$i] );
+        }
+    }
+
+    # make hints paths absolute
+    if (@hints) {
+        @hints = split( /[\s,]/, join( ',', @hints ) );
+        for ( my $i = 0; $i < scalar(@hints); $i++ ) {
+            $hints[$i] = rel2abs( $hints[$i] );
+        }
+    }
+
+    # make extrinsic file paths absolute
+    if (@extrinsicCfgFiles) {
+        @extrinsicCfgFiles = split( /[\s,]/, join( ',', @extrinsicCfgFiles ) );
+        for ( my $i = 0; $i < scalar(@extrinsicCfgFiles); $i++ ) {
+            $extrinsicCfgFiles[$i] = rel2abs ($extrinsicCfgFiles[$i]);
+        }
+    }
+
+    # make prot seq file paths absolut
+    if (@prot_seq_files) {
+        @prot_seq_files = split( /[\s,]/, join( ',', @prot_seq_files ) );
+        for ( my $i = 0; $i < scalar(@prot_seq_files); $i++ ) {
+            $prot_seq_files[$i] = rel2abs( $prot_seq_files[$i] );
+        }
+    }
+
+    # make prot aln paths absolute
+    if (@prot_aln_files) {
+        @prot_aln_files = split( /[\s,]/, join( ',', @prot_aln_files ) );
+        for ( my $i = 0; $i < scalar(@prot_aln_files); $i++ ) {
+            $prot_aln_files[$i] = rel2abs( $prot_aln_files[$i] );
+        }
+    }
+
+}
 
 ####################### set_AUGUSTUS_CONFIG_PATH ###############################
 # * set path to AUGUSTUS_CONFIG_PATH
@@ -2667,7 +2719,6 @@ sub check_options {
 
     # check whether bam files exist
     if (@bam) {
-        @bam = split( /[\s,]/, join( ',', @bam ) );
         for ( my $i = 0; $i < scalar(@bam); $i++ ) {
             if ( !-e $bam[$i] ) {
                 $prtStr
@@ -2679,13 +2730,11 @@ sub check_options {
                 print STDERR $logString;
                 exit(1);
             }
-            $bam[$i] = rel2abs( $bam[$i] );
         }
     }
 
     # check whether hints files exists
     if (@hints) {
-        @hints = split( /[\s,]/, join( ',', @hints ) );
         for ( my $i = 0; $i < scalar(@hints); $i++ ) {
             if ( !-e "$hints[$i]" ) {
                 $prtStr
@@ -2697,7 +2746,6 @@ sub check_options {
                 print STDERR $logString;
                 exit(1);
             }
-            $hints[$i] = rel2abs( $hints[$i] );
             check_gff( $hints[$i] );
         }
     }
@@ -2850,7 +2898,7 @@ sub check_options {
     # set extrinsic.cfg files if provided
     if (@extrinsicCfgFiles) {
         if(-f $extrinsicCfgFiles[0]) {
-            $extrinsicCfgFile1 = rel2abs ($extrinsicCfgFiles[0]);
+            $extrinsicCfgFile1 = $extrinsicCfgFiles[0];
         }else{
             $prtStr = "\# "
             . (localtime)
@@ -2862,7 +2910,7 @@ sub check_options {
         }
         if (scalar(@extrinsicCfgFiles) > 1) {
             if (-f $extrinsicCfgFiles[1] ) {
-                $extrinsicCfgFile2 = rel2abs($extrinsicCfgFiles[1]);
+                $extrinsicCfgFile2 = $extrinsicCfgFiles[1];
             }else{
                  $prtStr = "\# "
                     . (localtime)
@@ -2894,7 +2942,6 @@ sub check_options {
 
     # check whether protein sequence file is given
     if (@prot_seq_files) {
-        @prot_seq_files = split( /[\s,]/, join( ',', @prot_seq_files ) );
         for ( my $i = 0; $i < scalar(@prot_seq_files); $i++ ) {
             if ( !-f $prot_seq_files[$i] ) {
                 $prtStr
@@ -2907,7 +2954,6 @@ sub check_options {
             print STDERR $logString;
                 exit(1);
             }
-            $prot_seq_files[$i] = rel2abs( $prot_seq_files[$i] );
         }
         if ( !defined($prg) && $EPmode == 0 ) {
 
@@ -2961,7 +3007,6 @@ sub check_options {
 
     # check whether protein alignment file is given
     if (@prot_aln_files) {
-        @prot_aln_files = split( /[\s,]/, join( ',', @prot_aln_files ) );
         for ( my $i = 0; $i < scalar(@prot_aln_files); $i++ ) {
             if ( !-f $prot_aln_files[$i] ) {
                 $prtStr
@@ -2974,7 +3019,6 @@ sub check_options {
             print STDERR $logString;
                 exit(1);
             }
-            $prot_aln_files[$i] = rel2abs( $prot_aln_files[$i] );
         }
         if ( !defined($prg) ) {
             $prtStr
