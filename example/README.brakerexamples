@@ -6,7 +6,7 @@
 %                                                                                                 %
 %           Contact: katharina.hoff@uni-greifswald.de                                             %
 %                                                                                                 %
-%           Date: November 8th, 2017                                                              %
+%           Date: March 8th 2018                                                                  %
 %                                                                                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -16,7 +16,7 @@
               1. DATA DESCRIPTION
               -------------------
 
-This archive contains an example data set for testing the BRAKER1 pipeline, which is availabe for 
+This archive contains an example data set for testing the BRAKER2 pipeline, which is availabe for 
 Download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and 
 http://exon.gatech.edu.
 
@@ -34,45 +34,55 @@ Drosophila melanogaster chromosome R2 using GenomeThreader with parameters
 -prminmatchlen 20.
 Protein sequence records of mapped proteins were stored in proteins.fa.
 
-Files:
-   example.fa    - genome file in fasta format
-   example.bam   - RNA-Seq alignment file in bam format
-   hintsfile.gff - RNA-Seq intron hints file in gff format
-   proteins.fa   - protein sequence file in fasta format
+For generating protein hints from proteins of longer evolutionary distance, proteins from the 
+eggNog database insect proportion excluding proteins from Drosophila genus were aligned to 
+Drosophila melanogaster genome using the GaTech protein mapping pipline.
 
-              2.  RUNNING BRAKER1 WITH EXAMPLE DATA
+Files:
+   genome.fa     - genome file in fasta format
+   RNAseq.bam    - RNA-Seq alignment file in bam format
+   hintsfile.gff - RNA-Seq intron hints file in gff format
+   prot.fa       - protein sequence file in fasta format
+   ep.hints      - protein hints of remote homology in gff format
+
+              2.  RUNNING BRAKER2 WITH EXAMPLE DATA
               -------------------------------------
 
-BRAKER1 can be run with several input file combinations.
+BRAKER2 can be run with several input file combinations.
 
-   a) with a genome file and an RNA-Seq alignment file:
+   a) with a genome file and a corresponding RNA-Seq alignment file:
 
-      perl braker --species=new_species  --genome=example.fa  --bam=example.bam
+      braker --genome=genome.fa --bam=RNAseq.bam
 
-   b) with a file that contains intron "hints" extracted from RNA-Seq alignments in gff format:
+   b) with a file that contains intron "hints" extracted from RNA-Seq alignments in gff format
+      instead of the alignment file:
 
-      perl braker --species=new_species  --genome=example.fa  --hints=hintsfile.gff
+      braker --genome=example.fa  --hints=hintsfile.gff
 
-   c) with additional protein data and one of the aligners GenomeThreader, Spaln, Exonernate:
+   c) with a file that contains intron "hints" from mapping proteins of distant homology to 
+      the target genome in gff format:
 
-      perl braker --species=new_species  --genome=example.fa  --bam=example.bam \
-         --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALIGNMENT_TOOL_PATH=/path/to/aligner
+      braker.pl --genome=genome.fa --hints=ep.hints --epmode
 
-      perl braker --species=new_species  --genome=example.fa  --bam=example.bam \
-         --prot_seq=/path/to/examples/proteins.fa --prg=spaln \
-         --ALIGNMENT_TOOL_PATH=/path/to/aligner
+   d) with a file that contains RNA-Seq alignments and a file taht contains "hints" from mapping
+      proteins of distant homology to the target genome in gff format:
 
-      perl braker --species=new_species  --genome=example.fa  --bam=example.bam \
-         --prot_seq=/path/to/examples/proteins.fa --prg=exonerate \
-         --ALIGNMENT_TOOL_PATH=/path/to/aligner
+      braker.pl --genome=genome.fa --hints=ep.hints --bam=RNAseq.bam --etpmode
 
-      perl braker --species=new_species  --genome=example.fa  --hints=hintsfile.gff \
-         --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALIGNMENT_TOOL_PATH=/path/to/aligner
+   e) with a genome file and a file with protein sequences of close homology
 
-      perl braker --species=new_species  --genome=example.fa  --hints=hintsfile.gff \
-         --prot_seq=/path/to/examples/proteins.fa --prg=spaln \
-         --ALIGNMENT_TOOL_PATH=/path/to/aligner
+      braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --trainFromGth
 
-      perl braker --species=new_species  --genome=example.fa  --hints=hintsfile.gff \
-         --prot_seq=/path/to/examples/proteins.fa --prg=exonerate \
-         --ALIGNMENT_TOOL_PATH=/path/to/aligner
+   f) with a genome file, RNA-Seq data and a file with protein sequences of close homology for
+      using protein information in the prediction step, only:
+
+      braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam
+
+   g) with a genome file, RNA-Seq data and a file with protein sequences of close homology for
+      using protein information	for training and prediction:
+
+      braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam --gth2traingenes
+
+   h) for running AUGUSTUS with evidence using already existing AUGUSTUS parameters:
+
+      braker.pl --genome=genome.fa --bam=RNAseq.bam --species=fly --skipAllTraining
