@@ -3542,8 +3542,7 @@ sub make_rnaseq_hints {
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString
-                .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp &>$errorfile";
+            $cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp &>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": make hints from BAM file $bam[$i]\n" if ($v > 3);
@@ -3552,6 +3551,11 @@ sub make_rnaseq_hints {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $cmdString!\n");
+            if(not(-e $bam_temp)){
+                print "File $bam_temp does not exist\n";
+            }else{
+                print "File $bam_temp does exst\n";
+            }
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
@@ -4165,7 +4169,7 @@ sub get_genemark_hints {
     while (<HINTS>) {
         if ( $_ =~ m/\tintron\t.*src=E/ ) {
             print OUTRNASEQ $_;
-        }elsif ( $_ =~ m/\tintron\t/i && ( $_ =~ m/src=P/ or $_ =~ m/Parent=/ ) ) {
+        }elsif ( $_ =~ m/\tintron\t/i && $_ =~ m/src=P/ ) {
             $_ =~ s/intron/Intron/;
             print OUTPROT $_;
         }
