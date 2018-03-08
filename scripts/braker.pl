@@ -535,6 +535,9 @@ if ($printVersion) {
     exit(0);
 }
 
+# make genome path absolute
+$genome    = rel2abs($genome);
+
 # Set working directory ########################################################
 
 my $wdGiven;
@@ -843,9 +846,6 @@ print LOG "\# "
 
 chdir $rootDir or die("ERROR in file " . __FILE__ ." at line ".
     __LINE__ ."\nCould not change into directory $rootDir.\n");
-
-# make genome path absolute
-$genome    = rel2abs($genome);
 
 if ( $skipAllTraining == 0 ) {
     # create new species parameter files; we do this FIRST, before anything else,
