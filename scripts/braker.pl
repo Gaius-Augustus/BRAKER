@@ -3542,7 +3542,7 @@ sub make_rnaseq_hints {
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp &>$errorfile";
+            $cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": make hints from BAM file $bam[$i]\n" if ($v > 3);
