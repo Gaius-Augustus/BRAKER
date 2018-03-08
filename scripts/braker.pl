@@ -4165,7 +4165,7 @@ sub get_genemark_hints {
     while (<HINTS>) {
         if ( $_ =~ m/\tintron\t.*src=E/ ) {
             print OUTRNASEQ $_;
-        }elsif ( $_ =~ m/\tintron\t/i && $_ =~ m/src=P/ ) {
+        }elsif ( $_ =~ m/\tintron\t/i && ( $_ =~ m/src=P/ or $_ =~ m/Parent=/ ) ) {
             $_ =~ s/intron/Intron/;
             print OUTPROT $_;
         }
