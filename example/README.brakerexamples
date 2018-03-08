@@ -41,7 +41,7 @@ Drosophila melanogaster genome using the GaTech protein mapping pipline.
 Files:
    genome.fa     - genome file in fasta format
    RNAseq.bam    - RNA-Seq alignment file in bam format
-   hintsfile.gff - RNA-Seq intron hints file in gff format
+   RNAseq.hints  - RNA-Seq intron hints file in gff format
    prot.fa       - protein sequence file in fasta format
    ep.hints      - protein hints of remote homology in gff format
 
@@ -57,7 +57,7 @@ BRAKER2 can be run with several input file combinations.
    b) with a file that contains intron "hints" extracted from RNA-Seq alignments in gff format
       instead of the alignment file:
 
-      braker --genome=example.fa  --hints=hintsfile.gff
+      braker --genome=example.fa  --hints=RNAseq.hints
 
    c) with a file that contains intron "hints" from mapping proteins of distant homology to 
       the target genome in gff format:
