@@ -5210,7 +5210,7 @@ sub training_augustus {
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "Could not open file $trainGb4!\n");
             my $nLociGb4 = 0;
-            while ( <TRAINGB3> ) {
+            while ( <TRAINGB4> ) {
                 if($_ =~ m/LOCUS/) {
                     $nLociGb4++;
                 }
@@ -5414,12 +5414,12 @@ sub training_augustus {
                         . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                         . "Could not open file $otherfilesDir/train.gb.train.train!\n");
                 my $n_traingbtraintrain_genes = 0;
-                while ( <TRAINGBTEST> ) {
+                while ( <TRAINGBTRAINTRAIN> ) {
                     if($_ =~ m/LOCUS/) {
                        $n_traingbtraintrain_genes++;
                     }
                 }
-                close (TRAINGBTEST) or
+                close (TRAINGBTRAINTRAIN) or
                     clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                         "\# "
                         . (localtime)
@@ -5441,7 +5441,7 @@ sub training_augustus {
                        $n_traingbtraintest_genes++;
                     }
                 }
-                close (TRAINGBTRAIN) or
+                close (TRAINGBTRRAINTEST) or
                     clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                         "\# "
                         . (localtime)
