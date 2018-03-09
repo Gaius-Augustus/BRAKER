@@ -787,7 +787,7 @@ if ( !-d $otherfilesDir ) {
 # open log file
 $prtStr = "\# "
         . (localtime)
-        . ": Further logging information can be found in $logfile!\n";
+        . ": Logfile: $logfile!\n";
 print STDOUT $prtStr;
 
 open( LOG, ">" . $logfile ) or die("ERROR in file " . __FILE__ ." at line "
@@ -5313,7 +5313,7 @@ sub training_augustus {
                 $prtStr = "\# "
                     . (localtime)
                     . " WARNING: Number of good genes is low ($gb_good_size). "
-                    . "Recomended are at least 600 genes\n";
+                    . "Recommended are at least 600 genes\n";
                 print LOG $prtStr if ($v > 0);
                 print STDOUT $prtStr if ($v > 0);
                 $testsize1 = floor($gb_good_size/3);
@@ -7802,7 +7802,11 @@ sub clean_up {
         . " at line ". __LINE__
         . "\nFailed to open directory $otherfilesDir!\n");
     while ( my $file = readdir(DIR) ) {
-        if( $file =~ m/\.lst/ || $file =~ m/aug_ab_initio_/ || $file =~ m/Ppri5/ || $file =~ m/augustus\.E/ || $file =~ m/gff\.E/ || $file =~ m/missed/ || $file =~ m/prot_hintsfile\.aln2hints\.temp\.gff/){
+        if( $file =~ m/\.lst/ || $file =~ m/aug_ab_initio_/ || $file =~ m/Ppri5/ || $file =~ m/augustus\.E/
+            || $file =~ m/gff\.E/ || $file =~ m/missed/ || $file =~ m/prot_hintsfile\.aln2hints\.temp\.gff/ ||
+            $file =~ m/aa2nonred\.stdout/ || $file =~ m/augustus\.hints\.tmp\.gtf/ ||
+            $file =~ m/firstetraining\.stdout/ || $file =~ m/gbFilterEtraining\.stdout/
+            || $file =~ m/secondetraining\.stdout/ || $file =~ m/traingenes\.good\.fa/ ){
             print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
             unlink( "$otherfilesDir/$file" );
         }
@@ -7814,5 +7818,10 @@ sub clean_up {
         rmtree( ["$otherfilesDir/genome_split"] ) or die ("ERROR in file "
             . __FILE__ ." at line ". __LINE__
             . "\nFailed to delete $otherfilesDir/genome_split!\n");
+    }
+    if(-d "$otherfilesDir/tmp_opt_$species") {
+        rmtree( ["$otherfilesDir/tmp_opt_$species"] ) or die ("ERROR in file "
+            . __FILE__ ." at line ". __LINE__
+            . "\nFailed to delete $otherfilesDir/tmp_opt_$species!\n");
     }
 }
