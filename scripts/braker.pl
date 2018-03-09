@@ -5441,7 +5441,7 @@ sub training_augustus {
                        $n_traingbtraintest_genes++;
                     }
                 }
-                close (TRAINGBTRRAINTEST) or
+                close (TRAINGBTRAINTEST) or
                     clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                         "\# "
                         . (localtime)
