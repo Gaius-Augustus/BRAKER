@@ -4300,9 +4300,11 @@ sub format_ep_hints {
             } else {
                 print OUT "mult=$t[5];pri=4;src=P\n";
             }
-        }elsif( $t[8] =~ m/src=/ && $t[8] =~ m/pri/ ){
+        }elsif( $t[8] =~ m/so?u?rce?=/ && $t[8] =~ m/prio?r?i?t?y?=/ ){
             print OUT $t[8];
         }elsif( not ( $t[8] =~ m/src=/) || not ( $t[8] =~ m/pri/ ) ) {
+            if(not ( $t[8] =~ m/src=/)){print STDOUT $t[8] . "does not match src=\n";}
+            if(not ( $t[8] =~ m/pri/ )){print STDOUT $t[8] . "does not match pri=\n";}
             $prtStr = "WARNING: Format of hintsfile $genemark_hintsfile is "
                     . "incorrect in the last column, possibly mult= or pri= "
                     . "tags are missing!\n$t[8]";
