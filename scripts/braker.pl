@@ -3530,6 +3530,7 @@ sub make_rnaseq_hints {
     my $bam_temp = "$otherfilesDir/bam2hints.temp.gff";
     for ( my $i = 0; $i < scalar(@bam); $i++ ) {
         $errorfile = "$errorfilesDir/bam2hints.$i.stderr";
+        $stdoutfile = "$errorfilesDir/bam2hints.$i.stdout";
         if ( !uptodate( [ $bam[$i] ], [$hintsfile] ) || $overwrite ) {
             $bam[$i] = check_bam_headers( $bam[$i] );
             if ( -e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints" ) {
@@ -3542,7 +3543,7 @@ sub make_rnaseq_hints {
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 2>$errorfile";
+            $cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 1> $stdoutfile 2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": make hints from BAM file $bam[$i]\n" if ($v > 3);
