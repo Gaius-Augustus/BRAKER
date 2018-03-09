@@ -35,8 +35,8 @@ Drosophila melanogaster chromosome R2 using GenomeThreader with parameters
 Protein sequence records of mapped proteins were stored in proteins.fa.
 
 For generating protein hints from proteins of longer evolutionary distance, proteins from the 
-eggNog database insect proportion excluding proteins from Drosophila genus were aligned to 
-Drosophila melanogaster genome using the GaTech protein mapping pipline.
+eggNog database insect proportion were aligned to 
+Drosophila melanogaster chromosome 2R using the GaTech protein mapping pipline.
 
 Files:
    genome.fa     - genome file in fasta format
