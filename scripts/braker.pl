@@ -4305,7 +4305,7 @@ sub format_ep_hints {
         }elsif( not ( $t[8] =~ m/src=/) || not ( $t[8] =~ m/pri/ ) ) {
             $prtStr = "WARNING: Format of hintsfile $genemark_hintsfile is "
                     . "incorrect in the last column, possibly mult= or pri= "
-                    . "tags are missing!\n";
+                    . "tags are missing!\n$t[8]";
             print STDOUT $prtStr;
             print LOG $prtStr;
         }
