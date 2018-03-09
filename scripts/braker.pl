@@ -3551,11 +3551,6 @@ sub make_rnaseq_hints {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $cmdString!\n");
-            if(not(-e $bam_temp)){
-                print "File $bam_temp does not exist\n";
-            }else{
-                print "File $bam_temp does exst\n";
-            }
             $cmdString = "";
             if ($nice) {
                 $cmdString .= "nice ";
@@ -4881,6 +4876,31 @@ sub training_augustus {
         # convert gtf to gb
         gtf2gb ($trainGenesGtf, $trainGb1);
 
+        # count how many genes are in trainGb1
+        if($v > 3) {
+            open (TRAINGB1, "<", $trainGb1) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not open file $trainGb1!\n");
+            my $nLociGb1 = 0;
+            while ( <TRAINGB1> ) {
+                if($_ =~ m/LOCUS/) {
+                    $nLociGb1++;
+                }
+            }
+            close (TRAINGB1) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not close file $trainGb1!\n");
+            print LOG "\# "
+                    . (localtime)
+                    . ": \$trainGb1 file $trainGb1 contains $nLociGb1 genes.\n";
+        }
+
         # filter "good" genes from train.gb: all gth genes that are left, plus
         # the genemark "good" genes
         if ( not ( $trainFromGth ) ) {
@@ -4948,6 +4968,31 @@ sub training_augustus {
             $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $perlCmdString\n");
 
+        # count how many genes are in trainGb2
+        if($v > 3) {
+            open (TRAINGB2, "<", $trainGb2) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not open file $trainGb2!\n");
+            my $nLociGb2 = 0;
+            while ( <TRAINGB2> ) {
+                if($_ =~ m/LOCUS/) {
+                    $nLociGb2++;
+                }
+            }
+            close (TRAINGB2) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not close file $trainGb2!\n");
+            print LOG "\# "
+                    . (localtime)
+                    . ": \$trainGb2 file $trainGb2 contains $nLociGb2 genes.\n";
+        }
+
         # filter out genes that lead to etraining errors
         $augpath    = "$AUGUSTUS_BIN_PATH/etraining";
         $errorfile  = "$errorfilesDir/gbFilterEtraining.stderr";
@@ -5008,6 +5053,31 @@ sub training_augustus {
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+
+        # count how many genes are in trainGb3
+        if($v > 3) {
+            open (TRAINGB3, "<", $trainGb3) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not open file $trainGb3!\n");
+            my $nLociGb3 = 0;
+            while ( <TRAINGB3> ) {
+                if($_ =~ m/LOCUS/) {
+                    $nLociGb3++;
+                }
+            }
+            close (TRAINGB3) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not close file $trainGb3!\n");
+            print LOG "\# "
+                    . (localtime)
+                    . ": \$trainGb3 file $trainGb3 contains $nLociGb3 genes.\n";
+        }
 
         # find those training genes in gtf that are still in gb
         open (TRAINGB3, "<", $trainGb3) or clean_abort(
@@ -5130,6 +5200,32 @@ sub training_augustus {
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+
+        # count how many genes are in trainGb4
+        if($v > 3) {
+            open (TRAINGB4, "<", $trainGb4) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not open file $trainGb4!\n");
+            my $nLociGb4 = 0;
+            while ( <TRAINGB3> ) {
+                if($_ =~ m/LOCUS/) {
+                    $nLociGb4++;
+                }
+            }
+            close (TRAINGB4) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not close file $trainGb4!\n");
+            print LOG "\# "
+                    . (localtime)
+                    . ": \$trainGb3 file $trainGb4 contains $nLociGb4 genes.\n";
+        }
+
         # making trainGb4 the trainGb file
         $cmdString = "mv $trainGb4 $trainGb1";
         print LOG "\# "
@@ -5171,21 +5267,37 @@ sub training_augustus {
                 $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
             );
             $errorfile = "$errorfilesDir/randomSplit.stderr";
-            if ($nice) {
-                $gb_good_size
-                    = `nice grep -c LOCUS $otherfilesDir/train.gb`;
+
+            # count how many genes are in trainGb
+            $gb_good_size = 0;
+            open (TRAINGB1, "<", $trainGb1) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not open file $trainGb1!\n");
+            while ( <TRAINGB1> ) {
+                if($_ =~ m/LOCUS/) {
+                    $gb_good_size++;
+                }
             }
-            else {
-                $gb_good_size
-                    = `grep -c LOCUS $otherfilesDir/train.gb`;
-            }
+            close (TRAINGB1) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Could not close file $trainGb1!\n");
+            print LOG "\# "
+                    . (localtime)
+                    . ": \$trainGb1 file $trainGb1 contains $gb_good_size genes.\n";
+
             if ( $gb_good_size == 0 ) {
                 $prtStr
                     = "\# "
                     . (localtime)
                     . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "Number of good genes is 0, so the parameters cannot "
-                    . "be optimized. Recomended are at least 300 genes\n";
+                    . "be optimized. Recommended are at least 600 genes\n";
                 print LOG $prtStr;
                 clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, $prtStr);
@@ -5205,7 +5317,11 @@ sub training_augustus {
                             . " ERROR: in file " . __FILE__ ." at line "
                             . __LINE__ ."\nUnable to create three genbank"
                             . "files for optimizing AUGUSTUS (number of LOCI "
-                            . "too low)! The provided input data is not "
+                            . "too low)! \n"
+                            . "\$testsize1 is $testsize1, \$testsize2 is "
+                            . "$testsize2, additional genes are "
+                            . ($gb_good_size - ($testsize1 + $testsize2))
+                            . "\nThe provided input data is not "
                             . "sufficient for running braker.pl!\n";
                     print LOG $prtStr;
                     clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -5233,6 +5349,52 @@ sub training_augustus {
                         . (localtime)
                         . " $otherfilesDir/train.gb.test will be used for "
                         . "measuring AUGUSTUS accuracy after training\n" if ($v > 3);
+            if($v > 3) {
+                open (TRAINGBTEST, "<", "$otherfilesDir/train.gb.test") or
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Could not open file $otherfilesDir/train.gb.test!\n");
+                my $n_traingbtest_genes = 0;
+                while ( <TRAINGBTEST> ) {
+                    if($_ =~ m/LOCUS/) {
+                       $n_traingbtest_genes++;
+                    }
+                }
+                close (TRAINGBTEST) or
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Could not close file $otherfilesDir/train.gb.test!\n");
+                print LOG "\# "
+                        . (localtime)
+                        . ": $otherfilesDir/train.gb.test file contains "
+                        . "$n_traingbtest_genes genes.\n";
+                open (TRAINGBTRAIN, "<", "$otherfilesDir/train.gb.train") or
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Could not open file $otherfilesDir/train.gb.train!\n");
+                my $n_traingbtrain_genes = 0;
+                while ( <TRAINGBTRAIN> ) {
+                    if($_ =~ m/LOCUS/) {
+                       $n_traingbtrain_genes++;
+                    }
+                }
+                close (TRAINGBTRAIN) or
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Could not close file $otherfilesDir/train.gb.train!\n");
+                print LOG "\# "
+                        . (localtime)
+                        . ": $otherfilesDir/train.gb.train file contains "
+                        . "$n_traingbtrain_genes genes.\n";
+            }
             $perlCmdString = "";
             if ($nice) {
                 $perlCmdString .= "nice ";
@@ -5243,6 +5405,54 @@ sub training_augustus {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+
+            if($v > 3) {
+                open (TRAINGBTRAINTRAIN, "<", "$otherfilesDir/train.gb.train.train") or
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Could not open file $otherfilesDir/train.gb.train.train!\n");
+                my $n_traingbtraintrain_genes = 0;
+                while ( <TRAINGBTEST> ) {
+                    if($_ =~ m/LOCUS/) {
+                       $n_traingbtraintrain_genes++;
+                    }
+                }
+                close (TRAINGBTEST) or
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Could not close file $otherfilesDir/train.gb.train.train!\n");
+                print LOG "\# "
+                        . (localtime)
+                        . ": $otherfilesDir/train.gb.train.train file contains "
+                        . "$n_traingbtraintrain_genes genes.\n";
+                open (TRAINGBTRAINTEST, "<", "$otherfilesDir/train.gb.train.test") or
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Could not open file $otherfilesDir/train.gb.train.test!\n");
+                my $n_traingbtraintest_genes = 0;
+                while ( <TRAINGBTRAINTEST> ) {
+                    if($_ =~ m/LOCUS/) {
+                       $n_traingbtraintest_genes++;
+                    }
+                }
+                close (TRAINGBTRAIN) or
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Could not close file $otherfilesDir/train.gb.train.test!\n");
+                print LOG "\# "
+                        . (localtime)
+                        . ": $otherfilesDir/train.gb.train.test file contains "
+                        . "$n_traingbtraintest_genes genes.\n";
+            }
+
             print LOG "\# "
                 . (localtime)
                 . " \n$otherfilesDir/train.gb.train.test will be used for "
