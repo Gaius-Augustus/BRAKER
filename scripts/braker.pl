@@ -5339,7 +5339,7 @@ sub training_augustus {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString
-                .= "perl $string $trainGb1 $testsize1 &>$errorfile";
+                .= "perl $string $trainGb1 $testsize1 2>$errorfile";
             print LOG "$perlCmdString\n\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -5399,7 +5399,7 @@ sub training_augustus {
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString .= "perl $string $otherfilesDir/train.gb.train $testsize2 &>$errorfile";
+            $perlCmdString .= "perl $string $otherfilesDir/train.gb.train $testsize2 2>$errorfile";
             print LOG "$perlCmdString\n\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -6384,7 +6384,7 @@ sub make_hints_jobs{
     if ($augustus_args) {
         $perlCmdString .= " $augustus_args";
     }
-    $perlCmdString .= "\" &>$errorfile\n";
+    $perlCmdString .= "\" 2>$errorfile\n";
     $perlCmdString .= "cd ..\n";
     print LOG "$perlCmdString" if ($v > 3);
     system("$perlCmdString") == 0
@@ -6451,7 +6451,7 @@ sub make_ab_initio_jobs{
     if ($soft_mask) {
         $perlCmdString .= " --softmasking=1";
     }
-    $perlCmdString .= "\" &>$errorfile\n";
+    $perlCmdString .= "\" 2>$errorfile\n";
     $perlCmdString .= "cd ..\n";
     print LOG "$perlCmdString" if ($v > 3);
     system("$perlCmdString") == 0
@@ -7189,7 +7189,7 @@ sub eval_gene_pred {
         . (localtime)
         . ": Validating gtf of $firstStepFile, results are written to "
         . "$secondStepFile\n" if ($v > 3);
-    $cmdString = "$validate_gtf -c -f $firstStepFile &> /dev/null";
+    $cmdString = "$validate_gtf -c -f $firstStepFile 2> /dev/null";
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute $cmdString\n");
