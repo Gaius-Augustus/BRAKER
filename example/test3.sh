@@ -1,1 +1,8 @@
-( time braker.pl --genome=genome.fa --hints=ep.hints --bam=RNAseq.bam --etpmode ) &> test3.log
+wd=test3
+
+if [ -d $wd ]; then
+    rm -r $wd
+fi
+
+
+( time braker.pl --genome=genome.fa --hints=ep.hints --bam=RNAseq.bam --etpmode --workingdir=$wd ) &> test3.log
