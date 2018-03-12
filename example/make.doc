@@ -17,3 +17,10 @@ cdbfasta proteins.fa -o proteins.fa.idx
 
 cat proteins.lst | cdbyank proteins.fa.idx -d proteins.fa > example_proteins.fa
 
+# create example bam file
+export PATH=$PATH:/home/tool:/home/tool/tophat2:/home/tool/bowtie2:
+p="/home/braker/project2/Drosophila_melanogaster/arx"
+
+bowtie2-build genome.fa genome
+
+nohup tophat2  --num-threads 4  --microexon-search  --mate-std-dev 26  --mate-inner-dist 38  --min-intron-length 30  --min-coverage-intron 30 --min-segment-intron 30   -o ./tophat_out  genome   $p/SRR023505_1.fastq,$p/SRR023546_1.fastq,$p/SRR023608_1.fastq,$p/SRR026433_1.fastq,$p/SRR027108_1.fastq  $p/SRR023505_2.fastq,$p/SRR023546_2.fastq,$p/SRR023608_2.fastq,$p/SRR026433_2.fastq,$p/SRR027108_2.fastq > loginfo &
