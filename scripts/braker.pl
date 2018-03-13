@@ -555,7 +555,7 @@ if ( !defined $workDir ) {
     my $tmp_dir_name = abs_path($workDir);
     $workDir = $tmp_dir_name;
     if ( not( -d $workDir ) ) {
-        $prtStr = "\# " . (localtime) . ": Creating directory $workDir.\n";
+        $prtStr = "\# " . (localtime) . ": Creating directory $workDir.\n\n";
         $logString .= $prtStr if ( $v > 2 );
         mkdir($workDir) or die ("ERROR: in file " . __FILE__ ." at line "
             . __LINE__ ."\nFailed to create directory $workDir!\n");
@@ -584,7 +584,7 @@ if ( !-w $workDir ) {
 $prtStr
     = "\# "
     . (localtime)
-    . ": Configuring of BRAKER for using external tools...\n";
+    . ": Configuring of BRAKER for using external tools...\n\n";
 $logString .= $prtStr if ( $v > 2 );
 set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
@@ -611,7 +611,8 @@ if (@prot_seq_files){
 if (not ($skipAllTraining)){
     set_BLAST_PATH();
 }
-$prtStr = "\# " . (localtime) . ": Configuring of BRAKER complete!\n";
+$prtStr = "\# " . (localtime) . ": Configuration of BRAKER for using external "
+        . "tools is complete!\n\n";
 $logString .= $prtStr if ( $v > 2 );
 
 # check for known issues that may cause problems with braker.pl ################
@@ -2507,7 +2508,7 @@ sub check_gff {
     $prtStr
         = "\# "
         . (localtime)
-        . ": Checking if input file $gfffile is in gff format\n";
+        . ": Checking if input file $gfffile is in gff format\n\n";
     $logString .= $prtStr if ($v > 2);
     open( GFF, $gfffile ) or die ( "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nCannot open file: $gfffile\n" );
@@ -2837,14 +2838,14 @@ sub check_options {
             exit(1);
         }
         if ( $bool_species eq "false" ) {
-            $prtStr = "\# " . (localtime) . ": Program will use $species instead.\n";
+            $prtStr = "\# " . (localtime) . ": Program will use $species instead.\n\n";
             $logString .= $prtStr if ($v > 0);
         }
         else {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": No species was set. Program will use $species.\n";
+                . ": No species was set. Program will use $species.\n\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -3145,7 +3146,9 @@ sub check_fasta_headers {
 
     if ( !uptodate( [$genome], ["$otherfilesDir/genome.fa"] ) || $overwrite )
     {
-        print LOG "\# " . (localtime) . ": Checking fasta headers\n" if ($v > 2);
+        print LOG "\# " . (localtime) . ": check_fasta_headers(): Checking "
+                        . "fasta headers of file "
+                        . "$fastaFile\n\n" if ($v > 2);
         open( FASTA, "<", $fastaFile )
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -4023,20 +4026,36 @@ sub add_other_hints {
     if (@hints) {
         # have "uptodate" issues at this point, removed it... maybe fix later
         for ( my $i = 0; $i < scalar(@hints); $i++ ) {
-
+            # replace Intron by intron
+            my $replacedHintsFile = "$otherfilesDir/replaced_hints_$i.gff";
+            open (OTHER, "<", $hints[$i]) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nCould not open file $hints[$i]!\n");
+            open (REPLACED, ">", $replacedHintsFile) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nCould not open file $replacedHintsFile!\n");
+            while(<OTHER>) {
+                $_ =~ s/\tIntron\t/\tintron\t/;
+                print REPLACED $_;
+            }
+            close (OTHER) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nCould not close file $hints[$i]!\n");
+            close (REPLACED) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nCould not close file $replacedHintsFile!\n");
             # find Strand, set multiplicity for GeneMark
             my $filteredHintsFile = "$otherfilesDir/filtered_hints_$i.gff";
             $string = find(
                 "filterIntronsFindStrand.pl", $AUGUSTUS_BIN_PATH,
                 $AUGUSTUS_SCRIPTS_PATH,       $AUGUSTUS_CONFIG_PATH
             );
-            $errorfile
-                = "$errorfilesDir/filterIntronsFindStrand_userHints_$i.stderr";
+            $errorfile = "$errorfilesDir/filterIntronsFindStrand_userHints_$i.stderr";
             $perlCmdString = "";
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString .= "perl $string $genome $hints[$i] --score 1> $filteredHintsFile 2>$errorfile";
+            $perlCmdString .= "perl $string $genome $replacedHintsFile --score 1> $filteredHintsFile 2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": filter introns, find strand and change score to \'mult\' "
@@ -4062,7 +4081,15 @@ sub add_other_hints {
             print LOG "\n\# "
                 . (localtime)
                 . ": deleting file $filteredHintsFile\n" if ($v > 3);
-            unlink ( $filteredHintsFile );
+            unlink ( $filteredHintsFile ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nFailed to delete file $filteredHintsFile!\n");
+            print LOG "\n\# "
+                . (localtime)
+                . ": deleting file $replacedHintsFile\n" if ($v > 3);
+            unlink ( $replacedHintsFile ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nFailed to delete file $replacedHintsFile!\n");;
         }
         join_mult_hints( $hintsfile, "all" );
     }
@@ -4291,7 +4318,6 @@ sub format_ep_hints {
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nCould not open file $otherfilesDir/tmp.hints!\n");
     while (<INTRONS>) {
-        $_ =~ s/Intron/intron/;
         my @t = split(/\t/);
         print OUT "$t[0]\t$t[1]\t$t[2]\t$t[3]\t$t[4]\t$t[5]\t$t[6]\t$t[7]\t";
         if ($t[8] =~ m/Parent=/){
@@ -4742,8 +4768,8 @@ sub filter_genemark {
 ################################################################################
 
 sub new_species {
-    print LOG "\# " . (localtime) . ": Creating new_species parameter "
-        . "directory for AUGUSTUS\n" if ($v > 2);
+    print LOG "\# " . (localtime) . ": Creating parameter template files for "
+                    . "AUGUSTUS with new_species.pl\n\n" if ($v > 2);
     $augpath = "$AUGUSTUS_CONFIG_PATH/species/$species";
     if ((   !uptodate(
                 [ $augpath . "/$species\_metapars.cfg" ],
@@ -4770,14 +4796,16 @@ sub new_species {
                 $perlCmdString .= "perl $string --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH 1> /dev/null 2>$errorfile";
                 print LOG "\# "
                     . (localtime)
-                    . ": create new species $species in $AUGUSTUS_CONFIG_PATH/species\n" if ($v > 3);
+                    . ": new_species.pl will create parameter files for "
+                    . "species $species in "
+                    . "$AUGUSTUS_CONFIG_PATH/species/$species\n" if ($v > 3);
                 print LOG "$perlCmdString\n\n" if ($v > 3);
                 system("$perlCmdString") == 0 or die(
                     "ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nFailed to create new species with new_species.pl, "
                     . "check write permissions in "
                     . "$AUGUSTUS_CONFIG_PATH/species directory! "
-                    . "Command was $perlCmdString\n");
+                    . "Command was $perlCmdString\n\n");
             }
             else {
                 $prtStr = "\# "
@@ -7213,7 +7241,7 @@ sub eval_gene_pred {
     print LOG "\# "
         . (localtime)
         . ": Running eval on $secondStepFile\n" if ($v > 3);
-    $cmdString = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out 2> $errorfilesDir/eval.$gtfFile.err";
+    $cmdString = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out 2> ";
     print LOG $cmdString."\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute $cmdString\n");
