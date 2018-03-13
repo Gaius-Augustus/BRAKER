@@ -42,7 +42,7 @@ BRAKER2 can also combine RNA-Seq and protein homology information. This is in an
 \begin{itemize}
  \item Use a high quality genome assembly. If you have a huge number of very short scaffolds in your genome assembly, those short scaffolds will likely increase runtime dramatically but will not increase prediction accuracy. 
  \item Use simple scaffold names in the genome file (e.g.~\texttt{>contig1} will work better than \texttt{>contig1|my custom species name|some putative function|/more/information/ | and lots of special characters \%\^\&!*()\{\}}). Make the scaffold names in all your fasta files simple before running any alignment program.
- \item In order to predict genes accurately in a novel genome, the genome should be masked for repeats. This will avoid the prediction of false positive gene structures in repetitive and low complexitiy regions. Repeat masking is also essential for mapping RNA-Seq data to a genome. In case of GeneMark-EX and AUGUSTUS, softmasking (i.e.~putting repeat regions into lower case letters and all other regions into upper case letters) leads to better results than hardmasking (i.e.~replacing letters in repetitive regions by the letter \texttt{N} for unknown nucleotide).
+ \item In order to predict genes accurately in a novel genome, the genome should be masked for repeats. This will avoid the prediction of false positive gene structures in repetitive and low complexitiy regions. Repeat masking is also essential for mapping RNA-Seq data to a genome. In case of GeneMark-EX and AUGUSTUS, softmasking (i.e.~putting repeat regions into lower case letters and all other regions into upper case letters) leads to better results than hardmasking (i.e.~replacing letters in repetitive regions by the letter \texttt{N} for unknown nucleotide). If the genome is masked, use the \texttt{--softmasking} flag of \texttt{braker.pl}.
  
  \item Many genomes have gene structures that will be predicted accurately with standard parameters of GeneMark-ET and AUGUSTUS within BRAKER2. However, some genomes have clade-specific features, i.e.~special branch point model in fungi, or non-standard splice-site patterns. Please read the options section \ref{options} in order to determine whether any of the custom options may improve gene prediction accuracy in the genome of your target species.
  
@@ -51,7 +51,7 @@ BRAKER2 can also combine RNA-Seq and protein homology information. This is in an
 
 \section{Overview of modes for running BRAKER2}
 
-BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq \textbf{or} protein spliced alignment information\footnote{using both sources of evidence for GeneMark-EX is not supported by this release of BRAKER2.}) supported training of GeneMark-EX and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER2. In the following, we give an overview of possible input files and pipelines:
+BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq and/or protein spliced alignment information) supported training of GeneMark-EX and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER2. In the following, we give an overview of possible input files and pipelines:
 
 \begin{itemize}
  \item genome and RNA-Seq file from the same species (see figure \ref{braker-main}A); this approach is suitable for RNA-Seq libraries with a good coverage of the transcriptome, \textbf{important:} this approach requires that each intron is covered by many alignments, i.e.~it does not work with assembled transcriptome mappings,
@@ -470,7 +470,7 @@ Please run \texttt{braker.pl --help} to obtain a full list of options.
 
 Compute AUGUSTUS \textit{ab initio} predictions in addition to AUGUSTUS predictions with hints (additional output files: \texttt{augustus.ab\_initio.*}. This may be useful for estimating the quality of training gene parameters when inspecting predictions in a Browser.
 
-\subsection{\texttt{--augustus-args=``--some\_arg=bla''}}     
+\subsection{\texttt{--augustus\_args=``--some\_arg=bla''}}     
 One or several command line arguments to be passed to AUGUSTUS, if several arguments are given, separated by whitespace, i.e.~\texttt{``--first\_arg=sth --second\_arg=sth''}. This may be be useful if you know that gene prediction in your particular species benefits from a particular AUGUSTUS argument during the prediction step.  
     
 \subsection{\texttt{--cores}}                              Specifies the maximum number of cores that can be used during computation. BRAKER2 has to run some steps on a single core, others can take advantage of multiple cores. The optimal core number of all steps is 8. If you use more than 8 cores, this will not speed up all parallelized steps, in particular, the time consuming \texttt{optimize\_augustus.pl} will not use more than 8 cores. However, if you don't mind some cores being idle, using more than 8 cores will speed up other steps.
