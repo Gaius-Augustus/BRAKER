@@ -224,7 +224,7 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
 
 EXPERT OPTIONS
 
---augustus-args="--some_arg=bla"    One or several command line arguments to
+--augustus_args="--some_arg=bla"    One or several command line arguments to
                                     be passed to AUGUSTUS, if several
                                     arguments are given, separated by
                                     whitespace, i.e.
@@ -7844,7 +7844,10 @@ sub clean_up {
             || $file =~ m/gff\.E/ || $file =~ m/missed/ || $file =~ m/prot_hintsfile\.aln2hints\.temp\.gff/ ||
             $file =~ m/aa2nonred\.stdout/ || $file =~ m/augustus\.hints\.tmp\.gtf/ ||
             $file =~ m/firstetraining\.stdout/ || $file =~ m/gbFilterEtraining\.stdout/
-            || $file =~ m/secondetraining\.stdout/ || $file =~ m/traingenes\.good\.fa/ ){
+            || $file =~ m/secondetraining\.stdout/ || $file =~ m/traingenes\.good\.fa/ ||
+            $file =~ m/aa2nonred\.stdout/ || $file =~ m/singlecds\.hints/ ||
+            $file =~ m/augustus\.hints\.tmp\.gtf/ || $file =~ m/train\.gb\./ ||
+            $file =~ m/traingenes\.good\.fa/){
             print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
             unlink( "$otherfilesDir/$file" );
         }
