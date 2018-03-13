@@ -1,5 +1,7 @@
 # ----------------------------------------------------------------------
-# | parallelized AUGUSTUS better   | braker.pl            | 23.2.2018  |
+# | implemented BRAKER ETP mode    | braker.pl (Hoff)     | 13.3.2018  |
+# | fixed bug in path resolution   |                      |            |
+# | parallelized AUGUSTUS better   | braker.pl (Hoff)     | 23.2.2018  |
 # | filter training genes for      |                      |            |
 # | redundancy                     |                      |            |
 # | improve flanking noncoding     |                      |            |
