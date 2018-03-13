@@ -51,32 +51,33 @@ BRAKER2 can also combine RNA-Seq and protein homology information. This is in an
 
 \section{Overview of modes for running BRAKER2}
 
-BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq \textbf{or} protein spliced alignment information\footnote{using both sources of evidence for GeneMark-EX is not supported by this release of BRAKER2.}) supported training of GeneMark-EX and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER2. In the following, we give an overview:
+BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq \textbf{or} protein spliced alignment information\footnote{using both sources of evidence for GeneMark-EX is not supported by this release of BRAKER2.}) supported training of GeneMark-EX and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER2. In the following, we give an overview of possible input files and pipelines:
 
 \begin{itemize}
- \item genome and RNA-Seq file from the same species (see figure \ref{braker-main}A); this approach is suitable for RNA-Seq libraries with a good coverage of the transcriptome,
- \item genome file and database of proteins that may be of longer evolutionary distance to the target species (see figure \ref{braker-main}B; this approach is suitable if no RNA-Seq data is available, and if no protein data from a very closely related species is available,
- \item genome file and file with proteins of short evolutionary distance (see figure \ref{braker2-sidetrack}D); this approach is suitable if RNA-Seq data is not available and if the reference species is very closely related,
- \item genome and RNA-Seq file and proteins of short evolutionary distance (see figures \ref{braker2-sidetrack}C and \ref{braker2-sidetrack}E). In both cases, GeneMark-ET is trained supported by RNA-Seq data, and the resulting gene predictions are used for training AUGUSTUS. In approach C), protein alignment information is used in the gene prediction step with AUGUSTUS, only. In approach E), protein spliced alignment data is used to complement the training set for AUGUSTUS. The latter approach is in particular suitable if RNA-Seq data does not produce a sufficiently high number of training gene structures for AUGUSTUS, and if a very closely related and already annotated species is available. \textbf{Carefully inspect results of BRAKER2 runs with RNA-Seq and protein data! Compare to runs with only one of those data sources. The optimal result is not always the one from integrating both sources of evidence. (This will change in future versions of BRAKER2.)}
+ \item genome and RNA-Seq file from the same species (see figure \ref{braker-main}A); this approach is suitable for RNA-Seq libraries with a good coverage of the transcriptome, \textbf{important:} this approach requires that each intron is covered by many alignments, i.e.~it does not work with assembled transcriptome mappings,
+ \item genome file and database of proteins that may be of longer evolutionary distance to the target species (see figure \ref{braker-main}B); this approach is suitable if no RNA-Seq data is available, and if no protein data from a very closely related species is available, \textbf{important:} this approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database, 
+ \item genome and RNA-Seq file from the same species, and proteins that may be of longer evolutionary distance to the target species (see figure \ref{braker-main}C); \textbf{important:} this approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database,
+ \item genome file and file with proteins of short evolutionary distance (see figure \ref{braker2-sidetrack}B); this approach is suitable if RNA-Seq data is not available and if the reference species is very closely related,
+ \item genome and RNA-Seq file and proteins of short evolutionary distance (see figures \ref{braker2-sidetrack}A and \ref{braker2-sidetrack}C). In both cases, GeneMark-ET is trained supported by RNA-Seq data, and the resulting gene predictions are used for training AUGUSTUS. In approach A), protein alignment information is used in the gene prediction step with AUGUSTUS, only. In approach C), protein spliced alignment data is used to complement the training set for AUGUSTUS. The latter approach is in particular suitable if RNA-Seq data does not produce a sufficiently high number of training gene structures for AUGUSTUS, and if a very closely related and already annotated species is available.
 \end{itemize}
 
 \begin{figure}
 \begin{center}
-\begin{tabular}{c c c c }
- A) & \includegraphics[scale=0.4]{./figs/braker1.pdf} & B) &  \includegraphics[scale=0.4]{./figs/braker2_ep.pdf}\\
+\begin{tabular}{c c c c c c}
+ A) & \includegraphics[scale=0.27]{./figs/braker1.pdf} & B) &  \includegraphics[scale=0.27]{./figs/braker2_ep.pdf} & C) \includegraphics[scale=0.27]{./figs/braker2_ep_rnaseq.pdf}\\
  % braker1.pdf: 323x387 pixel, 72dpi, 11.39x13.65 cm, bb=0 0 323 387
  \end{tabular}
- \caption{BRAKER2 pipeline A) training GeneMark-ET supported by RNA-Seq spliced alignment information, prediction with AUGUSTUS with that same spliced alignment information, B) training GeneMark-EP on protein spliced alignment information, prediction with AUGUSTUS with that same spliced alignment information. Proteins used for B) can be of longer evolutionary distance.\label{braker-main}}
+ \caption{BRAKER2 pipeline A) training GeneMark-ET supported by RNA-Seq spliced alignment information, prediction with AUGUSTUS with that same spliced alignment information, B) training GeneMark-EP on protein spliced alignment information, prediction with AUGUSTUS with that same spliced alignment information. Proteins used for B) can be of longer evolutionary distance, C) training GeneMark-ETP supported by RNA-Seq alignment information and protein spliced alignment information (proteins can be of longer evolutionary distance), prediction with AUGUSTUS using the same alignment information. Introns supported by both RNA-Seq and protein alignment information are treated as ``true positive introns'', their prediction in gene structures by GeneMark-ETP and AUGUSTUS is enforced.\label{braker-main}}
  \end{center}
  \end{figure}
 
 \begin{figure}
 \begin{center}
 \begin{tabular}{c c c c c c}
- C) & \includegraphics[scale=0.27]{./figs/braker2.pdf} & D) &  \includegraphics[scale=0.27]{./figs/braker2_gth.pdf} & E) & \includegraphics[scale=0.27]{./figs/braker2_train_from_both.pdf}\\
+ A) & \includegraphics[scale=0.27]{./figs/braker2.pdf} & B) &  \includegraphics[scale=0.27]{./figs/braker2_gth.pdf} & C) & \includegraphics[scale=0.27]{./figs/braker2_train_from_both.pdf}\\
  % braker1.pdf: 323x387 pixel, 72dpi, 11.39x13.65 cm, bb=0 0 323 387
  \end{tabular}
- \caption{BRAKER2 pipeline C) training GeneMark-ET supported by RNA-Seq spliced alignment information, prediction with AUGUSTUS with spliced alignment information from RNA-Seq data and with gene features determined by alignments from proteins of a very closely related species against the target genome, D) training AUGUSTUS on the basis of spliced alignment information from proteins of a very closely related species against the target genome, E) training GeneMark-ET on the basis of RNA-Seq spliced alignment information, training AUGUSTUS on a set of training gene structures compiled from RNA-Seq supported gene structures predicted by GeneMark-ET and spliced alignment of proteins of a very closely related species.\label{braker2-sidetrack}}
+ \caption{BRAKER2 pipeline A) training GeneMark-ET supported by RNA-Seq spliced alignment information, prediction with AUGUSTUS with spliced alignment information from RNA-Seq data and with gene features determined by alignments from proteins of a very closely related species against the target genome, B) training AUGUSTUS on the basis of spliced alignment information from proteins of a very closely related species against the target genome, C) training GeneMark-ET on the basis of RNA-Seq spliced alignment information, training AUGUSTUS on a set of training gene structures compiled from RNA-Seq supported gene structures predicted by GeneMark-ET and spliced alignment of proteins of a very closely related species.\label{braker2-sidetrack}}
  \end{center}
  \end{figure} 
  
@@ -383,7 +384,7 @@ The source \texttt{ProSplign} in the second column and the source tag \texttt{sr
 
 \subsection{BRAKER2 with proteins of shorter evolutionary distance}\label{prot-in}
 
-This approach is suitable if RNA-Seq data for the species of the target genome is not available and if a well annotated and very closely related reference species is available. The pipeline is illustrated in figure \ref{braker2-sidetrack}D) on page \pageref{braker2-sidetrack}.
+This approach is suitable if RNA-Seq data for the species of the target genome is not available and if a well annotated and very closely related reference species is available. The pipeline is illustrated in figure \ref{braker2-sidetrack}B) on page \pageref{braker2-sidetrack}.
 
 For running BRAKER2 in this mode, type:
 
@@ -429,7 +430,7 @@ BRAKER2 with RNA-Seq and protein data is currently still under development. BRAK
 
 \subsubsection{Adding protein data of short evolutionary distance to gene prediction step}
 
-This pipeline is illustrated in figure \ref{braker2-sidetrack}C) on page \pageref{braker2-sidetrack}.
+This pipeline is illustrated in figure \ref{braker2-sidetrack}A) on page \pageref{braker2-sidetrack}.
 
 In general, add the options
 
@@ -446,7 +447,7 @@ to the BRAKER2 call that is described in section \ref{braker1}. Select one prote
 
 \subsubsection{Extending training gene set with proteins of short evolutionary distance}
 
-If the number of training gene structures identified by RNA-Seq data, only, seems to be too small, you may add training gene structures generated by protein alignments with GenomeThreader to the training gene set. This pipeline is illustrated in \ref{braker2-sidetrack}E) on page \pageref{braker2-sidetrack}.
+If the number of training gene structures identified by RNA-Seq data, only, seems to be too small, you may add training gene structures generated by protein alignments with GenomeThreader to the training gene set. This pipeline is illustrated in \ref{braker2-sidetrack}C) on page \pageref{braker2-sidetrack}.
 
 In general, add the options
 
@@ -520,13 +521,46 @@ seqname   source  feature  start   end   score   strand   frame  transcript ID a
 
 Due to file size, example data for testing BRAKER2 is separately available for download at 
 \url{http://bioinf.uni-greifswald.de/augustus/downloads/index.php} and \url{http://exon.gatech.edu/} as archive
-\texttt{BRAKER2examples.tar.gz}.
+\texttt{BRAKER2examples.tar.gz}. The example data set was not compiled in order to achieve optimal prediction accuracy, but in order to test all pipeline components.
+
+\section{Data description}
+
+Data corresponds to \textit{Drosophila melanogaster} chromosome 2R from flybase release R5. 
+
+RNA-Seq alignments were obtained by mapping Illumina paired-end libraries SRR023505, SRR023546, 
+SRR023608, SRR026433, SRR027108 against the complete genome using Tophat2 with the options 
+\texttt{--microexon-search   --mate-std-dev 26   --mate-inner-dist 38  --min-intron-length 30 \\ 
+--min-coverage-intron 30 --min-segment-intron 30}.
+The example data set contains only those RNA-Seq alignments that correspond to sequence 2R.
+
+Protein sequences from Drosophila ananassae release R1.05 were aligned to the genome sequence of
+Drosophila melanogaster chromosome R2 using GenomeThreader with parameters
+\texttt{-gff3out \\-skipalignmentout -paralogs -prseedlength 20 -prhdist 2 -gcmincoverage 80 \\
+-prminmatchlen 20}.
+Protein sequence records of mapped proteins were stored in proteins.fa. 
+
+For generating protein hints from proteins of longer evolutionary distance, proteins from the eggNog database insect proportion were aligned to \texttt{Drosophila melanogaster} genome using the GaTech protein mapping pipline.
+
+List of files:
+
+\begin{itemize}
+ \item \texttt{genome.fa} - genome file in fasta format
+ \item \texttt{RNAseq.bam} - RNA-Seq alignment file in bam format
+ \item \texttt{RNAseq.hints} - RNA-Seq hints (can be used instead of RNAseq.bam as RNA-Seq input to BRAKER2)
+ \item \texttt{prot.fa} - protein sequences of close homology in fasta format
+ \item \texttt{ep.hints} - protein hints of remote homology in gff format
+\end{itemize}
+
 
 Testing BRAKER2 is time consuming because a full test requires the assembly of sufficient training data and subsequent training of gene predictors. Consider running braker threaded (e.g.~\texttt{--cores=8}) for testing. You can also select the \texttt{--skipOptimize} option for all tests that include training of AUGUSTUS in order to speed up testing. 
 
-\section{Testing BRAKER2 with RNA-Seq (only) data}
+The below given commands assume that you configured all paths to tools by exporting bash variables.
 
-\subsection{Testing Training \& Prediction}
+The example data set also contains scripts \texttt{test*.sh} that will execute below listed commands for testing BRAKER2 with the example data set. You find example results of AUGUSTUS and GeneMark-EX in the folder \texttt{results/test*}. Be aware that BRAKER2 contains several parts where random variables are used, i.e.~results that you obtain when running the tests must not be exactly identical.
+
+We give runtime estimations derived from computing on a single core \textit{Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz}.
+
+\section{Testing BRAKER2 with RNA-Seq (only) data (\texttt{test1.sh})}
 
 The following command will test the pipeline according to figure \ref{braker-main}A:
 
@@ -534,23 +568,19 @@ The following command will test the pipeline according to figure \ref{braker-mai
 braker.pl --genome=genome.fa --bam=RNAseq.bam
 \end{verbatim}
 
-\subsection{Prediction only}
+Runtime of this command is $\sim$ 581 minutes.
 
-The following command will test the AUGUSTUS prediction module of braker.pl with pre-trained parameters (e.g.~the \texttt{fly} parameters from AUGUSTUS release):
+\section{Testing BRAKER2 with hints from proteins of remote homology (only) (\texttt{test2.sh})}
 
-\begin{verbatim}
-braker.pl --genome=genome.fa --bam=RNAseq.bam --species=fly --skipAllTraining
-\end{verbatim}
-
-\section{Testing BRAKER2 with hints from proteins of remote homology (only)}
-
-The following command will test the pipeline according to figure \ref{braker-main}B (training and prediction):
+The following command will test the pipeline according to figure \ref{braker-main}B:
 
 \begin{verbatim}
 braker.pl --genome=genome.fa --hints=ep.hints --epmode
 \end{verbatim}
 
-\section{Testing BRAKER2 with hints from proteins of remote homology and RNA-Seq}
+Runtime of this command is $\sim$ 492 minutes.
+
+\section{Testing BRAKER2 with hints from proteins of remote homology and RNA-Seq (\texttt{test3.sh})}
 
 The following command will test a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources.
 
@@ -558,53 +588,49 @@ The following command will test a pipeline that first trains GeneMark-ETP with p
 braker.pl --genome=genome.fa --hints=ep.hints --bam=RNAseq.bam --etpmode
 \end{verbatim}
 
-\section{Testing BRAKER2 with proteins of close homology (only)}
+Runtime of this command is $\sim$ 526 minutes.
 
-\subsection{Testing Training \& Prediction}
+\section{Testing BRAKER2 with proteins of close homology (only) (\texttt{test4.sh})}
 
-The following command will test the pipeline according to figure \ref{braker2-sidetrack}D (training and prediction):
+The following command will test the pipeline according to figure \ref{braker2-sidetrack}B:
 
 \begin{verbatim}
 braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --trainFromGth
 \end{verbatim}
 
-\subsection{Prediction only}
+Runtime of this command is $\sim$ 216 minutes.
 
-The following command will test the AUGUSTUS prediction module of braker.pl with pre-trained parameters (e.g.~the \texttt{fly} parameters from AUGUSTUS release):
+\section{Testing BRAKER2 with proteins of close homology and RNA-Seq data (RNA-Seq supported training) (\texttt{test5.sh})}
+
+The following command will test the pipeline according to figure \ref{braker2-sidetrack}A:
 
 \begin{verbatim}
-braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --species=fly --skipAllTraining
+braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam
 \end{verbatim}
 
-\section{Testing BRAKER2 
+Runtime of this command is $\sim$ 576 minutes.
 
+\section{Testing BRAKER2 with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training) (\texttt{test6.sh}}
 
+The following command will test the pipeline according to figure \ref{braker2-sidetrack}C:
 
-
-
-
-
-The following command 
-
-After extraction, test BRAKER2 with the following commands:
-
-1) For usage with RNA-Seq, only (BRAKER1 functionality):
-
-
-
-2) For usage with RNA-Seq and proteins (BRAKER2 functionaliy, adapt command to aligner of your 
-   choice):
-   
-   
 \begin{verbatim}
-perl braker.pl --genome=/path/to/examples/genome.fa --bam=/path/to/examples/RNAseq.bam \
-   --prot_seq=/path/to/examples/proteins.fa --prg=gth --ALIGNMENT_TOOL_PATH=/path/to/aligner
+braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam --gth2traingenes
 \end{verbatim}
-   
-The runtime of this example should be around 46 hours on a 2.27 GHz single CPU.
+
+Runtime of this command is $\sim$ 496 minutes.
+
+\section{Testing BRAKER2 with pre-trained parameters (prediction only) (\texttt{test7.sh})}
+
+The training step of all pipelines can be skipped with the option \texttt{--skipAllTraining}. This means, only AUGUSTUS predictions will be performed, using pre-trained, already existing parameters. For example, you can predict genes with the command:
+
+\begin{verbatim}
+braker.pl --genome=genome.fa --bam=RNAseq.bam --species=fly --skipAllTraining
+\end{verbatim}
+
+Runtime of this command is $\sim$ 102 minutes.
 
 \chapter{Bug reporting}
-
 
 If you found a bug, please contact katharina.hoff@uni-greifswald.de .
 
