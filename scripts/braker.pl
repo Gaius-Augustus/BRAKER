@@ -7241,7 +7241,7 @@ sub eval_gene_pred {
     print LOG "\# "
         . (localtime)
         . ": Running eval on $secondStepFile\n" if ($v > 3);
-    $cmdString = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out 2> ";
+    $cmdString = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out";
     print LOG $cmdString."\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute $cmdString\n");
