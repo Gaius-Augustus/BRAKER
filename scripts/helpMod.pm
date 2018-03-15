@@ -206,7 +206,7 @@ sub reverse_complement {
 
 sub dna2aa {
     my $seq = shift;
-    my $seq = uc($seq);
+    $seq = uc($seq);
     my @codons = $seq =~ /(.{1,3})/g;
     my $aa = "";
     foreach ( @codons ) {

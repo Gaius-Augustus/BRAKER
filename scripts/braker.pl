@@ -5082,7 +5082,7 @@ sub training_augustus {
             .= "perl $string $otherfilesDir/etrain.bad.lst $trainGb2 1> $trainGb3 2>$errorfile";
         print LOG "\# "
             . (localtime)
-            . ": Filtering $trainGb2 file to remove inconsistent gehe structures:\n" if ($v > 3);
+            . ": Filtering $trainGb2 file to remove inconsistent gene structures:\n" if ($v > 3);
         print LOG "$perlCmdString\n\n" if ($v > 3);
         system("$perlCmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
