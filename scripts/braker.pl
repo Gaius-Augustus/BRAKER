@@ -6087,11 +6087,12 @@ sub compute_flanking_region {
         if (m/\tCDS\t/) {
             chomp;
             my @gtfLine = split(/\t/);
-            if ( not( defined( $genes{ $gtfLine[8] } ) ) ) {
-                $genes{ $gtfLine[8] } = $gtfLine[4] - $gtfLine[3] + 1;
+            $gtfLine[8] =~ m/gene_id \"(\S+)\"/;
+            if ( not( defined( $genes{ $1 } ) ) ) {
+                $genes{ $1 } = $gtfLine[4] - $gtfLine[3] + 1;
             }
             else {
-                $genes{ $gtfLine[8] } += $gtfLine[4] - $gtfLine[3] + 1;
+                $genes{ $1 } += $gtfLine[4] - $gtfLine[3] + 1;
             }
         }
     }
