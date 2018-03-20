@@ -210,7 +210,11 @@ sub dna2aa {
     my @codons = $seq =~ /(.{1,3})/g;
     my $aa = "";
     foreach ( @codons ) {
-        $aa .= $genetic_code{$_};
+        if($_ =~ m/N/i){
+            $aa .= "X";
+        }else{
+            $aa .= $genetic_code{$_};
+        }
     }
     return $aa;
 }
