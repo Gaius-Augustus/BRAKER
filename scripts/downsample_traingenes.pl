@@ -113,12 +113,18 @@ for (my $i = 0; $i <= $max_intron_number; $i++ ) {
 
 open(OUT, ">", $out_gtf) or die("Could not open file $out_gtf!\n");
 
+my $min_single_exon_genes = 20;
+my $single_exon_gene_counter = 0;
+
 while (my ($txid, $intronNum) = each %nIntrons ) {
 	my $u = rand(1);
 	my $index = $intronNum >= $max_intron_number ? $intronNum : $max_intron_number;
-	if($u <= $F[$index]) {
+	if( ( $u <= $F[$index] ) or ( ( $single_exon_gene_counter < $min_single_exon_genes ) && $intronNum == 0 ) ) {
 		foreach (@{$tx{$txid}}) {
 			print OUT $_;
+		}
+		if( $intronNum == 0 ) {
+			$single_exon_gene_counter++;
 		}
 	}
 }
