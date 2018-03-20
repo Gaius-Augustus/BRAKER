@@ -148,11 +148,9 @@ sub P_X_is_k {
 
 sub factorial {
 	my $n = shift;
-	my $result;
-	if ($n == 1) {
-    	$result = 1;
-	} else {
-    	$result = $n * &factorial($n-1);
+	my $result = 1;
+	for (my $i = 1; $i <= $n; $i++) {
+		$result = $result * $i;
 	}
 	return $result;
 }
