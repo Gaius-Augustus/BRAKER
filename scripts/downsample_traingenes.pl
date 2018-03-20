@@ -122,6 +122,7 @@ open(OUT, ">", $out_gtf) or die("Could not open file $out_gtf!\n");
 
 my $min_single_exon_genes = 20;
 my $single_exon_gene_counter = 0;
+my %intronNumPrinted;
 
 while (my ($txid, $intronNum) = each %nIntrons ) {
 	my $u = rand(1);
@@ -129,7 +130,10 @@ while (my ($txid, $intronNum) = each %nIntrons ) {
 	if( ( $u <= $F[$index] ) or ( ( $single_exon_gene_counter < $min_single_exon_genes ) && $intronNum == 0 ) ) {
 		foreach (@{$tx{$txid}}) {
 			print OUT $_;
-			print LST $intronNum."\t".$txid."\n";
+			if($intron_num_lst && not(defined($intronNumPrinted{$txid}))) {
+				print LST $intronNum."\t".$txid."\n";
+				$intronNumPrinted{$txid} = 1;
+			}
 		}
 		if( $intronNum == 0 ) {
 			$single_exon_gene_counter++;
