@@ -33,6 +33,7 @@ OPTIONS
     --version                       Print version of script
     --lambda=f                      Parameter lambda of Poisson distribution
                                     (default value is 0)
+    --intron_num_lst=s              File with intron numbers per gene (selected)
 
 DESCRIPTION
 
@@ -48,13 +49,15 @@ my $out_gtf;
 my $help;
 my $version = 1.0;
 my $print_version;
+my $intron_num_lst;
 
 GetOptions(
     'in_gtf=s' 		  => \$in_gtf,
     'out_gtf=s'       => \$out_gtf,
     'lambda=s'        => \$lambda,
     'help!'           => \$help,
-    'version!'        => \$print_version
+    'version!'        => \$print_version,
+    'intron_num_lst=s'=> \$intron_num_lst
     );
 
 if(!$in_gtf) {
@@ -111,6 +114,10 @@ for (my $i = 0; $i <= $max_intron_number; $i++ ) {
 
 ####################### Sample genes ###########################################
 
+if($intron_num_lst) {
+	open (LST, ">", $intron_num_lst) or die ("Could not open file $intron_num_lst!\n");
+}
+
 open(OUT, ">", $out_gtf) or die("Could not open file $out_gtf!\n");
 
 my $min_single_exon_genes = 20;
@@ -122,6 +129,7 @@ while (my ($txid, $intronNum) = each %nIntrons ) {
 	if( ( $u <= $F[$index] ) or ( ( $single_exon_gene_counter < $min_single_exon_genes ) && $intronNum == 0 ) ) {
 		foreach (@{$tx{$txid}}) {
 			print OUT $_;
+			print LST $intronNum."\t".$txid."\n";
 		}
 		if( $intronNum == 0 ) {
 			$single_exon_gene_counter++;
@@ -130,6 +138,10 @@ while (my ($txid, $intronNum) = each %nIntrons ) {
 }
 close (OUT) or die ("Could not close file $out_gtf!\n");
 
+
+if($intron_num_lst) {
+	close(LST) or die ("Could not close fiel $intron_num_lst!\n");
+}
 ####################### P_X_is_k ###############################################
 # Computes the P(X=k), currently with Poisson distribution
 ################################################################################
