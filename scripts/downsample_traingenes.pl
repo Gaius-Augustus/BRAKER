@@ -119,6 +119,7 @@ my $single_exon_gene_counter = 0;
 while (my ($txid, $intronNum) = each %nIntrons ) {
 	my $u = rand(1);
 	my $index = $intronNum >= $max_intron_number ? $intronNum : $max_intron_number;
+	print $index."\n";
 	if( ( $u <= $F[$index] ) or ( ( $single_exon_gene_counter < $min_single_exon_genes ) && $intronNum == 0 ) ) {
 		foreach (@{$tx{$txid}}) {
 			print OUT $_;
