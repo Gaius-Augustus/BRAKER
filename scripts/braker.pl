@@ -2415,6 +2415,12 @@ sub check_upfront {
         "filterGenemark.pl",    $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
+    if($lambda){
+        find(
+        "downsample_traingenes.pl",    $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    }
     find(
         "filterIntronsFindStrand.pl", $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH,       $AUGUSTUS_CONFIG_PATH
@@ -4773,6 +4779,33 @@ sub filter_genemark {
             $useexisting, "ERROR in file " . __FILE__ ." at line "
             . __LINE__ ."\nFailed to execute: $perlCmdString\n");
     }
+    if($lambda){
+        if (!uptodate([ "$genemarkDir/genemark.f.good.gtf" ], [ "$genemarkDir/genemark.d.gtf"] )
+            || $overwrite
+        ){
+            print LOG "\#"
+                . (localtime)
+                . ": downsampling good genemark genes according to poisson "
+                . "distribution with Lambda $lambda:\n" if ($v > 3);
+            $string = find(
+            "downsample_traingenes.pl",    $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+            );
+            $perlCmdString = "";
+            if($nice){
+                $perlCmdString .= "nice "
+            }
+            $perlCmdString .= "perl $string --in_gtf=$genemarkDir/genemark.f.good.gtf "
+                           . "--out_gtf=$genemarkDir/genemark.d.gtf --lambda=$lambda "
+                           . "1> $otherfilesDir/downsample_traingenes.log "
+                           . "2> $errorfilesDir/downsample_traingenes.err";
+            print LOG "$perlCmdString\n\n" if ($v > 3);
+            system("$perlCmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+        }
+    }
 }
 
 
@@ -4953,17 +4986,31 @@ sub training_augustus {
         # filter "good" genes from train.gb: all gth genes that are left, plus
         # the genemark "good" genes
         if ( not ( $trainFromGth ) ) {
-            # get good genemark genes
-            print LOG "\#  "
-                . (localtime)
-                . ": concatenating good GeneMark training genes to "
-                . "$goodLstFile.\n" if ($v > 3);
-            $cmdString = "cat $genemarkDir/genemark.f.good.gtf > $goodLstFile";
-            print LOG "$cmdString\n" if ($v > 3);
-            system($cmdString) == 0
-                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-                    $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ ."\nfailed to execute: $cmdString!\n");
+            if (not($lambda)){
+                # get good genemark genes
+                print LOG "\#  "
+                    . (localtime)
+                    . ": concatenating good GeneMark training genes to "
+                    . "$goodLstFile.\n" if ($v > 3);
+                $cmdString = "cat $genemarkDir/genemark.f.good.gtf > $goodLstFile";
+                print LOG "$cmdString\n" if ($v > 3);
+                system($cmdString) == 0
+                    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                        $useexisting, "ERROR in file " . __FILE__ ." at line "
+                        . __LINE__ ."\nfailed to execute: $cmdString!\n");
+            }else{
+                # get downsampled good genemark genes
+                print LOG "\#  "
+                    . (localtime)
+                    . ": concatenating good and downsampled GeneMark training genes to "
+                    . "$goodLstFile.\n" if ($v > 3);
+                $cmdString = "cat $genemarkDir/genemark.d.gtf > $goodLstFile";
+                print LOG "$cmdString\n" if ($v > 3);
+                system($cmdString) == 0
+                    or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                        $useexisting, "ERROR in file " . __FILE__ ." at line "
+                        . __LINE__ ."\nfailed to execute: $cmdString!\n");
+            }
         }
 
         if ( $gth2traingenes ) {
@@ -6102,15 +6149,15 @@ sub compute_flanking_region {
             chomp;
             my @gtfLine = split(/\t/);
             $gtfLine[8] =~ m/gene_id \"(\S+)\"/;
-            if(not(defined($gene{$1}{'start'}))) {
-                $gene{$1}{'start'} = min($gtfLine[3], $gtfLine[4]);
-            }elsif($gene{$1}{'start'} > min($gtfLine[3], $gtfLine[4])){
-                $gene{$1}{'start'} = min($gtfLine[3], $gtfLine[4]);
+            if( not( defined( $gene{$1}{'start'} ) ) ) {
+                $gene{$1}{'start'} = min( $gtfLine[3], $gtfLine[4] );
+            }elsif( $gene{$1}{'start'} > min( $gtfLine[3], $gtfLine[4] ) ) {
+                $gene{$1}{'start'} = min( $gtfLine[3], $gtfLine[4] );
             }
-            if(not(defined($gene{$1}{'stop'}))) {
+            if( not( defined( $gene{$1}{'stop'} ) ) ) {
                 $gene{$1}{'stop'} = max($gtfLine[3], $gtfLine[4]);
-            }elsif($gene{$1}{'stop'} < max($gtfLine[3], $gtfLine[4]){
-                $gene{$1}{'stop'} = max($gtfLine[3], $gtfLine[4]);
+            }elsif( $gene{$1}{'stop'} < max( $gtfLine[3], $gtfLine[4] ) ) {
+                $gene{$1}{'stop'} = max( $gtfLine[3], $gtfLine[4] );
             }
         }
     }
