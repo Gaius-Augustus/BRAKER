@@ -102,7 +102,7 @@ close(GTF) or die("Could not close file $in_gtf!\n");
 ####################### compute F(X) ###########################################
 
 # genes with more than this number always keep:
-my $max_intron_number = 20;
+my $max_intron_number = 5;
 my @F; # distribution function
 for (my $i = 0; $i <= $max_intron_number; $i++ ) {
 	if ( $i == 0 ) {
@@ -125,19 +125,39 @@ my $single_exon_gene_counter = 0;
 my %intronNumPrinted;
 
 while (my ($txid, $intronNum) = each %nIntrons ) {
+	if( $intronNum == 0 ) {
+		$single_exon_gene_counter++;
+	}
 	my $u = rand(1);
-	my $index = $intronNum <= $max_intron_number ? $intronNum : $max_intron_number;
-	if( ( $u <= $F[$index] ) or ( ( $single_exon_gene_counter < $min_single_exon_genes ) && $intronNum == 0 ) ) {
-		foreach (@{$tx{$txid}}) {
-			print OUT $_;
-			if($intron_num_lst && not(defined($intronNumPrinted{$txid}))) {
-				print LST $intronNum."\t".$txid."\n";
-				$intronNumPrinted{$txid} = 1;
+	my $index = $intronNum;
+	if($index <= $max_intron_number) {
+		if( $u <= $F[$index]) {
+			foreach (@{$tx{$txid}}) {
+				print OUT $_;
+				if($intron_num_lst && not(defined($intronNumPrinted{$txid}))) {
+					print LST $intronNum."\t".$txid."\n";
+					$intronNumPrinted{$txid} = 1;
+				}
 			}
+		} elsif ( $intronNum == 0 && $single_exon_gene_counter <= $min_single_exon_genes ) {
+
+			foreach (@{$tx{$txid}}) {
+				print OUT $_;
+				if($intron_num_lst && not(defined($intronNumPrinted{$txid}))) {
+					print LST $intronNum."\t".$txid."\n";
+					$intronNumPrinted{$txid} = 1;
+				}
+			}
+
 		}
-		if( $intronNum == 0 ) {
-			$single_exon_gene_counter++;
-		}
+	}else{
+		foreach (@{$tx{$txid}}) {
+				print OUT $_;
+				if($intron_num_lst && not(defined($intronNumPrinted{$txid}))) {
+					print LST $intronNum."\t".$txid."\n";
+					$intronNumPrinted{$txid} = 1;
+				}
+			}
 	}
 }
 close (OUT) or die ("Could not close file $out_gtf!\n");
@@ -145,6 +165,11 @@ close (OUT) or die ("Could not close file $out_gtf!\n");
 
 if($intron_num_lst) {
 	close(LST) or die ("Could not close fiel $intron_num_lst!\n");
+}
+
+if($single_exon_gene_counter < 20){
+	print STDOUT "WARNING: Number of single exon training genes is smaller "
+				."than 20. It is: $single_exon_gene_counter!\n";
 }
 ####################### P_X_is_k ###############################################
 # Computes the P(X=k), currently with Poisson distribution
