@@ -7860,7 +7860,8 @@ sub train_utr {
         );
         print LOG "Found script $string.\n" if ($v > 3);
         $perlCmdString
-            = "perl $string --rounds=$rounds --species=$species --trainOnlyUtr=1 --onlytrain=onlytrain.gb  --metapars=$AUGUSTUS_CONFIG_PATH"
+            = "perl $string --rounds=$rounds --species=$species --trainOnlyUtr=1 "
+            . "--onlytrain=onlytrain.gb  --metapars=$AUGUSTUS_CONFIG_PATH"
             . "/species/$species/$metaUtrName train.gb --UTR=on > optimize.utr.out";
         print LOG
             "Now optimizing meta parameters of AUGUSTUS for the UTR model:\n"
