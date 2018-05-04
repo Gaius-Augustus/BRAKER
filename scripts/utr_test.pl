@@ -188,12 +188,12 @@ sub train_utr {
             . "\nCould not open file rnaseq.utr.hints!\n" );
         while ( my $line = <HINTS> ) {
             @gff = split( /\t/, $line );
-            print "I did split the hints, the current one is $gff[0]\n";
             if ( ( $gff[1] eq "b2h" ) && ( $gff[2] eq "intron" ) ){
             # TODO: make sure to use only intron hints from RNA-Seq data
                 $siteA = substr( $genome_hash{ $gff[0] }, ( $gff[3] - 1 ), 2 );
                 $siteB = substr( $genome_hash{ $gff[0] }, ( $gff[4] - 2 ), 2 );
                 $given = $siteA . $siteB;
+                print "given is $given\n";
                 if ( $gff[8] =~ m/mult=(\d+)/ ) {
                     $lastCol = "mult=".$1."_$splice\n";
                 }else {
