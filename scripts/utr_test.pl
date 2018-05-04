@@ -154,8 +154,6 @@ sub train_utr {
     }
 
     if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/rnaseq.utr.hints"] ) ) {
-        print "Checking whether we ever get in here!\n ";
-
       # TODO: currently, only using AT-AG, not AC-AG or any other splice site.
       #       Possibly extend to other splice patterns.
         print LOG "\# " . (localtime)
@@ -188,9 +186,9 @@ sub train_utr {
         open( UTRHINTS, ">", "$otherfilesDir/rnaseq.utr.hints" )
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not open file rnaseq.utr.hints!\n" );
-        print "I am going into the hints!\n";
         while ( my $line = <HINTS> ) {
             @gff = split( /\t/, $line );
+            print "I did split the hints, the current one is $gff[0]\n";
             if ( ( $gff[1] eq "b2h" ) && ( $gff[2] eq "intron" ) ){
             # TODO: make sure to use only intron hints from RNA-Seq data
                 $siteA = substr( $genome_hash{ $gff[0] }, ( $gff[3] - 1 ), 2 );
