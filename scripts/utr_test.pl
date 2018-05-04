@@ -334,19 +334,26 @@ sub train_utr {
         open( TR, "<", "$otherfilesDir/tr.lst" ) or die( "ERROR in file "
             . __FILE__ . " at line " . __LINE__
             . "\nCan not open file $otherfilesDir/tr.lst!\n" );
-        open( BOTH, ">", "$otherfilesDir/bothutr.lst" ) or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCan not open file $otherfilesDir/bothutr.lst!\n" );
-        my $Fld1;
-        my $prev;
+        my %both;
         while (<TR>) {
-            ($Fld1) = split( '\t', $_, -1 );
-            if ( $Fld1 eq $prev ) {
-                print BOTH "$prev\n";
+            my @t = split(/\t/);
+            $t[8]=~m/transcript_id \"\S+\"";
+            my $txid = $1;
+            if($t[2] =~ m/UTR/){
+                $both{$txid}{$t[2]} = $_;
             }
         }
         close(TR) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not close file $otherfilesDir/tr.lst!\n" );
+
+        open( BOTH, ">", "$otherfilesDir/bothutr.lst" ) or die( "ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCan not open file $otherfilesDir/bothutr.lst!\n" );
+        foreach(keys %both){
+            if(defined($both{$_}{"3'-UTR"}) && defined($both{$_}{"5'-UTR"})){
+                print BOTH $_."\n";
+            }
+        }
         close(BOTH) or die( "ERROR in file " . __FILE__ . " at line "
             . __LINE__
             . "\nCould not close file $otherfilesDir/bothutr.lst!\n" );
