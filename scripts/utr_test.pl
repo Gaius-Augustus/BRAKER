@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 use Getopt::Long;
 use File::Compare;
 use File::Path qw(make_path rmtree);
@@ -28,9 +30,22 @@ my $AUGUSTUS_CONFIG_PATH = "/home/katharina/SVN/augustus/trunks/config";
 my $hintsfile = $otherfilesDir."/hintsfile.gff";
 my $genome = $otherfilesDir."/genome.fa";
 my $BAMTOOLS_BIN_PATH = "/home/katharina/git/bamtools/build/src/toolkit/";
-my $rnaseq2utrPath = ""# full path with toolname
-my $bam2wigPath = "/home/katharina/SVN/augustus/trunks/auxprogs/bam2wig/bam2wig"#
-train_utr()
+my $rnaseq2utrPath = "/home/katharina/SVN/utrrnaseq/trunks/Debug/utrrnaseq";# full path with toolname
+my $bam2wigPath = "/home/katharina/SVN/augustus/trunks/auxprogs/bam2wig/bam2wig";#
+my $v = 4;
+my $species = "bug";
+my @bam = ("/home/katharina/utr_test/RNAseq.bam");
+my $cmdString;
+my $perlCmdString;
+my $nice = 1;
+my $rnaseq2utr_args = "";
+my $string;
+my $AUGUSTUS_BIN_PATH = "/home/katharina/SVN/augustus/trunks/bin/";
+my $AUGUSTUS_SCRIPTS_PATH = "/home/katharina/SVN/augustus/trunks/scripts/";
+my $flanking_DNA;
+my $rounds = 3;
+open(LOG, ">", "/home/katharina/utr.log");
+train_utr();
 
 
 
@@ -46,6 +61,8 @@ sub train_utr {
         . ": Move augustus predictions to *.noUTR.* files prior UTR training:\n"
         if ( $v > 3 );
     my $loci = 0;
+    my $testSetSize = 0;
+    my $onlyTrainSize = 0;
     # store predictions without UTRs, revert later if UTR model does not improve
     # predictions
     print LOG "mv $otherfilesDir/augustus.hints.gff "
@@ -347,7 +364,7 @@ sub train_utr {
             . " at line " . __LINE__
             . "\nFailed not execute $cmdString!\n" );
 
-        open( GENES, "<", "$otherfilfesDir/genes.gtf_temp" )
+        open( GENES, "<", "$otherfilesDir/genes.gtf_temp" )
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
                 . "\nCan not open the file $otherfilesDir/genes.gtf_temp!\n" );
         open( WRITEGENES, ">", "$otherfilesDir/genes.gtf_unsort" );
@@ -403,8 +420,6 @@ sub train_utr {
         close(UTRGB) or die( "ERROR in file "
             . __FILE__ . " at line " . __LINE__
             . "\nCould not close file $otherfilesDir/utr.gb!\n" );
-        my $testSetSize = 0;
-        my $onlyTrainSize = 0;
         if($loci < 50){
             die("ERROR in file " . __FILE__ . " at line " . __LINE__
             . "Number of UTR training loci is smaller than 50, aborting "
@@ -413,7 +428,7 @@ sub train_utr {
             . "but you are lacking UTR parameters. Do not attempt to "
             . "predict genes with UTRs for this species using the current "
             . "parameter set!\n");
-        }elsif($loci >= 50 && <=1000){
+        }elsif( ($loci >= 50) && ($loci <= 1000) ){
             $testSetSize = floor($loci * 0.2);
             if(($loci - $testSetSize) > 200){
                 $onlyTrainSize = 200;
@@ -444,8 +459,8 @@ sub train_utr {
                 );
             print LOG "Found script $string.\n" if ( $v > 3 );
             $perlCmdString = "perl $string $otherfilesDir/utr.gb.train "
-                           . "$onlyTrainSize ";
-                           . "&> $errorfilesDir/randomSplit_utr2.err"
+                           . "$onlyTrainSize "
+                           . "&> $errorfilesDir/randomSplit_utr2.err";
             print LOG "\nperlCmdString\n" if ( $v > 3 );
             system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
                 . " at line " . __LINE__
@@ -524,3 +539,5 @@ sub train_utr {
         print "Skipping UTR parameter optimization. Already up to date.\n";
     }
 }
+
+close(LOG);
