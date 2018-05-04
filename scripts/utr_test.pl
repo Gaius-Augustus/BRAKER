@@ -306,7 +306,7 @@ sub train_utr {
         my %both;
         while (<UTR>) {
             my @t = split(/\t/);
-            $t[8]=~m/transcript_id \"\S+\"/;
+            $t[8]=~m/transcript_id \"(\S+)\"/;
             my $txid = $1;
             if($t[2] =~ m/UTR/){
                 $both{$txid}{$t[2]} = $_;
