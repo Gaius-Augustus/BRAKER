@@ -303,39 +303,8 @@ sub train_utr {
         open( UTR, "<", "$otherfilesDir/utrs.gff" ) or die( "ERROR in file "
             . __FILE__ . " at line " . __LINE__
             . "\nCan not open file $otherfilesDir/utrs.gff!\n" );
-        open( TRLST, ">", "$otherfilesDir/tr.lst" ) or die ("ERROR in file "
-            . __FILE__ . " at line ". __LINE__
-            . "\nCan not open file $otherfilesDir/tr.lst!\n");
-        while (<UTR>) {
-            $_ = ~ s/.*\t(\S+UTR)\t.*transcript_id \"(\S+)\".*/$2\t$1/;
-            print TRLST $_;
-        }
-        close(UTR) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                . "\nCould not close file $otherfilesDir/utrs.gff!\n" );
-        close(TRLST) or die( "ERROR in file " . __FILE__ . " at line "
-            . __LINE__ . "\nCould not close file $otherfilesDir/tr.lst!\n" );
-        $cmdString = "";
-        if ($nice) {
-            $cmdString .= "nice ";
-        }
-        $cmdString .= "cat $otherfilesDir/tr.lst | sort -u > "
-                   .  "$otherfilesDir/tr_temp.lst "
-                   .  "2> $errorfilesDir/tr_tmp_sort.err";
-        print LOG "\n$cmdString\n" if ( $v > 3 );
-        system($cmdString) == 0 or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed not execute $cmdString!\n" );
-        print LOG "\nrm $otherfilesDir/tr.lst\n" if ( $v > 3 );
-        unlink("$otherfilesDir/tr.lst");
-        $cmdString = "mv $otherfilesDir/tr_temp.lst $otherfilesDir/tr.lst";
-        print LOG "\n$cmdString\n" if ( $v > 3 );
-        system($cmdString) == 0 or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed not execute $cmdString!\n" );
-
-        open( TR, "<", "$otherfilesDir/tr.lst" ) or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCan not open file $otherfilesDir/tr.lst!\n" );
         my %both;
-        while (<TR>) {
+        while (<UTR>) {
             my @t = split(/\t/);
             $t[8]=~m/transcript_id \"\S+\"/;
             my $txid = $1;
@@ -343,8 +312,8 @@ sub train_utr {
                 $both{$txid}{$t[2]} = $_;
             }
         }
-        close(TR) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/tr.lst!\n" );
+        close(UTR) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
+            . "\nCould not close file $otherfilesDir/utrs.gff!\n" );
 
         open( BOTH, ">", "$otherfilesDir/bothutr.lst" ) or die( "ERROR in file "
             . __FILE__ . " at line " . __LINE__
