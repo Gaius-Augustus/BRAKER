@@ -331,39 +331,15 @@ sub train_utr {
             $cmdString .= "nice ";
         }
         $cmdString .= "cat $otherfilesDir/utrs.gff "
-                   .  "$otherfilesDir/augustus.hints.noUtr.gtf "
-                   .  "> $otherfilesDir/genes.gtf_temp "
+                   .  "$otherfilesDir/augustus.hints.noUtr.gtf | "
+                   .  "sort -n -k 4,4 | "
+                   .  "sort -s -k 10,10 | sort -s -k 1,1 >"
+                   .  "> $otherfilesDir/genes.gtf "
                    .  "2> $errorfilesDir/cat_utrs_augustus_noUtrs.err";
         print LOG "\n$cmdString\n" if ( $v > 3 );
         system($cmdString) == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__
             . "\nFailed not execute $cmdString!\n" );
-
-        open( GENES, "<", "$otherfilesDir/genes.gtf_temp" )
-            or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                . "\nCan not open the file $otherfilesDir/genes.gtf_temp!\n" );
-        open( WRITEGENES, ">", "$otherfilesDir/genes.gtf_unsort" );
-        while (<GENES>) {
-            if (/(CDS|UTR)\t/) {
-                print WRITEGENES "Not sure what\n"; # TODO: FIX!
-            }
-        }
-        close(GENES) or die( "ERROR in file " . __FILE__ . " at line "
-            . __LINE__ . "\nCould not close file "
-            . "$otherfilesDir/genes.gtf_temp!\n" );
-        close(WRITEGENES) or die( "ERROR in file " . __FILE__ . " at line "
-            . __LINE__
-            . "\nCould not close file $otherfilesDir/genes.gtf_unsort!\n" );
-        $cmdString = "";
-        if ($nice) {
-            $cmdString .= "nice ";
-        }
-        $cmdString .= "cat genes.gtf_unsort | sort -n -k 4,4 | "
-                   .  "sort -s -k 10,10 | sort -s -k 1,1 > genes.gtf "
-                   .  "2> $errorfilesDir/genes.gtf_unsort.err";
-        print LOG "\n$cmdString\n" if ( $v > 3 );
-        system($cmdString) == 0 or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed not execute $cmdString!\n" );
 
         $string = find(
             "gff2gbSmallDNA.pl",    $AUGUSTUS_BIN_PATH,
