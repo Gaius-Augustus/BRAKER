@@ -282,9 +282,9 @@ sub train_utr {
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString .= "$rnaseq2utrPath -G $genome -C "
-                   .  "$otherfilesDir/stops.and.starts.gff -I "
-                   .  "$otherfilesDir/rnaseq.utr.hints "
+        $cmdString .= "$rnaseq2utrPath --in-scaffold-file $genome "
+                   .  "-C $otherfilesDir/stops.and.starts.gff "
+                   .  "-I $otherfilesDir/rnaseq.utr.hints "
                    .  "-W $otherfilesDir/merged.wig "
                    .  "-o $otherfilesDir/utrs.gff "
                    .  "$rnaseq2utr_args 2> $errorfilesDir/rnaseq2utr.err";
@@ -540,8 +540,4 @@ sub train_utr {
 }
 
 close(LOG);
-
-
-
-
 
