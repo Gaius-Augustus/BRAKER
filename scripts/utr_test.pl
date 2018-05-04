@@ -230,9 +230,9 @@ sub train_utr {
     }
 
     # create wiggle file from bam files
-    if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/rnaseq.wig"] ) ) {
+    if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/merged.wig"] ) ) {
         print LOG "\# " . (localtime)
-                . ": Converting bam files to wiggle file rnaseq.wig\n"
+                . ": Converting bam files to wiggle file merged.wig\n"
                 if ( $v > 3 );
         if ( scalar(@bam) > 1 ) {
             print LOG "\# " . (localtime)
@@ -282,11 +282,11 @@ sub train_utr {
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString .= "$rnaseq2utrPath -G $genome -O "
+        $cmdString .= "$rnaseq2utrPath -G $genome -C "
                    .  "$otherfilesDir/stops.and.starts.gff -I "
                    .  "$otherfilesDir/rnaseq.utr.hints "
-                   .  "-W $otherfilesDir/rnaseq.wig "
-                   .  "--outFileName=$otherfilesDir/utrs.gff "
+                   .  "-W $otherfilesDir/merged.wig "
+                   .  "-o $otherfilesDir/utrs.gff "
                    .  "$rnaseq2utr_args 2> $errorfilesDir/rnaseq2utr.err";
         print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
@@ -540,3 +540,8 @@ sub train_utr {
 }
 
 close(LOG);
+
+
+
+
+
