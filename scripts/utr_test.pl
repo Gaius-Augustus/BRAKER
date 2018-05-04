@@ -332,6 +332,7 @@ sub train_utr {
         }
         $cmdString .= "cat $otherfilesDir/utrs.gff "
                    .  "$otherfilesDir/augustus.hints.noUtr.gtf | "
+                   .  "grep -P \"(CDS|5'-UTR|3'-UTR)\" | "
                    .  "sort -n -k 4,4 | "
                    .  "sort -s -k 10,10 | sort -s -k 1,1 >"
                    .  "> $otherfilesDir/genes.gtf "
