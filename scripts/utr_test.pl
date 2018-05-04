@@ -33,7 +33,7 @@ my $BAMTOOLS_BIN_PATH = "/home/katharina/git/bamtools/build/src/toolkit/";
 my $rnaseq2utrPath = "/home/katharina/SVN/utrrnaseq/trunks/Debug/utrrnaseq";# full path with toolname
 my $bam2wigPath = "/home/katharina/SVN/augustus/trunks/auxprogs/bam2wig/bam2wig";#
 my $v = 4;
-my $species = "bug";
+my $species = "Sp_1";
 my @bam = ("/home/katharina/utr_test/RNAseq.bam");
 my $cmdString;
 my $perlCmdString;
@@ -104,7 +104,8 @@ sub train_utr {
         copy( "$AUGUSTUS_CONFIG_PATH/species/$species/$_",
               "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR" )
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                . "\nCopy failed!\n" );
+                . "\nCopy of $AUGUSTUS_CONFIG_PATH/species/$species/$_ to "
+                . "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR failed!\n" );
     }
     chdir($otherfilesDir) or die( "ERROR in file " . __FILE__ . " at line "
             . __LINE__
