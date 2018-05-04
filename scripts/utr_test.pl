@@ -187,7 +187,7 @@ sub train_utr {
         open( UTRHINTS, ">", "$otherfilesDir/rnaseq.utr.hints" )
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not open file rnaseq.utr.hints!\n" );
-        LINE: while ( my $line = <HINTS> ) {
+        while ( my $line = <HINTS> ) {
             @gff = split( /\t/, $line );
             if ( ( $gff[1] eq "b2h" ) && ( $gff[2] eq "intron" ) ){
             # TODO: make sure to use only intron hints from RNA-Seq data
