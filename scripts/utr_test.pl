@@ -45,6 +45,7 @@ my $AUGUSTUS_SCRIPTS_PATH = "/home/katharina/SVN/augustus/trunks/scripts/";
 my $flanking_DNA = 1000; # TODO: make sure that this is global in braker.pl
 my $rounds = 3;
 my $CPU = 8;
+my $BLAST_PATH = "/usr/bin/"
 open(LOG, ">", "/home/katharina/utr.log");
 train_utr();
 
@@ -410,8 +411,6 @@ sub train_utr {
             "aa2nonred.pl",       $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
         );
-        $errorfile     = "$errorfilesDir/aa2nonred.stderr";
-        $stdoutfile    = "$otherfilesDir/aa2nonred.stdout";
         $perlCmdString = "";
         if ($nice) {
             $perlCmdString .= "nice ";
