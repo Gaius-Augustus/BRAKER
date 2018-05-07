@@ -419,7 +419,8 @@ sub train_utr {
         $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
                        .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
                        .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU "
-                       .  "1> $stdoutfile 2>$errorfile";
+                       .  "1> $otherfilesDir/utr.aa2nonred.out "
+                       .  "2> $errorfilesDir/utr.aa2nonred.stderr";
         print LOG "\# "
             . (localtime)
             . ": BLAST training gene structures (with UTRs) against "
