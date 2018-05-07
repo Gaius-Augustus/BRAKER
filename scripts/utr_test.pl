@@ -127,12 +127,8 @@ sub train_utr {
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
                 . "\nCould not open file "
                 . "$otherfilesDir/augustus.hints.noUtr.gtf!\n" );
+        # remove transcripts that are redundant by start/stop codon position
         while ( defined( my $i = <AUG> ) ) {
-       # TODO: we are not dealing with redundancy, correctly. Discarding
-       #       duplicates is not the optimal solution because later, we filter
-       #       for genes where both codons have UTR models. However, at this
-       #       point in time, we ignore this matter and hope that we are left
-       #       with a sufficient number of training examples.
             if ( $i =~ /\t(start_codon|stop_codon)\t/ ) {
                 @tmpGffLine = split( /\t/, $i );
                 if ( not( defined( $nonRedundantCodons{"$tmpGffLine[0]_$tmpGffLine[3]_$tmpGffLine[4]_$tmpGffLine[6]"} ) ) ) {
@@ -390,9 +386,10 @@ sub train_utr {
             "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not open file $otherfilesDir/genes_in_gb.gtf!\n" );
         while(<GENES>){
-            $_=~m/transcript_id \"(\S+")\"/;
-            if(defined($txInUtrGb1{$1})){
-                print GENESINGB $_;
+            if($_=~m/transcript_id \"(\S+)\"/){
+                if(defined($txInUtrGb1{$1})){
+                    print GENESINGB $_;
+                }
             }
         }
         close(GENESINGB) or die( "ERROR in file " 
