@@ -43,6 +43,7 @@ my $string;
 my $AUGUSTUS_BIN_PATH = "/home/katharina/SVN/augustus/trunks/bin/";
 my $AUGUSTUS_SCRIPTS_PATH = "/home/katharina/SVN/augustus/trunks/scripts/";
 my $flanking_DNA = 1000; # TODO: make sure that this is global in braker.pl
+my @splice = ("GTAG"); # TODO make sure there is a global @splice in braker!
 my $rounds = 3;
 my $CPU = 8;
 my $BLAST_PATH = "/usr/bin/";
@@ -152,8 +153,6 @@ sub train_utr {
     }
 
     if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/rnaseq.utr.hints"] ) ) {
-      # TODO: currently, only using AT-AG, not AC-AG or any other splice site.
-      #       Possibly extend to other splice patterns.
         print LOG "\# " . (localtime)
             . ": filtering RNA-Seq hints for valid splice site AT-AG, storing "
             . "in $otherfilesDir/rnsaeq.utr.hints\n" if ( $v > 3 );
@@ -180,7 +179,6 @@ sub train_utr {
             . " at line " . __LINE__ . "\nCould not open file $hintsfile!\n" );
         my @gff;
         my ( $siteA, $siteB, $given, $lastCol );
-        my $splice = "GTAG";
         open( UTRHINTS, ">", "$otherfilesDir/rnaseq.utr.hints" )
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not open file rnaseq.utr.hints!\n" );
@@ -190,32 +188,34 @@ sub train_utr {
                 $siteA = substr( $genome_hash{ $gff[0] }, ( $gff[3] - 1 ), 2 );
                 $siteB = substr( $genome_hash{ $gff[0] }, ( $gff[4] - 2 ), 2 );
                 $given = $siteA . $siteB;
-                if ( $gff[8] =~ m/mult=(\d+)/ ) {
-                    $lastCol = "mult=".$1."_$splice\n";
-                }else {
-                    $lastCol = "mult=1_$splice\n";
-                }
-                if ( uc($given) =~ m/$splice/ ) {
-                    for(my $i = 0; $i < 8; $i++){
-                        if($i != 6 ) {
-                            print UTRHINTS $gff[$i] . "\t";
-                        }else{
-                            print UTRHINTS "+\t";
-                        }
+                foreach(@splice){
+                    if ( $gff[8] =~ m/mult=(\d+)/ ) {
+                        $lastCol = "mult=".$1."_$_\n";
+                    }else {
+                        $lastCol = "mult=1_$_\n";
                     }
-                    print UTRHINTS $lastCol;
-                } else {
-                    $given = reverse $given;
-                    $given =~ tr/ACGTacgt/TGCAtgca/;
-                    if ( uc($given) =~ m/$splice/ ) {
+                    if ( uc($given) =~ m/$_/ ) {
                         for(my $i = 0; $i < 8; $i++){
-                        if($i != 6 ) {
-                            print UTRHINTS $gff[$i] . "\t";
-                        }else{
-                            print UTRHINTS "-\t";
+                            if($i != 6 ) {
+                                print UTRHINTS $gff[$i] . "\t";
+                            }else{
+                                print UTRHINTS "+\t";
+                            }
                         }
-                    }
-                    print UTRHINTS $lastCol;
+                        print UTRHINTS $lastCol;
+                    } else {
+                        $given = reverse $given;
+                        $given =~ tr/ACGTacgt/TGCAtgca/;
+                        if ( uc($given) =~ m/$_/ ) {
+                            for(my $i = 0; $i < 8; $i++){
+                                if($i != 6 ) {
+                                    print UTRHINTS $gff[$i] . "\t";
+                                }else{
+                                    print UTRHINTS "-\t";
+                                }
+                            }
+                            print UTRHINTS $lastCol;
+                        }
                     }
                 }
             }
@@ -564,7 +564,7 @@ sub train_utr {
                 . "\nFailed to execute: $perlCmdString!\n" );
         }
         # changing UTR parameters in species config file to "on"
-        print STDOUT "NEXT STEP: Setting value of \"UTR\" in "
+        print LOG "NEXT STEP: Setting value of \"UTR\" in "
             . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg "
             . "to \"true\"\n";
         print LOG "\n\# "
