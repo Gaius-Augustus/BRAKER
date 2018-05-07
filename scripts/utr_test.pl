@@ -363,6 +363,150 @@ sub train_utr {
             . " at line " . __LINE__
             . "\nFailed to execute: $perlCmdString!\n" );
 
+        # assign LOCI locations to txIDs
+        open (TRAINUTRGB1, "<", "$otherfilesDir/utr.gb") or die( 
+            "ERROR in file " . __FILE__ . " at line " . __LINE__
+            . "\nCould not open file $otherfilesDir/utr.gb!\n" );
+
+        my %txInUtrGb1;
+        my $txLocus;;
+        while( <TRAINUTRGB1> ) {
+            if ( $_ =~ m/LOCUS\s+(\S+)\s/ ) {
+                $txLocus = $1;
+            }elsif ( $_ =~ m/\/gene=\"(\S+)\"/ ) {
+                $txInUtrGb1{$1} = $txLocus;
+            }
+        }
+        close (TRAINUTRGB1) or or die( 
+            "ERROR in file " . __FILE__ . " at line " . __LINE__
+            . "\nCould not close file $otherfilesDir/utr.gb!\n" );
+
+        # find those genes in gtf that ended up in gb file
+        open(GENES, "<", "$otherfilesDir/genes.gtf") or die( "ERROR in file " 
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not open file $otherfilesDir/genes.lst!\n" );
+        open(GENESINGB, ">", "$otherfilesDir/genes_in_gb.gtf") or die( 
+            "ERROR in file " . __FILE__ . " at line " . __LINE__
+            . "\nCould not open file $otherfilesDir/genes_in_gb.gtf!\n" );
+        while(<GENES>){
+            $_=~m/transcript_id \"(\S+")\"/;
+            if(defined($txInUtrGb1{$1})){
+                print GENESINGB $_;
+            }
+        }
+        close(GENESINGB) or die( "ERROR in file " 
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not close file $otherfilesDir/genes_in_gb.gtf!\n" );
+        close(GENES) or die( "ERROR in file " 
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not close file $otherfilesDir/genes.lst!\n" );
+
+        # convert those training genes to protein fasta file
+        gtf2fasta ($genome, "$otherfilesDir/genes_in_gb.gtf",
+            "$otherfilesDir/utr_genes_in_gb.fa");
+
+        # blast good training genes to exclude redundant sequences
+        $string = find(
+            "aa2nonred.pl",       $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $errorfile     = "$errorfilesDir/aa2nonred.stderr";
+        $stdoutfile    = "$otherfilesDir/aa2nonred.stdout";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
+                       .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
+                       .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU "
+                       .  "1> $stdoutfile 2>$errorfile";
+        print LOG "\# "
+            . (localtime)
+            . ": BLAST training gene structures (with UTRs) against "
+            . "themselves:\n" if ($v > 3);
+        print LOG "$perlCmdString\n\n" if ($v > 3);
+        system("$perlCmdString") == 0
+            or die( "ERROR in file " . __FILE__
+            . " at line " . __LINE__
+            . "\nFailed to execute: $perlCmdString!\n" );
+
+        # parse output of blast
+        my %nonRed;
+        open (BLASTOUT, "<", "$otherfilesDir/utr_genes_in_gb.nr.fa") or
+             die( "ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not open file $otherfilesDir/utr_genes_in_gb.nr.fa!\n" );
+        while ( <BLASTOUT> ) {
+            chomp;
+            if($_ =~ m/^\>(\S+)/){
+                $nonRed{$1} = 1;
+            }
+        }
+        close (BLASTOUT) or  die( "ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not close file $otherfilesDir/utr_genes_in_gb.nr.fa!\n" );
+
+        open ( NONREDLOCI, ">", "$otherfilesDir/utr.nonred.loci.lst") or
+            die( "ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not open file $otherfilesDir/utr.nonred.loci.lst!\n" );
+        foreach ( keys %nonRed ) {
+            print NONREDLOCI $txInUtrGb1{$_}."\n";
+        }
+        close (NONREDLOCI) or  die( "ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not close file $otherfilesDir/utr.nonred.loci.lst!\n" );
+
+        # filter utr.gb file for nonredundant loci
+        $string = find(
+            "filterGenesIn.pl",       $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $errorfile     = "$errorfilesDir/utr.filterGenesIn.stderr";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string $otherfilesDir/utr.nonred.loci.lst "
+                       .  "$otherfilesDir/utr.gb 1> $otherfilesDir/utr.nr.gb "
+                       .  "2>$errorfile";
+        print LOG "\# " . (localtime)
+            . ": Filtering nonredundant loci into $otherfilesDir/utr.nr.gb:\n" 
+            if ($v > 3);
+        print LOG "$perlCmdString\n\n" if ($v > 3);
+        system("$perlCmdString") == 0
+            or die( "ERROR in file " . __FILE__
+            . " at line " . __LINE__
+            . "\nFailed not execute $perlCmdString!\n" );
+
+        # count how many genes are still in utr.nr.gb
+        if($v > 3) {
+            open (TRAINUTRGB2, "<", "$otherfilesDir/utr.nr.gb") or
+                die( "ERROR in file " . __FILE__ . " at line " . __LINE__
+                . "\nCould not open file $otherfilesDir/utr.nr.gb!\n" );
+            my $nLociUtrGb2 = 0;
+            while ( <TRAINUTRGB2> ) {
+                if($_ =~ m/LOCUS/) {
+                    $nLociUtrGb2++;
+                }
+            }
+            close (TRAINUTRGB2) or  die( "ERROR in file " . __FILE__ 
+                . " at line " . __LINE__
+                . "\nCould not close file $otherfilesDir/utr.nr.gb!\n" );
+            print LOG "\# "
+                    . (localtime)
+                    . ": $otherfilesDir/utr.nr.gb file contains $nLociUtrGb2 genes.\n";
+        }
+
+        # move nonredundant file utr.nr.gb to utr.gb
+        $cmdString = "mv $otherfilesDir/utr.nr.gb $otherfilesDir/utr.gb";
+        print LOG  "\# " . (localtime) . ": Moving utr.nr.gb to utr.gb file:\n"
+            if($v>3);
+        print LOG $cmdString."\n";
+        system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
+            . " at line " . __LINE__
+            . "\nFailed to execute: $cmdString!\n" );
+
         # create an utr.onlytrain.gb if more than 200 UTR training genes
         open(UTRGB, "<", "$otherfilesDir/utr.gb") or die( "ERROR in file "
             . __FILE__ . " at line " . __LINE__
