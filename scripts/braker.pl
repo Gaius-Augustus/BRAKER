@@ -3,7 +3,7 @@
 ####################################################################################################
 #                                                                                                  #
 # braker.pl                                                                                        #
-# Pipeline for predicting genes with GeneMark-EX and AUGUSTUS                                      #
+# Pipeline for predicting genes with GeneMark-EX* and AUGUSTUS                                     #
 #                                                                                                  #
 # Authors: Katharina Hoff, Simone Lange, Mario Stanke, Alexandre Lomsadze, Mark Borodovsky         #
 #                                                                                                  #
@@ -14,6 +14,7 @@
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
 #                                                                                                  #
+# *EX = ES/ET/EP                                                                                   #
 ####################################################################################################
 
 use Getopt::Long;

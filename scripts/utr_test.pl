@@ -44,6 +44,7 @@ my $AUGUSTUS_BIN_PATH = "/home/katharina/SVN/augustus/trunks/bin/";
 my $AUGUSTUS_SCRIPTS_PATH = "/home/katharina/SVN/augustus/trunks/scripts/";
 my $flanking_DNA = 1000; # TODO: make sure that this is global in braker.pl
 my $rounds = 3;
+my $UTR = 8;
 open(LOG, ">", "/home/katharina/utr.log");
 train_utr();
 
@@ -418,14 +419,9 @@ sub train_utr {
                            . "1> $otherfilesDir/randomSplit_utr2.log "
                            . "2> $errorfilesDir/randomSplit_utr2.err";
             print LOG "\n$perlCmdString\n" if ( $v > 3 );
-            print "Before execution\n$perlCmdString\n";
             system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
                 . " at line " . __LINE__
                 . "\nFailed to execute: $perlCmdString!\n" );
-            print "after exection\n";
-            if(not(-e "$otherfilesDir/utr.gb.train.train")){
-                die("File is not there!\n");
-            }
         }
         # changing UTR parameters in species config file to "on"
         print STDOUT "NEXT STEP: Setting value of \"UTR\" in "
@@ -472,12 +468,11 @@ sub train_utr {
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
         );
         print LOG "Found script $string.\n" if ( $v > 3 );
-        print "onlyTrainSize is: $onlyTrainSize\n";
         if($onlyTrainSize == 0){
             $perlCmdString = "perl $string --rounds=$rounds --species=$species "
                            . "--trainOnlyUtr=1 "
                            . "--metapars=$AUGUSTUS_CONFIG_PATH"
-                           . "/species/$species/$metaUtrName "
+                           . "/species/$species/$metaUtrName --cpus=$CPU "
                            . "$otherfilesDir/utr.gb.train "
                            . "--UTR=on > $otherfilesDir/optimize.utr.out";
         }else{
@@ -485,7 +480,7 @@ sub train_utr {
                            . "--trainOnlyUtr=1  "
                            . "--onlytrain=$otherfilesDir/utr.gb.train.train "
                            . "--metapars=$AUGUSTUS_CONFIG_PATH"
-                           . "/species/$species/$metaUtrName "
+                           . "/species/$species/$metaUtrName --cpus=$CPU "
                            . "$otherfilesDir/utr.gb.train.test "
                            . "--UTR=on > $otherfilesDir/optimize.utr.out "
                            . "2> $errorfilesDir/optimize.utr.err"
