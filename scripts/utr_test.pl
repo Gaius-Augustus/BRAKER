@@ -247,7 +247,7 @@ sub train_utr {
                 $cmdString .= "-in $_ ";
             }
             $cmdString .= "-out $otherfilesDir/merged.bam "
-                       .= "1> $otherfilesDir/bam.merge.log "
+                       .  "1> $otherfilesDir/bam.merge.log "
                        .  "2> $errorfilesDir/bam.merge.err";
             print LOG "\n$cmdString\n\n" if ( $v > 3 );
             system("$cmdString") or die( "ERROR in file " . __FILE__
