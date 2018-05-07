@@ -377,7 +377,7 @@ sub train_utr {
                 $txInUtrGb1{$1} = $txLocus;
             }
         }
-        close (TRAINUTRGB1) or or die( 
+        close (TRAINUTRGB1) or die( 
             "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not close file $otherfilesDir/utr.gb!\n" );
 
