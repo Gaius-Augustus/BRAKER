@@ -44,7 +44,7 @@ my $AUGUSTUS_BIN_PATH = "/home/katharina/SVN/augustus/trunks/bin/";
 my $AUGUSTUS_SCRIPTS_PATH = "/home/katharina/SVN/augustus/trunks/scripts/";
 my $flanking_DNA = 1000; # TODO: make sure that this is global in braker.pl
 my $rounds = 3;
-my $UTR = 8;
+my $CPU = 8;
 open(LOG, ">", "/home/katharina/utr.log");
 train_utr();
 
