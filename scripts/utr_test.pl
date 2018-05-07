@@ -475,7 +475,7 @@ sub train_utr {
         print "onlyTrainSize is: $onlyTrainSize\n";
         if($onlyTrainSize == 0){
             $perlCmdString = "perl $string --rounds=$rounds --species=$species "
-                           . "--trainOnlyUtr=1  "
+                           . "--trainOnlyUtr=1 "
                            . "--metapars=$AUGUSTUS_CONFIG_PATH"
                            . "/species/$species/$metaUtrName "
                            . "$otherfilesDir/utr.gb.train "
@@ -483,7 +483,7 @@ sub train_utr {
         }else{
             $perlCmdString = "perl $string --rounds=$rounds --species=$species "
                            . "--trainOnlyUtr=1  "
-                           . "--onlytrain=$otherfilesDir/utr.gb.train.train"
+                           . "--onlytrain=$otherfilesDir/utr.gb.train.train "
                            . "--metapars=$AUGUSTUS_CONFIG_PATH"
                            . "/species/$species/$metaUtrName "
                            . "$otherfilesDir/utr.gb.train.test "
