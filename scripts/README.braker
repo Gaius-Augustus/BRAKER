@@ -89,7 +89,7 @@ At the time of release, this BRAKER2 version, the pipeline was tested with:
       subsequently follow SAMTOOLS documentation for installation). 
 
 9. Install the required PERL modules available on CPAN:
-   			    File::Spec::Functions
+   			File::Spec::Functions
 				Hash::Merge
 				List::Util
 				Logger::Simple
@@ -101,7 +101,7 @@ At the time of release, this BRAKER2 version, the pipeline was tested with:
    (on Ubuntu, install the modules e.g. with CPANminus: "cpanm [Module::Name]")
 
    BRAKER2 also uses the PERL module helpMod.pm that is not available on CPAN. This module is 
-   part of the BRAKER2 relase and does not require separate installation.
+   part of the BRAKER2 release and does not require separate installation.
 
 10. Optional:
        If you would like BRAKER2 to produce protein to genome alignments, install one or
