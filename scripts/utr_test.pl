@@ -462,14 +462,13 @@ sub train_utr {
             "filterGenesIn.pl",       $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
         );
-        $errorfile     = "$errorfilesDir/utr.filterGenesIn.stderr";
         $perlCmdString = "";
         if ($nice) {
             $perlCmdString .= "nice ";
         }
         $perlCmdString .= "perl $string $otherfilesDir/utr.nonred.loci.lst "
                        .  "$otherfilesDir/utr.gb 1> $otherfilesDir/utr.nr.gb "
-                       .  "2>$errorfile";
+                       .  "2> $errorfilesDir/utr.filterGenesIn.stderr";
         print LOG "\# " . (localtime)
             . ": Filtering nonredundant loci into $otherfilesDir/utr.nr.gb:\n" 
             if ($v > 3);
