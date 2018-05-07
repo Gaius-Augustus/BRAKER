@@ -287,7 +287,8 @@ sub train_utr {
                    .  "-I $otherfilesDir/rnaseq.utr.hints "
                    .  "-W $otherfilesDir/merged.wig "
                    .  "-o $otherfilesDir/utrs.gff "
-                   .  "$rnaseq2utr_args 2> $errorfilesDir/rnaseq2utr.err";
+                   .  "$rnaseq2utr_args 1> $otherfilesDir/rnaseq2utr.log "
+                   .  "2> $errorfilesDir/rnaseq2utr.err";
         print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
@@ -398,7 +399,7 @@ sub train_utr {
         print LOG "Found script $string.\n" if ( $v > 3 );
         $perlCmdString = "perl $string $otherfilesDir/utr.gb $testSetSize "
                        . "&> $errorfilesDir/randomSplit_utr1.err";
-        print LOG "\nperlCmdString\n" if ( $v > 3 );
+        print LOG "\n$perlCmdString\n" if ( $v > 3 );
         system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__
             . "\nFailed to execute: $perlCmdString!\n" );
@@ -413,7 +414,7 @@ sub train_utr {
             $perlCmdString = "perl $string $otherfilesDir/utr.gb.train "
                            . "$onlyTrainSize "
                            . "&> $errorfilesDir/randomSplit_utr2.err";
-            print LOG "\nperlCmdString\n" if ( $v > 3 );
+            print LOG "\n$perlCmdString\n" if ( $v > 3 );
             system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
                 . " at line " . __LINE__
                 . "\nFailed to execute: $perlCmdString!\n" );
