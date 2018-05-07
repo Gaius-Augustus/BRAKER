@@ -463,6 +463,7 @@ sub train_utr {
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
         );
         print LOG "Found script $string.\n" if ( $v > 3 );
+        print "onlyTrainSize is: $onlyTrainsize\n";
         if($onlyTrainSize == 0){
             $perlCmdString = "perl $string --rounds=$rounds --species=$species "
                            . "--trainOnlyUtr=1  "
