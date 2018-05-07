@@ -247,7 +247,8 @@ sub train_utr {
                 $cmdString .= "-in $_ ";
             }
             $cmdString .= "-out $otherfilesDir/merged.bam "
-                       .  "&> $errorfilesDir/bam.merge.err";
+                       .= "1> $otherfilesDir/bam.merge.log "
+                       .  "2> $errorfilesDir/bam.merge.err";
             print LOG "\n$cmdString\n\n" if ( $v > 3 );
             system("$cmdString") or die( "ERROR in file " . __FILE__
                     . " at line " . __LINE__
@@ -398,7 +399,8 @@ sub train_utr {
         );
         print LOG "Found script $string.\n" if ( $v > 3 );
         $perlCmdString = "perl $string $otherfilesDir/utr.gb $testSetSize "
-                       . "&> $errorfilesDir/randomSplit_utr1.err";
+                       . "1> $otherfilesDir/randomSplit_utr1.log "
+                       . "2> $errorfilesDir/randomSplit_utr1.err";
         print LOG "\n$perlCmdString\n" if ( $v > 3 );
         system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__
@@ -413,7 +415,8 @@ sub train_utr {
             print LOG "Found script $string.\n" if ( $v > 3 );
             $perlCmdString = "perl $string $otherfilesDir/utr.gb.train "
                            . "$onlyTrainSize "
-                           . "&> $errorfilesDir/randomSplit_utr2.err";
+                           . "$otherfilesDir/randomSplit_utr2.log "
+                           . "2> $errorfilesDir/randomSplit_utr2.err";
             print LOG "\n$perlCmdString\n" if ( $v > 3 );
             print "Before execution\n$perlCmdString\n";
             system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
