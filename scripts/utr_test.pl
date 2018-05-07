@@ -415,9 +415,11 @@ sub train_utr {
                            . "$onlyTrainSize "
                            . "&> $errorfilesDir/randomSplit_utr2.err";
             print LOG "\n$perlCmdString\n" if ( $v > 3 );
+            print "Before execution\n";
             system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
                 . " at line " . __LINE__
                 . "\nFailed to execute: $perlCmdString!\n" );
+            print "after exection\n";
         }
         # changing UTR parameters in species config file to "on"
         print STDOUT "NEXT STEP: Setting value of \"UTR\" in "
