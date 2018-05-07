@@ -415,7 +415,7 @@ sub train_utr {
             print LOG "Found script $string.\n" if ( $v > 3 );
             $perlCmdString = "perl $string $otherfilesDir/utr.gb.train "
                            . "$onlyTrainSize "
-                           . "$otherfilesDir/randomSplit_utr2.log "
+                           . "1> $otherfilesDir/randomSplit_utr2.log "
                            . "2> $errorfilesDir/randomSplit_utr2.err";
             print LOG "\n$perlCmdString\n" if ( $v > 3 );
             print "Before execution\n$perlCmdString\n";
