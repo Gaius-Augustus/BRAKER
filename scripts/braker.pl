@@ -339,7 +339,7 @@ ENDUSAGE
 # Declartion of global variables ###############################################
 
 my $v = 4; # determines what is printed to log
-my $version = 2.1.0;    # braker.pl version number
+my $version = "2.1.0";    # braker.pl version number
 my $rootDir;
 my $logString;          # stores log messages produced before opening log file
 my $prtStr;
