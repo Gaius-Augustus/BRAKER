@@ -441,7 +441,7 @@ my $crf;     # flag that determines whether CRF training should be tried
 my $keepCrf;
 my $nice;    # flag that determines whether system calls should be executed
              # with bash nice (default nice value)
-my ( $target_1, $target_2, $target_3 ) = 0;
+my ( $target_1, $target_2, $target_3, $target_4, $target_5) = 0;
                       # variables that store AUGUSTUS accuracy after different
                       # training steps
 my $prg;              # variable to store protein alignment tool
@@ -1040,6 +1040,8 @@ augustus("off");    # run augustus without UTR
 
 if ( $UTR eq "on" ) {
     train_utr();
+    wig2hints(); # convert coverage information to ep hints
+    augustus("on"); # run augustus with UTR
 }
 
 if( $annot ) {
@@ -5911,7 +5913,7 @@ sub training_augustus {
                         . "\nFailed to execute: $cmdString\n");
                 $target_3 = accuracy_calculator($stdoutfile);
                 print LOG "\# ". (localtime) . ": The accuracy after CRF "
-                    . "training is $target_2\n" if ($v > 3);
+                    . "training is $target_3\n" if ($v > 3);
             }
 
             # decide on whether to keep CRF parameters
@@ -6277,18 +6279,25 @@ sub gtf2gb {
 #   1) RNA-Seq only
 #   2) RNA-Seq and protein (with higher weight on protein)
 #   subsequently, prediction sets are joined with joingenes
+# * with ep hints (RNA-Seq) and all other hints and UTR parameters
 ################################################################################
 
 sub augustus {
     my $localUTR = shift;
+    $genesetID = "";
+    if( $localUTR eq "on" ) {
+        $genesetID = "_utr";
+    }
     print LOG "\# " . (localtime) . ": RUNNING AUGUSTUS\n" if ($v > 2);
     $augpath = "$AUGUSTUS_BIN_PATH/augustus";
     my @genome_files;
     my $genome_dir = "$otherfilesDir/genome_split";
-    my $augustus_dir           = "$otherfilesDir/augustus_tmp";
-    my $augustus_dir_ab_initio = "$otherfilesDir/augustus_ab_initio_tmp";
+    my $augustus_dir           = "$otherfilesDir/augustus_tmp$genesetID";
+    my $augustus_dir_ab_initio = "$otherfilesDir/augustus_ab_initio_tmp$genesetID";
+
+
     if (!uptodate( [ $extrinsicCfgFile, $hintsfile, $genome ],
-            ["$otherfilesDir/augustus.gff"] )
+            ["$otherfilesDir/augustus.hints$genesetID.gff"] )
         || $overwrite
         )
     {
@@ -6296,11 +6305,11 @@ sub augustus {
             prepare_genome( $genome_dir );
             if ($ab_initio) {
                 make_ab_initio_jobs( $augustus_dir_ab_initio, $genome_dir,
-                    $localUTR );
-                run_augustus_jobs( "$otherfilesDir/ab_initio.job.lst" );
+                    $localUTR, $genesetID );
+                run_augustus_jobs( "$otherfilesDir/ab_initio$genesetID.job.lst" );
                 join_aug_pred( $augustus_dir_ab_initio,
-                    "$otherfilesDir/augustus.ab_initio.gff" );
-                make_gtf("$otherfilesDir/augustus.ab_initio.gff");
+                    "$otherfilesDir/augustus.ab_initio$genesetID.gff" );
+                make_gtf("$otherfilesDir/augustus.ab_initio$genesetID.gff");
             }
             # single ex.cfg scenarios are:
             # EPmode == 1 -> ep.cfg
@@ -6328,23 +6337,22 @@ sub augustus {
                         assign_ex_cfg ("rnaseq.cfg");
                     }
                 }
-                copy_ex_cfg($extrinsicCfgFile, "ex1.cfg");
-                my $hintId = "hints";
+                copy_ex_cfg($extrinsicCfgFile, "ex1$genesetID.cfg");
+                my $hintId = "hints".$genesetID;
                 make_hints_jobs( $augustus_dir, $genome_dir, $hintsfile,
                     $extrinsicCfgFile, $localUTR, $hintId );
-                run_augustus_jobs( "$otherfilesDir/hints.job.lst" );
+                run_augustus_jobs( "$otherfilesDir/$hintId.job.lst" );
                 join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
                 clean_aug_jobs($hintId);
                 make_gtf("$otherfilesDir/augustus.$hintId.gff");
             }else{
-                run_augustus_with_joingenes_parallel($genome_dir, $localUTR);
+                run_augustus_with_joingenes_parallel($genome_dir, $localUTR, $genesetID);
             }
-        }
-        else {
+        } else {
             push( @genome_files, $genome );
              if ($ab_initio) {
-                run_augustus_single_core_ab_initio( $localUTR );
-                make_gtf("$otherfilesDir/augustus.ab_initio.gff");
+                run_augustus_single_core_ab_initio( $localUTR , $genesetID);
+                make_gtf("$otherfilesDir/augustus.ab_initio$genesetID.gff");
             }
             if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
                 if(defined($extrinsicCfgFile1)){
@@ -6368,12 +6376,13 @@ sub augustus {
                         assign_ex_cfg ("rnaseq.cfg");
                     }
                 }
+                my $hintId = "hints".$genesetID;
                 copy_ex_cfg($extrinsicCfgFile, "ex1.cfg");
                 run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile,
-                    $localUTR, "hints");
-                make_gtf("$otherfilesDir/augustus.hints.gff");
+                    $localUTR, $hintId);
+                make_gtf("$otherfilesDir/augustus.$hintId.gff");
             }else{
-                run_augustus_with_joingenes_single_core($localUTR);
+                run_augustus_with_joingenes_single_core($localUTR, $genesetID);
             }
         }
         print LOG "\# " . (localtime) . ": AUGUSTUS prediction complete\n"
@@ -7876,6 +7885,30 @@ sub train_utr {
                 . " at line " . __LINE__
                 . "\nFailed to execute: $perlCmdString!\n" );
         }
+
+        # run AUGUSTUS on UTR test set before UTR training
+        if( !uptodate( ["$otherfilesDir/utr.gb.test"], 
+            ["$otherfilesDir/fourthtest.out"] ) || $overwrite ) {
+            $augpath = "$AUGUSTUS_BIN_PATH/augustus";
+            $errorfile  = "$errorfilesDir/fourthtest.stderr";
+                $stdoutfile = "$otherfilesDir/fourthtest.stdout";
+                $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/utr.gb.test >$stdoutfile 2>$errorfile";
+            print LOG "\# "
+                . (localtime)
+                . ": Fourth AUGUSTUS accuracy test (no UTR parameters on UTR test set)\n" if ($v > 3);
+            print LOG "$cmdString\n\n" if ($v > 3);
+            system("$cmdString") == 0
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                    . "\nFailed to execute: $cmdString\n");
+            $target_4 = accuracy_calculator($stdoutfile);
+            print LOG "\# ". (localtime) . ": The accuracy before UTR training "
+                . "training is $target_4\n" if ($v > 3);
+        }
+
         # changing UTR parameters in species config file to "on"
         print LOG "NEXT STEP: Setting value of \"UTR\" in "
             . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg "
@@ -7944,9 +7977,89 @@ sub train_utr {
         system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__
             . "\nFailed to execute: $perlCmdString!\n" );
+
+        # run AUGUSTUS on UTR test set after UTR training
+        if( !uptodate( ["$otherfilesDir/utr.gb.test"], 
+            ["$otherfilesDir/fifthtest.out"] ) || $overwrite ) {
+            $augpath = "$AUGUSTUS_BIN_PATH/augustus";
+            $errorfile  = "$errorfilesDir/fifthtest.stderr";
+                $stdoutfile = "$otherfilesDir/fifthtest.stdout";
+                $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/utr.gb.test >$stdoutfile 2>$errorfile";
+            print LOG "\# "
+                . (localtime)
+                . ": Fifth AUGUSTUS accuracy test (with UTR parameters on UTR "
+                . "test set)\n" if ($v > 3);
+            print LOG "$cmdString\n\n" if ($v > 3);
+            system("$cmdString") == 0
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                    . "\nFailed to execute: $cmdString\n");
+            $target_5 = accuracy_calculator($stdoutfile);
+            print LOG "\# ". (localtime) . ": The accuracy after UTR training "
+                . "training is $target_5\n" if ($v > 3);
+
+            if($target_4 > $target_5){
+                print LOG "\# ". (localtime) . ": WARNING: UTR training "
+                    . "decreased AUGUSTUS ab initio accuracy!\n" if ($v > 3);
+            }
+        }
     }
     else {
         print "Skipping UTR parameter optimization. Already up to date.\n";
+    }
+}
+
+####################### wig2hints ##############################################
+# convert wiggle file (from RNA-Seq) to ep hints (only required for AUGUSTUS
+# prediction with UTRs)
+####################### wig2hints ##############################################
+sub wig2hints {
+    my $wiggle = "$otherfilesDir/merged.wig";
+    my $ep_hints_file = "$otherfilesDir/ep.hints";
+    if( not( uptodate( [$wiggle] , [$ep_hints_file] ) ) || $overwrite ){
+        $string = find(
+            "wig2hints.pl", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $perlCmdString = "";
+        if( $nice ) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "cat $wiggle | ";
+        if( $nice ) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string --margin=10 --minthresh=2 --minscore=4 "
+                       .  "--prune=0.1 --src=W --type=ep "
+                       .  "--UCSC=$otherfilesDir/unstranded.track --radius=4.5 "
+                       .  "--pri=4 --strand="." > $ep_hints_file "
+                       .  "2> $errorfilesDir/wig2hints.err";
+        print LOG "\# "
+            . (localtime)
+            . ": Converting wiggle file to exonpart hints for AUGUSTUS\n" 
+            if ($v > 3);
+        print LOG "$perlCmdString\n\n" if ($v > 3);
+        system("$perlCmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $perlCmdString\n");
+    }
+    if( not( uptodate( [$ep_hints_file], [$hintsfile] ) ) || $overwrite ) {
+        $cmdString = "";
+        if( $nice ) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "cat $ep_hints_file >> $hintsfile 2> $errorfilesDir/cat_exonpart_to_hintsfile.err";
+        print LOG "\# "
+            . (localtime)
+            . ": Concatenating exonpart hints from $ep_hints_file to $hintsfile:\n" 
+            if ($v > 3);
+        print LOG "$cmdString\n\n" if ($v > 3);
+        system("$cmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdString\n");
     }
 }
 
