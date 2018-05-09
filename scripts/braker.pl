@@ -347,7 +347,7 @@ my $alternatives_from_evidence = "true";
                  # output alternative transcripts based on explicit evidence
                  # from hints
 my $augpath;     # path to augustus
-my $rnaseq2utrPath;
+my $rnaseq2utr;
 my $augustus_cfg_path;        # augustus config path, higher priority than
                               # $AUGUSTUS_CONFIG_PATH on system
 my $augustus_bin_path;        # path to augustus folder binaries folder
@@ -358,7 +358,7 @@ my $AUGUSTUS_SCRIPTS_PATH;
 my @bam;                      # bam file names
 my $bamtools_path;
 my $BAMTOOLS_BIN_PATH;
-my $bam2wigPath;
+my $bam2wig;
 my $bool_species = "true";     # false, if $species contains forbidden words
 my $cmdString;    # to store shell commands
 my $CPU        = 1;      # number of CPUs that can be used
@@ -2245,16 +2245,16 @@ sub check_upfront {
     }
 
     #    check whether bam2wig is executable
-    $bam2wigPath = "$AUGUSTUS_BIN_PATH/../auxprogs/bam2wig/bam2wig";
+    $bam2wig = "$AUGUSTUS_BIN_PATH/bam2wig";
     if ( $UTR eq "on" && $skipAllTraining == 0 )
     {    # MIGHT WANT TO CHANGE THIS!
-        if ( not( -x $bam2wigPath ) ) {
-            if ( !-f $bam2wigPath ) {
+        if ( not( -x $bam2wig ) ) {
+            if ( !-f $bam2wig ) {
                 $prtStr
                     = "\# "
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "bam2wig executable not found at $bam2wigPath.\n";
+                    . "bam2wig executable not found at $bam2wig.\n";
                 $logString .= $prtStr;
             }
             else {
@@ -2262,13 +2262,13 @@ sub check_upfront {
                     = "\# "
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "$bam2wigPath not executable on this machine.\n";
+                    . "$bam2wig not executable on this machine.\n";
                 $logString .= $prtStr;
             }
             $prtStr
                 = "       UTR training from RNA-Seq is enabled. This requires "
                 . "bam2wig. Please check README.TXT of AUGUSTUS to compile "
-                . "bam2wig correctly.\n";
+                . "bam2wig.\n";
             $logString .= $prtStr;
             print STDERR $logString;
             exit(1);
@@ -2276,16 +2276,15 @@ sub check_upfront {
     }
 
     # check whether rnaseq2utr is executable
-    $rnaseq2utrPath = "$AUGUSTUS_BIN_PATH/../auxprogs/utrrnaseq/trunks/Debug/utrrnaseq";
-    # FIX WHEN TOOL MIGRATES TO AUGUSTUS REPOSITORY BEFORE RELEASE!
+    $rnaseq2utr = "$AUGUSTUS_BIN_PATH/utrrnaseq";
     if ( $UTR eq "on" && $skipAllTraining == 0 ) {
-        if ( not( -x $rnaseq2utrPath ) ) {
-            if ( !-f $rnaseq2utrPath ) {
+        if ( not( -x $rnaseq2utr ) ) {
+            if ( !-f $rnaseq2utr ) {
                 $prtStr
                     = "\# "
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "rnaseq2utr executable not found at $rnaseq2utrPath.\n";
+                    . "rnaseq2utr executable not found at $rnaseq2utr.\n";
                 $logString .= $prtStr;
             }
             else {
@@ -2293,7 +2292,7 @@ sub check_upfront {
                     = "\# "
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "$rnaseq2utrPath not executable on this machine.\n";
+                    . "$rnaseq2utr not executable on this machine.\n";
                 $logString .= $prtStr;
             }
             $prtStr
@@ -7580,7 +7579,7 @@ sub train_utr {
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString .= "$bam2wigPath merged.bam >$otherfilesDir/merged.wig "
+        $cmdString .= "$bam2wig merged.bam >$otherfilesDir/merged.wig "
                    .   "2> $errorfilesDir/bam2wig.err";
         print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
@@ -7595,7 +7594,7 @@ sub train_utr {
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString .= "$rnaseq2utrPath --in-scaffold-file $genome "
+        $cmdString .= "$rnaseq2utr--in-scaffold-file $genome "
                    .  "-C $otherfilesDir/stops.and.starts.gff "
                    .  "-I $otherfilesDir/rnaseq.utr.hints "
                    .  "-W $otherfilesDir/merged.wig "

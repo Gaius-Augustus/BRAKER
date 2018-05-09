@@ -42,7 +42,7 @@ my $rnaseq2utr_args = "";
 my $string;
 my $AUGUSTUS_BIN_PATH = "/home/katharina/SVN/augustus/trunks/bin/";
 my $AUGUSTUS_SCRIPTS_PATH = "/home/katharina/SVN/augustus/trunks/scripts/";
-my $flanking_DNA = 1000; # TODO: make sure that this is global in braker.pl
+my $flanking_DNA = 1000;
 my @splice = ("GTAG"); # TODO make sure there is a global @splice in braker!
 my $rounds = 3;
 my $CPU = 8;
