@@ -6284,7 +6284,7 @@ sub gtf2gb {
 
 sub augustus {
     my $localUTR = shift;
-    $genesetID = "";
+    my $genesetID = "";
     if( $localUTR eq "on" ) {
         $genesetID = "_utr";
     }
@@ -6427,52 +6427,78 @@ sub assign_ex_cfg {
 # * split genome for parallel AUGUSTUS execution
 ################################################################################
 
-sub prepare_genome{
-    print LOG "\# " . (localtime) . ": Preparing genome for running AUGUSTUS "
-    . "in parallel\n" if ($v > 2);
+sub prepare_genome {
     my $augustus_dir = shift;
-    if ( not( -d $augustus_dir ) ) {
+    # check whether genome has been split, already, cannot use uptodate because
+    # name of resulting files is unknown before splitting genome file
+    my $foundFastaFile;
+    if( -d $augustus_dir ) {
+        opendir(DIR, $augustus_dir) or die ("ERROR in file " . __FILE__
+            . " at line ". __LINE__
+            . "\nFailed to open directory $augustus_dir!\n");
+        while(my $f = readdir(DIR)) {
+            if($f =~ m/\.fa$/) {
+                $foundFastaFile = 1;
+            }
+        }
+        closedir(DIR)
+    }
+
+    if( not( $foundFastaFile ) || $overwrite ) {
+        # if augustus_dir already has contents, this leads to problems with
+        # renaming fasta files, therefore delete the entire directory in case
+        # of $overwrite
+        if( $overwrite && -d $augustus_dir ) {
+            rmtree( $augustus_dir ) or die ("ERROR in file " . __FILE__
+            . " at line ". __LINE__
+            . "\nFailed recursively delete directory $augustus_dir!\n");
+        }
+
+        print LOG "\# " . (localtime) . ": Preparing genome for running "
+            . "AUGUSTUS in parallel\n" if ($v > 2);
+
+        if ( not( -d $augustus_dir ) ) {
+            print LOG "\# "
+                . (localtime)
+                . ": Creating directory for storing AUGUSTUS files (hints, "
+                . "temporarily) $augustus_dir.\n" if ($v > 3);
+            mkdir $augustus_dir or die ("ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to create directory $augustus_dir!\n");
+        }
         print LOG "\# "
             . (localtime)
-            . ": Creating directory for storing AUGUSTUS files (hints, "
-            . "temporarily) $augustus_dir.\n" if ($v > 3);
-        mkdir $augustus_dir or die ("ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nFailed to create directory $augustus_dir!\n");
-    }
-    print LOG "\# "
-        . (localtime)
-        . ": splitting genome file in smaller parts for parallel execution of "
-        . "AUGUSTUS prediction\n" if ($v > 3);
-    $string = find(
-        "splitMfasta.pl",       $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    $errorfile = "$errorfilesDir/splitMfasta.stderr";
-
-    $perlCmdString = "";
-    if ($nice) {
-        $perlCmdString .= "nice ";
-    }
-    $perlCmdString
-        .= "perl $string $genome --outputpath=$augustus_dir 2>$errorfile";
-    print LOG "$perlCmdString\n" if ($v > 3);
-    system("$perlCmdString") == 0
-        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . ": splitting genome file in smaller parts for parallel execution of "
+            . "AUGUSTUS prediction\n" if ($v > 3);
+        $string = find(
+            "splitMfasta.pl",       $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+        $errorfile = "$errorfilesDir/splitMfasta.stderr";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString
+            .= "perl $string $genome --outputpath=$augustus_dir 2>$errorfile";
+        print LOG "$perlCmdString\n" if ($v > 3);
+        system("$perlCmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $perlCmdString\n");
 
-    # rename files according to scaffold name
-    $cmdString
-        = "cd $augustus_dir; for f in genome.split.*; do NAME=`grep \">\" \$f`; mv \$f \${NAME#>}.fa; done; cd ..\n";
-    print LOG $cmdString if ($v > 3);
-    system("$cmdString") == 0
-        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+        # rename files according to scaffold name
+        $cmdString = "cd $augustus_dir; for f in genome.split.*; "
+                   . "do NAME=`grep \">\" \$f`; mv \$f \${NAME#>}.fa; "
+                   . "done; cd ..\n";
+        print LOG $cmdString if ($v > 3);
+        system("$cmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
-    my @genome_files = `ls $augustus_dir`;
-    print LOG "\# "
-        . (localtime)
-        . ": Split genome file in "
-        . scalar(@genome_files)
-        . " parts, finished.\n" if ($v > 3);
+        my @genome_files = `ls $augustus_dir`;
+        print LOG "\# " . (localtime) . ": Split genome file in "
+        . scalar(@genome_files) . " parts, finished.\n" if ($v > 3);
+    }else{
+        print LOG "\# " . (localtime) . ": Skipping splitMfasta.pl because "
+            . "genome file has already been split.\n" if ($v > 3);
+    }
 }
 
 ####################### make_hints_jobs ########################################
@@ -6486,71 +6512,80 @@ sub make_hints_jobs{
     my $cfgFile = shift;
     my $localUTR = shift;
     my $hintId = shift;
-    print LOG "\# " . (localtime) . ": Making AUGUSTUS jobs with hintsfile "
-        . "$thisHintsfile, cfgFile $cfgFile, UTR status $localUTR, and hintId "
-        . "$hintId\n" if ($v > 2);
-    my @genome_files = `ls $genome_dir`;
-    my %scaffFileNames;
-    foreach (@genome_files) {
-        chomp;
-        $_ =~ m/(.*)\.\w+$/;
-        $scaffFileNames{$1} = "$genome_dir/$_";
-    }
-    if ( not( -d $augustus_dir ) && $CPU > 1) {
+    if( !uptodate([$genome, $thisHintsfile], ["$otherfilesDir/aug_$hintId.lst"] 
+        ) || $overwrite ) {
+        print LOG "\# " . (localtime) . ": Making AUGUSTUS jobs with hintsfile "
+            . "$thisHintsfile, cfgFile $cfgFile, UTR status $localUTR, and hintId "
+            . "$hintId\n" if ($v > 2);
+        my @genome_files = `ls $genome_dir`;
+        my %scaffFileNames;
+        foreach (@genome_files) {
+            chomp;
+            $_ =~ m/(.*)\.\w+$/;
+            $scaffFileNames{$1} = "$genome_dir/$_";
+        }  
+        if ( not( -d $augustus_dir ) && $CPU > 1) {
+            print LOG "\# " . (localtime)
+                . ": Creating directory for storing AUGUSTUS files (ab initio, "
+                . "temporarily) $augustus_dir.\n" if ($v > 3);
+            mkdir $augustus_dir or die ("ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to create directory $augustus_dir!\n");
+        }
         print LOG "\# "
             . (localtime)
-            . ": Creating directory for storing AUGUSTUS files (ab initio, "
-            . "temporarily) $augustus_dir.\n" if ($v > 3);
-        mkdir $augustus_dir or die ("ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nFailed to create directory $augustus_dir!\n");
-    }
-    print LOG "\# "
-        . (localtime)
-        . ": creating $otherfilesDir/aug_$hintId.lst for AUGUSTUS jobs\n" if ($v > 3);
-    open( ALIST, ">", "$otherfilesDir/aug_$hintId.lst" )
-        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . ": creating $otherfilesDir/aug_$hintId.lst for AUGUSTUS jobs\n" 
+            if ($v > 3);
+        open( ALIST, ">", "$otherfilesDir/aug_$hintId.lst" )
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nCould not open file $otherfilesDir/aug_$hintId.lst!\n");
-    # make list for creating augustus jobs
-    while ( my ( $locus, $size ) = each %scaffSizes ) {
-        print ALIST "$scaffFileNames{$locus}\t$thisHintsfile\t1\t$size\n";
+        # make list for creating augustus jobs
+        while ( my ( $locus, $size ) = each %scaffSizes ) {
+            print ALIST "$scaffFileNames{$locus}\t$thisHintsfile\t1\t$size\n";
+        }
+        close(ALIST) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $otherfilesDir/aug_$hintId.lst!\n");
+    }else{
+        print LOG "\# " . (localtime) . ": Skip making AUGUSTUS job list file "
+            . " with hintsfile $thisHintsfile and hintId $hintId because "
+            . "$otherfilesDir/aug_$hintId.lst is up to date.\n" if ($v > 3);
     }
-    close(ALIST)
-        or
-    die("ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $otherfilesDir/aug_$hintId.lst!\n");
-    print LOG "\# "
-        . (localtime)
-        . ": creating AUGUSTUS jobs (with $hintId)\n" if ($v > 3);
-    $string = find(
-        "createAugustusJoblist.pl", $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH,     $AUGUSTUS_CONFIG_PATH
-    );
-    $errorfile = "$errorfilesDir/createAugustusJoblist_$hintId.stderr";
-
-    $perlCmdString = "";
-    $perlCmdString .= "cd $otherfilesDir\n";
-    if ($nice) {
-        $perlCmdString .= "nice ";
-    }
-    $perlCmdString .= "perl $string --sequences=$otherfilesDir/aug_$hintId.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir "
-                   .  "--joblist=$hintId.job.lst --jobprefix=aug_".$hintId."_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
-                   .  "--extrinsicCfgFile=$cfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on "
-                   .  "--allow_hinted_splicesites=gcag,atac ";
-    if ( defined($optCfgFile) ) {
-        $perlCmdString .= " --optCfgFile=$optCfgFile";
-    }
-    if ($soft_mask) {
-        $perlCmdString .= " --softmasking=1";
-    }
-    if ($augustus_args) {
-        $perlCmdString .= " $augustus_args";
-    }
-    $perlCmdString .= "\" 2>$errorfile\n";
-    $perlCmdString .= "cd ..\n";
-    print LOG "$perlCmdString" if ($v > 3);
-    system("$perlCmdString") == 0
-        or die("ERROR in file " . __FILE__ ." at line "
+    if( !uptodate(["$otherfilesDir/aug_$hintId.lst"], 
+        ["$otherfilesDir/$hintId.job.lst"]) || $overwrite ) {
+        print LOG "\# " . (localtime)
+            . ": creating AUGUSTUS jobs (with $hintId)\n" if ($v > 3);
+        $string = find(
+            "createAugustusJoblist.pl", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH,     $AUGUSTUS_CONFIG_PATH );
+        $errorfile = "$errorfilesDir/createAugustusJoblist_$hintId.stderr";
+        $perlCmdString = "";
+        $perlCmdString .= "cd $otherfilesDir\n";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string --sequences=$otherfilesDir/aug_$hintId.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir "
+                       .  "--joblist=$otherfilesDir/$hintId.job.lst --jobprefix=aug_".$hintId."_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                       .  "--extrinsicCfgFile=$cfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on "
+                       .  "--allow_hinted_splicesites=gcag,atac ";
+        if ( defined($optCfgFile) ) {
+            $perlCmdString .= " --optCfgFile=$optCfgFile";
+        }
+        if ($soft_mask) {
+            $perlCmdString .= " --softmasking=1";
+        }
+        if ($augustus_args) {
+            $perlCmdString .= " $augustus_args";
+        }
+        $perlCmdString .= "\" 2>$errorfile\n";
+        $perlCmdString .= "cd ..\n";
+        print LOG "$perlCmdString" if ($v > 3);
+        system("$perlCmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line "
             . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+    }else{
+        print LOG "\# " . (localtime) . ": Skip making AUGUSTUS jobs with "
+            . "hintsfile $thisHintsfile and hintId $hintId because "
+            . "$otherfilesDir/$hintId.job.lst is up to date.\n" if ($v > 3);
+    }
 }
 
 ####################### make_ab_initio_jobs ####################################
@@ -6561,77 +6596,97 @@ sub make_ab_initio_jobs{
     my $augustus_dir_ab_initio = shift;
     my $augustus_dir = shift;
     my $localUTR = shift;
-    print LOG "\# " . (localtime) . ": Creating AUGUSTUS ab initio jobs\n"
-        if ($v > 2);
-    my @genome_files = `ls $augustus_dir`;
-    my %scaffFileNames;
-    foreach (@genome_files) {
-        chomp;
-        $_ =~ m/(.*)\.\w+$/;
-        $scaffFileNames{$1} = "$augustus_dir/$_";
+    my $genesetID = shift;
+    if( !uptodate( [$genome], ["$otherfilesDir/augustus_ab_initio.lst"])
+        || $overwrite ) {
+        print LOG "\# " . (localtime) . ": Creating AUGUSTUS ab initio jobs\n"
+            if ($v > 2);
+        my @genome_files = `ls $augustus_dir`;
+        my %scaffFileNames;
+        foreach (@genome_files) {
+            chomp;
+            $_ =~ m/(.*)\.\w+$/;
+            $scaffFileNames{$1} = "$augustus_dir/$_";
+        }
+        if ( not( -d $augustus_dir_ab_initio ) && $CPU > 1) {
+            print LOG "\# " . (localtime)
+                . ": Creating directory for storing AUGUSTUS files (ab initio, "
+                . "temporarily) $augustus_dir_ab_initio.\n" if ($v > 3);
+            mkdir $augustus_dir_ab_initio or die ("ERROR in file " . __FILE__
+                . " at line ". __LINE__
+                ."\nFailed to create directory $augustus_dir_ab_initio!\n");
+        }
+        print LOG "\# " . (localtime)
+            . ": creating $otherfilesDir/aug_ab_initio.lst for AUGUSTUS jobs\n"
+            if ($v > 3);
+        open( ILIST, ">", "$otherfilesDir/aug_ab_initio.lst" )
+            or die(
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir/aug_ab_initio.lst!\n" );
+        while ( my ( $locus, $size ) = each %scaffSizes ) {
+            print ILIST "$scaffFileNames{$locus}\t1\t$size\n";
+        }
+        close(ILIST) or die(
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            ."\nCould not close file $otherfilesDir/aug_ab_initio.lst!\n" );
+    } else {
+        print LOG "\# " . (localtime)
+            . ": Using existing file  $otherfilesDir/aug_ab_initio.lst\n"
+            if ($v > 3);
     }
-    if ( not( -d $augustus_dir_ab_initio ) && $CPU > 1) {
-        print LOG "\# "
-            . (localtime)
-            . ": Creating directory for storing AUGUSTUS files (ab initio, "
-            . "temporarily) $augustus_dir_ab_initio.\n" if ($v > 3);
-        mkdir $augustus_dir_ab_initio or die ("ERROR in file " . __FILE__
-            . " at line ". __LINE__
-            ."\nFailed to create directory $augustus_dir_ab_initio!\n");
-    }
-    print LOG "\# "
-        . (localtime)
-        . ": creating $otherfilesDir/aug_ab_initio.lst for AUGUSTUS jobs\n"
-        if ($v > 3);
-    open( ILIST, ">", "$otherfilesDir/aug_ab_initio.lst" )
-        or die(
-        "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not open file $otherfilesDir/aug_ab_initio.lst!\n" );
-    while ( my ( $locus, $size ) = each %scaffSizes ) {
-        print ILIST "$scaffFileNames{$locus}\t1\t$size\n";
-    }
-    close(ILIST)
-        or die(
-        "ERROR in file " . __FILE__ ." at line ". __LINE__
-        ."\nCould not close file $otherfilesDir/aug_ab_initio.lst!\n" );
-    $string = find(
-        "createAugustusJoblist.pl", $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH,     $AUGUSTUS_CONFIG_PATH
-    );
-    $errorfile
-        = "$errorfilesDir/createAugustusJoblist_ab_initio.stderr";
 
-    $perlCmdString = "";
-    $perlCmdString = "cd $otherfilesDir\n";
-    if ($nice) {
-        $perlCmdString .= "nice ";
-    }
-    $perlCmdString .= "perl $string --sequences=$otherfilesDir/aug_ab_initio.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir_ab_initio "
-                   .  "--joblist=ab_initio.job.lst --jobprefix=aug_ab_initio_ --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR "
-                   .  "--exonnames=on --codingseq=on ";
-    if ($soft_mask) {
-        $perlCmdString .= " --softmasking=1";
-    }
-    $perlCmdString .= "\" 2>$errorfile\n";
-    $perlCmdString .= "cd ..\n";
-    print LOG "$perlCmdString" if ($v > 3);
-    system("$perlCmdString") == 0
-        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+    if( !uptodate(["$otherfilesDir/aug_ab_initio.lst"], []) || $overwrite ) {
+        $string = find(
+            "createAugustusJoblist.pl", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH,     $AUGUSTUS_CONFIG_PATH);
+        $errorfile
+        = "$errorfilesDir/createAugustusJoblist_ab_initio$genesetID.stderr";
+
+        $perlCmdString = "";
+        $perlCmdString = "cd $otherfilesDir\n";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string "
+                       .  "--sequences=$otherfilesDir/aug_ab_initio.lst "
+                       .  "--wrap=\"#!/bin/bash\" --overlap=5000 "
+                       .  "--chunksize=$chunksize "
+                       .  "--outputdir=$augustus_dir_ab_initio "
+                       .  "--joblist=$otherfilesDir/ab_initio$genesetID.job.lst "
+                       .  "--jobprefix=aug_ab_initio_ "
+                       .  "--command \"$augpath --species=$species "
+                       .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                       .  "--UTR=$localUTR  --exonnames=on --codingseq=on ";
+        if ($soft_mask) {
+            $perlCmdString .= " --softmasking=1";
+        }
+        $perlCmdString .= "\" 2>$errorfile\n";
+        $perlCmdString .= "cd ..\n";
+        print LOG "$perlCmdString" if ($v > 3);
+        system("$perlCmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $perlCmdString\n");
+    }else{
+        print LOG "\# " . (localtime)
+            . ": Skipping creation of AUGUSTUS ab inito jobs because they "
+            . "already exist ($otherfilesDir/ab_initio$geneID.job.lst).\n"
+            if ($v > 3);
+    }
 }
 
 ####################### run_augustus_jobs ######################################
-# * run parallel AUGUSTUS jobs
+# * run parallel AUGUSTUS jobs (ForkManager)
 ################################################################################
 
 sub run_augustus_jobs {
-    print LOG "\# " . (localtime) . ": Running AUGUSTUS jobs\n" if ($v > 2);
     my $jobLst = shift;
+    print LOG "\# " . (localtime) . ": Running AUGUSTUS jobs from $jobList\n" 
+        if ($v > 2);
     my $pm = new Parallel::ForkManager($CPU);
     my $cJobs = 0;
     open( AIJOBS, "<", $jobLst )
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nCould not open file $jobLst!\n");
+        . "\nCould not open file $jobLst!\n");
     my @aiJobs;
     while (<AIJOBS>) {
         chomp;
@@ -6639,19 +6694,17 @@ sub run_augustus_jobs {
     }
     close(AIJOBS)
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nCould not close file $jobLst!\n");
+        . "\nCould not close file $jobLst!\n");
     foreach(@aiJobs){
         $cJobs++;
-        print LOG "\# "
-            . (localtime)
-            . ": Running AUGUSTUS job $cJobs"
-            . "\n" if ($v > 3);
+        print LOG "\# " . (localtime) . ": Running AUGUSTUS job $cJobs\n" 
+            if ($v > 3);
         $cmdString = "$_";
         print LOG "$cmdString\n" if ($v > 3);
         my $pid = $pm->start and next;
         system("$cmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nFailed to execute: $cmdString!\n");
+            . "\nFailed to execute: $cmdString!\n");
         $pm->finish;
     }
     $pm->wait_all_children;
@@ -6668,14 +6721,12 @@ sub join_aug_pred {
     my $target_file = shift;
     $string = find(
         "join_aug_pred.pl",     $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
     my $cat_file = "$otherfilesDir/augustus.tmp.gff";
     my @t = split(/\//, $pred_dir);
     $t[scalar(@t)-1] =~ s/\///;
     my $error_cat_file = "$errorfilesDir/augustus_".$t[scalar(@t)-1].".err";
-    print LOG "\# "
-        . (localtime)
+    print LOG "\# " . (localtime)
         . ": Concatenating AUGUSTUS output files in $pred_dir\n" if ($v > 3);
     opendir( DIR, $pred_dir ) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to open directory $pred_dir!\n");
@@ -6885,25 +6936,33 @@ sub run_augustus_with_joingenes_parallel {
         . "parallel mode\n" if ($v > 2);
     my $genome_dir = shift;
     my $localUTR = shift;
-    # if RNASeq and protein hints are given
-    my $adjustedHintsFile = "$hintsfile.Ppri5";
-    if( ! $ETPmode ) {
-        $cmdString = "cp $hintsfile $adjustedHintsFile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-    }else{
-        adjust_pri( $hintsfile, $adjustedHintsFile, "P", 5);
-    }
-    if ( $ETPmode == 1 && -e "$genemarkDir/evidence.gff") {
-        $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    my $genesetId = shift;
+
+    if( !uptodate( [$hintsfile], [$adjustedHintsFile]) || $overwrite ) {
+        # if RNASeq and protein hints are given
+        my $adjustedHintsFile = "$hintsfile.Ppri5";
+        if( ! $ETPmode ) {
+            $cmdString = "cp $hintsfile $adjustedHintsFile";
+            print LOG "$cmdString\n" if ($v > 3);
+            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+        }else{
+            adjust_pri( $hintsfile, $adjustedHintsFile, "P", 5);
+        }
+        if ( $ETPmode == 1 && -e "$genemarkDir/evidence.gff") {
+            $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+            print LOG "$cmdString\n" if ($v > 3);
+            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+        } else {
+            print LOG "\# " . (localtime) . "WARNING: ETPmode enabled but "
+                . "$genemarkDir/evidence.gff does not exist!\n" if ($v > 0);
+        }
     } else {
-        print LOG "WARNING: ETPmode enabled but $genemarkDir/evidence.gff does "
-            . "not exist!\n" if ($v > 0);
+        print LOG "\# " . (localtime) . " Skip creating adjusted hints file "
+            . "$adjustedHintsFile because it is up to date.\n" if($v > 3);
     }
+    
     if( defined ($extrinsicCfgFile1) ) {
         $extrinsicCfgFile = $extrinsicCfgFile1;
     }else{
@@ -7130,56 +7189,64 @@ sub get_anno_fasta {
 
 sub make_gtf {
     my $AUG_pred = shift;
-    print LOG "\# " . (localtime) . ": Making a gtf file from $AUG_pred\n"
-    if ($v > 2);
     @_ = split( /\//, $AUG_pred );
     my $name_base = substr( $_[-1],    0, -4 );
     my $gtf_file_tmp = substr( $AUG_pred, 0, -4 ) . ".tmp.gtf";
     my $gtf_file  = substr( $AUG_pred, 0, -4 ) . ".gtf";
-    my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gtf.stderr";
-    my $perlstring = find(
-        "gtf2gff.pl",           $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    $cmdString = "";
-    if ($nice) {
-        $cmdString .= "nice ";
-    }
-    my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon --out=$gtf_file_tmp 2>$errorfile";
-    print LOG "$cmdString\n\n" if ($v > 3);
-    system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-        . " at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
-    open (GTF, "<", $gtf_file_tmp) or die("ERROR in file " . __FILE__
-        . " at line ". __LINE__ ."\nCannot open file $gtf_file_tmp\n");
-    open (FINALGTF, ">", $gtf_file) or die("ERROR in file " . __FILE__
-        . " at line ". __LINE__ ."\nCannot open file $gtf_file\n");
-    while(<GTF>){
-      if(not($_ =~ m/\tterminal\t/) && not($_ =~ m/\tinternal\t/) && not ($_ =~ m/\tinitial\t/) && not ($_ =~ m/\tsingle\t/)) {
-            print FINALGTF $_;
-      }
-    }
-    close (FINALGTF) or die ("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nCannot close file $gtf_file\n");
-    close(GTF) or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nCannot close file $gtf_file_tmp\n");
-    if ($gff3) {
-        my $gff3_file  = substr( $AUG_pred, 0, -4 ) . ".gff3";
-        my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
+    if( !uptodate([$AUG_pred], [$gtf_file]) || $overwrite ) {
+        print LOG "\# " . (localtime) . ": Making a gtf file from $AUG_pred\n"
+            if ($v > 2);
+        my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gtf.stderr";
         my $perlstring = find(
             "gtf2gff.pl",           $AUGUSTUS_BIN_PATH,
-            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-        );
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH );
         $cmdString = "";
         if ($nice) {
             $cmdString .= "nice ";
         }
-        my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
-        print LOG "\# "
-            . (localtime)
-            . ": Making a gff3 file from $AUG_pred\n" if ($v > 3);
-        print LOG "$cmdString\n\n";
+        my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon --out=$gtf_file_tmp 2>$errorfile";
+        print LOG "$cmdString\n\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+        open (GTF, "<", $gtf_file_tmp) or die("ERROR in file " . __FILE__
+            . " at line ". __LINE__ ."\nCannot open file $gtf_file_tmp\n");
+        open (FINALGTF, ">", $gtf_file) or die("ERROR in file " . __FILE__
+            . " at line ". __LINE__ ."\nCannot open file $gtf_file\n");
+        while(<GTF>){
+            if(not($_ =~ m/\tterminal\t/) && not($_ =~ m/\tinternal\t/) && not ($_ =~ m/\tinitial\t/) && not ($_ =~ m/\tsingle\t/)) {
+                print FINALGTF $_;
+            }
+        }
+        close (FINALGTF) or die ("ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nCannot close file $gtf_file\n");
+        close(GTF) or die("ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nCannot close file $gtf_file_tmp\n");
+    }else{
+        print LOG "\# " . (localtime) . ": Skip making gtf file from $AUG_Pred "
+            . "because $gtf_file is up to date.\n" if ($v > 3);
+    }
+    if ($gff3) {
+        my $gff3_file  = substr( $AUG_pred, 0, -4 ) . ".gff3";
+        if( !uptodate([$AUG_pred], [$gff3_file]) || $overwrite ) {
+            my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
+            my $perlstring = find(
+                "gtf2gff.pl",           $AUGUSTUS_BIN_PATH,
+                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH );
+            $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
+            print LOG "\# " . (localtime)
+                . ": Making a gff3 file from $AUG_pred\n" if ($v > 3);
+            print LOG "$cmdString\n\n";
+            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                . " at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+        }else{
+            print LOG "\# " . (localtime)
+                . ": Skip making a gff3 file from $AUG_pred because $gff3_file "
+                . "is up to date.\n" if ($v > 3);
+        }
     }
 }
 
@@ -7683,7 +7750,7 @@ sub train_utr {
             . "\nFailed to execute: $perlCmdString!\n" );
 
         # assign LOCI locations to txIDs
-        open (TRAINUTRGB1, "<", "$otherfilesDir/utr.gb") or die( 
+        open (TRAINUTRGB1, "<", "$otherfilesDir/utr.gb") or die(
             "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not open file $otherfilesDir/utr.gb!\n" );
 
@@ -7696,15 +7763,15 @@ sub train_utr {
                 $txInUtrGb1{$1} = $txLocus;
             }
         }
-        close (TRAINUTRGB1) or die( 
+        close (TRAINUTRGB1) or die(
             "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not close file $otherfilesDir/utr.gb!\n" );
 
         # find those genes in gtf that ended up in gb file
-        open(GENES, "<", "$otherfilesDir/genes.gtf") or die( "ERROR in file " 
+        open(GENES, "<", "$otherfilesDir/genes.gtf") or die( "ERROR in file "
             . __FILE__ . " at line " . __LINE__
             . "\nCould not open file $otherfilesDir/genes.lst!\n" );
-        open(GENESINGB, ">", "$otherfilesDir/genes_in_gb.gtf") or die( 
+        open(GENESINGB, ">", "$otherfilesDir/genes_in_gb.gtf") or die(
             "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not open file $otherfilesDir/genes_in_gb.gtf!\n" );
         while(<GENES>){
@@ -7714,10 +7781,10 @@ sub train_utr {
                 }
             }
         }
-        close(GENESINGB) or die( "ERROR in file " 
+        close(GENESINGB) or die( "ERROR in file "
             . __FILE__ . " at line " . __LINE__
             . "\nCould not close file $otherfilesDir/genes_in_gb.gtf!\n" );
-        close(GENES) or die( "ERROR in file " 
+        close(GENES) or die( "ERROR in file "
             . __FILE__ . " at line " . __LINE__
             . "\nCould not close file $otherfilesDir/genes.lst!\n" );
 
@@ -7789,7 +7856,7 @@ sub train_utr {
                        .  "$otherfilesDir/utr.gb 1> $otherfilesDir/utr.nr.gb "
                        .  "2> $errorfilesDir/utr.filterGenesIn.stderr";
         print LOG "\# " . (localtime)
-            . ": Filtering nonredundant loci into $otherfilesDir/utr.nr.gb:\n" 
+            . ": Filtering nonredundant loci into $otherfilesDir/utr.nr.gb:\n"
             if ($v > 3);
         print LOG "$perlCmdString\n\n" if ($v > 3);
         system("$perlCmdString") == 0
@@ -7808,7 +7875,7 @@ sub train_utr {
                     $nLociUtrGb2++;
                 }
             }
-            close (TRAINUTRGB2) or  die( "ERROR in file " . __FILE__ 
+            close (TRAINUTRGB2) or  die( "ERROR in file " . __FILE__
                 . " at line " . __LINE__
                 . "\nCould not close file $otherfilesDir/utr.nr.gb!\n" );
             print LOG "\# "
@@ -7887,7 +7954,7 @@ sub train_utr {
         }
 
         # run AUGUSTUS on UTR test set before UTR training
-        if( !uptodate( ["$otherfilesDir/utr.gb.test"], 
+        if( !uptodate( ["$otherfilesDir/utr.gb.test"],
             ["$otherfilesDir/fourthtest.out"] ) || $overwrite ) {
             $augpath = "$AUGUSTUS_BIN_PATH/augustus";
             $errorfile  = "$errorfilesDir/fourthtest.stderr";
@@ -7979,7 +8046,7 @@ sub train_utr {
             . "\nFailed to execute: $perlCmdString!\n" );
 
         # run AUGUSTUS on UTR test set after UTR training
-        if( !uptodate( ["$otherfilesDir/utr.gb.test"], 
+        if( !uptodate( ["$otherfilesDir/utr.gb.test"],
             ["$otherfilesDir/fifthtest.out"] ) || $overwrite ) {
             $augpath = "$AUGUSTUS_BIN_PATH/augustus";
             $errorfile  = "$errorfilesDir/fifthtest.stderr";
@@ -8039,7 +8106,7 @@ sub wig2hints {
                        .  "2> $errorfilesDir/wig2hints.err";
         print LOG "\# "
             . (localtime)
-            . ": Converting wiggle file to exonpart hints for AUGUSTUS\n" 
+            . ": Converting wiggle file to exonpart hints for AUGUSTUS\n"
             if ($v > 3);
         print LOG "$perlCmdString\n\n" if ($v > 3);
         system("$perlCmdString") == 0
@@ -8054,7 +8121,7 @@ sub wig2hints {
         $cmdString .= "cat $ep_hints_file >> $hintsfile 2> $errorfilesDir/cat_exonpart_to_hintsfile.err";
         print LOG "\# "
             . (localtime)
-            . ": Concatenating exonpart hints from $ep_hints_file to $hintsfile:\n" 
+            . ": Concatenating exonpart hints from $ep_hints_file to $hintsfile:\n"
             if ($v > 3);
         print LOG "$cmdString\n\n" if ($v > 3);
         system("$cmdString") == 0
