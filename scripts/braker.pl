@@ -6373,7 +6373,11 @@ sub augustus {
                             assign_ex_cfg ("ep.cfg");
                         }
                     }elsif( $foundProt==0 && $foundRNASeq > 0) {
-                        assign_ex_cfg ("rnaseq.cfg");
+                        if($localUTR eq "off") {
+                            assign_ex_cfg ("rnaseq.cfg");
+                        }else{
+                            assign_ex_cfg ("rnaseq_utr.cfg");
+                        }
                     }
                 }
                 my $hintId = "hints".$genesetID;
@@ -6596,7 +6600,7 @@ sub make_ab_initio_jobs{
     my $augustus_dir_ab_initio = shift;
     my $augustus_dir = shift;
     my $localUTR = shift;
-    my $genesetID = shift;
+    my $genesetId = shift;
     if( !uptodate( [$genome], ["$otherfilesDir/augustus_ab_initio.lst"])
         || $overwrite ) {
         print LOG "\# " . (localtime) . ": Creating AUGUSTUS ab initio jobs\n"
@@ -6635,12 +6639,13 @@ sub make_ab_initio_jobs{
             if ($v > 3);
     }
 
-    if( !uptodate(["$otherfilesDir/aug_ab_initio.lst"], []) || $overwrite ) {
+    if( !uptodate(["$otherfilesDir/aug_ab_initio.lst"], 
+        ["$otherfilesDir/ab_initio$genesetId.job.lst"]) || $overwrite ) {
         $string = find(
             "createAugustusJoblist.pl", $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH,     $AUGUSTUS_CONFIG_PATH);
         $errorfile
-        = "$errorfilesDir/createAugustusJoblist_ab_initio$genesetID.stderr";
+        = "$errorfilesDir/createAugustusJoblist_ab_initio$genesetId.stderr";
 
         $perlCmdString = "";
         $perlCmdString = "cd $otherfilesDir\n";
@@ -6652,7 +6657,7 @@ sub make_ab_initio_jobs{
                        .  "--wrap=\"#!/bin/bash\" --overlap=5000 "
                        .  "--chunksize=$chunksize "
                        .  "--outputdir=$augustus_dir_ab_initio "
-                       .  "--joblist=$otherfilesDir/ab_initio$genesetID.job.lst "
+                       .  "--joblist=$otherfilesDir/ab_initio$genesetId.job.lst "
                        .  "--jobprefix=aug_ab_initio_ "
                        .  "--command \"$augpath --species=$species "
                        .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
@@ -6669,7 +6674,7 @@ sub make_ab_initio_jobs{
     }else{
         print LOG "\# " . (localtime)
             . ": Skipping creation of AUGUSTUS ab inito jobs because they "
-            . "already exist ($otherfilesDir/ab_initio$geneID.job.lst).\n"
+            . "already exist ($otherfilesDir/ab_initio$genesetId.job.lst).\n"
             if ($v > 3);
     }
 }
@@ -6680,7 +6685,7 @@ sub make_ab_initio_jobs{
 
 sub run_augustus_jobs {
     my $jobLst = shift;
-    print LOG "\# " . (localtime) . ": Running AUGUSTUS jobs from $jobList\n" 
+    print LOG "\# " . (localtime) . ": Running AUGUSTUS jobs from $jobLst\n" 
         if ($v > 2);
     my $pm = new Parallel::ForkManager($CPU);
     my $cJobs = 0;
@@ -6808,22 +6813,25 @@ sub join_aug_pred {
 
 sub run_augustus_single_core_ab_initio {
     my $localUTR = shift;
+    my $genesetId = shift;
     my $aug_ab_initio_err
-        = "$errorfilesDir/augustus.ab_initio.stderr";
-    my $aug_ab_initio_out = "$otherfilesDir/augustus.ab_initio.gff";
+        = "$errorfilesDir/augustus.ab_initio$genesetId.stderr";
+    my $aug_ab_initio_out = "$otherfilesDir/augustus.ab_initio$genesetId.gff";
     $cmdString         = "";
     if ($nice) {
         $cmdString .= "nice ";
     }
-    $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --UTR=$localUTR --exonnames=on --codingseq=on";
+    $cmdString .= "$augpath --species=$species "
+               .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+               .  "--UTR=$localUTR --exonnames=on --codingseq=on";
     if ($soft_mask) {
         $cmdString .= " --softmasking=1";
     }
-    $cmdString
-        .= " $genome 1>$aug_ab_initio_out 2>$aug_ab_initio_err";
+    $cmdString .= " $genome 1>$aug_ab_initio_out 2>$aug_ab_initio_err";
     print LOG "\# "
         . (localtime)
-        . ": Running AUGUSTUS in ab initio mode for file $genome\n" if ($v > 2);
+        . ": Running AUGUSTUS in ab initio mode for file $genome with "
+        . "gensetsetId $genesetId.\n" if ($v > 2);
     print LOG "$cmdString\n\n" if ($v > 3);
     system("$cmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -6937,10 +6945,9 @@ sub run_augustus_with_joingenes_parallel {
     my $genome_dir = shift;
     my $localUTR = shift;
     my $genesetId = shift;
-
-    if( !uptodate( [$hintsfile], [$adjustedHintsFile]) || $overwrite ) {
-        # if RNASeq and protein hints are given
-        my $adjustedHintsFile = "$hintsfile.Ppri5";
+    # if RNASeq and protein hints are given
+    my $adjustedHintsFile = "$hintsfile.Ppri5";
+    if( !uptodate( [$hintsfile], [$adjustedHintsFile]) || $overwrite ) {    
         if( ! $ETPmode ) {
             $cmdString = "cp $hintsfile $adjustedHintsFile";
             print LOG "$cmdString\n" if ($v > 3);
@@ -6962,20 +6969,20 @@ sub run_augustus_with_joingenes_parallel {
         print LOG "\# " . (localtime) . " Skip creating adjusted hints file "
             . "$adjustedHintsFile because it is up to date.\n" if($v > 3);
     }
-    
+
     if( defined ($extrinsicCfgFile1) ) {
         $extrinsicCfgFile = $extrinsicCfgFile1;
     }else{
         assign_ex_cfg("gth.cfg");
     }
     copy_ex_cfg($extrinsicCfgFile, "ex1.cfg");
-    my $augustus_dir = "$otherfilesDir/augustus_tmp_Ppri5";
+    my $augustus_dir = "$otherfilesDir/augustus_tmp_Ppri5$genesetId";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile,
-        $extrinsicCfgFile, $localUTR, "Ppri5");
-    run_augustus_jobs( "$otherfilesDir/Ppri5.job.lst" );
-    join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5.gff" );
-    clean_aug_jobs("Ppri5");
-    make_gtf("$otherfilesDir/augustus.Ppri5.gff");
+        $extrinsicCfgFile, $localUTR, "Ppri5", $genesetId);
+    run_augustus_jobs( "$otherfilesDir/Ppri5$genesetId.job.lst" );
+    join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5$genesetId.gff" );
+    clean_aug_jobs("Ppri5$genesetId");
+    make_gtf("$otherfilesDir/augustus.Ppri5$genesetId.gff");
     $adjustedHintsFile = "$hintsfile.E";
     get_rnaseq_hints($hintsfile, $adjustedHintsFile);
     if ( $ETPmode == 1 && ( -e "$genemarkDir/evidence.gff" ) ) {
@@ -6986,19 +6993,21 @@ sub run_augustus_with_joingenes_parallel {
     }
     if (defined ($extrinsicCfgFile2)) {
         $extrinsicCfgFile = $extrinsicCfgFile2;
-    }else{
+    }elsif($localUTR eq "off"){
         assign_ex_cfg("rnaseq.cfg");
+    }else{
+        assign_ex_cfg("rnaseq_utr.cfg");
     }
     copy_ex_cfg($extrinsicCfgFile, "ex2.cfg");
-    $augustus_dir = "$otherfilesDir/augustus_tmp_E";
+    $augustus_dir = "$otherfilesDir/augustus_tmp_E$genesetId";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile,
-        $extrinsicCfgFile, $localUTR, "E");
-    run_augustus_jobs( "$otherfilesDir/E.job.lst" );
-    join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E.gff" );
-    clean_aug_jobs("E");
-    make_gtf("$otherfilesDir/augustus.E.gff");
-    joingenes("$otherfilesDir/augustus.Ppri5.gtf",
-        "$otherfilesDir/augustus.E.gtf");
+        $extrinsicCfgFile, $localUTR, "E", $genesetId);
+    run_augustus_jobs( "$otherfilesDir/E$genesetId.job.lst" );
+    join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E$genesetId.gff" );
+    clean_aug_jobs("E$genesetId");
+    make_gtf("$otherfilesDir/augustus.E$genesetId.gff");
+    joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gtf",
+        "$otherfilesDir/augustus.E$genesetId.gtf", $genesetId);
 }
 
 ####################### run_augustus_with_joingenes_single_core ################
@@ -7009,54 +7018,95 @@ sub run_augustus_with_joingenes_parallel {
 #          adding genes missed by joingenes to final gene set
 ################################################################################
 
-sub run_augustus_with_joingenes_single_core{
+sub run_augustus_with_joingenes_single_core {
     print LOG "\# " . (localtime) . ": Running AUGUSTUS with joingenes in "
         . "single core mode\n" if ($v > 2);
     my $localUTR = shift;
+    my $genesetId = shift;
     # if RNASeq and protein hints are given
     my $adjustedHintsFile = "$hintsfile.Ppri5";
-    if( ! $ETPmode ) {
-        $cmdString = "cp $hintsfile $adjustedHintsFile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+    if( !uptodate([$hintsfile],[$adjustedHintsFile]) || $overwrite ) {
+        if( ! $ETPmode ) {
+            $cmdString = "cp $hintsfile $adjustedHintsFile";
+            print LOG "$cmdString\n" if ($v > 3);
+            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+        }else{
+            adjust_pri( $hintsfile, $adjustedHintsFile, "P", 5);
+        }
+        if ( $ETPmode == 1 && (-e  "$genemarkDir/evidence.gff" )) {
+            $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+            print LOG "$cmdString\n" if ($v > 3);
+            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+        }
+    } else {
+        print LOG "\# " . (localtime) . ": Skip making adjusted hints file "
+            . "$adjustedHintsFile from hintsfile $hintsfile because file is up "
+            . "to date.\n" if ($v > 3);
+    }
+
+    if( !uptodate( [$adjustedHintsFile], 
+        ["$otherfilesDir/augustus.Ppri5$genesetId.gff"] ) || $overwrite ) {
+        if( defined ($extrinsicCfgFile1) ) {
+            $extrinsicCfgFile = $extrinsicCfgFile1;
+        }else{
+            assign_ex_cfg("gth.cfg");
+        }
+        copy($extrinsicCfgFile, "ex1.cfg");
+        run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
+            $localUTR, "Ppri5$genesetId");
+        make_gtf("$otherfilesDir/augustus.Ppri5$genesetId.gff");
     }else{
-        adjust_pri( $hintsfile, $adjustedHintsFile, "P", 5);
+        print LOG "\# " . (localtime) . ": Skip making file "
+            . "$otherfilesDir/augustus.Ppri5$genesetId.gff because file is up "
+            . "to date.\n" if ($v > 3);
     }
-    if ( $ETPmode == 1 && (-e  "$genemarkDir/evidence.gff" )) {
-        $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-    }
-    if( defined ($extrinsicCfgFile1) ) {
-        $extrinsicCfgFile = $extrinsicCfgFile1;
-    }else{
-        assign_ex_cfg("gth.cfg");
-    }
-    copy($extrinsicCfgFile, "ex1.cfg");
-    run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
-        $localUTR, "Ppri5");
-    make_gtf("$otherfilesDir/augustus.Ppri5.gff");
+
     $adjustedHintsFile = "$hintsfile.E";
-    get_rnaseq_hints($hintsfile, $adjustedHintsFile);
-    if ( $ETPmode == 1 ) {
-        $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-    }
-    if (defined ($extrinsicCfgFile2)) {
-        $extrinsicCfgFile = $extrinsicCfgFile2;
+    if ( !uptodate( [$hintsfile], [$adjustedHintsFile] ) || $overwrite ) {
+        get_rnaseq_hints($hintsfile, $adjustedHintsFile);
+        if ( $ETPmode == 1 ) {
+            $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+            print LOG "$cmdString\n" if ($v > 3);
+            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+        }
     }else{
-        assign_ex_cfg("rnaseq.cfg");
+        print LOG "\# " . (localtime) . ": Skip making adjusted hints file "
+            . "$adjustedHintsFile from hintsfile $hintsfile because file is up "
+            . "to date.\n" if ($v > 3);
     }
-    copy_ex_cfg($extrinsicCfgFile, "ex2.cfg");
-    run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
-        $localUTR, "E");
-    make_gtf("$otherfilesDir/augustus.E.gff");
-    joingenes("$otherfilesDir/augustus.Ppri5.gtf",
-        "$otherfilesDir/augustus.E.gtf");
+    if ( !uptodate( [$adjustedHintsFile], 
+        ["$otherfilesDir/augustus.E$genesetId.gff"] ) || $overwrite ) {
+        if (defined ($extrinsicCfgFile2)) {
+            $extrinsicCfgFile = $extrinsicCfgFile2;
+        }elsif($localUTR eq "off"){
+            assign_ex_cfg("rnaseq.cfg");
+        }else{
+            assign_ex_cfg("rnaseq_utr.cfg");
+        }
+        copy_ex_cfg($extrinsicCfgFile, "ex2.cfg");
+        run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
+            $localUTR, "E$genesetId");
+        make_gtf("$otherfilesDir/augustus.E$genesetId.gff");
+    } else {
+        print LOG "\# " . (localtime) . ": Skip making file "
+            . "$otherfilesDir/augustus.E$genesetId.gff because file is up "
+            . "to date.\n" if ($v > 3);
+    }
+    if( !uptodate(["$otherfilesDir/augustus.Ppri5$genesetId.gtf", 
+        "$otherfilesDir/augustus.E$genesetId.gtf"], 
+        ["$otherfilesDir/augustus.hints$genesetId.gtf"]) || $overwrite ) {
+        joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gtf",
+            "$otherfilesDir/augustus.E$genesetId.gtf", $genesetId);
+    }else{
+        print LOG "\# " . (localtime) . ": Skip running joingenes with input "
+            . "files $otherfilesDir/augustus.E$genesetId.gtf and "
+            . "$otherfilesDir/augustus.Ppri5$genesetId.gtf to produce "
+            . "$otherfilesDir/augustus.hints$genesetId.gtf because file is "
+            . "up to date.\n" if ($v > 3);
+    }
 }
 
 ####################### copy_ex_cfg ############################################
@@ -7111,6 +7161,7 @@ sub clean_aug_jobs {
 sub joingenes {
     my $file1 = shift;
     my $file2 = shift;
+    my $genesetId = shift;
     print LOG "\# " . (localtime) . ": Executing joingenes on files $file1 and "
         . "$file2\n" if ($v > 2);
     my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
@@ -7124,7 +7175,8 @@ sub joingenes {
     }else{
         $cmdString .= "--priorities=2,1 "
     }
-    $cmdString .= "--output=$otherfilesDir/join.gtf 1> /dev/null 2> $errorfilesDir/joingenes.err";
+    $cmdString .= "--output=$otherfilesDir/join$genesetId.gtf 1> /dev/null 2> "
+               .  "$errorfilesDir/joingenes$genesetId.err";
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
@@ -7136,17 +7188,20 @@ sub joingenes {
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    $perlCmdString .= "perl $string --in_gff=$file1 --jg_gff=$otherfilesDir/join.gtf --out_gff=$otherfilesDir/missed.genes.gtf 1> /dev/null 2> $errorfilesDir/findGenesInIntrons.err";
+    $perlCmdString .= "perl $string --in_gff=$file1 "
+                   .  "--jg_gff=$otherfilesDir/join$genesetId.gtf "
+                   .  "--out_gff=$otherfilesDir/missed.genes$genesetId.gtf 1> "
+                   .  "/dev/null 2> $errorfilesDir/findGenesInIntrons$genesetId.err";
     print LOG "$perlCmdString\n" if ($v > 3);
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
-    if (-e "$otherfilesDir/missed.genes.gtf") {
-        $cmdString = "cat $otherfilesDir/missed.genes.gtf >> $otherfilesDir/join.gtf";
+    if (-e "$otherfilesDir/missed.genes$genesetId.gtf") {
+        $cmdString = "cat $otherfilesDir/missed.genes$genesetId.gtf >> $otherfilesDir/join$genesetId.gtf";
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
-    $cmdString = "mv $otherfilesDir/join.gtf $otherfilesDir/augustus.hints.gtf";
+    $cmdString = "mv $otherfilesDir/join$genesetId.gtf $otherfilesDir/augustus.hints$genesetId.gtf";
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
@@ -7222,7 +7277,7 @@ sub make_gtf {
         close(GTF) or die("ERROR in file " . __FILE__ ." at line "
             . __LINE__ ."\nCannot close file $gtf_file_tmp\n");
     }else{
-        print LOG "\# " . (localtime) . ": Skip making gtf file from $AUG_Pred "
+        print LOG "\# " . (localtime) . ": Skip making gtf file from $AUG_pred "
             . "because $gtf_file is up to date.\n" if ($v > 3);
     }
     if ($gff3) {
