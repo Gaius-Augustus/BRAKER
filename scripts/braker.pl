@@ -114,6 +114,9 @@ FREQUENTLY USED OPTIONS
                                     is assigned
 --softmasking                       Softmasking option for soft masked genome
                                     files. (Disabled by default.)
+--esmode                            Run GeneMark-ES (genome sequence only) and 
+                                    train AUGUSTUS on long genes predicted by 
+                                    GeneMark-ES. Final predictions are ab initio
 --epmode                            Run GeneMark-EP with intron hints provided
                                     from protein data. This mode is not 
                                     comptabile with using the aligners
@@ -244,9 +247,12 @@ EXPERT OPTIONS
                                     "--first_arg=sth --second_arg=sth".
 --overwrite                         Overwrite existing files (except for
                                     species parameter files)
+--skipGeneMark-ES                   Skip GeneMark-ES and use provided
+                                    GeneMark-ES output (e.g. provided with 
+                                    --geneMarkGtf=genemark.gtf)
 --skipGeneMark-ET                   Skip GeneMark-ET and use provided
-                                    GeneMark-ET output (e.g. from a different
-                                    source)
+                                    GeneMark-ET output (e.g. provided with 
+                                    --geneMarkGtf=genemark.gtf)
 --skipGeneMark-EP                   Skip GeneMark-EP and use provided
                                     GeneMark-EP output (e.g. provided with
                                     --geneMarkGtf=genemark.gtf)
@@ -258,11 +264,11 @@ EXPERT OPTIONS
                                     folder GeneMarkET for an already existing
                                     gtf file. Instead, you may provide such a
                                     file from another location. If geneMarkGtf
-                                    option is set, skipGeneMark-ET is
+                                    option is set, skipGeneMark-ES/ET/EP/ETP is
                                     automatically also set.
 --rounds                            The number of optimization rounds used in
                                     optimize_augustus.pl (default 5)
---skipAllTraining                   Skip GeneMark-ET (training and
+--skipAllTraining                   Skip GeneMark-EX (training and
                                     prediction), skip AUGUSTUS training, only
                                     runs AUGUSTUS with pre-trained and already
                                     existing parameters (not recommended).
@@ -417,6 +423,7 @@ my $scriptPath = dirname($0); # path of directory where this script is located
 my $skipGeneMarkET = 0; # skip GeneMark-ET and use provided GeneMark-ET output
 my $skipGeneMarkEP = 0; # skip GeneMark-EP and use provided GeneMark-EP output
 my $skipGeneMarkETP = 0;
+my $skipGeneMarkES = 0;
 my $skipoptimize   = 0; # skip optimize parameter step
 my $skipAllTraining = 0;    # skip all training (including no GeneMark-EX run)
 my $species;                # species name
@@ -477,6 +484,7 @@ my $gth2traingenes; # Generate training genestructures for AUGUSTUS from
 my $trainFromGth;   # No GeneMark-Training, train AUGUSTUS from GenomeThreader
                     # alignments, automatically sets --gth2traingenes
 my $gthTrainGeneFile;    # gobally accessible file name variable
+my $ESmode = 0; # flag for executing GeneMark-ES with genome sequence only
 my $EPmode  = 0;    # flag for executing GeneMark-EP instead of GeneMark-ET
 my $ETPmode = 0;  # flag for executing GeneMark-EPT
 my $GeneMarkIntronThreshold;
@@ -524,6 +532,7 @@ GetOptions(
     'optCfgFile=s'                 => \$optCfgFile,
     'overwrite!'                   => \$overwrite,
     'SAMTOOLS_PATH=s'              => \$SAMTOOLS_PATH_OP,
+    'skipGeneMark-Es!'             => \$skipGeneMarkES,
     'skipGeneMark-ET!'             => \$skipGeneMarkET,
     'skipGeneMark-EP!'             => \$skipGeneMarkEP,
     'skipGeneMark-ETP!'            => \$skipGeneMarkETP,
@@ -548,6 +557,7 @@ GetOptions(
     'geneMarkGtf=s'                => \$geneMarkGtf,
     'gth2traingenes!'              => \$gth2traingenes,
     'trainFromGth!'                => \$trainFromGth,
+    'esmode!'                      => \$ESmode,
     'epmode!'                      => \$EPmode,
     'etpmode!'                     => \$ETPmode,
     'AUGUSTUS_ab_initio!'          => \$ab_initio,
@@ -636,8 +646,10 @@ if ( not($trainFromGth) ) {
         $gth2traingenes = 1;    # enable if no genemark training is performed
     }
 }
-set_BAMTOOLS_PATH();
-set_SAMTOOLS_PATH();
+if( not($ESmode) ) {
+    set_BAMTOOLS_PATH();
+    set_SAMTOOLS_PATH();
+}
 if (@prot_seq_files){
     set_ALIGNMENT_TOOL_PATH();
 }
@@ -2673,6 +2685,7 @@ sub check_options {
         $skipGeneMarkET = 1;
         $skipGeneMarkEP = 1;
         $skipGeneMarkETP = 1;
+        $skipGeneMarkES = 1;
     }
 
     if ($skipAllTraining) {
@@ -2680,12 +2693,14 @@ sub check_options {
         $skipGeneMarkET = 1;
         $skipGeneMarkEP = 1;
         $skipGeneMarkETP = 1;
+        $skipGeneMarkES = 1;
     }
 
     if ( defined($geneMarkGtf) ) {
         $skipGeneMarkET = 1;
         $skipGeneMarkEP = 1;
         $skipGeneMarkETP = 1;
+        $skipGeneMarkES = 1;
     }
 
     # if UTR is on, check whether splice site patterns are given
@@ -7543,7 +7558,7 @@ sub eval_gene_pred {
 ################################################################################
 
 sub train_utr {
-    print LOG "\# " . (localtime) . "Training AUGUSTUS UTR parameters\n"
+    print LOG "\# " . (localtime) . ": Training AUGUSTUS UTR parameters\n"
         if ( $v > 2 );
     print LOG "\# "
         . (localtime)
@@ -7767,7 +7782,7 @@ sub train_utr {
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString .= "$rnaseq2utr--in-scaffold-file $genome "
+        $cmdString .= "$rnaseq2utr --in-scaffold-file $genome "
                    .  "-C $otherfilesDir/stops.and.starts.gff "
                    .  "-I $otherfilesDir/rnaseq.utr.hints "
                    .  "-W $otherfilesDir/merged.wig "
