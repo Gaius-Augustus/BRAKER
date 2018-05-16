@@ -2259,7 +2259,7 @@ sub check_upfront {
     }
 
     #    check whether bam2wig is executable
-    $bam2wig = "$AUGUSTUS_BIN_PATH/bam2wig";
+    $bam2wig = "$AUGUSTUS_BIN_PATH/../auxprogs/bam2wig/bam2wig";
     if ( $UTR eq "on" && $skipAllTraining == 0 )
     {    # MIGHT WANT TO CHANGE THIS!
         if ( not( -x $bam2wig ) ) {
