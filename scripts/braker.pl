@@ -6284,20 +6284,20 @@ sub gtf2gb {
 
 sub augustus {
     my $localUTR = shift;
-    my $genesetID = "";
+    my $genesetId = "";
     if( $localUTR eq "on" ) {
-        $genesetID = "_utr";
+        $genesetId = "_utr";
     }
     print LOG "\# " . (localtime) . ": RUNNING AUGUSTUS\n" if ($v > 2);
     $augpath = "$AUGUSTUS_BIN_PATH/augustus";
     my @genome_files;
     my $genome_dir = "$otherfilesDir/genome_split";
-    my $augustus_dir           = "$otherfilesDir/augustus_tmp$genesetID";
-    my $augustus_dir_ab_initio = "$otherfilesDir/augustus_ab_initio_tmp$genesetID";
+    my $augustus_dir           = "$otherfilesDir/augustus_tmp$genesetId";
+    my $augustus_dir_ab_initio = "$otherfilesDir/augustus_ab_initio_tmp$genesetId";
 
 
     if (!uptodate( [ $extrinsicCfgFile, $hintsfile, $genome ],
-            ["$otherfilesDir/augustus.hints$genesetID.gff"] )
+            ["$otherfilesDir/augustus.hints$genesetId.gff"] )
         || $overwrite
         )
     {
@@ -6305,11 +6305,11 @@ sub augustus {
             prepare_genome( $genome_dir );
             if ($ab_initio) {
                 make_ab_initio_jobs( $augustus_dir_ab_initio, $genome_dir,
-                    $localUTR, $genesetID );
-                run_augustus_jobs( "$otherfilesDir/ab_initio$genesetID.job.lst" );
+                    $localUTR, $genesetId );
+                run_augustus_jobs( "$otherfilesDir/ab_initio$genesetId.job.lst" );
                 join_aug_pred( $augustus_dir_ab_initio,
-                    "$otherfilesDir/augustus.ab_initio$genesetID.gff" );
-                make_gtf("$otherfilesDir/augustus.ab_initio$genesetID.gff");
+                    "$otherfilesDir/augustus.ab_initio$genesetId.gff" );
+                make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
             }
             # single ex.cfg scenarios are:
             # EPmode == 1 -> ep.cfg
@@ -6322,7 +6322,11 @@ sub augustus {
                     if ( $foundProt>0 && $foundRNASeq==0 ){
                         if(defined($prg)){
                             if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
-                                assign_ex_cfg ("gth.cfg");
+                                if( $localUTR eq "off" ) {
+                                    assign_ex_cfg ("gth.cfg");
+                                }else{
+                                    assign_ex_cfg ("gth_utr.cfg")
+                                }
                             }else{
                                 $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
                                     ." at line " . __LINE__
@@ -6331,14 +6335,22 @@ sub augustus {
                                 print LOG $prtStr;
                             }
                         }else{
-                            assign_ex_cfg ("ep.cfg");
+                            if( $localUTR eq "off" ) {
+                                assign_ex_cfg ("ep.cfg");
+                            }else{
+                                assign_ex_cfg ("ep_utr.cfg");
+                            }
                         }
                     }elsif( $foundProt==0 && $foundRNASeq > 0){
-                        assign_ex_cfg ("rnaseq.cfg");
+                        if( $localUTR eq "off" ) {
+                            assign_ex_cfg ("rnaseq.cfg");
+                        }else{
+                            assign_ex_cfg ("rnaseq_utr.cfg");
+                        }
                     }
                 }
-                copy_ex_cfg($extrinsicCfgFile, "ex1$genesetID.cfg");
-                my $hintId = "hints".$genesetID;
+                copy_ex_cfg($extrinsicCfgFile, "ex1$genesetId.cfg");
+                my $hintId = "hints".$genesetId;
                 make_hints_jobs( $augustus_dir, $genome_dir, $hintsfile,
                     $extrinsicCfgFile, $localUTR, $hintId );
                 run_augustus_jobs( "$otherfilesDir/$hintId.job.lst" );
@@ -6346,13 +6358,13 @@ sub augustus {
                 clean_aug_jobs($hintId);
                 make_gtf("$otherfilesDir/augustus.$hintId.gff");
             }else{
-                run_augustus_with_joingenes_parallel($genome_dir, $localUTR, $genesetID);
+                run_augustus_with_joingenes_parallel($genome_dir, $localUTR, $genesetId);
             }
         } else {
             push( @genome_files, $genome );
              if ($ab_initio) {
-                run_augustus_single_core_ab_initio( $localUTR , $genesetID);
-                make_gtf("$otherfilesDir/augustus.ab_initio$genesetID.gff");
+                run_augustus_single_core_ab_initio( $localUTR , $genesetId);
+                make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
             }
             if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
                 if(defined($extrinsicCfgFile1)){
@@ -6361,7 +6373,11 @@ sub augustus {
                     if ( ($foundProt>0 && $foundRNASeq==0) ){
                         if (defined ($prg) ) {
                             if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
-                                assign_ex_cfg ("gth.cfg");
+                                if ( $localUTR eq "off" ) {
+                                    assign_ex_cfg ("gth.cfg");
+                                }else{
+                                    assign_ex_cfg ("gth_utr.cfg");
+                                }
                             }else{
                                 $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
                                     ." at line " . __LINE__
@@ -6370,7 +6386,11 @@ sub augustus {
                                 print LOG $prtStr;
                             }
                         }else{
-                            assign_ex_cfg ("ep.cfg");
+                            if( $localUTR eq "off" ) {
+                                assign_ex_cfg ("ep.cfg");
+                            }else{
+                                assign_ex_cfg ("ep_utr.cfg");
+                            }
                         }
                     }elsif( $foundProt==0 && $foundRNASeq > 0) {
                         if($localUTR eq "off") {
@@ -6380,13 +6400,13 @@ sub augustus {
                         }
                     }
                 }
-                my $hintId = "hints".$genesetID;
-                copy_ex_cfg($extrinsicCfgFile, "ex1.cfg");
+                my $hintId = "hints".$genesetId;
+                copy_ex_cfg($extrinsicCfgFile, "ex1$genesetId.cfg");
                 run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile,
                     $localUTR, $hintId);
                 make_gtf("$otherfilesDir/augustus.$hintId.gff");
             }else{
-                run_augustus_with_joingenes_single_core($localUTR, $genesetID);
+                run_augustus_with_joingenes_single_core($localUTR, $genesetId);
             }
         }
         print LOG "\# " . (localtime) . ": AUGUSTUS prediction complete\n"
@@ -6973,9 +6993,13 @@ sub run_augustus_with_joingenes_parallel {
     if( defined ($extrinsicCfgFile1) ) {
         $extrinsicCfgFile = $extrinsicCfgFile1;
     }else{
-        assign_ex_cfg("gth.cfg");
+        if( $localUTR eq "off" ) {
+            assign_ex_cfg("gth.cfg");
+        }else{
+            assign_ex_cfg("gth_utr.cfg");
+        }
     }
-    copy_ex_cfg($extrinsicCfgFile, "ex1.cfg");
+    copy_ex_cfg($extrinsicCfgFile, "ex1$genesetId.cfg");
     my $augustus_dir = "$otherfilesDir/augustus_tmp_Ppri5$genesetId";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile,
         $extrinsicCfgFile, $localUTR, "Ppri5", $genesetId);
@@ -6998,7 +7022,7 @@ sub run_augustus_with_joingenes_parallel {
     }else{
         assign_ex_cfg("rnaseq_utr.cfg");
     }
-    copy_ex_cfg($extrinsicCfgFile, "ex2.cfg");
+    copy_ex_cfg($extrinsicCfgFile, "ex2$genesetId.cfg");
     $augustus_dir = "$otherfilesDir/augustus_tmp_E$genesetId";
     make_hints_jobs( $augustus_dir, $genome_dir, $adjustedHintsFile,
         $extrinsicCfgFile, $localUTR, "E", $genesetId);
@@ -7051,9 +7075,13 @@ sub run_augustus_with_joingenes_single_core {
         if( defined ($extrinsicCfgFile1) ) {
             $extrinsicCfgFile = $extrinsicCfgFile1;
         }else{
-            assign_ex_cfg("gth.cfg");
+            if( $localUTR eq "off" ) {
+                assign_ex_cfg("gth.cfg");
+            } else {
+                assign_ex_cfg("gth_utr.cfg");
+            }
         }
-        copy($extrinsicCfgFile, "ex1.cfg");
+        copy($extrinsicCfgFile, "ex1$genesetId.cfg");
         run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
             $localUTR, "Ppri5$genesetId");
         make_gtf("$otherfilesDir/augustus.Ppri5$genesetId.gff");
@@ -7086,7 +7114,7 @@ sub run_augustus_with_joingenes_single_core {
         }else{
             assign_ex_cfg("rnaseq_utr.cfg");
         }
-        copy_ex_cfg($extrinsicCfgFile, "ex2.cfg");
+        copy_ex_cfg($extrinsicCfgFile, "ex2$genesetId.cfg");
         run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
             $localUTR, "E$genesetId");
         make_gtf("$otherfilesDir/augustus.E$genesetId.gff");
