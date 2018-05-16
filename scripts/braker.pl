@@ -433,7 +433,7 @@ my $filterOutShort; # filterOutShort option (see help)
 my @allowedHints = (
     "Intron",  "intron",  "start",    "stop",
     "ass",     "dss",     "exonpart", "exon",
-    "CDSpart", "UTRpart", "nonexonpart"
+    "CDSpart", "UTRpart", "nonexonpart", "ep"
 );
 # REMOVE Intron when GeneMark introns format has been fixed!
 
