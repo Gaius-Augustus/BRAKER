@@ -31,7 +31,7 @@ The rapidly growing number of sequenced genomes requires fully automated methods
 
 However, the quality of RNA-Seq data that is available for annotating a novel genome is variable, and in some cases, RNA-Seq data is not available, at all.
 
-BRAKER2 is an extension of BRAKER1 which allows for \textbf{fully automated training} of the gene prediction tools GeneMark-EX and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the \textbf{prediction}.
+BRAKER2 is an extension of BRAKER1 which allows for \textbf{fully automated training} of the gene prediction tools GeneMark-EX\footnote{EX = ES/ET/EP} and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the \textbf{prediction}.
 
 In contrast to other available methods that rely on protein homology information, BRAKER2 reaches high gene prediction accuracy even in the absence of the annotation of very closely related species and in the absence of RNA-Seq data. 
 
@@ -44,14 +44,14 @@ BRAKER2 can also combine RNA-Seq and protein homology information. This is in an
  \item Use simple scaffold names in the genome file (e.g.~\texttt{>contig1} will work better than \texttt{>contig1|my custom species name|some putative function|/more/information/ | and lots of special characters \%\^\&!*()\{\}}). Make the scaffold names in all your fasta files simple before running any alignment program.
  \item In order to predict genes accurately in a novel genome, the genome should be masked for repeats. This will avoid the prediction of false positive gene structures in repetitive and low complexitiy regions. Repeat masking is also essential for mapping RNA-Seq data to a genome. In case of GeneMark-EX and AUGUSTUS, softmasking (i.e.~putting repeat regions into lower case letters and all other regions into upper case letters) leads to better results than hardmasking (i.e.~replacing letters in repetitive regions by the letter \texttt{N} for unknown nucleotide). If the genome is masked, use the \texttt{--softmasking} flag of \texttt{braker.pl}.
  
- \item Many genomes have gene structures that will be predicted accurately with standard parameters of GeneMark-ET and AUGUSTUS within BRAKER2. However, some genomes have clade-specific features, i.e.~special branch point model in fungi, or non-standard splice-site patterns. Please read the options section \ref{options} in order to determine whether any of the custom options may improve gene prediction accuracy in the genome of your target species.
+ \item Many genomes have gene structures that will be predicted accurately with standard parameters of GeneMark-EX and AUGUSTUS within BRAKER2. However, some genomes have clade-specific features, i.e.~special branch point model in fungi, or non-standard splice-site patterns. Please read the options section \ref{options} in order to determine whether any of the custom options may improve gene prediction accuracy in the genome of your target species.
  
  \item Always check gene prediction results before further usage! You can e.g.~use a genome browser for visual inspection of gene models in context with extrinsic evidence data.
 \end{itemize}
 
 \section{Overview of modes for running BRAKER2}
 
-BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq and/or protein spliced alignment information) supported training of GeneMark-EX and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER2. In the following, we give an overview of possible input files and pipelines:
+BRAKER2 mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq and/or protein spliced alignment information) supported training of GeneMark-EX\footnote{EX=ES/ET/EP} and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER2. In the following, we give an overview of possible input files and pipelines:
 
 \begin{itemize}
  \item genome and RNA-Seq file from the same species (see figure \ref{braker-main}A); this approach is suitable for RNA-Seq libraries with a good coverage of the transcriptome, \textbf{important:} this approach requires that each intron is covered by many alignments, i.e.~it does not work with assembled transcriptome mappings,
@@ -90,7 +90,7 @@ At the time of release, this BRAKER2 version was tested with:
 
 \begin{itemize}
 \item AUGUSTUS 3.3\footnote{Please use AUGUSTUS distributed by the original developers, it is available at \url{http://bioinf.uni-greifswald.de/augustus/binaries/augustus.current.tar.gz}. This BRAKER version has been tested with the future release, i.e.~3.4, which is not officially avilable, yet, at the date of BRAKER2 release. AUGUSTUS release maintained by third parties, i.e.~on Bioconda, have been reported to cause problems with BRAKER2.}
-   \item  GeneMark-EX 4.33
+   \item  GeneMark-ET 4.33
    \item  BAMTOOLS 2.5.1
    \item  SAMTOOLS 1.7-4-g93586ed
    \item  GenomeThreader 1.7.0
@@ -176,7 +176,7 @@ BRAKER2 calls upon various bioinformatics software tools that are not part of BR
 
 \subsubsection{GeneMark-EX}
 
-Download GeneMark-EX from \url{http://exon.gatech.edu/GeneMark/license_download.cgi}.
+Download GeneMark-EX\footnote{EX=ES/ET/EP, currently, braker.pl can use GeneMark-ES for prediction without any extrinsic data, and, alternatively, GeneMark-ET for prediction with RNA-Seq and/or protein data} from \url{http://exon.gatech.edu/GeneMark/license_download.cgi}.
  Unpack and install GeneMark-EX as described in GeneMark-EX's \texttt{README} file.
 
 If already contained in your \texttt{\$PATH} variable, BRAKER2 will guess the location of \texttt{gmes\_petap.pl}, automatically. Otherwise, BRAKER2 can find GeneMark-EX executables either by locating them in an environment variable \texttt{GENEMARK\_PATH}, or by taking a command line argument\\ (\texttt{--GENEMARK\_PATH=/your\_path\_to\_GeneMark-EX/gmes\_petap/}). In order to set the environment variable for your current Bash session, type: 
@@ -358,6 +358,7 @@ This approach is suitable for genomes of species for which no RNA-Seq libraries 
 \begin{figure}
  \centering
  \includegraphics[scale=0.4]{./figs/gatech-prot-pipeline.pdf}
+ --hints=hints.gff --epmode
  % gatech-prot-pipeline.pdf: 972x713 pixel, 72dpi, 34.29x25.15 cm, bb=0 0 972 713
  \caption{BRAKER2 and GeneMark-EP protein mapping pipeline.}
  \label{gatech}
@@ -369,7 +370,6 @@ For running BRAKER2 in this mode, type:
 
 \begin{verbatim}
    braker.pl --species=yourSpecies --genome=genome.fasta \
-      --hints=hints.gff --epmode
 \end{verbatim}
 
 The format of such a hints file must be as follows (tabulator separated file):
@@ -475,7 +475,7 @@ One or several command line arguments to be passed to AUGUSTUS, if several argum
     
 \subsection{\texttt{--cores}}                              Specifies the maximum number of cores that can be used during computation. BRAKER2 has to run some steps on a single core, others can take advantage of multiple cores. The optimal core number of all steps is 8. If you use more than 8 cores, this will not speed up all parallelized steps, in particular, the time consuming \texttt{optimize\_augustus.pl} will not use more than 8 cores. However, if you don't mind some cores being idle, using more than 8 cores will speed up other steps.
 \subsection{\texttt{--fungus}}                             GeneMark-EX option: run algorithm with branch point model. Use this option if you genome is a fungus.
-    \subsection{\texttt{--softmasking}}                        Softmasking option for soft masked genome files. Set to 'on' or '1'. Recommended to use this option!
+    \subsection{\texttt{--softmasking}}                        Softmasking option for soft masked genome files. (Disabled by default.)
    
     \subsection{\texttt{--useexisting}}                        Use the present config and parameter files if they exist for 
                                          'species'. This step will skip training AUGUSTUS and instead use pre-trained parameters.

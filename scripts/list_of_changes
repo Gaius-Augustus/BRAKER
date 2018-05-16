@@ -1,4 +1,8 @@
 # ----------------------------------------------------------------------
+# | implemented UTR training andm  | braker.pl (Hoff)     | 16.5.2018  |
+# | prediction with braker in      |                      |            |
+# | case RNA-Seq data is proveded  |                      |            |
+# | and UTR enabled                |                      |            |
 # | implemented BRAKER ETP mode    | braker.pl (Hoff)     | 13.3.2018  |
 # | fixed bug in path resolution   |                      |            |
 # | parallelized AUGUSTUS better   | braker.pl (Hoff)     | 23.2.2018  |

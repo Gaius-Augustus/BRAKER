@@ -113,11 +113,23 @@ FREQUENTLY USED OPTIONS
                                     overwritten. Uses Sp_1 etc., if no species
                                     is assigned
 --softmasking                       Softmasking option for soft masked genome
-                                    files. Set to 'on' or '1'
+                                    files. (Disabled by default.)
 --epmode                            Run GeneMark-EP with intron hints provided
-                                    from protein data
+                                    from protein data. This mode is not 
+                                    comptabile with using the aligners
+                                    GenomeThreader, Exonerate and Spaln within
+                                    braker.pl because etpmode and epmode require
+                                    a large database of proteins and such
+                                    mapping should be done outside of braker.pl 
+                                    e.g. on a cluster.
 --etpmode                           Run GeneMark-ETP with hints provided from
-                                    proteins and RNA-Seq data
+                                    proteins and RNA-Seq data. This mode is not
+                                    compatible with using the aligners
+                                    GenomeThreader, Exonerate and Spaln within
+                                    braker.pl because etpmode and epmode require
+                                    a large database of proteins and such
+                                    mapping should be done outside of braker.pl 
+                                    e.g. on a cluster.
 --gff3                              Output in GFF3 format (default is gtf
                                     format)
 --cores                             Specifies the maximum number of cores that
