@@ -2514,7 +2514,9 @@ sub check_upfront {
     find_ex_cfg ("rnaseq.cfg");
     find_ex_cfg ("ep.cfg");
     find_ex_cfg ("gth.cfg");
-    find_ex_cfg ("etp.cfg");
+    find_ex_cfg ("rnaseq_utr.cfg");
+    find_ex_cfg ("ep_utr.cfg");
+    find_ex_cfg ("gth_utr.cfg");
 }
 
 ####################### find_ex_cfg ############################################
