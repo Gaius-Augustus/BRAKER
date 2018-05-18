@@ -4637,12 +4637,12 @@ sub check_genemark_hints {
     close(GH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $genemark_hintsfile!\n");
-    if ( $nIntronsAboveThreshold < 500 ) {
+    if ( $nIntronsAboveThreshold < 150 ) {
         $prtStr
             = "\# "
             . (localtime)
             . ": WARNING: \n"
-            . "The file $genemark_hintsfile contains less than 500 "
+            . "The file $genemark_hintsfile contains less than 150 "
             . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
             . "total, $nIntrons unique introns are contained. $nIntronsAboveThreshold have a multiplicity >= 10.) Possibly, you "
             . "are trying to run braker.pl on data that does not supply "
