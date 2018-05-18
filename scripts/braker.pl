@@ -5710,11 +5710,11 @@ sub training_augustus {
                 clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, $prtStr);
             }
-            if ( $gb_good_size < 300 ) {
+            if ( $gb_good_size < 600 ) {
                 $prtStr = "\# "
                     . (localtime)
                     . " WARNING: Number of good genes is low ($gb_good_size). "
-                    . "Recommended are at least 300 genes\n";
+                    . "Recommended are at least 600 genes\n";
                 print LOG $prtStr if ($v > 0);
                 print STDOUT $prtStr if ($v > 0);
                 $testsize1 = floor($gb_good_size/3);
