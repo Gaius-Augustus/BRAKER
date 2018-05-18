@@ -297,7 +297,7 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 --optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS
                                     for running PPX (currently not
                                     implemented)
---UTR                               create UTR training examples from RNA-Seq
+--UTR=on                            create UTR training examples from RNA-Seq
                                     coverage data; requires options
                                     --bam=rnaseq.bam and --softmasking.
                                     Alternatively, if UTR parameters already
