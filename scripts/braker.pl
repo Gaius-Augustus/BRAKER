@@ -6713,6 +6713,7 @@ sub augustus {
 
 sub assign_ex_cfg {
     my $thisCfg = shift;
+    print STDERR "The path is  rel2abs($0)/cfg/\n";
     $string = find( $thisCfg, rel2abs($0)."/cfg/", $AUGUSTUS_SCRIPTS_PATH,
         $AUGUSTUS_CONFIG_PATH );
     if ( -e $string ) {
