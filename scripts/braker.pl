@@ -2280,16 +2280,17 @@ sub check_upfront {
     }
 
     # check whether bamtools is installed
-    if ( system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0 
-        && !$esmode == 1 ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "bamtools not installed. Please install it first.\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
+    if( ! $esmode == 1) {
+        if ( system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0 ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "bamtools not installed. Please install it first.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+        }
     }
 
     # check for etraining executable
