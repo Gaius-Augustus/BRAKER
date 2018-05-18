@@ -6589,8 +6589,9 @@ sub augustus {
                 . "$otherfilesDir/augustus.ab_initio$genesetId.gtf is up to "
                 . "date.\n" if ($v > 3);
         }
-    } else {
+    }
 
+    if( ! ESmode == 1 ) {
         if (!uptodate( [ $extrinsicCfgFile, $hintsfile, $genome ],
             ["$otherfilesDir/augustus.hints$genesetId.gtf"] ) || $overwrite)
         {
