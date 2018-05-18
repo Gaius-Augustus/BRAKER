@@ -6591,7 +6591,7 @@ sub augustus {
         }
     }
 
-    if( ! ESmode == 1 ) {
+    if( ! $ESmode == 1 ) {
         if (!uptodate( [ $extrinsicCfgFile, $hintsfile, $genome ],
             ["$otherfilesDir/augustus.hints$genesetId.gtf"] ) || $overwrite)
         {
