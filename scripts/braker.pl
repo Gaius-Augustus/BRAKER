@@ -650,7 +650,7 @@ if( not($ESmode) ) {
     set_BAMTOOLS_PATH();
     set_SAMTOOLS_PATH();
 }
-if (@prot_seq_files){
+if ( @prot_seq_files && !$ESmode ){
     set_ALIGNMENT_TOOL_PATH();
 }
 if (not ($skipAllTraining)){
@@ -702,19 +702,22 @@ if ( $wdGiven == 1 ) {
     if ( $EPmode == 0 && $ETPmode == 0) {
         $genemarkDir = "$rootDir/GeneMark-ET";
     }elsif ( $ETPmode == 1 ) {
-        $genemarkDir = "$rootDir/GeneMark-ETP"
+        $genemarkDir = "$rootDir/GeneMark-ETP";
+    }elsif ($ESmode == 1 ) {
+        $genemarkDir = "$rootDir/GeneMark-ES";
     } else {
         $genemarkDir = "$rootDir/GeneMark-EP";
     }
     $parameterDir  = "$rootDir/species";
     $otherfilesDir = "$rootDir";
     $errorfilesDir = "$rootDir/errors";
-}
-else {
+} else {
     if ( $EPmode == 0 && $ETPmode == 0) {
         $genemarkDir = "$rootDir/$species/GeneMark-ET";
     } elsif ( $ETPmode == 1 ) {
         $genemarkDir = "$rootDir/$species/GeneMark-ETP"
+    } elsif ( $ESmode == 1 ) {
+        $genemarkDir = "$rootDir/$species/GeneMark-ES";
     } else {
         $genemarkDir = "$rootDir/$species/GeneMark-EP";
     }
@@ -731,10 +734,11 @@ else {
 # set in check_options, yet.                                                   #
 ################################################################################
 
-if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && not ( $skipAllTraining) ) {
+if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 && 
+    not ( $skipAllTraining) ) {
     $prtStr = "\# "
             . (localtime)
-            . ": REMARK: The GeneMark-ET step will be skipped.\n";
+            . ": REMARK: The GeneMark-EX step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if ( not($trainFromGth) && not($useexisting)) {
         if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -743,9 +747,10 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && not ( $skipAllTraining) 
             $prtStr = "\# "
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "The --skipGeneMark-ET option was used, but "
-                    . "there is no genemark.gtf file under $genemarkDir and no "
-                    . "valid file --geneMarkGtf=... was specified.\n";
+                    . "The --skipGeneMark-EX (X = {S, T, P, TP}) option was "
+                    . "used, but there is no genemark.gtf file under "
+                    . "$genemarkDir and no valid file --geneMarkGtf=... was "
+                    . "specified.\n";
             $logString .= $prtStr;
             if ( defined($geneMarkGtf) ) {
                 $prtStr = "       The specified geneMarkGtf=... file was "
@@ -756,7 +761,8 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && not ( $skipAllTraining) 
             exit(1);
         }
     }
-} elsif ( $skipGeneMarkEP && $EPmode == 1 && $ETPmode == 0 && not ($skipAllTraining) ) {
+} elsif ( $skipGeneMarkEP && $EPmode == 1 && $ETPmode == 0 && $ESmode == 0 
+    && not ($skipAllTraining) ) {
     $prtStr = "REMARK: The GeneMark-EP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -780,7 +786,8 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && not ( $skipAllTraining) 
         }
         exit(1);
     }
-} elsif ( $skipGeneMarkETP && $EPmode == 0 && $ETPmode == 1 && not($skipAllTraining)){
+} elsif ( $skipGeneMarkETP && $EPmode == 0 && $ETPmode == 1 && $ESmode == 0 
+    && not($skipAllTraining)){
     $prtStr = "REMARK: The GeneMark-ETP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -806,11 +813,40 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && not ( $skipAllTraining) 
         }
         exit(1);
     }
-} elsif ( ( ( $skipGeneMarkEP && not($trainFromGth) ) || ( $skipGeneMarkETP && not ($trainFromGth) ) ) && not ($skipAllTraining) ) {
+} elsif ( $skipGeneMarkES && $EPmode == 0 && $ETPmode == 0 && $ESmode == 1 
+    && not($skipAllTraining)){
+    $prtStr = "REMARK: The GeneMark-ES step will be skipped.\n";
+    $logString .= $prtStr if ( $v > 3 );
+    if (    not( -f "$genemarkDir/genemark.gtf" )
+        and not( -f $geneMarkGtf ) )
+    {
+        $prtStr = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The --skipGeneMark-ES option was used, but there is "
+                . "no genemark.gtf file under $genemarkDir and no valid file "
+                . "--geneMarkGtf=... was specified.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        if ( defined($geneMarkGtf) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The specified geneMarkGtf=... file was "
+                . "$geneMarkGtf. This is not an accessible file.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+        }
+        exit(1);
+    }
+} elsif ( ( ( $skipGeneMarkEP && not($trainFromGth) ) || 
+    ( $skipGeneMarkETP && not ($trainFromGth) ) || 
+    ( $skipGeneMarkES && not ($trainFromGth) ) ) && not ($skipAllTraining) ) {
     $prtStr = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "Option --skipGeneMarkEP/--skipGeneMarkETP cannot be used when "
+            . "Option --skipGeneMarkEP/ETP/ES cannot be used when "
             . "BRAKER is started in GeneMark-ET mode.\n";
     $logString .= $prtStr;
     print STDERR $logString;
@@ -1010,7 +1046,7 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
 # define $genemark_hintsfile: is needed because genemark can only handle intron
 # hints in braker.pl, AUGUSTUS can also handle other hints types
 $hintsfile          = "$otherfilesDir/hintsfile.gff";
-if(! $trainFromGth ) {
+if(! $trainFromGth && ! $ESmode) {
     $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
 }
 
@@ -1030,7 +1066,7 @@ if (@hints) {
 }
 
 # extract intron hints from hintsfile.gff for GeneMark
-if (! $trainFromGth && $skipAllTraining==0 ) {
+if (! $trainFromGth && $skipAllTraining==0 && $ESmode == 0 ) {
     get_genemark_hints();
 }
 
@@ -1041,18 +1077,20 @@ if ( $skipAllTraining == 0 ) {
             check_genemark_hints();
             GeneMark_ET();    # run GeneMark-ET
             filter_genemark();
-        }
-        elsif ( $EPmode == 1 ) {
+        } elsif ( $EPmode == 1 ) {
             # remove reformatting of hintsfile, later!
             format_ep_hints();
             check_genemark_hints();
             GeneMark_EP();
             filter_genemark();
-        }elsif ( $ETPmode == 1 ) {
+        } elsif ( $ETPmode == 1 ) {
             format_ep_hints();
             create_evidence_gff();
             check_genemark_hints();
             GeneMark_ETP();
+            filter_genemark();
+        } elsif  ( $ESmode == 1 ) {
+            GeneMark_ES();
             filter_genemark();
         }
     }
@@ -2749,6 +2787,28 @@ sub check_options {
         exit(1);
     }
 
+    if ( $EPmode == 1 && $ESmode == 1 ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "--epmode and --esmode cannot be set simultaneously!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
+    if ( $ETPmode && $ESmode == 1 ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "--etpmode and --esmode cannot be set simultaneously!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
     if (   $alternatives_from_evidence ne "true"
         && $alternatives_from_evidence ne "false" )
     {
@@ -2785,7 +2845,9 @@ sub check_options {
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "--UTR=on has been set but --softmasking has not been enabled. "
             . "A softmasked genome file and the option --softmasking and a "
-            . "bam file must be provided in order to run --UTR=on.\n";
+            . "bam file must be provided in order to run --UTR=on (in contrast "
+            . "to other modes, where a hints file can replace the alignment "
+            . "file, the bam file is strictly required for UTR training).\n";
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
@@ -2810,7 +2872,7 @@ sub check_options {
         $logString .= $prtStr if ($v > 0);
     }
 
-    # check whether bam files exist
+    # check whether bam files exist (if given)
     if (@bam) {
         for ( my $i = 0; $i < scalar(@bam); $i++ ) {
             if ( !-e $bam[$i] ) {
@@ -2854,7 +2916,8 @@ sub check_options {
 
 
     # check whether RNA-Seq files are specified
-    if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth & !$skipAllTraining) {
+    if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth & !$skipAllTraining 
+        && !$ESmode ) {
         $prtStr
             = "\# "
             . (localtime)
@@ -2972,22 +3035,35 @@ sub check_options {
     if (   ( !@bam && !@hints )
         && ( !$trainFromGth && !@hints )
         && ( !$trainFromGth && !@prot_seq_files )
-        && ( !$trainFromGth && !@prot_aln_files ) )
+        && ( !$trainFromGth && !@prot_aln_files ) 
+        && ( !$ESmode ))
     {
         $prtStr
             = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "in addition to a genome file, braker.pl requires at ";
-        $prtStr = "least one of the following files/flags as input:\n";
-        $prtStr = "    --bam=file.bam\n";
-        $prtStr = "    --hints=file.hints\n";
-        $prtStr = "    --prot_seq=file.fa --trainFromGth\n";
-        $prtStr = "    --prot_aln=file.aln --trainFromGth\n$usage";
+            . "in addition to a genome file, braker.pl requires at "
+            . "least one of the following files/flags as input (unless "
+            . "you run braker.pl --esmode):\n"
+            . "    --bam=file.bam\n"
+            . "    --hints=file.hints\n"
+            . "    --prot_seq=file.fa --trainFromGth\n"
+            . "    --prot_aln=file.aln --trainFromGth\n$usage";
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
     }
+
+    if ( $ESmode && (@bam || @hints || @prot_seq_files || @prot_aln_files ) ) {
+        $prtStr = "\# " . (localtime) . ": ERROR: Options --bam, --hints, "
+                . "--prot_seq, --prot_aln are not allowed if option --esmode "
+                . "is specified!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
+
     # set extrinsic.cfg files if provided
     if (@extrinsicCfgFiles) {
         if(-f $extrinsicCfgFiles[0]) {
@@ -3020,6 +3096,16 @@ sub check_options {
                 $logString .= $prtStr;
                 print STDERR $logString;
                 exit(1);
+        }
+
+        # TODO: extend code to accept 4 extrinsic.cfg files for UTR training
+        if( $UTR eq "on" ) {
+            $prtStr = "\# " . (localtime) . ": ERROR: supplying user defined "
+                    . "extrinsic.cfg files is not supported for if option "
+                    . "--UTR=on is set!\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
         }
     }
 
@@ -4564,6 +4650,70 @@ sub check_genemark_hints {
     }
 }
 
+####################### GeneMark_ES ############################################
+# * execute GeneMark-ES
+################################################################################
+
+sub GeneMark_ES {
+    print LOG "\# " . (localtime) . ": Executing GeneMark-ES\n" if ($v > 2);
+    if ( !$skipGeneMarkET ) {
+        if (!uptodate( [ $genome], ["$genemarkDir/genemark.gtf"] ) || $overwrite
+            ){
+            $cmdString = "cd $genemarkDir";
+            print LOG "\n\# "
+                . (localtime)
+                . ": changing into GeneMark-ES directory $genemarkDir\n"
+                if ($v > 3);
+            print LOG "$cmdString\n\n" if ($v > 3);
+            chdir $genemarkDir
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__
+                    ."\nCould not change into directory $genemarkDir.\n");
+            $string        = "$GENEMARK_PATH/gmes_petap.pl";
+            $errorfile     = "$errorfilesDir/GeneMark-ES.stderr";
+            $stdoutfile    = "$otherfilesDir/GeneMark-ES.stdout";
+            $perlCmdString = "";
+
+            if ($nice) {
+                $perlCmdString .= "nice ";
+            }
+
+            # consider removing --verbose, later
+            $perlCmdString
+                .= "perl $string --verbose --sequence=$genome --cores=$CPU";
+            if ($fungus) {
+                $perlCmdString .= " --fungus";
+            }
+            if ($soft_mask) {
+                $perlCmdString .= " --soft_mask 1000"
+                    ; # version prior to 4.29, apparently also in version 4.33
+                      #     $perlCmdString .= " --soft 1000"; # version 4.29
+            }
+            $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
+            print LOG "\# " . (localtime) . ": Executing gmes_petap.pl\n" 
+                if ($v > 3);
+            print LOG "$perlCmdString\n\n" if ($v > 3);
+            system("$perlCmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            $cmdString = "cd $rootDir";
+            print LOG "\# "
+                . (localtime)
+                . ": change to working directory $rootDir\n" if ($v > 3);
+            print LOG "$cmdString\n\n" if ($v > 3);
+            chdir $rootDir
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nCould not change to directory $rootDir.\n");
+        } else {
+            print LOG "\n\# " . (localtime) . ": skipping GeneMark-ES because "
+                . "$genemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
+        }
+    }
+}
+
 ####################### GeneMark_ET ############################################
 # * execute GeneMark-ET with RNA-Seq hints for training
 ################################################################################
@@ -4571,13 +4721,8 @@ sub check_genemark_hints {
 sub GeneMark_ET {
     print LOG "\# " . (localtime) . ": Executing GeneMark-ET\n" if ($v > 2);
     if ( !$skipGeneMarkET ) {
-        if (!uptodate(
-                [ $genome, $genemark_hintsfile ],
-                ["$genemarkDir/genemark.gtf"]
-            )
-            || $overwrite
-            )
-        {
+        if (!uptodate( [ $genome, $genemark_hintsfile ], 
+            ["$genemarkDir/genemark.gtf"] ) || $overwrite ) {
             $cmdString = "cd $genemarkDir";
             print LOG "\n\# "
                 . (localtime)
@@ -4599,8 +4744,8 @@ sub GeneMark_ET {
             }
 
             # consider removing --verbose, later
-            $perlCmdString
-                .= "perl $string --verbose --sequence=$genome --ET=$genemark_hintsfile --cores=$CPU";
+            $perlCmdString .= "perl $string --verbose --sequence=$genome "
+                           .  "--ET=$genemark_hintsfile --cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
@@ -4610,7 +4755,8 @@ sub GeneMark_ET {
                       #     $perlCmdString .= " --soft 1000"; # version 4.29
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
-            print LOG "\# " . (localtime) . ": Executing gmes_petap.pl\n" if ($v > 3);
+            print LOG "\# " . (localtime) . ": Executing gmes_petap.pl\n" 
+                if ($v > 3);
             print LOG "$perlCmdString\n\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -4625,6 +4771,9 @@ sub GeneMark_ET {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nCould not change to directory $rootDir.\n");
+        } else {
+            print LOG "\n\# " . (localtime) . ": skipping GeneMark-ET because "
+                . "$genemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
         }
     }
 }
@@ -4636,13 +4785,8 @@ sub GeneMark_ET {
 sub GeneMark_EP {
     print LOG "\# ". (localtime) . ": Running GeneMark-EP\n" if ($v > 2);
     if ( !$skipGeneMarkEP ) {
-        if (!uptodate(
-                [ $genome, $genemark_hintsfile ],
-                ["$genemarkDir/genemark.gtf"]
-            )
-            || $overwrite
-            )
-        {
+        if (!uptodate( [ $genome, $genemark_hintsfile ], 
+            ["$genemarkDir/genemark.gtf"] ) || $overwrite ) {
             $cmdString = "cd $genemarkDir";
             print LOG "\n\# "
                 . (localtime)
@@ -4660,8 +4804,9 @@ sub GeneMark_EP {
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString
-                .= "perl $string --verbose --seq $genome --max_intergenic 50000 --et_score 4 --ET $genemark_hintsfile --cores=$CPU";
+            $perlCmdString .= "perl $string --verbose --seq $genome "
+                           .  "--max_intergenic 50000 --et_score 4 --ET "
+                           .  "$genemark_hintsfile --cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
@@ -4669,7 +4814,8 @@ sub GeneMark_EP {
                 $perlCmdString .= " --soft 1000";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
-            print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" if ($v > 3);
+            print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
+                if ($v > 3);
             print LOG "$perlCmdString\n\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -4684,8 +4830,11 @@ sub GeneMark_EP {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nCould not change to directory $rootDir.\n");
+        } else{
+            print LOG "\n\# " . (localtime) . ": skipping GeneMark-EP because "
+                . "$genemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
         }
-    }
+    } 
 }
 
 ####################### GeneMark_ETP ###########################################
@@ -4706,7 +4855,8 @@ sub GeneMark_ETP {
             $cmdString = "cd $genemarkDir";
             print LOG "\n\# "
                 . (localtime)
-                . ": changing into GeneMark-ETP directory $genemarkDir\n" if ($v > 3);
+                . ": changing into GeneMark-ETP directory $genemarkDir\n" 
+                if ($v > 3);
             print LOG "$cmdString\n\n" if ($v > 3);
             chdir $genemarkDir
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -4719,8 +4869,11 @@ sub GeneMark_ETP {
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString
-                .= "perl $string --verbose --seq $genome --max_intergenic 50000 --evidence $genemarkDir/evidence.gff --et_score 4 --ET $genemark_hintsfile --cores=$CPU";
+            $perlCmdString .= "perl $string --verbose --seq $genome "
+                           .  "--max_intergenic 50000 "
+                           .  "--evidence $genemarkDir/evidence.gff "
+                           .  "--et_score 4 --ET $genemark_hintsfile "
+                           .  "--cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
@@ -4728,7 +4881,8 @@ sub GeneMark_ETP {
                 $perlCmdString .= " --soft 1000";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
-            print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" if ($v > 3);
+            print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
+                if ($v > 3);
             print LOG "$perlCmdString\n\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -4743,6 +4897,9 @@ sub GeneMark_ETP {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nCould not change to directory $rootDir.\n");
+        } else{
+            print LOG "\n\# " . (localtime) . ": skipping GeneMark-ETP because "
+                . "$genemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
         }
     }
 }
@@ -4757,103 +4914,170 @@ sub GeneMark_ETP {
 sub filter_genemark {
     print LOG "\# " . (localtime) . "Filtering output of GeneMark for "
         . "generating training genes for AUGUSTUS\n" if ($v > 2);
-    if (!uptodate(
-            [ "$genemarkDir/genemark.gtf", $hintsfile ],
-            [   "$genemarkDir/genemark.c.gtf",
-                "$genemarkDir/genemark.f.good.gtf",
-                "$genemarkDir/genemark.average_gene_length.out"
-            ]
-        )
-        || $overwrite
-        )
-    {
-        print LOG "\# "
-            . ( localtime )
-            . ": Checking whether hintsfile contains single exon CDSpart "
-            . "hints\n" if ($v > 3);
-        my %singleCDS;
-        open ( HINTS, "<", $hintsfile ) or clean_abort(
-            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "Could not open file $hintsfile!\n" );
-        while ( <HINTS> ) {
-            if( $_ =~ m/\tCDSpart\t.+grp=(\S+);/ ) {
-                if (not ( defined ($singleCDS{$1}) ) ) {
-                    $singleCDS{$1} = $_;
-                }else{
-                    $singleCDS{$1} = "0";
-                }
-            }
-        }
-        close ( HINTS ) or clean_abort(
-            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            ."Could not close file $hintsfile!\n" );
-        # delete non single CDS genes from hash
-        # collapse multiplicity of singleCDS hints
-        my %multSingleCDS;
-        while (my ($k, $v) = each %singleCDS ) {
-            if ($v eq "0") {
-                delete $singleCDS{$k};
-            }else{
-                my @t = split(/\t/, $v);
-                if ( !defined( $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} ) ) {
-                    $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} = 1;
-                }else{
-                    $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]}++;
-                }
-            }
-        }
-        my $countSingleCDS = 0;
-        open ( SINGLECDS, ">", "$otherfilesDir/singlecds.hints" ) or
-            clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+
+    if( not( $ESmode == 1 ) ) {
+        if (!uptodate(
+                [ "$genemarkDir/genemark.gtf", $hintsfile ],
+                [   "$genemarkDir/genemark.c.gtf",
+                    "$genemarkDir/genemark.f.good.gtf",
+                    "$genemarkDir/genemark.average_gene_length.out"
+                ] ) || $overwrite )
+        {
+            print LOG "\# "
+                . ( localtime )
+                . ": Checking whether hintsfile contains single exon CDSpart "
+                . "hints\n" if ($v > 3);
+            my %singleCDS;
+            open ( HINTS, "<", $hintsfile ) or clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                 "ERROR in file " . __FILE__ ." at line ". __LINE__
-                ."Could not open file $otherfilesDir/singlecds.hints!\n" );
-        while (my ($locus, $v1) = each %multSingleCDS ) {
-            while ( my ($strand, $v2) = each %{$v1} ) {
-                while ( my ($start, $v3 ) = each %{$v2} ) {
-                    while ( my ($end, $v4) = each %{$v3} ) {
-                        print SINGLECDS "$locus\n.\nCDSpart\n$start\t$end\t.\t"
-                            . "$strand\t0\tsrc=P;mult=$v4;\n";
-                        $countSingleCDS++;
+                . "Could not open file $hintsfile!\n" );
+            while ( <HINTS> ) {
+                if( $_ =~ m/\tCDSpart\t.+grp=(\S+);/ ) {
+                    if (not ( defined ($singleCDS{$1}) ) ) {
+                        $singleCDS{$1} = $_;
+                    }else{
+                        $singleCDS{$1} = "0";
                     }
                 }
             }
+            close ( HINTS ) or clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                ."Could not close file $hintsfile!\n" );
+            # delete non single CDS genes from hash
+            # collapse multiplicity of singleCDS hints
+            my %multSingleCDS;
+            while (my ($k, $v) = each %singleCDS ) {
+                if ($v eq "0") {
+                    delete $singleCDS{$k};
+                }else{
+                    my @t = split(/\t/, $v);
+                    if ( !defined( $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} ) ) {
+                        $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} = 1;
+                    }else{
+                        $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]}++;
+                    }
+                }
+            }
+            my $countSingleCDS = 0;
+            open ( SINGLECDS, ">", "$otherfilesDir/singlecds.hints" ) or
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "ERROR in file " . __FILE__ ." at line ". __LINE__
+                    ."Could not open file $otherfilesDir/singlecds.hints!\n" );
+            while (my ($locus, $v1) = each %multSingleCDS ) {
+                while ( my ($strand, $v2) = each %{$v1} ) {
+                    while ( my ($start, $v3 ) = each %{$v2} ) {
+                        while ( my ($end, $v4) = each %{$v3} ) {
+                            print SINGLECDS "$locus\n.\nCDSpart\n$start\t$end\t.\t"
+                                . "$strand\t0\tsrc=P;mult=$v4;\n";
+                            $countSingleCDS++;
+                        }
+                    }
+                }
+            }
+            close ( SINGLECDS ) or clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                ."Could not close file $otherfilesDir/singlecds.hints!\n" );
+
+            print LOG "\# "
+                . (localtime)
+                . ": filtering GeneMark genes by intron hints\n" if ($v > 3);
+            $string = find(
+                "filterGenemark.pl",    $AUGUSTUS_BIN_PATH,
+                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+            );
+            $errorfile     = "$errorfilesDir/filterGenemark.stderr";
+            $stdoutfile    = "$otherfilesDir/filterGenemark.stdout";
+            $perlCmdString = "";
+            if ($nice) {
+                $perlCmdString .= "nice ";
+            }
+            $perlCmdString .= "perl $string "
+                           .  "--genemark=$genemarkDir/genemark.gtf "
+                           .  "--introns=$hintsfile ";
+            if ($filterOutShort) {
+                $perlCmdString .= "--filterOutShort "
+            }
+            if ($countSingleCDS > 0 ) {
+                $perlCmdString .= "--singeCDSfile=$otherfilesDir/singlecds.hints ";
+            }
+            $perlCmdString .= "1>$stdoutfile 2>$errorfile";
+            print LOG "$perlCmdString\n\n" if ($v > 3);
+            system("$perlCmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+        } else {
+            print LOG "\# " . (localtime)
+                . ": skip filtering genemark genes because file "
+                . "$genemarkDir/genemark.f.good.gtf is up to date.\n" 
+                if ($v > 3);
         }
-        close ( SINGLECDS ) or clean_abort(
-            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            ."Could not close file $otherfilesDir/singlecds.hints!\n" );
-        print LOG "\# "
-            . (localtime)
-            . ": filtering GeneMark genes by intron hints\n" if ($v > 3);
-        $string = find(
-            "filterGenemark.pl",    $AUGUSTUS_BIN_PATH,
-            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-        );
-        $errorfile     = "$errorfilesDir/filterGenemark.stderr";
-        $stdoutfile    = "$otherfilesDir/filterGenemark.stdout";
-        $perlCmdString = "";
-        if ($nice) {
-            $perlCmdString .= "nice ";
+    } else {
+        # if no hints for filtering are provided (--esmode), filter by length:
+        # keep those genes that are longer than 800 nt in CDS
+        if (!uptodate([ "$genemarkDir/genemark.gtf"],
+            [ "$genemarkDir/genemark.f.good.gtf"]) || $overwrite ) 
+        {
+
+            open( ESPRED, "<", "$genemarkDir/genemark.gtf" ) or 
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to open file "
+                . "$genemarkDir/genemark.gtf\n");
+            # compute CDS length of genes
+            my %espred;
+            while( <ESPRED> ) {
+                chomp;
+                my @l = split(/\t/);
+                push( @{$espred{$l[8]}{'line'}}, $_ );
+                if( $_ =~ m/\tCDS\t/ ) {
+                    if( !defined( $espred{$l[8]}{'len'}) ) {
+                        $espred{$l[9]}{'len'} = $l[4] - $l[3] + 1;
+                    } else {
+                        $espred{$l[9]}{'len'} += $l[4] - $l[3] + 1;
+                    }
+                }
+            }
+            close( ESPRED ) or 
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to close file "
+                . "$genemarkDir/genemark.gtf\n");
+
+            open( ESPREDF, ">", "$genemarkDir/genemark.f.good.gtf" ) or 
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to open file "
+                . "$genemarkDir/genemark.f.good.gtf\n");
+            # print genes that are longer 800
+            foreach(keys %espred) {
+                if( $espred{$_}{'len'} >= 800 ) {
+                    foreach( @{ $espred{$_}{'line'} } ) {
+                        print ESPREDF $_."\n";
+                    }
+                }
+            }
+            close( ESPREDF ) or 
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to close file "
+                . "$genemarkDir/genemark.f.good.gtf\n");
+
+        } else {
+            print LOG "\# " . (localtime)
+                . ": skip filtering genemark genes because file "
+                . "$genemarkDir/genemark.f.good.gtf is up to date.\n" 
+                if ($v > 3);
         }
-        $perlCmdString .= "perl $string --genemark=$genemarkDir/genemark.gtf --introns=$hintsfile ";
-        if ($filterOutShort) {
-            $perlCmdString .= "--filterOutShort "
-        }
-        if ($countSingleCDS > 0 ) {
-            $perlCmdString .= "--singeCDSfile=$otherfilesDir/singlecds.hints ";
-        }
-        $perlCmdString .= "1>$stdoutfile 2>$errorfile";
-        print LOG "$perlCmdString\n\n" if ($v > 3);
-        system("$perlCmdString") == 0
-            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nFailed to execute: $perlCmdString\n");
     }
+
+
     if($lambda){
-        if (!uptodate([ "$genemarkDir/genemark.f.good.gtf" ], [ "$genemarkDir/genemark.d.gtf"] )
-            || $overwrite
+        if (!uptodate([ "$genemarkDir/genemark.f.good.gtf" ], 
+            [ "$genemarkDir/genemark.d.gtf"] ) || $overwrite
         ){
             print LOG "\#"
                 . (localtime)
@@ -4867,15 +5091,21 @@ sub filter_genemark {
             if($nice){
                 $perlCmdString .= "nice "
             }
-            $perlCmdString .= "perl $string --in_gtf=$genemarkDir/genemark.f.good.gtf "
-                           . "--out_gtf=$genemarkDir/genemark.d.gtf --lambda=$lambda "
-                           . "1> $otherfilesDir/downsample_traingenes.log "
-                           . "2> $errorfilesDir/downsample_traingenes.err";
+            $perlCmdString .= "perl $string "
+                           .  "--in_gtf=$genemarkDir/genemark.f.good.gtf "
+                           .  "--out_gtf=$genemarkDir/genemark.d.gtf "
+                           .  "--lambda=$lambda "
+                           .  "1> $otherfilesDir/downsample_traingenes.log "
+                           .  "2> $errorfilesDir/downsample_traingenes.err";
             print LOG "$perlCmdString\n\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+        } else {
+            print LOG "\#" . (localtime)
+                . ": skip downsampling because file "
+                . "$genemarkDir/genemark.d.gtf is up to date.\n" if ($v > 3);
         }
     }
 }
@@ -7786,9 +8016,12 @@ sub train_utr {
                    .  "-C $otherfilesDir/stops.and.starts.gff "
                    .  "-I $otherfilesDir/rnaseq.utr.hints "
                    .  "-W $otherfilesDir/merged.wig "
-                   .  "-o $otherfilesDir/utrs.gff "
-                   .  "$rnaseq2utr_args 1> $otherfilesDir/rnaseq2utr.log "
-                   .  "2> $errorfilesDir/rnaseq2utr.err";
+                   .  "-o $otherfilesDir/utrs.gff ";
+        if( $rnaseq2utr_args ) {
+            $cmdString .= "$rnaseq2utr_args ";
+        }
+        $cmdString .=  "1> $otherfilesDir/rnaseq2utr.log "
+                    .  "2> $errorfilesDir/rnaseq2utr.err";
         print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
