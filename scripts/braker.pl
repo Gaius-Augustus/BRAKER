@@ -5045,9 +5045,9 @@ sub filter_genemark {
                 push( @{$espred{$l[8]}{'line'}}, $_ );
                 if( $_ =~ m/\tCDS\t/ ) {
                     if( !defined( $espred{$l[8]}{'len'}) ) {
-                        $espred{$l[9]}{'len'} = $l[4] - $l[3] + 1;
+                        $espred{$l[8]}{'len'} = $l[4] - $l[3] + 1;
                     } else {
-                        $espred{$l[9]}{'len'} += $l[4] - $l[3] + 1;
+                        $espred{$l[8]}{'len'} += $l[4] - $l[3] + 1;
                     }
                 }
             }
