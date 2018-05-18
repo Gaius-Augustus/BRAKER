@@ -24,3 +24,24 @@ p="/home/braker/project2/Drosophila_melanogaster/arx"
 bowtie2-build genome.fa genome
 
 nohup tophat2  --num-threads 4  --microexon-search  --mate-std-dev 26  --mate-inner-dist 38  --min-intron-length 30  --min-coverage-intron 30 --min-segment-intron 30   -o ./tophat_out  genome   $p/SRR023505_1.fastq,$p/SRR023546_1.fastq,$p/SRR023608_1.fastq,$p/SRR026433_1.fastq,$p/SRR027108_1.fastq  $p/SRR023505_2.fastq,$p/SRR023546_2.fastq,$p/SRR023608_2.fastq,$p/SRR026433_2.fastq,$p/SRR027108_2.fastq > loginfo &
+
+# May 18th 2018
+# Want to build a smaller example because runtime for testing is to big
+
+cdbfasta genome.fa -o genome.fa.idx
+
+# retrieve only 1/6 of chr2 sequence: 1:4213838
+
+cdbyank genome.fa.idx -d genome.fa -a '2R 1 4213838' -R > genome.small.fa
+
+mv genome.small.fa genome.fa
+
+# get rnaseq reads from rgasp that map to 2R
+wget http://bioinf.uni-greifswald.de/augustus/binaries/tutorial/data/rgasp_fly_2R.fastq.gz
+gunzip rgasp_fly_2R.fastq.gz
+cat rgasp_fly_2R.fastq | perl -ne 'if(m/\/1$/){$p = 1}elsif(m/\/2$/){$p = 0} if($p==1){print $_;}' > rnaseq_1.fq
+cat rgasp_fly_2R.fastq | perl -ne 'if(m/\/1$/){$p = 0}elsif(m/\/2$/){$p = 1} if($p==1){print $_;}' > rnaseq_2.fq
+
+bowtie2-build genome.fa genome
+
+tophat2  --num-threads 7  --microexon-search  --mate-std-dev 26  --mate-inner-dist 38  --min-intron-length 30  --min-coverage-intron 30 --min-segment-intron 30   -o ./tophat_out  genome  rnaseq_1.fq  rnaseq_2.fq > loginfo &
