@@ -39,9 +39,10 @@ mv genome.small.fa genome.fa
 # get rnaseq reads from rgasp that map to 2R
 wget http://bioinf.uni-greifswald.de/augustus/binaries/tutorial/data/rgasp_fly_2R.fastq.gz
 gunzip rgasp_fly_2R.fastq.gz
-cat rgasp_fly_2R.fastq | perl -ne 'if(m/\/1$/){$p = 1}elsif(m/\/2$/){$p = 0} if($p==1){print $_;}' > rnaseq_1.fq
-cat rgasp_fly_2R.fastq | perl -ne 'if(m/\/1$/){$p = 0}elsif(m/\/2$/){$p = 1} if($p==1){print $_;}' > rnaseq_2.fq
 
-bowtie2-build genome.fa genome
+mkdir star_genome
+STAR --runMode genomeGenerate --genomeDir star_genome --genomeFastaFiles genome.fa
+STAR --genomeDir star_genome --readFilesIn rgasp_fly_2R.fastq  --runThreadN 10
+samtools view -Sb Aligned.out.sam > RNAseq.bam
 
-tophat2  --num-threads 7  --microexon-search  --mate-std-dev 26  --mate-inner-dist 38  --min-intron-length 30  --min-coverage-intron 30 --min-segment-intron 30   -o ./tophat_out  genome  rnaseq_1.fq  rnaseq_2.fq > loginfo &
+bam2hints RNAseq.bam --intronsonly --in RNAseq.bam --out=RNAseq.hints
