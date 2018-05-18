@@ -6714,14 +6714,7 @@ sub augustus {
 sub assign_ex_cfg {
     my $thisCfg = shift;
     print STDERR "The path is  "."rel2abs($0)/cfg/\n";
-    my $localSearchPath = rel2abs($0);
-    my @t = split(/\//, $localSearchPath);
-    $localSearchPath = "";
-    for(my $i = 0; $i++; $i < (scalar(@t)-1)) {
-        $localSearchPath .= "/".$t[$i];
-    }
-    $localSearchPath .= "/cfg/";
-    $string = find( $thisCfg, $localSearchPath, $AUGUSTUS_SCRIPTS_PATH,
+    $string = find( "cfg/".$thisCfg, $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH,
         $AUGUSTUS_CONFIG_PATH );
     if ( -e $string ) {
         $extrinsicCfgFile = $string;
