@@ -359,7 +359,8 @@ ENDUSAGE
 my $v = 4; # determines what is printed to log
 my $version = "2.1.0";    # braker.pl version number
 my $rootDir;
-my $logString;          # stores log messages produced before opening log file
+my $logString = "";          # stores log messages produced before opening log file
+$logString .= "\# ". (localtime) . ": braker.pl version $version\n\n";
 my $prtStr;
 my $alternatives_from_evidence = "true";
                  # output alternative transcripts based on explicit evidence
@@ -577,6 +578,7 @@ if ($printVersion) {
     print "braker.pl version $version\n";
     exit(0);
 }
+
 
 # Make paths to input files absolute ###########################################
 
