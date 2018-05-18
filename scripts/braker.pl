@@ -2280,7 +2280,8 @@ sub check_upfront {
     }
 
     # check whether bamtools is installed
-    if ( system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0 ) {
+    if ( system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0 
+        && !$esmode == 1 ) {
         $prtStr
             = "\# "
             . (localtime)
