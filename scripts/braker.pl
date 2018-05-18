@@ -2568,12 +2568,12 @@ sub check_upfront {
     );
 
     # check whether all extrinsic cfg files are available
-    find_ex_cfg ("rnaseq.cfg");
-    find_ex_cfg ("ep.cfg");
-    find_ex_cfg ("gth.cfg");
-    find_ex_cfg ("rnaseq_utr.cfg");
-    find_ex_cfg ("ep_utr.cfg");
-    find_ex_cfg ("gth_utr.cfg");
+    find_ex_cfg ("cfg/rnaseq.cfg");
+    find_ex_cfg ("cfg/ep.cfg");
+    find_ex_cfg ("cfg/gth.cfg");
+    find_ex_cfg ("cfg/rnaseq_utr.cfg");
+    find_ex_cfg ("cfg/ep_utr.cfg");
+    find_ex_cfg ("cfg/gth_utr.cfg");
 }
 
 ####################### find_ex_cfg ############################################
