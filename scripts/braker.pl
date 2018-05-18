@@ -728,6 +728,11 @@ if ( $wdGiven == 1 ) {
     $errorfilesDir = "$rootDir/$species/errors";
 }
 
+# if esmode, no hintsfile is given, only ab initio predictions possible
+if( $ESmode == 1 ) {
+    $ab_initio = 1;
+}
+
 ################################################################################
 # check whether genemark.gtf file exists                                       #
 # this is not in check_options because it is possible to use a genemark.gtf    #
@@ -6556,123 +6561,135 @@ sub augustus {
     my $augustus_dir           = "$otherfilesDir/augustus_tmp$genesetId";
     my $augustus_dir_ab_initio = "$otherfilesDir/augustus_ab_initio_tmp$genesetId";
 
+    if( $CPU > 1 ) {
+        prepare_genome( $genome_dir );
+    }
 
-    if (!uptodate( [ $extrinsicCfgFile, $hintsfile, $genome ],
-            ["$otherfilesDir/augustus.hints$genesetId.gff"] )
-        || $overwrite
-        )
-    {
-        if ( $CPU > 1 ) {
-            prepare_genome( $genome_dir );
-            if ($ab_initio) {
+    if( $ESmode == 1 || $ab_initio == 1) {
+        if( !uptodate( [$genome], 
+            ["$otherfilesDir/augustus.ab_initio$genesetId.gtf"] ) 
+        || $overwrite ){
+            if( $CPU > 1) {
                 make_ab_initio_jobs( $augustus_dir_ab_initio, $genome_dir,
                     $localUTR, $genesetId );
                 run_augustus_jobs( "$otherfilesDir/ab_initio$genesetId.job.lst" );
                 join_aug_pred( $augustus_dir_ab_initio,
                     "$otherfilesDir/augustus.ab_initio$genesetId.gff" );
                 make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
-            }
-            # single ex.cfg scenarios are:
-            # EPmode == 1 -> ep.cfg
-            # EPmode == 0 && !prg -> rnaseq.cfg
-            # trainFromGth -> gth.cfg
-            if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
-                if(defined($extrinsicCfgFile1)){
-                    $extrinsicCfgFile = $extrinsicCfgFile1;
-                }else{
-                    if ( $foundProt>0 && $foundRNASeq==0 ){
-                        if(defined($prg)){
-                            if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
-                                if( $localUTR eq "off" ) {
-                                    assign_ex_cfg ("gth.cfg");
-                                }else{
-                                    assign_ex_cfg ("gth_utr.cfg")
-                                }
-                            }else{
-                                $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
-                                    ." at line " . __LINE__
-                                    . "\nunsupported alignment program $prg given!\n";
-                                print STDERR $prtStr;
-                                print LOG $prtStr;
-                            }
-                        }else{
-                            if( $localUTR eq "off" ) {
-                                assign_ex_cfg ("ep.cfg");
-                            }else{
-                                assign_ex_cfg ("ep_utr.cfg");
-                            }
-                        }
-                    }elsif( $foundProt==0 && $foundRNASeq > 0){
-                        if( $localUTR eq "off" ) {
-                            assign_ex_cfg ("rnaseq.cfg");
-                        }else{
-                            assign_ex_cfg ("rnaseq_utr.cfg");
-                        }
-                    }
-                }
-                copy_ex_cfg($extrinsicCfgFile, "ex1$genesetId.cfg");
-                my $hintId = "hints".$genesetId;
-                make_hints_jobs( $augustus_dir, $genome_dir, $hintsfile,
-                    $extrinsicCfgFile, $localUTR, $hintId );
-                run_augustus_jobs( "$otherfilesDir/$hintId.job.lst" );
-                join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
-                clean_aug_jobs($hintId);
-                make_gtf("$otherfilesDir/augustus.$hintId.gff");
-            }else{
-                run_augustus_with_joingenes_parallel($genome_dir, $localUTR, $genesetId);
-            }
-        } else {
-            push( @genome_files, $genome );
-             if ($ab_initio) {
+            } else {
                 run_augustus_single_core_ab_initio( $localUTR , $genesetId);
                 make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
             }
-            if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
-                if(defined($extrinsicCfgFile1)){
-                    $extrinsicCfgFile = $extrinsicCfgFile1;
-                }else{
-                    if ( ($foundProt>0 && $foundRNASeq==0) ){
-                        if (defined ($prg) ) {
-                            if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
-                                if ( $localUTR eq "off" ) {
-                                    assign_ex_cfg ("gth.cfg");
+        } else {
+            print LOG "\# " . (localtime) . ": Skipping predicting genes with "
+                . "AUGUSTUS ab initio because file "
+                . "$otherfilesDir/augustus.ab_initio$genesetId.gtf is up to "
+                . "date.\n" if ($v > 3);
+        }
+    } else {
+
+        if (!uptodate( [ $extrinsicCfgFile, $hintsfile, $genome ],
+            ["$otherfilesDir/augustus.hints$genesetId.gtf"] ) || $overwrite)
+        {
+            if ( $CPU > 1 ) {
+                # single ex.cfg scenarios are:
+                # EPmode == 1 -> ep.cfg
+                # EPmode == 0 && !prg -> rnaseq.cfg
+                # trainFromGth -> gth.cfg
+                if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
+                    if(defined($extrinsicCfgFile1)){
+                        $extrinsicCfgFile = $extrinsicCfgFile1;
+                    }else{
+                        if ( $foundProt>0 && $foundRNASeq==0 ){
+                            if(defined($prg)){
+                                if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
+                                    if( $localUTR eq "off" ) {
+                                        assign_ex_cfg ("gth.cfg");
+                                    }else{
+                                        assign_ex_cfg ("gth_utr.cfg")
+                                    }
                                 }else{
-                                    assign_ex_cfg ("gth_utr.cfg");
+                                    $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
+                                        ." at line " . __LINE__
+                                        . "\nunsupported alignment program $prg given!\n";
+                                    print STDERR $prtStr;
+                                    print LOG $prtStr;
                                 }
                             }else{
-                                $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
-                                    ." at line " . __LINE__
-                                    . "\nunsupported alignment program $prg given!\n";
-                                print STDERR $prtStr;
-                                print LOG $prtStr;
+                                if( $localUTR eq "off" ) {
+                                    assign_ex_cfg ("ep.cfg");
+                                }else{
+                                    assign_ex_cfg ("ep_utr.cfg");
+                                }
                             }
-                        }else{
+                        }elsif( $foundProt==0 && $foundRNASeq > 0){
                             if( $localUTR eq "off" ) {
-                                assign_ex_cfg ("ep.cfg");
+                                assign_ex_cfg ("rnaseq.cfg");
                             }else{
-                                assign_ex_cfg ("ep_utr.cfg");
+                                assign_ex_cfg ("rnaseq_utr.cfg");
                             }
-                        }
-                    }elsif( $foundProt==0 && $foundRNASeq > 0) {
-                        if($localUTR eq "off") {
-                            assign_ex_cfg ("rnaseq.cfg");
-                        }else{
-                            assign_ex_cfg ("rnaseq_utr.cfg");
                         }
                     }
+                    copy_ex_cfg($extrinsicCfgFile, "ex1$genesetId.cfg");
+                    my $hintId = "hints".$genesetId;
+                    make_hints_jobs( $augustus_dir, $genome_dir, $hintsfile,
+                        $extrinsicCfgFile, $localUTR, $hintId );
+                    run_augustus_jobs( "$otherfilesDir/$hintId.job.lst" );
+                    join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
+                    clean_aug_jobs($hintId);
+                    make_gtf("$otherfilesDir/augustus.$hintId.gff");
+                }else{
+                    run_augustus_with_joingenes_parallel($genome_dir, $localUTR, $genesetId);
                 }
-                my $hintId = "hints".$genesetId;
-                copy_ex_cfg($extrinsicCfgFile, "ex1$genesetId.cfg");
-                run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile,
-                    $localUTR, $hintId);
-                make_gtf("$otherfilesDir/augustus.$hintId.gff");
-            }else{
-                run_augustus_with_joingenes_single_core($localUTR, $genesetId);
+            } else {
+                push( @genome_files, $genome );
+                if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
+                    if(defined($extrinsicCfgFile1)){
+                        $extrinsicCfgFile = $extrinsicCfgFile1;
+                    }else{
+                        if ( ($foundProt>0 && $foundRNASeq==0) ){
+                            if (defined ($prg) ) {
+                                if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
+                                    if ( $localUTR eq "off" ) {
+                                        assign_ex_cfg ("gth.cfg");
+                                    }else{
+                                        assign_ex_cfg ("gth_utr.cfg");
+                                    }
+                                }else{
+                                    $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
+                                        ." at line " . __LINE__
+                                        . "\nunsupported alignment program $prg given!\n";
+                                    print STDERR $prtStr;
+                                    print LOG $prtStr;
+                                }
+                            }else{
+                                if( $localUTR eq "off" ) {
+                                    assign_ex_cfg ("ep.cfg");
+                                }else{
+                                    assign_ex_cfg ("ep_utr.cfg");
+                                }
+                            }
+                        }elsif( $foundProt==0 && $foundRNASeq > 0) {
+                            if($localUTR eq "off") {
+                                assign_ex_cfg ("rnaseq.cfg");
+                            }else{
+                                assign_ex_cfg ("rnaseq_utr.cfg");
+                            }
+                        }
+                    }
+                    my $hintId = "hints".$genesetId;
+                    copy_ex_cfg($extrinsicCfgFile, "ex1$genesetId.cfg");
+                    run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile,
+                        $localUTR, $hintId);
+                    make_gtf("$otherfilesDir/augustus.$hintId.gff");
+                }else{
+                    run_augustus_with_joingenes_single_core($localUTR, $genesetId);
+                }
             }
-        }
-        print LOG "\# " . (localtime) . ": AUGUSTUS prediction complete\n"
-            if ($v > 3);
+            print LOG "\# " . (localtime) . ": AUGUSTUS prediction complete\n"
+                if ($v > 3);
 
+        }
     }
     #if ($ab_initio) {
     #    get_anno_fasta("$otherfilesDir/augustus.ab_initio.gff");
@@ -6692,7 +6709,7 @@ sub augustus {
 
 sub assign_ex_cfg {
     my $thisCfg = shift;
-    $string = find( $thisCfg, $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH,
+    $string = find( $thisCfg, rel2abs($0)."/cfg/", $AUGUSTUS_SCRIPTS_PATH,
         $AUGUSTUS_CONFIG_PATH );
     if ( -e $string ) {
         $extrinsicCfgFile = $string;
@@ -7095,8 +7112,7 @@ sub join_aug_pred {
 sub run_augustus_single_core_ab_initio {
     my $localUTR = shift;
     my $genesetId = shift;
-    my $aug_ab_initio_err
-        = "$errorfilesDir/augustus.ab_initio$genesetId.stderr";
+    my $aug_ab_initio_err = "$errorfilesDir/augustus.ab_initio$genesetId.err";
     my $aug_ab_initio_out = "$otherfilesDir/augustus.ab_initio$genesetId.gff";
     $cmdString         = "";
     if ($nice) {
