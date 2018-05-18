@@ -4690,7 +4690,8 @@ sub GeneMark_ES {
 
             # consider removing --verbose, later
             $perlCmdString
-                .= "perl $string --verbose --sequence=$genome --cores=$CPU";
+                .= "perl $string --verbose --sequence=$genome --cores=$CPU "
+                .  "--ES ";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
