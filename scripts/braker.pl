@@ -4644,7 +4644,7 @@ sub check_genemark_hints {
             . ": WARNING: \n"
             . "The file $genemark_hintsfile contains less than 500 "
             . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
-            . "total, $nIntrons unique introns are contained.) Possibly, you "
+            . "total, $nIntrons unique introns are contained. $nIntronsAboveThreshold have a multiplicity >= 10.) Possibly, you "
             . "are trying to run braker.pl on data that does not supply "
             . "multiplicity information. This will e.g. happen if you try to "
             . "use introns generated from assembled RNA-Seq transcripts; or if "
