@@ -5710,11 +5710,11 @@ sub training_augustus {
                 clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, $prtStr);
             }
-            if ( $gb_good_size < 600 ) {
+            if ( $gb_good_size < 300 ) {
                 $prtStr = "\# "
                     . (localtime)
                     . " WARNING: Number of good genes is low ($gb_good_size). "
-                    . "Recommended are at least 600 genes\n";
+                    . "Recommended are at least 300 genes\n";
                 print LOG $prtStr if ($v > 0);
                 print STDOUT $prtStr if ($v > 0);
                 $testsize1 = floor($gb_good_size/3);
@@ -6713,7 +6713,7 @@ sub augustus {
 
 sub assign_ex_cfg {
     my $thisCfg = shift;
-    print STDERR "The path is  rel2abs($0)/cfg/\n";
+    print STDERR "The path is  "."rel2abs($0)/cfg/\n";
     $string = find( $thisCfg, rel2abs($0)."/cfg/", $AUGUSTUS_SCRIPTS_PATH,
         $AUGUSTUS_CONFIG_PATH );
     if ( -e $string ) {
