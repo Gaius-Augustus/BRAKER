@@ -1080,7 +1080,7 @@ if (! $trainFromGth && $skipAllTraining==0 && $ESmode == 0 ) {
 # train gene predictors
 if ( $skipAllTraining == 0 ) {
     if ( not($trainFromGth) ) {
-        if ( $EPmode == 0 && $ETPmode==0 ) {
+        if ( $EPmode == 0 && $ETPmode==0 && $ESmode == 0 ) {
             check_genemark_hints();
             GeneMark_ET();    # run GeneMark-ET
             filter_genemark();
