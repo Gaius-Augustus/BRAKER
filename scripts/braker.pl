@@ -6713,7 +6713,6 @@ sub augustus {
 
 sub assign_ex_cfg {
     my $thisCfg = shift;
-    print STDERR "The path is  "."rel2abs($0)/cfg/\n";
     $string = find( "cfg/".$thisCfg, $AUGUSTUS_BIN_PATH, $AUGUSTUS_SCRIPTS_PATH,
         $AUGUSTUS_CONFIG_PATH );
     if ( -e $string ) {
@@ -8014,14 +8013,27 @@ sub train_utr {
                 . " at line " . __LINE__
                 . "\nFailed to execute: $cmdString!\n" );
         }
+        print LOG "\# " . (localtime) . ": sorting bam file...\n" if ($v > 3);
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$SAMTOOLS_PATH/samtools sort $otherfilesDir/merged.bam "
+                   .  "-o $otherfilesDir/merged.s.bam "
+                   .  "1> $otherfilesDir/samtools_sort_before_wig.stdout "
+                   .  "2> $errorfilesDir/samtools_sort_before_wig.stderr";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
         print LOG "\# " . (localtime) . ": Creating wiggle file...\n"
             if ( $v > 3 );
         $cmdString = "";
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString .= "$bam2wig merged.bam >$otherfilesDir/merged.wig "
-                   .   "2> $errorfilesDir/bam2wig.err";
+        $cmdString .= "$bam2wig $otherfilesDir/merged.s.bam "
+                   .  "1>$otherfilesDir/merged.wig "
+                   .  "2> $errorfilesDir/bam2wig.err";
         print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
