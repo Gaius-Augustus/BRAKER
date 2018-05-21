@@ -7812,42 +7812,9 @@ sub eval_gene_pred {
 sub train_utr {
     print LOG "\# " . (localtime) . ": Training AUGUSTUS UTR parameters\n"
         if ( $v > 2 );
-    print LOG "\# "
-        . (localtime)
-        . ": Move augustus predictions to *.noUTR.* files prior UTR training:\n"
-        if ( $v > 3 );
     my $loci = 0;
     my $testSetSize = 0;
     my $onlyTrainSize = 0;
-    # store predictions without UTRs, revert later if UTR model does not improve
-    # predictions
-    print LOG "mv $otherfilesDir/augustus.hints.gff "
-        . "$otherfilesDir/augustus.hints.noUtr.gff\n" if ( $v > 3 );
-    move( "$otherfilesDir/augustus.hints.gff",
-        "$otherfilesDir/augustus.hints.noUtr.gff" );
-    print LOG "mv $otherfilesDir/augustus.hints.gtf "
-        . "$otherfilesDir/augustus.hints.noUtr.gtf\n" if ( $v > 3 );
-    move( "$otherfilesDir/augustus.hints.gtf",
-        "$otherfilesDir/augustus.hints.noUtr.gtf" );
-    if(-e "$otherfilesDir/augustus.hints.aa"){
-        print LOG "mv $otherfilesDir/augustus.hints.aa "
-            . "$otherfilesDir/augustus.hints.noUtr.aa\n" if ( $v > 3 );
-        move( "$otherfilesDir/augustus.hints.aa",
-            "$otherfilesDir/augustus.hints.noUtr.aa" );
-    }
-    if(-e "$otherfilesDir/augustus.hints.codingseq"){
-        print LOG "mv $otherfilesDir/augustus.hints.codingseq "
-            . "$otherfilesDir/augustus.hints.noUtr.codingseq\n" if ( $v > 3 );
-        move( "$otherfilesDir/augustus.hints.codingseq",
-            "$otherfilesDir/augustus.hints.noUtr.codingseq" );
-    }
-    if(-e "$otherfilesDir/augustus.hints.cdsexons"){
-        print LOG "mv $otherfilesDir/augustus.hints.cdsexons "
-            . "$otherfilesDir/augustus.hints.noUtr.cdsexons\n" if ( $v > 3 );
-        move( "$otherfilesDir/augustus.hints.cdsexons",
-            "$otherfilesDir/augustus.hints.noUtr.cdsexons" );
-    }
-
     # copy species parameter files, revert later if UTR model does not improve
     # predictions
     print LOG "\# " . (localtime)
@@ -7867,20 +7834,20 @@ sub train_utr {
             . __LINE__
             . "\nCould not change into directory $otherfilesDir!\n" );
 
-    # search all start and stop codons from augustus.noUtr.gtf and write them
+    # search all start and stop codons from augustus.gtf and write them
     # to the file stops.and.starts.gff
-    if ( !uptodate( ["$otherfilesDir/augustus.hints.noUtr.gtf"],
+    if ( !uptodate( ["$otherfilesDir/augustus.hints.gtf"],
         ["$otherfilesDir/stops.and.starts.gff"] ) ) {
         print LOG "\# " . (localtime)
             . ": extracting all stop and start codons from "
-            . "augustus.hints.noUtr.gtf to stops.and.starts.gff\n"
+            . "augustus.hints.gtf to stops.and.starts.gff\n"
             if ( $v > 3 );
         my %nonRedundantCodons;
         my @tmpGffLine;
-        open( AUG, "<", "$otherfilesDir/augustus.hints.noUtr.gtf" )
+        open( AUG, "<", "$otherfilesDir/augustus.hints.gtf" )
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
                 . "\nCould not open file "
-                . "$otherfilesDir/augustus.hints.noUtr.gtf!\n" );
+                . "$otherfilesDir/augustus.hints.gtf!\n" );
         # remove transcripts that are redundant by start/stop codon position
         while ( defined( my $i = <AUG> ) ) {
             if ( $i =~ /\t(start_codon|stop_codon)\t/ ) {
@@ -7892,7 +7859,7 @@ sub train_utr {
         }
         close(AUG) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not close file "
-            . "$otherfilesDir/augustus.hints.noUtr.gtf!\n" );
+            . "$otherfilesDir/augustus.hints.gtf!\n" );
         open( CODON, ">", "$otherfilesDir/stops.and.starts.gff" )
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
                 . "\nCould not open file "
@@ -8063,7 +8030,7 @@ sub train_utr {
     }
 
     # create genbank file with genes that have two utrs
-    if (!uptodate( [ "$otherfilesDir/utrs.gff",    "$otherfilesDir/augustus.hints.noUtr.gtf" ],
+    if (!uptodate( [ "$otherfilesDir/utrs.gff",    "$otherfilesDir/augustus.hints.gtf" ],
             [ "$otherfilesDir/bothutr.lst", "$otherfilesDir/bothutr.test.gb" ] ) ) {
         print LOG "\# " . (localtime) . ": Creating gb file for UTR training\n"
             if ( $v > 3 );
@@ -8100,7 +8067,7 @@ sub train_utr {
             $cmdString .= "nice ";
         }
         $cmdString .= "cat $otherfilesDir/utrs.gff "
-                   .  "$otherfilesDir/augustus.hints.noUtr.gtf | "
+                   .  "$otherfilesDir/augustus.hints.gtf | "
                    .  "grep -P \"(CDS|5'-UTR|3'-UTR)\" | "
                    .  "sort -n -k 4,4 | "
                    .  "sort -s -k 10,10 | sort -s -k 1,1 >"
