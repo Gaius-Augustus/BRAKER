@@ -7645,6 +7645,19 @@ sub evaluate {
             if ($v > 3);
     }
 
+    if ( -e "$otherfilesDir/augustus.ab_initio_utr.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $otherfilesDir/augustus.ab_initio_utr.gtf!\n"
+            if ($v > 3);
+        eval_gene_pred("$otherfilesDir/augustus.ab_initio_utr.gtf");
+    }else{
+         print LOG "\# "
+            . (localtime)
+            . ": did not find $otherfilesDir/augustus.ab_initio_utr.gtf!\n"
+            if ($v > 3);
+    }
+
     if ( -e "$otherfilesDir/augustus.hints.gtf" ) {
         print LOG "\# "
             . (localtime)
@@ -7655,6 +7668,19 @@ sub evaluate {
         print LOG "\# "
             . (localtime)
             . ": did not find $otherfilesDir/augustus_hints.gtf!\n"
+            if ($v > 3);
+    }
+
+    if ( -e "$otherfilesDir/augustus.hints_utr.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $otherfilesDir/augustus.hints_utr.gtf!\n"
+            if ($v > 3);
+        eval_gene_pred("$otherfilesDir/augustus.hints_utr.gtf");
+    }else{
+        print LOG "\# "
+            . (localtime)
+            . ": did not find $otherfilesDir/augustus_hints_utr.gtf!\n"
             if ($v > 3);
     }
 
