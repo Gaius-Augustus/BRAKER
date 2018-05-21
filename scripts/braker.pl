@@ -8022,7 +8022,7 @@ sub train_utr {
         if( $rnaseq2utr_args ) {
             $cmdString .= "$rnaseq2utr_args ";
         }
-        $cmdString .=  "1> $otherfilesDir/rnaseq2utr.log "
+        $cmdString .=  "1> $otherfilesDir/rnaseq2utr.stdout "
                     .  "2> $errorfilesDir/rnaseq2utr.err";
         print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
@@ -8151,7 +8151,7 @@ sub train_utr {
         $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
                        .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
                        .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU "
-                       .  "1> $otherfilesDir/utr.aa2nonred.out "
+                       .  "1> $otherfilesDir/utr.aa2nonred.stdout "
                        .  "2> $errorfilesDir/utr.aa2nonred.stderr";
         print LOG "\# "
             . (localtime)
@@ -8382,7 +8382,7 @@ sub train_utr {
                            . "--metapars=$AUGUSTUS_CONFIG_PATH"
                            . "/species/$species/$metaUtrName --cpus=$CPU "
                            . "$otherfilesDir/utr.gb.train.test "
-                           . "--UTR=on > $otherfilesDir/optimize.utr.out "
+                           . "--UTR=on > $otherfilesDir/optimize.utr.stdout "
                            . "2> $errorfilesDir/optimize.utr.err"
         }
         print LOG "Now optimizing meta parameters of AUGUSTUS for the UTR "
@@ -8515,7 +8515,14 @@ sub clean_up {
             || $file =~ m/secondetraining\.stdout/ || $file =~ m/traingenes\.good\.fa/ ||
             $file =~ m/aa2nonred\.stdout/ || $file =~ m/singlecds\.hints/ ||
             $file =~ m/augustus\.hints\.tmp\.gtf/ || $file =~ m/train\.gb\./ ||
-            $file =~ m/traingenes\.good\.fa/){
+            $file =~ m/traingenes\.good\.fa/ || $file =~ m/augustus\.ab_initio\.tmp\.gtf/
+            || $file =~ m/augustus\.ab_initio_utr\.tmp\.gtf/ || $file =~ m/augustus\.hints_utr\.tmp\.gtf/
+            || $file =~ m/genes\.gtf/ || $file =~ m/genes_in_gb\.gtf/ ||
+            $file =~ m/merged\.s\.bam/ || $file =~ m/utr_genes_in_gb\.fa/ ||
+            $file =~ m/utr_genes_in_gb\.nr\.fa/ || $file =~ m/utr\.gb\.test/ ||
+            $file =~ m/utr\.gb\.train/ || $file =~ m/utr\.gb\.train\.test/ ||
+            $file =~ m/utr\.gb\.train\.train/ || $file =~ m/ep\.hints/ || 
+            $file =~ m/rnaseq\.utr\.hints/ || $file =~ m/stops\.and\.starts.gff/){
             print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
             unlink( "$otherfilesDir/$file" );
         }
