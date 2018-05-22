@@ -7793,7 +7793,7 @@ sub eval_gene_pred {
             if (   ( $t[2] eq "CDS" )
                 or ( $t[2] eq "exon" )
                 or ( $t[2] eq "start_codon" )
-                or ( $t[2] eq "UTR" ) )
+                or ( $t[2] =~ m/UTR/ ) )
             {
                 print FIRST $_;
             }
@@ -8475,7 +8475,7 @@ sub wig2hints {
         $perlCmdString .= "perl $string --margin=10 --minthresh=2 --minscore=4 "
                        .  "--prune=0.1 --src=W --type=ep "
                        .  "--UCSC=$otherfilesDir/unstranded.track --radius=4.5 "
-                       .  "--pri=4 --strand="." > $ep_hints_file "
+                       .  "--pri=4 --strand=\".\" > $ep_hints_file "
                        .  "2> $errorfilesDir/wig2hints.err";
         print LOG "\# "
             . (localtime)
