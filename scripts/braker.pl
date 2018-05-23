@@ -8606,10 +8606,10 @@ sub filter_augustus {
                     $printF = 0;
                 }
             }
-            if( $printF == 1 && $nIntron > 0 ) {
-                foreach(@{$txarray}){
-                    print FGENES $_;
-                }
+        }
+        if( $printF == 1 && $nIntron > 0 ) {
+            foreach(@{$txarray}){
+                print FGENES $_;
             }
         }
     }
