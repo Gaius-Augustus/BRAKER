@@ -855,8 +855,9 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
         exit(1);
     }
 } elsif ( ( ( $skipGeneMarkEP && not($trainFromGth) && not ( defined($AUGUSTUS_hints_preds) )) || 
-    ( $skipGeneMarkETP && not ($trainFromGth) ) || 
-    ( $skipGeneMarkES && not ($trainFromGth) ) ) && not ($skipAllTraining) ) {
+    ( $skipGeneMarkETP && not ($trainFromGth)  && not ( defined($AUGUSTUS_hints_preds) )) || 
+    ( $skipGeneMarkES && not ($trainFromGth)  && not ( defined($AUGUSTUS_hints_preds) )) ) 
+    && not ($skipAllTraining) &&  not ( defined($AUGUSTUS_hints_preds) ) ) {
     $prtStr = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
