@@ -2769,7 +2769,6 @@ sub check_options {
         $skipGeneMarkEP = 1;
         $skipGeneMarkETP = 1;
         $skipGeneMarkES = 1;
-        $gth2traingenes = 0;
         $UTR = "on";
         if( defined($hintsfile) ) {
             $prtStr = "\# " . (localtime)
