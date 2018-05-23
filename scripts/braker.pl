@@ -312,6 +312,10 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     use this file as basis for UTR training;
                                     only UTR training and prediction is
                                     performed if this option is given.
+--flanking_DNA=n                    Size of flanking region, must only be
+                                    specified if --AUGUSTUS_hints_preds is given
+                                    (for UTR training in a separate braker.pl 
+                                    run that builds on top of an existing run)
 --eval=reference.gtf                Reference set to evaluate predictions
                                     against
 --verbosity=n                       0 -> run braker.pl quiet (no log)
@@ -573,6 +577,7 @@ GetOptions(
     'verbosity=i'                  => \$v,
     'downsampling_lambda=s'        => \$lambda,
     'splice_sites=s'               => \@splice_cmd_line,
+    'flanking_DNA=i'               => \$flanking_DNA,
     'version!'                     => \$printVersion
 );
 
@@ -6547,7 +6552,9 @@ sub gtf2gb {
     print LOG "\# " . (localtime) . ": Converting gtf file $gtf to genbank "
         . "file\n" if ($v > 2);
     my $gb  = shift;
-    $flanking_DNA = compute_flanking_region($gtf);
+    if( not( defined( $flanking_DNA ) ) ) {
+        $flanking_DNA = compute_flanking_region($gtf);
+    }
     $string       = find(
         "gff2gbSmallDNA.pl",    $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -8592,7 +8599,7 @@ sub filter_augustus {
         my $printF = 1;
         foreach(@{$txarray}){
             my @line = split(/\t/);
-            my $nIntron;
+            my $nIntron = 0;
             if( $line[2] eq "intron" ) {
                 $nIntron++;
                 if( not( defined( $introns{ $line[0] }{ $line[6] } { $line[3] } { $line[4] }) ) ) {
