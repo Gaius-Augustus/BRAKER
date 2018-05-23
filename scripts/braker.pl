@@ -8597,9 +8597,9 @@ sub filter_augustus {
         . "\nCould not open file $otherfilesDir/augustus.hints.f.gtf!\n" );
     while ( my ($txid, $txarray) = each (%tx) ) {
         my $printF = 1;
+        my $nIntron = 0;
         foreach(@{$txarray}){
             my @line = split(/\t/);
-            my $nIntron = 0;
             if( $line[2] eq "intron" ) {
                 $nIntron++;
                 if( not( defined( $introns{ $line[0] }{ $line[6] } { $line[3] } { $line[4] }) ) ) {
