@@ -305,9 +305,13 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     those pre-existing parameters are used.
 --splice_sites=patterns             list of splice site patterns for UTR
                                     prediction; default: GTAG, extend like this:
-                                    --splice_sites=GTAG,GCAG,ATAG,...
+                                    --splice_sites=GTAG,ATAC,...
 --rnaseq2utr_args=params            Expert option: pass additional parameters
                                     to rnaseq2utr as string
+--AUGUSTUS_hints_preds=s            File with AUGUSTUS hints predictions; will
+                                    use this file as basis for UTR training;
+                                    only UTR training and prediction is
+                                    performed if this option is given.
 --eval=reference.gtf                Reference set to evaluate predictions
                                     against
 --verbosity=n                       0 -> run braker.pl quiet (no log)
@@ -446,6 +450,7 @@ my $UTR = "off";    # UTR prediction on/off. currently not available für new
 my $workDir;        # in the working directory results and temporary files are
                     # stored
 my $filterOutShort; # filterOutShort option (see help)
+my $augustusHintsPreds; # already existing AUGUSTUS hints prediction without UTR
 
 # Hint type from input hintsfile will be checked
 # a) GeneMark-ET (requires intron hints) and
@@ -499,6 +504,7 @@ my $foundProt = 0; # stores whether hintsfile contains src=P
 my $lambda; # labmda of poisson distribution for downsampling of training genes
 my @splice_cmd_line;
 my @splice;
+my $AUGUSTUS_hints_preds; # for UTR training only (updating existing runs)
 
 # list of forbidden words for species name
 @forbidden_words = (
@@ -527,6 +533,7 @@ GetOptions(
     'fungus!'                      => \$fungus,
     'extrinsicCfgFiles=s'           => \@extrinsicCfgFiles,
     'GENEMARK_PATH=s'              => \$GMET_path,
+    'AUGUSTUS_hints_preds=s'       => \$AUGUSTUS_hints_preds,
     'genome=s'                     => \$genome,
     'gff3'                         => \$gff3,
     'hints=s'                      => \@hints,
@@ -701,7 +708,7 @@ if ( !-d $rootDir ) {
 
 # set other directories
 if ( $wdGiven == 1 ) {
-    if ( $EPmode == 0 && $ETPmode == 0) {
+    if ( $EPmode == 0 && $ETPmode == 0 && $ESmode == 0) {
         $genemarkDir = "$rootDir/GeneMark-ET";
     }elsif ( $ETPmode == 1 ) {
         $genemarkDir = "$rootDir/GeneMark-ETP";
@@ -714,7 +721,7 @@ if ( $wdGiven == 1 ) {
     $otherfilesDir = "$rootDir";
     $errorfilesDir = "$rootDir/errors";
 } else {
-    if ( $EPmode == 0 && $ETPmode == 0) {
+    if ( $EPmode == 0 && $ETPmode == 0 && $ESmode == 0) {
         $genemarkDir = "$rootDir/$species/GeneMark-ET";
     } elsif ( $ETPmode == 1 ) {
         $genemarkDir = "$rootDir/$species/GeneMark-ETP"
@@ -742,7 +749,7 @@ if( $ESmode == 1 ) {
 ################################################################################
 
 if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 && 
-    not ( $skipAllTraining) ) {
+    not ( $skipAllTraining) && not ( defined($AUGUSTUS_hints_preds) ) ) {
     $prtStr = "\# "
             . (localtime)
             . ": REMARK: The GeneMark-EX step will be skipped.\n";
@@ -769,7 +776,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
         }
     }
 } elsif ( $skipGeneMarkEP && $EPmode == 1 && $ETPmode == 0 && $ESmode == 0 
-    && not ($skipAllTraining) ) {
+    && not ($skipAllTraining) && not ( defined($AUGUSTUS_hints_preds) ) ) {
     $prtStr = "REMARK: The GeneMark-EP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -794,7 +801,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
         exit(1);
     }
 } elsif ( $skipGeneMarkETP && $EPmode == 0 && $ETPmode == 1 && $ESmode == 0 
-    && not($skipAllTraining)){
+    && not($skipAllTraining) && not ( defined($AUGUSTUS_hints_preds) )){
     $prtStr = "REMARK: The GeneMark-ETP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -821,7 +828,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
         exit(1);
     }
 } elsif ( $skipGeneMarkES && $EPmode == 0 && $ETPmode == 0 && $ESmode == 1 
-    && not($skipAllTraining)){
+    && not($skipAllTraining) && not ( defined($AUGUSTUS_hints_preds) ) ){
     $prtStr = "REMARK: The GeneMark-ES step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if (    not( -f "$genemarkDir/genemark.gtf" )
@@ -847,7 +854,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
         }
         exit(1);
     }
-} elsif ( ( ( $skipGeneMarkEP && not($trainFromGth) ) || 
+} elsif ( ( ( $skipGeneMarkEP && not($trainFromGth) && not ( defined($AUGUSTUS_hints_preds) )) || 
     ( $skipGeneMarkETP && not ($trainFromGth) ) || 
     ( $skipGeneMarkES && not ($trainFromGth) ) ) && not ($skipAllTraining) ) {
     $prtStr = "\# "
@@ -893,7 +900,7 @@ if ( !-d $genemarkDir ) {
 }
 
 # check gthTrainGeneFile
-if ($gth2traingenes) {
+if ( $gth2traingenes ) {
     $gthTrainGeneFile = "$otherfilesDir/gthTrainGenes.gtf";
 }
 
@@ -937,7 +944,7 @@ print LOG "\# "
 chdir $rootDir or die("ERROR in file " . __FILE__ ." at line ".
     __LINE__ ."\nCould not change into directory $rootDir.\n");
 
-if ( $skipAllTraining == 0 ) {
+if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
     # create new species parameter files; we do this FIRST, before anything else,
     # because if you start several processes in parallel, you might otherwise end
     # up with those processes using the same species directory!
@@ -986,6 +993,7 @@ if ( $skipAllTraining == 0 ) {
 
  # check fasta headers
 check_fasta_headers($genome);
+
 if (@prot_seq_files) {
     foreach (@prot_seq_files) {
         check_fasta_headers($_);
@@ -1053,7 +1061,7 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
 # define $genemark_hintsfile: is needed because genemark can only handle intron
 # hints in braker.pl, AUGUSTUS can also handle other hints types
 $hintsfile          = "$otherfilesDir/hintsfile.gff";
-if(! $trainFromGth && ! $ESmode) {
+if(! $trainFromGth && ! $ESmode && not ( defined($AUGUSTUS_hints_preds) )) {
     $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
 }
 
@@ -1063,22 +1071,24 @@ if ( @bam ) {
 }
 
 # make hints from protein sequence data
-if ( @prot_seq_files or @prot_aln_files ) {
+if ( @prot_seq_files or @prot_aln_files 
+    && not ( defined($AUGUSTUS_hints_preds) ) ) {
     make_prot_hints();
 }
 
 # add other user supplied hints
-if (@hints) {
+if (@hints && not ( defined($AUGUSTUS_hints_preds) )) {
     add_other_hints();
 }
 
 # extract intron hints from hintsfile.gff for GeneMark
-if (! $trainFromGth && $skipAllTraining==0 && $ESmode == 0 ) {
+if (! $trainFromGth && $skipAllTraining==0 && $ESmode == 0 
+    && not ( defined($AUGUSTUS_hints_preds) ) ) {
     get_genemark_hints();
 }
 
 # train gene predictors
-if ( $skipAllTraining == 0 ) {
+if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
     if ( not($trainFromGth) ) {
         if ( $EPmode == 0 && $ETPmode==0 && $ESmode == 0 ) {
             check_genemark_hints();
@@ -1105,7 +1115,9 @@ if ( $skipAllTraining == 0 ) {
     training_augustus();
 }
 
-augustus("off");    # run augustus without UTR
+if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
+    augustus("off");    # run augustus without UTR
+}
 
 if ( $UTR eq "on" ) {
     train_utr();
@@ -2748,6 +2760,37 @@ sub check_options {
         $skipGeneMarkEP = 1;
         $skipGeneMarkETP = 1;
         $skipGeneMarkES = 1;
+    }
+
+    # UTR training only
+    if ( defined($AUGUSTUS_hints_preds) ) {
+        $skipoptimize = 1;
+        $skipGeneMarkET = 1;
+        $skipGeneMarkEP = 1;
+        $skipGeneMarkETP = 1;
+        $skipGeneMarkES = 1;
+        $gth2traingenes = 0;
+        $UTR = "on";
+        if( defined($hintsfile) ) {
+            $prtStr = "\# " . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line "
+                    . __LINE__ . "\n" . "--hintsfile cannot be specified "
+                    . "if --AUGUSTUS_hints_preds=s is given. Must specify "
+                    . "--bam (only)!\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+        }
+        if( !@bam ) {
+            $prtStr = "\# " . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line "
+                    . __LINE__ . "\n" . "Must specify "
+                    . "--bam (as only evidence source) for UTR parameter "
+                    . "training!\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+        }
     }
 
     # if UTR is on, check whether splice site patterns are given
@@ -5892,7 +5935,7 @@ sub training_augustus {
                 $AUGUSTUS_CONFIG_PATH
                     . "/species/$species/$species\_parameters.cfg",
                 "stopCodonExcludedFromCDS", "true"
-            );    # see autoAugTrain.pl
+            );
 
             # first try with etraining
             $augpath    = "$AUGUSTUS_BIN_PATH/etraining";
@@ -5943,7 +5986,7 @@ sub training_augustus {
                         . "/species/$species/$species\_parameters.cfg",
                     "stopCodonExcludedFromCDS",
                     "false"
-                );                       # see autoAugTrain.pl
+                );
                 print LOG "\n\# "
                     . (localtime)
                     . ": Trying etraining again\n" if ($v > 3);
@@ -7862,18 +7905,28 @@ sub train_utr {
 
     # search all start and stop codons from augustus.gtf and write them
     # to the file stops.and.starts.gff
-    if ( !uptodate( ["$otherfilesDir/augustus.hints.gtf"],
+    my $augustus_file;
+    if( defined($AUGUSTUS_hints_preds) ) {
+        $augustus_file = $AUGUSTUS_hints_preds;
+    }else{
+        $augustus_file = "$otherfilesDir/augustus.hints.gtf";
+    }
+
+    if ( !uptodate( [$augustus_file],
         ["$otherfilesDir/stops.and.starts.gff"] ) ) {
+
+        filter_augustus($augustus_file);
+        $augustus_file = "$otherfilesDir/augustus.hints.f.gtf";
         print LOG "\# " . (localtime)
             . ": extracting all stop and start codons from "
-            . "augustus.hints.gtf to stops.and.starts.gff\n"
+            . "$augustus_file to stops.and.starts.gff\n"
             if ( $v > 3 );
         my %nonRedundantCodons;
         my @tmpGffLine;
-        open( AUG, "<", "$otherfilesDir/augustus.hints.gtf" )
+        open( AUG, "<", "$augustus_file" )
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
                 . "\nCould not open file "
-                . "$otherfilesDir/augustus.hints.gtf!\n" );
+                . "$augustus_file!\n" );
         # remove transcripts that are redundant by start/stop codon position
         while ( defined( my $i = <AUG> ) ) {
             if ( $i =~ /\t(start_codon|stop_codon)\t/ ) {
@@ -7885,7 +7938,7 @@ sub train_utr {
         }
         close(AUG) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nCould not close file "
-            . "$otherfilesDir/augustus.hints.gtf!\n" );
+            . "$augustus_file!\n" );
         open( CODON, ">", "$otherfilesDir/stops.and.starts.gff" )
             or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
                 . "\nCould not open file "
@@ -8053,10 +8106,34 @@ sub train_utr {
         print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
+        # utrrnaseq has a bug that outputs "fake copies" of UTR lines where the
+        # fourth column contains smaller coordinates thant he third gff column
+        # have to fix this, for now, remove those lines in braker
+        print LOG "\# " . (localtime) . ": fixing utrrnaseq output\n";
+        open (UTR, "<", "$otherfilesDir/utrs.gff" ) or die( "ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCan not open file $otherfilesDir/utrs.gff!\n" );
+        open (UTRFIX, ">", "$otherfilesDir/utrs.f.gff") or die( "ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCan not open file $otherfilesDir/utrs.f.gff!\n" );
+        while(<UTR>) {
+            my @l = split(/\t/);
+            if($l[4] > $l[3]){
+                print UTRFIX $_;
+            }
+        }
+        close(UTRFIX) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
+            . "\nCould not close file $otherfilesDir/utrs.f.gff!\n" );
+        close(UTR) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
+            . "\nCould not close file $otherfilesDir/utrs.gff!\n" );
+        $cmdString = "mv $otherfilesDir/utrs.f.gff $otherfilesDir/utrs.gff";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
     }
 
     # create genbank file with genes that have two utrs
-    if (!uptodate( [ "$otherfilesDir/utrs.gff",    "$otherfilesDir/augustus.hints.gtf" ],
+    if (!uptodate( [ "$otherfilesDir/utrs.gff",    $augustus_file ],
             [ "$otherfilesDir/bothutr.lst", "$otherfilesDir/bothutr.test.gb" ] ) ) {
         print LOG "\# " . (localtime) . ": Creating gb file for UTR training\n"
             if ( $v > 3 );
@@ -8093,7 +8170,7 @@ sub train_utr {
             $cmdString .= "nice ";
         }
         $cmdString .= "cat $otherfilesDir/utrs.gff "
-                   .  "$otherfilesDir/augustus.hints.gtf | "
+                   .  "$augustus_file | "
                    .  "grep -P \"(CDS|5'-UTR|3'-UTR)\" | "
                    .  "sort -n -k 4,4 | "
                    .  "sort -s -k 10,10 | sort -s -k 1,1 >"
@@ -8350,10 +8427,7 @@ sub train_utr {
         }
 
         # changing UTR parameters in species config file to "on"
-        print LOG "NEXT STEP: Setting value of \"UTR\" in "
-            . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg "
-            . "to \"true\"\n";
-        print LOG "\n\# "
+        print LOG "\# "
             . (localtime)
             . ": Setting value of \"UTR\" in "
             . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg "
@@ -8361,12 +8435,12 @@ sub train_utr {
             if ( $v > 3 );
         setParInConfig(
             $AUGUSTUS_CONFIG_PATH
-                . "/species/$species/$species\_parameters.cfg",
+            . "/species/$species/$species\_parameters.cfg",
             "UTR", "on"
         );
         setParInConfig(
             $AUGUSTUS_CONFIG_PATH
-                . "/species/$species/$species\_parameters.cfg",
+            . "/species/$species/$species\_parameters.cfg",
             "print_utr", "on"
         );
     }
@@ -8421,6 +8495,22 @@ sub train_utr {
         # run AUGUSTUS on UTR test set after UTR training
         if( !uptodate( ["$otherfilesDir/utr.gb.test"],
             ["$otherfilesDir/fifthtest.out"] ) || $overwrite ) {
+            # decrease patternweight parameters independent of optimize_result
+            # because the aim is to predict coding sequences, correctly, merely
+            # incorporate ep hints into UTRs where necessary
+            print LOG "\# " . (localtime) . ": Decreasing utr5patternweight "
+                . "and utr3patternweight to 0.2 in parameters.cfg file "
+                . "to give priority to correct CDS prediction.\n" if($v > 3);
+            setParInConfig(
+                $AUGUSTUS_CONFIG_PATH
+                . "/species/$species/$species\_parameters.cfg",
+                "/UtrModel/utr5patternweight", "0.2"
+            );
+            setParInConfig(
+                $AUGUSTUS_CONFIG_PATH
+                . "/species/$species/$species\_parameters.cfg",
+                "/UtrModel/utr3patternweight", "0.2"
+            );
             $augpath = "$AUGUSTUS_BIN_PATH/augustus";
             $errorfile  = "$errorfilesDir/fifthtest.stderr";
                 $stdoutfile = "$otherfilesDir/fifthtest.stdout";
@@ -8428,7 +8518,10 @@ sub train_utr {
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/utr.gb.test >$stdoutfile 2>$errorfile";
+            $cmdString .= "$augpath --species=$species "
+                       .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                       .  "$otherfilesDir/utr.gb.test >$stdoutfile "
+                       .  "2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": Fifth AUGUSTUS accuracy test (with UTR parameters on UTR "
@@ -8452,10 +8545,77 @@ sub train_utr {
     }
 }
 
+####################### filter_augustus ########################################
+# filter AUGUSTUS genes for those that have support by RNA-Seq hints with
+# a minimal multiplicity of 10 in all introns (those genes will be used as
+# starting point for UTR identification). Single exon genes are discarded.
+####################### filter_augustus ########################################
+
+sub filter_augustus {
+    my $augustus_file = shift;
+    print LOG "\# " . (localtime) 
+        . ": filtering $augustus_file for genes with strong intron support.\n"
+        if ($v > 3);
+    my %introns;
+    open( HINTS, "<", $hintsfile ) or die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $hintsfile!\n" );
+    while(<HINTS>) {
+        if( $_ =~ m/\tintron\t.*mult=(\d+)/ ) {
+            if( $1 > 9 ) {
+                my @line = split( /\t/, $_ );
+                $introns{ $line[0] }{ $line[6] }{ $line[3] }{ $line[4] } = $line[5];
+            }
+        }
+    }
+    close( HINTS ) or die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $hintsfile!\n" );
+    my %tx;
+    open( GENES, "<", $augustus_file ) or die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $augustus_file!\n" );
+    while(<GENES>){
+        if($_ =~ m/transcript_id/) {
+            my @line = split( /\t/, $_ );
+            push( @{$tx{$line[8]}}, $_ );
+        }
+    }
+    close( GENES ) or die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $augustus_file!\n" );
+
+    open( FGENES , ">", "$otherfilesDir/augustus.hints.f.gtf") or die ( 
+        "ERROR in file " . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $otherfilesDir/augustus.hints.f.gtf!\n" );
+    while ( my ($txid, $txarray) = each (%tx) ) {
+        my $printF = 1;
+        foreach(@{$txarray}){
+            my @line = split(/\t/);
+            my $nIntron;
+            if( $line[2] eq "intron" ) {
+                $nIntron++;
+                if( not( defined( $introns{ $line[0] }{ $line[6] } { $line[3] } { $line[4] }) ) ) {
+                    $printF = 0;
+                }
+            }
+            if( $printF == 1 && $nIntron > 0 ) {
+                foreach(@{$txarray}){
+                    print FGENES $_;
+                }
+            }
+        }
+    }
+    close( FGENES ) or die ( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/augustus.hints.f.gtf!\n" );
+}
+
 ####################### wig2hints ##############################################
 # convert wiggle file (from RNA-Seq) to ep hints (only required for AUGUSTUS
 # prediction with UTRs)
 ####################### wig2hints ##############################################
+
 sub wig2hints {
     my $wiggle = "$otherfilesDir/merged.wig";
     my $ep_hints_file = "$otherfilesDir/ep.hints";
