@@ -978,7 +978,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
             exit(1);
         }
     }
-    if ( $UTR eq "on" ) {
+    if ( $UTR eq "on" && !$AUGUSTUS_hints_preds) {
         @confFiles = ( "metapars.utr.cfg", "utr_probs.pbl" );
         foreach (@confFiles) {
             if ( not( -e "$specPath" . "$_" ) ) {
@@ -993,6 +993,18 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                 print STDERR $prtStr;
                 exit(1);
             }
+        }
+    }elsif( $UTR eq "on" ) {
+        if( not ( -e $specPath . "metapars.utr.cfg" ) ) {
+            $prtStr = "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Config file $specPath"
+                    . "metapars.utr.cfg for species $species "
+                    . "does not exist!\n";
+            print LOG $prtStr;
+            print STDERR $prtStr;
+            exit(1);
         }
     }
 }
@@ -8071,7 +8083,8 @@ sub train_utr {
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString .= "$SAMTOOLS_PATH/samtools sort $otherfilesDir/merged.bam "
+        $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ ".($CPU-1)
+                   .  " $otherfilesDir/merged.bam "
                    .  "-o $otherfilesDir/merged.s.bam "
                    .  "1> $otherfilesDir/samtools_sort_before_wig.stdout "
                    .  "2> $errorfilesDir/samtools_sort_before_wig.stderr";
