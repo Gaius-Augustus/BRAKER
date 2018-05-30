@@ -1137,8 +1137,13 @@ if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
     augustus("off");    # run augustus without UTR
 }
 
-if ( $UTR eq "on" ) {
-    train_utr();
+if ( $UTR eq "on" && !$useexisting) {
+    train_utr(); # includes bam2wig
+} else {
+    bam2wig();
+}
+
+if ( $UTR eq "on") {
     wig2hints(); # convert coverage information to ep hints
     augustus("on"); # run augustus with UTR
 }
@@ -8047,62 +8052,7 @@ sub train_utr {
 
     # create wiggle file from bam files
     if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/merged.wig"] ) ) {
-        print LOG "\# " . (localtime)
-                . ": Converting bam files to wiggle file merged.wig\n"
-                if ( $v > 3 );
-        if ( scalar(@bam) > 1 ) {
-            print LOG "\# " . (localtime)
-                . ": For conversion, merge multiple bam files\n" if ( $v > 3 );
-            $cmdString = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-            $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools merge ";
-            foreach (@bam) {
-                chomp;
-                $cmdString .= "-in $_ ";
-            }
-            $cmdString .= "-out $otherfilesDir/merged.bam "
-                       .  "1> $otherfilesDir/bam.merge.log "
-                       .  "2> $errorfilesDir/bam.merge.err";
-            print LOG "\n$cmdString\n\n" if ( $v > 3 );
-            system("$cmdString") or die( "ERROR in file " . __FILE__
-                    . " at line " . __LINE__
-                    . "\nFailed to execute: $cmdString!\n" );
-        } else {
-            print LOG "\# " . (localtime) . ":  For conversion, creating "
-                . "softlink to bam file $bam[0]...\n" if ( $v > 3 );
-            $cmdString = "ln -s $bam[0] $otherfilesDir/merged.bam";
-            print LOG "$cmdString\n" if ( $v > 3 );
-            system($cmdString) == 0 or die( "ERROR in file " . __FILE__
-                . " at line " . __LINE__
-                . "\nFailed to execute: $cmdString!\n" );
-        }
-        print LOG "\# " . (localtime) . ": sorting bam file...\n" if ($v > 3);
-        $cmdString = "";
-        if ($nice) {
-            $cmdString .= "nice ";
-        }
-        $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ ".($CPU-1)
-                   .  " $otherfilesDir/merged.bam "
-                   .  "-o $otherfilesDir/merged.s.bam "
-                   .  "1> $otherfilesDir/samtools_sort_before_wig.stdout "
-                   .  "2> $errorfilesDir/samtools_sort_before_wig.stderr";
-        print LOG "\n$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
-        print LOG "\# " . (localtime) . ": Creating wiggle file...\n"
-            if ( $v > 3 );
-        $cmdString = "";
-        if ($nice) {
-            $cmdString .= "nice ";
-        }
-        $cmdString .= "$bam2wig $otherfilesDir/merged.s.bam "
-                   .  "1>$otherfilesDir/merged.wig "
-                   .  "2> $errorfilesDir/bam2wig.err";
-        print LOG "\n$cmdString\n" if ( $v > 3 );
-        system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
+        bam2wig()
     }
 
     # call utrrnaseq
@@ -8563,6 +8513,68 @@ sub train_utr {
     else {
         print "Skipping UTR parameter optimization. Already up to date.\n";
     }
+}
+
+####################### bam2wig ################################################
+# convert merged and sorted bam files to wig file
+####################### filter_augustus ########################################
+
+sub bam2wig {
+    print LOG "\# " . (localtime)
+        . ": Converting bam files to wiggle file merged.wig\n" if ( $v > 3 );
+    if ( scalar(@bam) > 1 ) {
+        print LOG "\# " . (localtime)
+            . ": For conversion, merge multiple bam files\n" if ( $v > 3 );
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools merge ";
+        foreach (@bam) {
+            chomp;
+            $cmdString .= "-in $_ ";
+        }
+        $cmdString .= "-out $otherfilesDir/merged.bam "
+                   .  "1> $otherfilesDir/bam.merge.log "
+                   .  "2> $errorfilesDir/bam.merge.err";
+        print LOG "\n$cmdString\n\n" if ( $v > 3 );
+        system("$cmdString") or die( "ERROR in file " . __FILE__
+            . " at line " . __LINE__
+            . "\nFailed to execute: $cmdString!\n" );
+    } else {
+        print LOG "\# " . (localtime) . ":  For conversion, creating "
+            . "softlink to bam file $bam[0]...\n" if ( $v > 3 );
+        $cmdString = "ln -s $bam[0] $otherfilesDir/merged.bam";
+        print LOG "$cmdString\n" if ( $v > 3 );
+        system($cmdString) == 0 or die( "ERROR in file " . __FILE__
+            . " at line " . __LINE__
+            . "\nFailed to execute: $cmdString!\n" );
+    }
+    print LOG "\# " . (localtime) . ": sorting bam file...\n" if ($v > 3);
+    $cmdString = "";
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ ".($CPU-1)
+               .  " $otherfilesDir/merged.bam "
+               .  "-o $otherfilesDir/merged.s.bam "
+               .  "1> $otherfilesDir/samtools_sort_before_wig.stdout "
+               .  "2> $errorfilesDir/samtools_sort_before_wig.stderr";
+    print LOG "\n$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+        . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    print LOG "\# " . (localtime) . ": Creating wiggle file...\n"
+        if ( $v > 3 );
+    $cmdString = "";
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    $cmdString .= "$bam2wig $otherfilesDir/merged.s.bam "
+               .  "1>$otherfilesDir/merged.wig "
+               .  "2> $errorfilesDir/bam2wig.err";
+    print LOG "\n$cmdString\n" if ( $v > 3 );
+    system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
+        . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
 }
 
 ####################### filter_augustus ########################################
