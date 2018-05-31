@@ -8557,7 +8557,7 @@ sub bam2wig {
     }
     $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ "
                .($CPU-1) . " -o $otherfilesDir/merged.s.bam "
-               .  " $otherfilesDir/merged.bam "
+               .  "$otherfilesDir/merged.bam "
                .  "1> $otherfilesDir/samtools_sort_before_wig.stdout "
                .  "2> $errorfilesDir/samtools_sort_before_wig.stderr";
     print LOG "\n$cmdString\n" if ($v > 3);
