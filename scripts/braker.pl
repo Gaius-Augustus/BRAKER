@@ -6635,7 +6635,7 @@ sub augustus {
         prepare_genome( $genome_dir );
     }
 
-    if( $ESmode == 1 || $ab_initio == 1) {
+    if( $ESmode == 1 || defined($ab_initio)) {
         if( !uptodate( [$genome], 
             ["$otherfilesDir/augustus.ab_initio$genesetId.gtf"] ) 
         || $overwrite ){
@@ -8555,9 +8555,9 @@ sub bam2wig {
     if ($nice) {
         $cmdString .= "nice ";
     }
-    $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ ".($CPU-1)
+    $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ "
+               .($CPU-1) . " -o $otherfilesDir/merged.s.bam "
                .  " $otherfilesDir/merged.bam "
-               .  "-o $otherfilesDir/merged.s.bam "
                .  "1> $otherfilesDir/samtools_sort_before_wig.stdout "
                .  "2> $errorfilesDir/samtools_sort_before_wig.stderr";
     print LOG "\n$cmdString\n" if ($v > 3);

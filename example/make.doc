@@ -30,9 +30,9 @@ nohup tophat2  --num-threads 4  --microexon-search  --mate-std-dev 26  --mate-in
 
 cdbfasta genome.fa -o genome.fa.idx
 
-# retrieve only 1/6 of chr2 sequence: 1:4213838
+# retrieve only a part of chr2 sequence: 1:8000000
 
-cdbyank genome.fa.idx -d genome.fa -a '2R 1 4213838' -R > genome.small.fa
+cdbyank genome.fa.idx -d genome.fa -a '2R 1 8000000' -R > genome.small.fa
 
 mv genome.small.fa genome.fa
 
