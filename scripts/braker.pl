@@ -2785,6 +2785,24 @@ sub check_options {
         $skipGeneMarkES = 1;
     }
 
+    if( $CPU > 48 ) {
+        $CPU = 48;
+        $prtStr = "\# " . (localtime). ": WARNING: The number of cores was set "
+                . "to $CPU, which is greater than 48. GeneMark is likely to "
+                . "die if you set such a high number of cores. Decreasing "
+                . "number of cores to 48. You might want to restart the "
+                . "process in order to use your resources, efficiently. Please "
+                . "be aware that a very large number of cores also may not "
+                . "be used, efficiently by optimize_augustus.pl during "
+                . "cross validation. braker.pl will automatically compute the "
+                . "number of cores that will effectively be used for "
+                . "optimizing AUGUSTUS parameter in such a way that each "
+                . "each bucket will contain at least 200 training genes. We "
+                . "usually use 8 cores for 8-fold cross validation.\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+    }
+
     # UTR training only
     if ( defined($AUGUSTUS_hints_preds) ) {
         $skipoptimize = 1;
@@ -5289,6 +5307,8 @@ sub training_augustus {
         my $trainGb3 = "$otherfilesDir/train.ff.gb";
         my $trainGb4 = "$otherfilesDir/train.fff.gb";
         my $goodLstFile = "$otherfilesDir/good_genes.lst";
+        my $t_b_t = 0; # to be tested gene set size, used to determine
+                       # stop codon setting and to compute k for cores>8
 
         # set contents of trainGenesGtf file
         if ( not ($gth2traingenes) and not ($trainFromGth) ) {
@@ -5975,7 +5995,7 @@ sub training_augustus {
                     . __LINE__ ."\nFailed to execute $cmdString\n");
 
             # set "stopCodonExcludedFromCDS" to false and run etraining again if necessary
-            my $t_b_t = $gb_good_size - $testsize1;
+            $t_b_t = $gb_good_size - $testsize1;
             my $err_stopCodonExcludedFromCDS;
             if ($nice) {
                 print LOG "nice grep -c \"exon doesn't end in stop codon\" "
@@ -6118,6 +6138,14 @@ sub training_augustus {
                 );
                 $errorfile  = "$errorfilesDir/optimize_augustus.stderr";
                 $stdoutfile = "$otherfilesDir/optimize_augustus.stdout";
+                my $k_fold;
+                if($CPU > 1){
+                    for(my $i=1; $i<=$CPU; $i++){
+                        if ($t_b_t/$i > 200){
+                            $k_fold = $i;
+                        }
+                    }   
+                }
                 $perlCmdString = "";
                 if ($nice) {
                     $perlCmdString .= "nice ";
@@ -6126,8 +6154,8 @@ sub training_augustus {
                 if ($nice) {
                     $perlCmdString .= "--nice "
                 }
-                $perlCmdString  .= "--rounds=$rounds --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
-                                ."--onlytrain=$otherfilesDir/train.gb.train.train --cpus=$CPU $otherfilesDir/train.gb.train.test 1>$stdoutfile 2>$errorfile";
+                $perlCmdString  .= "--rounds=$rounds --species=$species --kfold=$k_fold --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                                ."--onlytrain=$otherfilesDir/train.gb.train.train --cpus=$k_fold $otherfilesDir/train.gb.train.test 1>$stdoutfile 2>$errorfile";
                 print LOG "\# "
                     . (localtime)
                     . ": optimizing AUGUSTUS parameters\n" if ($v > 3);
