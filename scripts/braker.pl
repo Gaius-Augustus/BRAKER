@@ -6154,8 +6154,13 @@ sub training_augustus {
                 if ($nice) {
                     $perlCmdString .= "--nice "
                 }
-                $perlCmdString  .= "--rounds=$rounds --species=$species --kfold=$k_fold --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
-                                ."--onlytrain=$otherfilesDir/train.gb.train.train --cpus=$k_fold $otherfilesDir/train.gb.train.test 1>$stdoutfile 2>$errorfile";
+                $perlCmdString  .= "--rounds=$rounds --species=$species "
+                                 . "--kfold=$k_fold "
+                                 . "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                                 . "--onlytrain=$otherfilesDir/train.gb.train.train "
+                                 . "--cpus=$k_fold "
+                                 . "$otherfilesDir/train.gb.train.test "
+                                 . "1>$stdoutfile 2>$errorfile";
                 print LOG "\# "
                     . (localtime)
                     . ": optimizing AUGUSTUS parameters\n" if ($v > 3);
