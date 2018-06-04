@@ -1136,7 +1136,7 @@ if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
     augustus("off");    # run augustus without UTR
 }
 
-if ( $UTR eq "on" && !$useexisting) {
+if ( $UTR eq "on" || defined($AUGUSTUS_hints_preds) ) { # if you give this input, train parameters!
     train_utr(); # includes bam2wig
 } else {
     bam2wig();
