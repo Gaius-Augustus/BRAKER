@@ -990,6 +990,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                     . "does not exist!\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
+                print STDERR "I AM IN ONE";
                 exit(1);
             }
         }
@@ -1003,6 +1004,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                     . "does not exist!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
+            print STDERR "I AM IN TWO";
             exit(1);
         }
     }elsif( $UTR eq "on" && $skipAllTraining==1 ) {
@@ -1015,6 +1017,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                     . "does not exist!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
+            print STDERR "I AM IN THREE";
             exit(1);
         }
     }
