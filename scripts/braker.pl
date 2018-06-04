@@ -977,7 +977,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
             exit(1);
         }
     }
-    if ( $UTR eq "on" && !$AUGUSTUS_hints_preds) {
+    if ( $UTR eq "on" && !$AUGUSTUS_hints_preds && !$skipAllTraining ) {
         @confFiles = ( "metapars.utr.cfg", "utr_probs.pbl" );
         foreach (@confFiles) {
             if ( not( -e "$specPath" . "$_" ) ) {
