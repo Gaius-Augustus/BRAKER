@@ -993,13 +993,25 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                 exit(1);
             }
         }
-    }elsif( $UTR eq "on" ) {
+    }elsif( $UTR eq "on" && not(defined($skipAllTraining))) {
         if( not ( -e $specPath . "metapars.utr.cfg" ) ) {
             $prtStr = "\# "
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "Config file $specPath"
                     . "metapars.utr.cfg for species $species "
+                    . "does not exist!\n";
+            print LOG $prtStr;
+            print STDERR $prtStr;
+            exit(1);
+        }
+    }elsif( $UTR eq "on" && $skipAllTraining==1 ) {
+        if( not ( -e $specPath . "utr_probs.cfg" ) ) {
+            $prtStr = "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Config file $specPath"
+                    . "utr_probs.cfg for species $species "
                     . "does not exist!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
