@@ -344,7 +344,6 @@ DESCRIPTION
 
 Example:
 
-To run with RNAseq data, only:
 
 braker.pl [OPTIONS] --genome=genome.fa --species=speciesname \
     --bam=accepted_hits.bam
@@ -4838,7 +4837,8 @@ sub GeneMark_ET {
 
             # consider removing --verbose, later
             $perlCmdString .= "perl $string --verbose --sequence=$genome "
-                           .  "--ET=$genemark_hintsfile --cores=$CPU";
+                           .  "--ET=$genemark_hintsfile --et_score 10 "
+                           .  "--max_intergenic 50000 --cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
@@ -4898,13 +4898,13 @@ sub GeneMark_EP {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string --verbose --seq $genome "
-                           .  "--max_intergenic 50000 --et_score 4 --ET "
+                           .  "--max_intergenic 50000 --ep_score 4 --EP "
                            .  "$genemark_hintsfile --cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
             if ($soft_mask) {
-                $perlCmdString .= " --soft 1000";
+                $perlCmdString .= " --soft_mask 1000";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
@@ -4965,13 +4965,13 @@ sub GeneMark_ETP {
             $perlCmdString .= "perl $string --verbose --seq $genome "
                            .  "--max_intergenic 50000 "
                            .  "--evidence $genemarkDir/evidence.gff "
-                           .  "--et_score 4 --ET $genemark_hintsfile "
+                           .  "--et_score 10 --ET $genemark_hintsfile "
                            .  "--cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
             if ($soft_mask) {
-                $perlCmdString .= " --soft 1000";
+                $perlCmdString .= " --soft_mask 1000";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
