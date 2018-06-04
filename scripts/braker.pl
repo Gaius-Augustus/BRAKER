@@ -576,7 +576,7 @@ GetOptions(
     'verbosity=i'                  => \$v,
     'downsampling_lambda=s'        => \$lambda,
     'splice_sites=s'               => \@splice_cmd_line,
-    'flanking_DNA=i'               => \$flanking_DNA,
+    'i'               => \$flanking_DNA,
     'version!'                     => \$printVersion
 );
 
@@ -1151,7 +1151,7 @@ if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
     augustus("off");    # run augustus without UTR
 }
 
-if ( $UTR eq "on" || defined($AUGUSTUS_hints_preds) ) { # if you give this input, train parameters!
+if ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds)) && not($skipAllTraining) ) { # if you give this input, train parameters!
     train_utr(); # includes bam2wig
 } else {
     bam2wig();
