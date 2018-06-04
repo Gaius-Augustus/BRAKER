@@ -1008,12 +1008,12 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
             exit(1);
         }
     }elsif( $UTR eq "on" && $skipAllTraining==1 ) {
-        if( not ( -e $specPath . "utr_probs.cfg" ) ) {
+        if( not ( -e $specPath . "utr_probs.pbl" ) ) {
             $prtStr = "\# "
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "Config file $specPath"
-                    . "utr_probs.cfg for species $species "
+                    . "utr_probs.pbl for species $species "
                     . "does not exist!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
