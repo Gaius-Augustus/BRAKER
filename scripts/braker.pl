@@ -8501,19 +8501,18 @@ sub train_utr {
             # decrease patternweight parameters independent of optimize_result
             # because the aim is to predict coding sequences, correctly, merely
             # incorporate ep hints into UTRs where necessary
-            print LOG "\# " . (localtime) . ": Decreasing utr5patternweight "
-                . "and utr3patternweight to 0.2 in parameters.cfg file "
-                . "to give priority to correct CDS prediction.\n" if($v > 3);
-            setParInConfig(
-                $AUGUSTUS_CONFIG_PATH
-                . "/species/$species/$species\_parameters.cfg",
-                "/UtrModel/utr5patternweight", "0.2"
-            );
-            setParInConfig(
-                $AUGUSTUS_CONFIG_PATH
-                . "/species/$species/$species\_parameters.cfg",
-                "/UtrModel/utr3patternweight", "0.2"
-            );
+            #print LOG "\# " . (localtime) . ": Decreasing utr5patternweight "
+            #    . "and utr3patternweight to 0.2 in parameters.cfg file "
+            #    . "to give priority to correct CDS prediction.\n" if($v > 3);
+            #setParInConfig(
+            #    $AUGUSTUS_CONFIG_PATH
+            #    . "/species/$species/$species\_parameters.cfg",
+            #    "/UtrModel/utr5patternweight", "0.2"
+            #);
+            #setParInConfig(
+            #    $AUGUSTUS_CONFIG_PATH
+            #    . "/species/$species/$species\_parameters.cfg",
+            #    "/UtrModel/utr3patternweight", "0.2"
             $augpath = "$AUGUSTUS_BIN_PATH/augustus";
             $errorfile  = "$errorfilesDir/fifthtest.stderr";
                 $stdoutfile = "$otherfilesDir/fifthtest.stdout";
