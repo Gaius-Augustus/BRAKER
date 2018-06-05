@@ -576,7 +576,7 @@ GetOptions(
     'verbosity=i'                  => \$v,
     'downsampling_lambda=s'        => \$lambda,
     'splice_sites=s'               => \@splice_cmd_line,
-    'i'               => \$flanking_DNA,
+    'flanking_DNA=i'               => \$flanking_DNA,
     'version!'                     => \$printVersion
 );
 
