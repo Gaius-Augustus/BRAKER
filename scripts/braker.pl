@@ -66,7 +66,7 @@ INPUT FILE OPTIONS
                                     from additional extrinsic sources for gene
                                     prediction with AUGUSTUS. To consider such
                                     additional extrinsic information, you need
-                                    to use the flag --extrinsicCfgFile to
+                                    to use the flag --extrinsicCfgFiles to
                                     specify parameters for all sources in the
                                     hints file (including the source "E" for
                                     intron hints from RNA-Seq).
@@ -323,7 +323,7 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     2 -> also log configuration
                                     3 -> log all major steps
                                     4 -> very verbose, log also small steps
---extrinsicCfgFiles=file1,file2     Depending on the mode in which braker.pl
+--extrinsicCfgFiles=file1,file2,... Depending on the mode in which braker.pl
                                     is executed, it may require one ore several
                                     extrinsicCfgFiles. Don't use this option
                                     unless you know what you are doing!
@@ -395,6 +395,8 @@ my @extrinsicCfgFiles;    # assigned extrinsic files
 my $extrinsicCfgFile;    # file to be used for running AUGUSTUS
 my $extrinsicCfgFile1;   # user supplied file 1
 my $extrinsicCfgFile2;   # user supplied file 2
+my $extrinsicCfgFile3;   # user supplied file 3
+my $extrinsicCfgFile4;   # user supplied file 4
 my @files;               # contains all files in $rootDir
 my $flanking_DNA;        # length of flanking DNA, default value is
                          # min{ave. gene length/2, 10000}
@@ -3172,46 +3174,47 @@ sub check_options {
 
     # set extrinsic.cfg files if provided
     if (@extrinsicCfgFiles) {
-        if(-f $extrinsicCfgFiles[0]) {
-            $extrinsicCfgFile1 = $extrinsicCfgFiles[0];
+        my $exLimit;
+        if( $UTR eq "on" ) {
+            $exLimit = 4;
         }else{
-            $prtStr = "\# "
-            . (localtime)
-            . ": ERROR: specified extrinsic.cfg file $extrinsicCfgFiles[0] "
-            . "does not exist!\n";
-            $logString .= $prtStr;
-            print STDERR $logString;
-            exit(1);
+            $exLimit = 2;
         }
-        if (scalar(@extrinsicCfgFiles) > 1) {
-            if (-f $extrinsicCfgFiles[1] ) {
-                $extrinsicCfgFile2 = $extrinsicCfgFiles[1];
-            }else{
-                 $prtStr = "\# "
-                    . (localtime)
-                    . ": ERROR: specified extrinsic.cfg file "
-                    . "$extrinsicCfgFiles[1] does not exist!\n";
+        if( scalar(@extrinsicCfgFiles) < ($exLimit+1) ) {
+            for(my $i = 0; $i < scalar(@extrinsicCfgFiles); $i++ ) {
+                if(-f $extrinsicCfgFiles[$i]) {
+                    if($i == 0) {
+                        $extrinsicCfgFile1 = $extrinsicCfgFiles[$i];
+                    }elsif($i==1){
+                        $extrinsicCfgFile2 = $extrinsicCfgFiles[$i];
+                    }elsif($i==2){
+                        $extrinsicCfgFile3 = $extrinsicCfgFiles[$i];
+                    }elsif($i==3){
+                        $extrinsicCfgFile4 = $extrinsicCfgFiles[$i];
+                    }
+                }else{
+                    $prtStr = "\# " . (localtime)
+                            . ": ERROR: specified extrinsic.cfg file "
+                            . "$extrinsicCfgFiles[$i] does not exist!\n";
                     $logString .= $prtStr;
                     print STDERR $logString;
                     exit(1);
+                }
             }
-        } elsif (scalar (@extrinsicCfgFiles) > 2) {
+        }else{
             $prtStr = "\# "
                 . (localtime)
-                . ": ERROR: more than two extrinsic.cfg files provided!\n";
+                . ": ERROR: too many extrinsic.cfg files provided! If UTR is "
+                . "off, at most two files are allowed (the first for "
+                . "prediction with RNA-Seq and protein hints where proteins "
+                . " have higher priority; the second for "
+                . "prediction with RNA-Seq, only). If UTR is on, at most "
+                . "four files are allowed (the third for prediction with "
+                . "RNA-Seq and protein hints; the fourth for prediction with "
+                . "RNA-Seq hints, only).\n";
                 $logString .= $prtStr;
                 print STDERR $logString;
                 exit(1);
-        }
-
-        # TODO: extend code to accept 4 extrinsic.cfg files for UTR training
-        if( $UTR eq "on" ) {
-            $prtStr = "\# " . (localtime) . ": ERROR: supplying user defined "
-                    . "extrinsic.cfg files is not supported for if option "
-                    . "--UTR=on is set!\n";
-            $logString .= $prtStr;
-            print STDERR $logString;
-            exit(1);
         }
     }
 
@@ -5339,7 +5342,7 @@ sub training_augustus {
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $trainFromGth ) {
-            # create softlinke from gth.gtf to traingenes.gtf
+            # create softlink from gth.gtf to traingenes.gtf
              # make gth gb final
             print LOG "\#  "
                 . (localtime)
