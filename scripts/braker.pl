@@ -1771,26 +1771,27 @@ sub set_GENEMARK_PATH {
             . "gmes_petap.pl executable that is available in your \$PATH.\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'gmes_petap.pl';
-        if ( -d dirname($epath) ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": Setting \$GENEMARK_PATH to "
-                . dirname($epath) . "\n";
-            $logString .= $prtStr if ($v > 1);
-            $GENEMARK_PATH = dirname($epath);
-        }
-        else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Guessing the location of \$GENEMARK_PATH "
-                . "failed. " . dirname($epath) . " is not a directory!\n";
-            $logString .= $prtStr if ($v > 0);
+        if(defined($epath)){
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$GENEMARK_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $GENEMARK_PATH = dirname($epath);
+            } else {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": WARNING: Guessing the location of \$GENEMARK_PATH "
+                    . "failed. " . dirname($epath) . " is not a directory!\n";
+                $logString .= $prtStr if ($v > 0);
+            }
         }
     }
 
-    if ( not( defined($GENEMARK_PATH) ) ) {
+    if ( not( defined($GENEMARK_PATH) )) {
         my $gm_err;
         $gm_err
             .= "There are 3 alternative ways to set this variable for\n"
