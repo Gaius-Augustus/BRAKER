@@ -3211,7 +3211,10 @@ sub check_options {
                 . "prediction with RNA-Seq, only). If UTR is on, at most "
                 . "four files are allowed (the third for prediction with "
                 . "RNA-Seq and protein hints; the fourth for prediction with "
-                . "RNA-Seq hints, only).\n";
+                . "RNA-Seq hints, only). If UTR is on and only RNA-Seq or "
+                . "or only protein data is provided for hints, the first file "
+                . "is used for predictions without UTR and the second for prediction "
+                . "with UTR.\n";
                 $logString .= $prtStr;
                 print STDERR $logString;
                 exit(1);
@@ -6719,8 +6722,10 @@ sub augustus {
                 # EPmode == 0 && !prg -> rnaseq.cfg
                 # trainFromGth -> gth.cfg
                 if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
-                    if(defined($extrinsicCfgFile1)){
+                    if(defined($extrinsicCfgFile1) && $localUTR eq "off"){
                         $extrinsicCfgFile = $extrinsicCfgFile1;
+                    }elsif(defined($extrinsicCfgFile2) && $localUTR eq "on"){
+                        $extrinsicCfgFile = $extrinsicCfgFile2;
                     }else{
                         if ( $foundProt>0 && $foundRNASeq==0 ){
                             if(defined($prg)){
@@ -6766,8 +6771,10 @@ sub augustus {
             } else {
                 push( @genome_files, $genome );
                 if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
-                    if(defined($extrinsicCfgFile1)){
+                    if(defined($extrinsicCfgFile1) && $localUTR eq "off"){
                         $extrinsicCfgFile = $extrinsicCfgFile1;
+                    }elsif(defined($extrinsicCfgFile2) && $localUTR eq "on"){
+                        $extrinsicCfgFile = $extrinsicCfgFile2;
                     }else{
                         if ( ($foundProt>0 && $foundRNASeq==0) ){
                             if (defined ($prg) ) {
@@ -7389,8 +7396,10 @@ sub run_augustus_with_joingenes_parallel {
             . "$adjustedHintsFile because it is up to date.\n" if($v > 3);
     }
 
-    if( defined ($extrinsicCfgFile1) ) {
+    if( defined ($extrinsicCfgFile1) && $localUTR eq "off") {
         $extrinsicCfgFile = $extrinsicCfgFile1;
+    }elsif(defined ($extrinsicCfgFile3) && $localUTR eq "on"){
+        $extrinsicCfgFile = $extrinsicCfgFile3;
     }else{
         if( $localUTR eq "off" ) {
             assign_ex_cfg("gth.cfg");
@@ -7414,8 +7423,10 @@ sub run_augustus_with_joingenes_parallel {
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             ." at line ". __LINE__ . "\nFailed to execute: $cmdString!\n");
     }
-    if (defined ($extrinsicCfgFile2)) {
+    if (defined ($extrinsicCfgFile2) && $localUTR eq "off") {
         $extrinsicCfgFile = $extrinsicCfgFile2;
+    }elsif(defined ($extrinsicCfgFile4) && $localUTR eq "on"){
+        $extrinsicCfgFile = $extrinsicCfgFile4;
     }elsif($localUTR eq "off"){
         assign_ex_cfg("rnaseq.cfg");
     }else{
@@ -7471,8 +7482,10 @@ sub run_augustus_with_joingenes_single_core {
 
     if( !uptodate( [$adjustedHintsFile], 
         ["$otherfilesDir/augustus.Ppri5$genesetId.gff"] ) || $overwrite ) {
-        if( defined ($extrinsicCfgFile1) ) {
+        if( defined ($extrinsicCfgFile1) && $localUTR eq "off") {
             $extrinsicCfgFile = $extrinsicCfgFile1;
+        }elsif(defined ($extrinsicCfgFile3) && $localUTR eq "on"){
+            $extrinsicCfgFile = $extrinsicCfgFile3;
         }else{
             if( $localUTR eq "off" ) {
                 assign_ex_cfg("gth.cfg");
@@ -7506,8 +7519,10 @@ sub run_augustus_with_joingenes_single_core {
     }
     if ( !uptodate( [$adjustedHintsFile], 
         ["$otherfilesDir/augustus.E$genesetId.gff"] ) || $overwrite ) {
-        if (defined ($extrinsicCfgFile2)) {
+        if (defined ($extrinsicCfgFile2) && $localUTR eq "off") {
             $extrinsicCfgFile = $extrinsicCfgFile2;
+        }elsif(defined ($extrinsicCfgFile4) && $localUTR eq "on"){
+            $extrinsicCfgFile = $extrinsicCfgFile4;
         }elsif($localUTR eq "off"){
             assign_ex_cfg("rnaseq.cfg");
         }else{
