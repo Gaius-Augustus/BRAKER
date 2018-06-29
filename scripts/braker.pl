@@ -7926,8 +7926,7 @@ sub eval_gene_pred {
         if(scalar(@t)==9){
             if (   ( $t[2] eq "CDS" )
                 or ( $t[2] eq "exon" )
-                or ( $t[2] eq "start_codon" )
-                or ( $t[2] =~ m/UTR/ ) )
+                or ( $t[2] eq "start_codon" ))
             {
                 print FIRST $_;
             }
