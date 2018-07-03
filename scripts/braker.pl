@@ -291,18 +291,18 @@ EXPERT OPTIONS
                                     that gene.
 --skipOptimize                      Skip optimize parameter step (not
                                     recommended).
-
-DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
-
---optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS
-                                    for running PPX (currently not
-                                    implemented)
 --UTR=on                            create UTR training examples from RNA-Seq
                                     coverage data; requires options
                                     --bam=rnaseq.bam and --softmasking.
                                     Alternatively, if UTR parameters already
                                     exist, training step will be skipped and
                                     those pre-existing parameters are used.
+
+DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
+
+--optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS
+                                    for running PPX (currently not
+                                    implemented)
 --splice_sites=patterns             list of splice site patterns for UTR
                                     prediction; default: GTAG, extend like this:
                                     --splice_sites=GTAG,ATAC,...
@@ -319,7 +319,7 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     (for UTR training in a separate braker.pl 
                                     run that builds on top of an existing run)
 --eval=reference.gtf                Reference set to evaluate predictions
-                                    against
+                                    against (using the eval package)
 --verbosity=n                       0 -> run braker.pl quiet (no log)
                                     1 -> only log warnings
                                     2 -> also log configuration
