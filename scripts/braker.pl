@@ -339,8 +339,9 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     their number of introns distribution, i.e.
                                     genes with none or few exons will be
                                     downsampled, genes with many exons will be
-                                    kept. If not specified, no downsampling is
-                                    performed.
+                                    kept. Default value is 2. 
+                                    If you want to avoid downsampling, you have 
+                                    to specify 0. 
 
 DESCRIPTION
 
