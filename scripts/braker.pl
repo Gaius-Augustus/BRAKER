@@ -306,8 +306,10 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 --splice_sites=patterns             list of splice site patterns for UTR
                                     prediction; default: GTAG, extend like this:
                                     --splice_sites=GTAG,ATAC,...
---rnaseq2utr_args=params            Expert option: pass additional parameters
-                                    to rnaseq2utr as string
+--rnaseq2utr_args=params            Expert option: pass alternative parameters
+                                    to rnaseq2utr as string, default parameters:
+                                    -r 76 -v 100 -n 15 -i 0.7 -m 0.3 -w 70 
+                                    -c 100 -p 0.5 
 --AUGUSTUS_hints_preds=s            File with AUGUSTUS hints predictions; will
                                     use this file as basis for UTR training;
                                     only UTR training and prediction is
@@ -485,7 +487,8 @@ my $BLAST_PATH; # path to blastall and formatdb ncbi blast executable
 my $blast_path; # command line argument value for $BLAST_PATH
 my %hintTypes;    # stores hint types occuring over all generated and supplied
                   # hints for comparison
-my $rnaseq2utr_args;    # additional parameters to be passed to rnaseq2utr
+                  # additional parameters to be passed to rnaseq2utr
+my $rnaseq2utr_args = "-r 76 -v 100 -n 15 -i 0.7 -m 0.3 -w 70 -c 100 -p 0.5 ";    
 my $rounds = 5;   # rounds used by optimize_augustus.pl
 my $geneMarkGtf;  # GeneMark output file (for skipGeneMark-ET option if not in
                   # braker working directory)
@@ -506,7 +509,7 @@ my $GeneMarkIntronThreshold;
 my $ab_initio;    # flag for output of AUGUSTUS ab initio predictions
 my $foundRNASeq = 0; # stores whether hintsfile contains src=E
 my $foundProt = 0; # stores whether hintsfile contains src=P
-my $lambda; # labmda of poisson distribution for downsampling of training genes
+my $lambda = 2; # labmda of poisson distribution for downsampling of training genes
 my @splice_cmd_line;
 my @splice;
 my $AUGUSTUS_hints_preds; # for UTR training only (updating existing runs)

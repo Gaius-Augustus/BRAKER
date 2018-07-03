@@ -1,4 +1,8 @@
 # ----------------------------------------------------------------------
+# | set lambda=2 and optimizedm    | braker.pl (Hoff)     | 3.7.2018   |
+# | utrrnaseq parameters,          |                      |            |
+# | threading for bam2hints in     |                      |            |
+# | case of multiple input files   |                      |            |
 # | implemented UTR training andm  | braker.pl (Hoff)     | 16.5.2018  |
 # | prediction with braker in      |                      |            |
 # | case RNA-Seq data is proveded  |                      |            |
