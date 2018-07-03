@@ -3821,10 +3821,12 @@ sub make_rnaseq_hints {
         . ": Converting bam files to hints\n" if ($v > 2);
     my $bam_hints;
     my $hintsfile_temp = "$otherfilesDir/hintsfile.temp.gff";
-    my $bam_temp = "$otherfilesDir/bam2hints.temp.gff";
+    my $bam_temp; 
+    my $pj = new Parallel::ForkManager($CPU);
     for ( my $i = 0; $i < scalar(@bam); $i++ ) {
         $errorfile = "$errorfilesDir/bam2hints.$i.stderr";
         $stdoutfile = "$errorfilesDir/bam2hints.$i.stdout";
+        $bam_temp = "$otherfilesDir/bam2hints.temp.$i.gff";
         if ( !uptodate( [ $bam[$i] ], [$hintsfile] ) || $overwrite ) {
             $bam[$i] = check_bam_headers( $bam[$i] );
             if ( -e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints" ) {
@@ -3859,8 +3861,10 @@ sub make_rnaseq_hints {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nfailed to execute: $cmdString!\n");
+            $pj->finish;
         }
     }
+    $pj->wait_all_children;
     unlink($bam_temp);
     if ( -f $hintsfile_temp || $overwrite ) {
         if ( !uptodate( [$hintsfile_temp], [$hintsfile] ) || $overwrite ) {
@@ -4699,10 +4703,17 @@ sub create_evidence_gff {
             }
         }
     }
-
     close(EV) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $evidenceFile!\n");
+    # check whether there actually is any evidence, if not, delete file
+    if(-z $evidenceFile){
+        print LOG "\# "
+        . (localtime)
+        . ": File $evidenceFile is empty, deleteing file\n" if ($v > 2);
+        unlink $evidenceFile;
+    }
+
 }
 
 ####################### check_genemark_hints ###################################
@@ -4985,9 +4996,11 @@ sub GeneMark_ETP {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string --verbose --seq $genome "
-                           .  "--max_intergenic 50000 "
-                           .  "--evidence $genemarkDir/evidence.gff "
-                           .  "--et_score 10 --ET $genemark_hintsfile "
+                           .  "--max_intergenic 50000 ";
+            if(-e "$genemarkDir/evidence.gff"){
+                $perlCmdString .= "--evidence $genemarkDir/evidence.gff ";
+            }
+            $perlCmdString .=  "--et_score 10 --ET $genemark_hintsfile "
                            .  "--cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
