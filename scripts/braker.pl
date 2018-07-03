@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: February 9th 2018                                                                  #
+# Release date: July 13th 2018                                                                  #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -1165,6 +1165,10 @@ if ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds)) && not($skipAllTraining) )
 if ( $UTR eq "on") {
     wig2hints(); # convert coverage information to ep hints
     augustus("on"); # run augustus with UTR
+}
+
+if ( $gff3 != 0) {
+    all_preds_gtf2gff3();
 }
 
 if( $annot ) {
@@ -2621,6 +2625,10 @@ sub check_upfront {
     );
     find(
         "eval_multi_gtf.pl",       $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    find(
+        "gtf2gff.pl",       $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
 
@@ -7739,29 +7747,29 @@ sub make_gtf {
         print LOG "\# " . (localtime) . ": Skip making gtf file from $AUG_pred "
             . "because $gtf_file is up to date.\n" if ($v > 3);
     }
-    if ($gff3) {
-        my $gff3_file  = substr( $AUG_pred, 0, -4 ) . ".gff3";
-        if( !uptodate([$AUG_pred], [$gff3_file]) || $overwrite ) {
-            my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
-            my $perlstring = find(
-                "gtf2gff.pl",           $AUGUSTUS_BIN_PATH,
-                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH );
-            $cmdString = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-            my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon -gff3 --out=$gff3_file 2>$errorfile";
-            print LOG "\# " . (localtime)
-                . ": Making a gff3 file from $AUG_pred\n" if ($v > 3);
-            print LOG "$cmdString\n\n";
-            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-                . " at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
-        }else{
-            print LOG "\# " . (localtime)
-                . ": Skip making a gff3 file from $AUG_pred because $gff3_file "
-                . "is up to date.\n" if ($v > 3);
-        }
-    }
+    #if ($gff3) {
+    #    my $gff3_file  = substr( $AUG_pred, 0, -4 ) . ".gff3";
+    #    if( !uptodate([$AUG_pred], [$gff3_file]) || $overwrite ) {
+    #        my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
+    #        my $perlstring = find(
+    #            "gtf2gff.pl",           $AUGUSTUS_BIN_PATH,
+    #            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH );
+    #        $cmdString = "";
+    #        if ($nice) {
+    #            $cmdString .= "nice ";
+    #        }
+    #        my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon --gff3 --out=$gff3_file 2>$errorfile";
+    #        print LOG "\# " . (localtime)
+    #            . ": Making a gff3 file from $AUG_pred\n" if ($v > 3);
+    #        print LOG "$cmdString\n\n";
+    #        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+    #            . " at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
+    #    }else{
+    #        print LOG "\# " . (localtime)
+    #            . ": Skip making a gff3 file from $AUG_pred because $gff3_file "
+    #            . "is up to date.\n" if ($v > 3);
+    #    }
+    #}
 }
 
 ####################### evaluate ###############################################
@@ -8773,6 +8781,63 @@ sub wig2hints {
         system("$cmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
+    }
+}
+
+
+####################### gtf2gff3 ###############################################
+# convert gtf to gff3 format
+# (do not use native AUGUSTUS gff3 output because joingenes does not produce
+# gff3 format)
+####################### gtf2gff3 ###############################################
+
+sub gtf2gff3 {
+    my $gtf = shift;
+    my $gff3 = shift;
+    print LOG "\# " . (localtime) . ": converting gtf file $gtf to gff3 format "
+        . ", outputfile $gff3.\n" if ($v > 2);
+    if( not( uptodate( [$gtf] , [$gff3] ) ) || $overwrite ){
+        $string = find(
+            "gtf2gff.pl", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $perlCmdString = "";
+        if($nice){
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "cat $gtf | perl -ne 'if(m/\\tAUGUSTUS\\t/) {"
+                       .  "print \$_;}' | perl $string --gff3 --out=$gff3 "
+                       .   ">> $otherfilesDir/gtf2gff3.log "
+                       .   "2>> $errorfilesDir/gtf2gff3.err";
+        print LOG "$perlCmdString\n\n" if ($v > 3);
+        system("$perlCmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $perlCmdString\n");
+    }else{
+        print LOG "\# " . (localtime) . ": skipping format conversion because "
+        . "files are up to date.\n" if ($v > 2);
+    }
+}
+
+####################### all_preds_gtf2gff3 #####################################
+# convert gtf to gff3 format for the following possible final output files:
+#  * augustus.ab_initio.gtf
+#  * augustus.hints.gtf
+#  * augustus.ab_initio_utr.gtf
+#  * augustus.hints_utr.gtf
+####################### all_preds_gtf2gff3 #####################################
+
+sub all_preds_gtf2gff3 {
+    my @files = ("$otherfilesDir/augustus.ab_initio.gtf", 
+        "$otherfilesDir/augustus.hints.gtf",
+        "$otherfilesDir/augustus.ab_initio_utr.gtf",
+        "$otherfilesDir/augustus.hints_utr.gtf");
+    foreach(@files){
+        if(-e $_){
+            my $gtf, $gff3 = $_;
+            $gff3 =~ s/\.gtf/\.gff3/;
+            gtf2gff3($gtf, $gff3);
+        }
     }
 }
 
