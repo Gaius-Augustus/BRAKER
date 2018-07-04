@@ -1029,9 +1029,10 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
     }
 }
 
+print("I am here!2\n")
  # check fasta headers
 check_fasta_headers($genome);
-
+print("I am here!3\n")
 if (@prot_seq_files) {
     foreach (@prot_seq_files) {
         check_fasta_headers($_);
