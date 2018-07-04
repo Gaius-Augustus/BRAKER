@@ -960,6 +960,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
     # because if you start several processes in parallel, you might otherwise end
     # up with those processes using the same species directory!
     new_species();
+    print("I am here!1\n");
 } else {
     # if no training will be executed, check whether species parameter files exist
     my $specPath
@@ -1029,10 +1030,10 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
     }
 }
 
-print("I am here!2\n")
+print("I am here!2\n");
  # check fasta headers
 check_fasta_headers($genome);
-print("I am here!3\n")
+print("I am here!3\n");
 if (@prot_seq_files) {
     foreach (@prot_seq_files) {
         check_fasta_headers($_);
