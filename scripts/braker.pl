@@ -3855,6 +3855,7 @@ sub make_rnaseq_hints {
                 . (localtime)
                 . ": make hints from BAM file $bam[$i]\n" if ($v > 3);
             print LOG "$cmdString\n\n" if ($v > 3);
+            my $jid = $pj->start and next;
             system("$cmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
