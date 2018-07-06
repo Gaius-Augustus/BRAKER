@@ -8628,9 +8628,14 @@ sub bam2wig {
                    .  "1> $otherfilesDir/bam.merge.log "
                    .  "2> $errorfilesDir/bam.merge.err";
         print LOG "\n$cmdString\n\n" if ( $v > 3 );
-        system("$cmdString") or die( "ERROR in file " . __FILE__
+        print "Kommando:\n";
+        print $cmdString."\n\n";
+        my $val = system("$cmdString");
+        print "Return value is $val\n";
+#        system("$cmdString") or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__
             . "\nFailed to execute: $cmdString!\n" );
+        print "I got until here\n";
     } else {
         print LOG "\# " . (localtime) . ":  For conversion, creating "
             . "softlink to bam file $bam[0]...\n" if ( $v > 3 );
