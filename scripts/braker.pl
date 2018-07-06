@@ -8840,7 +8840,8 @@ sub all_preds_gtf2gff3 {
         "$otherfilesDir/augustus.hints_utr.gtf");
     foreach(@files){
         if(-e $_){
-            my $gtf, $gff3 = $_;
+            my $gtf = $_;
+            my $gff3 = $_;
             $gff3 =~ s/\.gtf/\.gff3/;
             gtf2gff3($gtf, $gff3);
         }
