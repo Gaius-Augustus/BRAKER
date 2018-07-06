@@ -8633,8 +8633,8 @@ sub bam2wig {
         my $val = system("$cmdString");
         print "Return value is $val\n";
 #        system("$cmdString") or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__
-            . "\nFailed to execute: $cmdString!\n" );
+        #    . " at line " . __LINE__
+        #    . "\nFailed to execute: $cmdString!\n" );
         print "I got until here\n";
     } else {
         print LOG "\# " . (localtime) . ":  For conversion, creating "
