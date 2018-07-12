@@ -342,6 +342,12 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     kept. Default value is 2. 
                                     If you want to avoid downsampling, you have 
                                     to specify 0. 
+--stranded=+,-,+,-,...              If UTRs are trained, i.e.~strand-specific
+                                    bam-files are supplied and coverage 
+                                    information is extracted for gene prediction, 
+                                    create stranded ep hints. The order of 
+                                    strand specifications must correspond to the
+                                    order of bam files.
 
 DESCRIPTION
 
@@ -385,6 +391,8 @@ my $AUGUSTUS_CONFIG_PATH;
 my $AUGUSTUS_BIN_PATH;
 my $AUGUSTUS_SCRIPTS_PATH;
 my @bam;                      # bam file names
+my @stranded;                 # contains +,-,+,-... corresponding to 
+                              # bam files
 my $bamtools_path;
 my $BAMTOOLS_BIN_PATH;
 my $bam2wig;
@@ -583,6 +591,7 @@ GetOptions(
     'downsampling_lambda=s'        => \$lambda,
     'splice_sites=s'               => \@splice_cmd_line,
     'flanking_DNA=i'               => \$flanking_DNA,
+    'stranded=s'                   => \@stranded,
     'version!'                     => \$printVersion
 );
 
@@ -1163,7 +1172,11 @@ if ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds)) && not($skipAllTraining) )
 }
 
 if ( $UTR eq "on") {
-    wig2hints(); # convert coverage information to ep hints
+    if(not @stranded){
+        wig2hints(); # convert coverage information to ep hints
+    }else{
+        bam2stranded_ep_hints();
+    }
     augustus("on"); # run augustus with UTR
 }
 
@@ -8606,7 +8619,7 @@ sub train_utr {
 }
 
 ####################### bam2wig ################################################
-# convert merged and sorted bam files to wig file
+# convert merged and sorted bam files to wig file (unstranded data)
 ####################### filter_augustus ########################################
 
 sub bam2wig {
@@ -8668,6 +8681,100 @@ sub bam2wig {
     system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
         . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
 }
+
+####################### bam2stranded_ep_hints ##################################
+# convert strand separated bam files to wig files, convert wig to hints
+####################### filter_augustus ########################################
+
+sub bam2stranded_ep_hints {
+    my $ep_hints_file = "$otherfilesDir/ep.hints";
+    print LOG "\# " . (localtime)
+        . ": Converting strand separated bam files to individual wiggle files, "
+        . "subsequently convert to stranded ep hints.\n" 
+        if ( $v > 3 );
+    for(my $i=0; $i < scalar(@bam); $i++){
+         print LOG "\# " . (localtime)
+        . ": Processing bam file $i\n" if ( $v > 3 );
+        print LOG "\# " . (localtime) . ": sorting bam file...\n" if ($v > 3);
+        # create filename for sorted bam file
+        my @bamFilePath = split(/\//, $bam[$i]);
+        my $thisSortedBamFile = "$otherfilesDir/".$bamFilePath[scalar(@bamFilePath)-1];
+        $thisSortedBamFile =~ s/\.bam/\.s\.bam/;
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ "
+               .($CPU-1) . " -o $thisSortedBamFile "
+               .  "$bam[$i] "
+               .  "1> $otherfilesDir/samtools_sort_before_wig_$i.stdout "
+               .  "2> $errorfilesDir/samtools_sort_before_wig_$i.stderr";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+        print LOG "\# " . (localtime) . ": Creating wiggle file...\n"
+            if ( $v > 3 );
+        $cmdString = "";
+        my $thisWigFile = $thisSortedBamFile;
+        $thisWigFile =~ s/\.s\.bam/\.wig/;
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$bam2wig $thisSortedBamFile "
+               .  "1>$thisWigFile "
+               .  "2> $errorfilesDir/bam2wig_$i.err";
+        print LOG "\n$cmdString\n" if ( $v > 3 );
+        system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
+        my $this_ep_hints_file = $thisWigFile;
+        $thisWigFile =~ s/\.wig/\.ep\.hints/;
+        if( not( uptodate( [$thisWigFile] , [$this_ep_hints_file] ) ) || $overwrite ){
+            $string = find(
+                "wig2hints.pl", $AUGUSTUS_BIN_PATH,
+                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+            );
+            $perlCmdString = "";
+            if( $nice ) {
+                $perlCmdString .= "nice ";
+            }
+            $perlCmdString .= "cat $thisWigFile | ";
+            if( $nice ) {
+                $perlCmdString .= "nice ";
+            }
+            $perlCmdString .= "perl $string --margin=10 --minthresh=2 --minscore=4 "
+                       .  "--prune=0.1 --src=W --type=ep "
+                       .  "--UCSC=$otherfilesDir/unstranded.track --radius=4.5 "
+                       .  "--pri=4 --strand=\"$stranded[$i]\" > $this_ep_hints_file "
+                       .  "2> $errorfilesDir/wig2hints_$i.err";
+            print LOG "\# "
+                . (localtime)
+                . ": Converting wiggle file to exonpart hints for AUGUSTUS\n"
+                if ($v > 3);
+            print LOG "$perlCmdString\n\n" if ($v > 3);
+            system("$perlCmdString") == 0
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nFailed to execute: $perlCmdString\n");
+        }
+        if( not( uptodate( [$this_ep_hints_file], [$hintsfile] ) ) || $overwrite ) {
+            $cmdString = "";
+            if( $nice ) {
+                $cmdString .= "nice ";
+            }
+            $cmdString .= "cat $this_ep_hints_file >> $hintsfile "
+                   . "2> $errorfilesDir/cat_exonpart_to_hintsfile_$i.err";
+            print LOG "\# "
+                . (localtime)
+                . ": Concatenating exonpart hints from $this_ep_hints_file to $hintsfile:\n"
+                if ($v > 3);
+            print LOG "$cmdString\n\n" if ($v > 3);
+            system("$cmdString") == 0
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nFailed to execute: $cmdString\n");
+        }
+    }    
+}
+
+
 
 ####################### filter_augustus ########################################
 # filter AUGUSTUS genes for those that have support by RNA-Seq hints with
