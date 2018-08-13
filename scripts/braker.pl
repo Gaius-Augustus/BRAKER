@@ -2842,6 +2842,8 @@ sub check_options {
     }
 
     if (@stranded) {
+        my @split_stranded = split(/,/, @stranded[0]);
+        @stranded = @split_stranded;
         foreach(@stranded){
             if(not($_ =~ m/\+/) && not($_ =~ m/-/) && not($_ =~ m/\./)){
                 $prtStr = "\# " . (localtime)
