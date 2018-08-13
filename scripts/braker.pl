@@ -8807,16 +8807,16 @@ sub bam2stranded_wig{
     for(my $i=0; $i < scalar(@stranded); $i++){
         if($stranded[$i] eq "+"){
             push(@plus_index, $i);
-        }elsif($strandend[$i] eq "-"){
+        }elsif($stranded[$i] eq "-"){
             push(@minus_index, $i);
         }elsif($stranded[$i] eq "."){
             push(@unstranded_index, $i);
         }else{
             print LOG "\# " . (localtime)
-                . " ERROR: argument ". $strandend[$i] ." has been supplied as level of "
+                . " ERROR: argument ". $stranded[$i] ." has been supplied as level of "
                 . "strandedness. Allowed are \"+\", \"-\", \".\".";
             print STDERR   "\# " . (localtime)
-                . " ERROR: argument ". $strandend[$i] ." has been supplied as level of "
+                . " ERROR: argument ". $stranded[$i] ." has been supplied as level of "
                 . "strandedness. Allowed are \"+\", \"-\", \".\".";
             exit(1);
         }
