@@ -347,7 +347,18 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     information is extracted for gene prediction, 
                                     create stranded ep hints. The order of 
                                     strand specifications must correspond to the
-                                    order of bam files.
+                                    order of bam files. Possible values are
+                                    +, -, .
+                                    If stranded data is provided, ONLY coverage
+                                    data from the stranded data is used to 
+                                    generate UTR examples! Coverage data from 
+                                    unstranded data is used in the prediction
+                                    step, only.
+                                    The stranded label is applied to coverage
+                                    data, only. Intron hints are generated
+                                    from all libraries treated as "unstranded"
+                                    (because splice site filtering eliminates
+                                    intron hints from the wrong strand, anyway).
 
 DESCRIPTION
 
@@ -1168,14 +1179,18 @@ if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
 if ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds)) && not($skipAllTraining) ) { # if you give this input, train parameters!
     train_utr(); # includes bam2wig
 } else {
-    bam2wig();
+    if(!@stranded){
+        bam2wig();
+    }else{
+        bam2stranded_wig();
+    }
 }
 
 if ( $UTR eq "on") {
     if(not @stranded){
         wig2hints(); # convert coverage information to ep hints
     }else{
-        bam2stranded_ep_hints();
+        stranded_wig2ep_hints();
     }
     augustus("on"); # run augustus with UTR
 }
@@ -2826,6 +2841,31 @@ sub check_options {
         $skipGeneMarkES = 1;
     }
 
+    if (@stranded) {
+        foreach(@stranded){
+            if(not($_ =~ m/\+/) && not($_ =~ m/-/) && not($_ =~ m/\./)){
+                $prtStr = "\# " . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line "
+                    . __LINE__ . "\n" . "arguments for --stranded can be: "
+                    . "+, -, . The provided argument $_ is invalid!\n";
+                $logString .= $prtStr;
+                print STDERR $logString;
+                exit(1);
+            }
+        }
+        if(not(scalar(@stranded) == scalar(@bam))){
+            $prtStr = "\# " . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line "
+                . __LINE__ . "\n" . "number of arguments for --bam (here "
+                . scalar(@bam)
+                . ") must be the same as number of arguments for --stranded (here "
+                . scalar(@stranded)
+                . ")!\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+        }
+    }
     if( $CPU > 48 ) {
         $CPU = 48;
         $prtStr = "\# " . (localtime). ": WARNING: The number of cores was set "
@@ -8155,55 +8195,121 @@ sub train_utr {
     }
 
     # create wiggle file from bam files
-    if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/merged.wig"] ) ) {
-        bam2wig()
+    if(!@stranded){
+        if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/merged.wig"] ) ) {
+            bam2wig()
+        }
+    }else{
+        bam2stranded_wig();
     }
 
-    # call utrrnaseq
-    if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/utrs.gff"] ) ) {
-        print LOG "\# " . (localtime) . ": Creating $otherfilesDir/utrs.gff\n"
-            if ( $v > 3 );
-        $cmdString = "";
-        if ($nice) {
-            $cmdString .= "nice ";
-        }
-        $cmdString .= "$rnaseq2utr --in-scaffold-file $genome "
-                   .  "-C $otherfilesDir/stops.and.starts.gff "
-                   .  "-I $otherfilesDir/rnaseq.utr.hints "
-                   .  "-W $otherfilesDir/merged.wig "
-                   .  "-o $otherfilesDir/utrs.gff ";
-        if( $rnaseq2utr_args ) {
-            $cmdString .= "$rnaseq2utr_args ";
-        }
-        $cmdString .=  "1> $otherfilesDir/rnaseq2utr.stdout "
-                    .  "2> $errorfilesDir/rnaseq2utr.err";
-        print LOG "\n$cmdString\n" if ( $v > 3 );
-        system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
-        # utrrnaseq has a bug that outputs "fake copies" of UTR lines where the
-        # fourth column contains smaller coordinates thant he third gff column
-        # have to fix this, for now, remove those lines in braker
-        print LOG "\# " . (localtime) . ": fixing utrrnaseq output\n";
-        open (UTR, "<", "$otherfilesDir/utrs.gff" ) or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCan not open file $otherfilesDir/utrs.gff!\n" );
-        open (UTRFIX, ">", "$otherfilesDir/utrs.f.gff") or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCan not open file $otherfilesDir/utrs.f.gff!\n" );
-        while(<UTR>) {
-            my @l = split(/\t/);
-            if($l[4] > $l[3]){
-                print UTRFIX $_;
+    # call utrrnaseq; if no stranded data is supplied, once, if stranded
+    # or mixed data is provided, for plus and minus strand; unstranded data
+    # will be ignored in this case:
+    if(!@stranded){
+        if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/utrs.gff"] ) ) {
+            print LOG "\# " . (localtime) . ": Creating $otherfilesDir/utrs.gff\n"
+                if ( $v > 3 );
+            if(!@stranded){
+                $cmdString = "";
+                if ($nice) {
+                    $cmdString .= "nice ";
+                }
+                $cmdString .= "$rnaseq2utr --in-scaffold-file $genome "
+                           .  "-C $otherfilesDir/stops.and.starts.gff "
+                           .  "-I $otherfilesDir/rnaseq.utr.hints "
+                           .  "-W $otherfilesDir/merged.wig "
+                           .  "-o $otherfilesDir/utrs.gff ";
+                if( $rnaseq2utr_args ) {
+                    $cmdString .= "$rnaseq2utr_args ";
+                }
+                $cmdString .=  "1> $otherfilesDir/rnaseq2utr.stdout "
+                            .  "2> $errorfilesDir/rnaseq2utr.err";
+                print LOG "\n$cmdString\n" if ( $v > 3 );
+                system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
+                    . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
+                # utrrnaseq has a bug that outputs "fake copies" of UTR lines where the
+                # fourth column contains smaller coordinates thant he third gff column
+                # have to fix this, for now, remove those lines in braker
+                # Katharina fixed the utrrnaseq issues on August 13th 2018, could
+                # remove the UTRFIX code from braker, now.
+                print LOG "\# " . (localtime) . ": fixing utrrnaseq output\n";
+                open (UTR, "<", "$otherfilesDir/utrs.gff" ) or die( "ERROR in file "
+                    . __FILE__ . " at line " . __LINE__
+                    . "\nCan not open file $otherfilesDir/utrs.gff!\n" );
+                open (UTRFIX, ">", "$otherfilesDir/utrs.f.gff") or die( "ERROR in file "
+                    . __FILE__ . " at line " . __LINE__
+                    . "\nCan not open file $otherfilesDir/utrs.f.gff!\n" );
+                while(<UTR>) {
+                    my @l = split(/\t/);
+                    if($l[4] > $l[3]){
+                        print UTRFIX $_;
+                    }
+                }
+                close(UTRFIX) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
+                    . "\nCould not close file $otherfilesDir/utrs.f.gff!\n" );
+                close(UTR) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
+                    . "\nCould not close file $otherfilesDir/utrs.gff!\n" );
+                $cmdString = "mv $otherfilesDir/utrs.f.gff $otherfilesDir/utrs.gff";
+                print LOG "\n$cmdString\n" if ($v > 3);
+                system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
+                    . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
             }
         }
-        close(UTRFIX) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/utrs.f.gff!\n" );
-        close(UTR) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/utrs.gff!\n" );
-        $cmdString = "mv $otherfilesDir/utrs.f.gff $otherfilesDir/utrs.gff";
-        print LOG "\n$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
+    }else{
+        my @names;
+        my $utrs_file = "$otherfilesDir/utrs.gff";
+        if(-e "$otherfilesDir/rnaseq_plus.bam"){
+            push(@names, "plus");
+        }
+        if(-e "$otherfilesDir/rnaseq_minus.bam"){
+            push(@names, "minus");
+        }
+        foreach(@names){
+            my $this_strand;
+            if($_ eq "plus"){
+                $this_strand = "+";
+            }else{
+                $this_strand = "-";
+            }
+            $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            $cmdString .= "$rnaseq2utr --in-scaffold-file $genome "
+                       .  "-C $otherfilesDir/stops.and.starts.gff "
+                       .  "-I $otherfilesDir/rnaseq.utr.hints "
+                       .  "-W $otherfilesDir/rnaseq_".$_.".wig "
+                       .  "-o $otherfilesDir/utrs_".$_.".gff ";
+            if( $rnaseq2utr_args ) {
+                $cmdString .= "$rnaseq2utr_args ";
+            }
+            $cmdString .=  "1> $otherfilesDir/rnaseq2utr_".$_.".stdout "
+                        .  "2> $errorfilesDir/rnaseq2utr_".$_.".err";
+            print LOG "\n$cmdString\n" if ( $v > 3 );
+            system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
+                . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
+            # filter utrs from the current strand!
+            open(MERGEDUTRS, ">", $utrs_file) or die ("ERROR in file " 
+                . __FILE__ . " at line " . __LINE__ . "\nFailed to open file "
+                . $utrs_file . " for writing!\n");
+            open(ONESTRANDUTRS, "<", "$otherfilesDir/rnaseq_".$_.".gff") or
+                die("ERROR in file " . __FILE__ . " at line " . __LINE__ 
+                . "\nFailed to open file " . "$otherfilesDir/rnaseq_".$_.".gff" 
+                . " for reading!\n");
+            while(<ONESTRANDUTRS>){
+                my @line = split(/\t/);
+                if( ($line[3] < $line[4]) && ($line[6] eq $this_strand) ) {
+                    print MERGEDUTRS $_;
+                }
+            }
+            close(ONESTRANDUTRS) or die ("ERROR in file " 
+                . __FILE__ . " at line " . __LINE__ . "\nFailed to close file "
+                . "$otherfilesDir/rnaseq_".$_.".gff" . "!\n");
+            close(MERGEDUTRS) or die ("ERROR in file " 
+                . __FILE__ . " at line " . __LINE__ . "\nFailed to close file "
+                . $utrs_file . "!\n");
+        }
     }
 
     # create genbank file with genes that have two utrs
@@ -8641,8 +8747,6 @@ sub bam2wig {
                    .  "1> $otherfilesDir/bam.merge.log "
                    .  "2> $errorfilesDir/bam.merge.err";
         print LOG "\n$cmdString\n\n" if ( $v > 3 );
-        print "Kommando:\n";
-        print $cmdString."\n\n";
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
                 . " at line " . __LINE__
                 . "\nFailed to execute: $cmdString!\n" );
@@ -8682,23 +8786,68 @@ sub bam2wig {
         . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
 }
 
-####################### bam2stranded_ep_hints ##################################
-# convert strand separated bam files to wig files, convert wig to hints
+####################### bam2stranded_wig #######################################
+# convert strand separated bam files to  two separate wig files
 ####################### filter_augustus ########################################
 
-sub bam2stranded_ep_hints {
-    my $ep_hints_file = "$otherfilesDir/ep.hints";
+sub bam2stranded_wig{
     print LOG "\# " . (localtime)
-        . ": Converting strand separated bam files to individual wiggle files, "
-        . "subsequently convert to stranded ep hints.\n" 
+        . ": Converting strand separated bam files to individual wiggle files\n" 
         if ( $v > 3 );
-    for(my $i=0; $i < scalar(@bam); $i++){
-         print LOG "\# " . (localtime)
-        . ": Processing bam file $i\n" if ( $v > 3 );
-        print LOG "\# " . (localtime) . ": sorting bam file...\n" if ($v > 3);
+    # determine how many "levels of strandedness" were supplied 
+    # (can be +, -, .)
+    my $bam_plus = "$otherfilesDir/rnaseq_plus.bam";
+    my @plus_index;
+    my $bam_minus = "$otherfilesDir/rnaseq_minus.bam";
+    my @minus_index;
+    my $bam_unstranded = "$otherfilesDir/rnaseq_unstranded.bam";
+    my @unstranded_index;
+    for(my $i=0; $i < scalar(@stranded); $i++){
+        if($stranded[$i] eq "+"){
+            push(@plus_index, $i);
+        }elsif($_ eq "-"){
+            push(@minus_index, $i);
+        }elsif($_ eq "."){
+            push(@unstranded_index, $i);
+        }else{
+            print LOG "\# " . (localtime)
+                . " ERROR: argument ". $_ ." has been supplied as level of "
+                . "strandedness. Allowed are \"+\", \"-\", \".\".";
+            print STDERR   "\# " . (localtime)
+                . " ERROR: argument ". $_ ." has been supplied as level of "
+                . "strandedness. Allowed are \"+\", \"-\", \".\".";
+            exit(1);
+        }
+    }
+    # merging and sorting plus stranded bam files
+    if(scalar(@plus_index) > 1){
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools merge ";
+        foreach (my $i = 0; $i < scalar(@plus_index); $i++) {
+            chomp;
+            $cmdString .= "-in $bam[$plus_index[$i]] ";
+        }
+        $cmdString .= "-out $bam_plus "
+                   .  "1> $otherfilesDir/bam_plus.merge.log "
+                   .  "2> $errorfilesDir/bam_plus.merge.err";
+        print LOG "\n$cmdString\n\n" if ( $v > 3 );
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    }elsif(scalar(@plus_index) == 1){
+        $cmdString = "ln -s $bam[$plus_index[0]] $bam_plus";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    }
+    if(scalar(@plus_index > 0)){
+        print LOG "\# " . (localtime) . ": sorting bam file $bam_plus...\n" 
+            if ($v > 3);
         # create filename for sorted bam file
-        my @bamFilePath = split(/\//, $bam[$i]);
-        my $thisSortedBamFile = "$otherfilesDir/".$bamFilePath[scalar(@bamFilePath)-1];
+        my @bam_plus_path = split(/\//, $bam_plus);
+        my $thisSortedBamFile = "$otherfilesDir/".$bam_plus_path[scalar(@bam_plus_path)-1];
         $thisSortedBamFile =~ s/\.bam/\.s\.bam/;
         $cmdString = "";
         if ($nice) {
@@ -8706,26 +8855,164 @@ sub bam2stranded_ep_hints {
         }
         $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ "
                .($CPU-1) . " -o $thisSortedBamFile "
-               .  "$bam[$i] "
-               .  "1> $otherfilesDir/samtools_sort_before_wig_$i.stdout "
-               .  "2> $errorfilesDir/samtools_sort_before_wig_$i.stderr";
+               .  "$bam_plus "
+               .  "1> $otherfilesDir/samtools_sort_plus_bam.stdout "
+               .  "2> $errorfilesDir/samtools_sort_plus_bam.stderr";
         print LOG "\n$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
-        print LOG "\# " . (localtime) . ": Creating wiggle file...\n"
-            if ( $v > 3 );
+        $cmdString = "mv $thisSortedBamFile $bam_plus";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    }
+    # merging and sorting minus stranded bam files
+    if(scalar(@plus_index) > 1){
         $cmdString = "";
-        my $thisWigFile = $thisSortedBamFile;
-        $thisWigFile =~ s/\.s\.bam/\.wig/;
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString .= "$bam2wig $thisSortedBamFile "
+        $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools merge ";
+        foreach (my $i = 0; $i < scalar(@minus_index); $i++) {
+            chomp;
+            $cmdString .= "-in $bam[$minus_index[$i]] ";
+        }
+        $cmdString .= "-out $bam_minus "
+                   .  "1> $otherfilesDir/bam_minus.merge.log "
+                   .  "2> $errorfilesDir/bam_minus.merge.err";
+        print LOG "\n$cmdString\n\n" if ( $v > 3 );
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    }elsif(scalar(@plus_index) == 1){
+        $cmdString = "ln -s $bam[$minus_index[0]] $bam_minus";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    }
+    if(scalar(@minus_index > 0)){
+        print LOG "\# " . (localtime) . ": sorting bam file $bam_minus...\n" 
+            if ($v > 3);
+        # create filename for sorted bam file
+        my @bam_minus_path = split(/\//, $bam_minus);
+        my $thisSortedBamFile = "$otherfilesDir/".$bam_minus_path[scalar(@bam_minus_path)-1];
+        $thisSortedBamFile =~ s/\.bam/\.s\.bam/;
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ "
+               .($CPU-1) . " -o $thisSortedBamFile "
+               .  "$bam_minus "
+               .  "1> $otherfilesDir/samtools_sort_minus_bam.stdout "
+               .  "2> $errorfilesDir/samtools_sort_minus_bam.stderr";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+        $cmdString = "mv $thisSortedBamFile $bam_minus";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    }
+    # merging and sorting unstranded bam files
+    if(scalar(@unstranded_index) > 1){
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$BAMTOOLS_BIN_PATH/bamtools merge ";
+        foreach (my $i = 0; $i < scalar(@unstranded_index); $i++) {
+            chomp;
+            $cmdString .= "-in $bam[$unstranded_index[$i]] ";
+        }
+        $cmdString .= "-out $bam_unstranded "
+                   .  "1> $otherfilesDir/bam_unstranded.merge.log "
+                   .  "2> $errorfilesDir/bam_unstranded.merge.err";
+        print LOG "\n$cmdString\n\n" if ( $v > 3 );
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    }elsif(scalar(@plus_index) == 1){
+        $cmdString = "ln -s $bam[$unstranded_index[0]] $bam_unstranded";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    }
+    if(scalar(@minus_index > 0)){
+        print LOG "\# " . (localtime) . ": sorting bam file $bam_unstranded...\n" 
+            if ($v > 3);
+        # create filename for sorted bam file
+        my @bam_unstranded_path = split(/\//, $bam_unstranded);
+        my $thisSortedBamFile = "$otherfilesDir/".$bam_unstranded_path[scalar(@bam_unstranded_path)-1];
+        $thisSortedBamFile =~ s/\.bam/\.s\.bam/;
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ "
+               .($CPU-1) . " -o $thisSortedBamFile "
+               .  "$bam_unstranded "
+               .  "1> $otherfilesDir/samtools_sort_unstranded_bam.stdout "
+               .  "2> $errorfilesDir/samtools_sort_unstranded_bam.stderr";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+        $cmdString = "mv $thisSortedBamFile $bam_unstranded";
+        print LOG "\n$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
+    }
+    my @names;
+    if(-e $bam_plus){
+        push(@names, "plus");
+    }
+    if(-e $bam_minus){
+        push(@names, "minus");
+    }
+    if(-e $bam_unstranded){
+        push(@names, "unstranded");
+    }
+    foreach(@names){
+        $cmdString = "";
+        my $thisWigFile = "$otherfilesDir/rnaseq_".$_.".bam";
+        $thisWigFile =~ s/\.bam/\.wig/;
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$bam2wig $otherfilesDir/bam_".$_.".bam "
                .  "1>$thisWigFile "
-               .  "2> $errorfilesDir/bam2wig_$i.err";
+               .  "2> $errorfilesDir/bam2wig_$_.err";
         print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
+    }
+}
+
+####################### stranded_wig2ep_hints ##################################
+# convert stranded wig files to exonpart hints for AUGUSTUS
+####################### filter_augustus ########################################
+
+sub stranded_wig2ep_hints {
+    my $ep_hints_file = "$otherfilesDir/ep.hints";
+    print LOG "\# " . (localtime)
+        . ": Converting strand separated wig files to stranded ep hints.\n" 
+        if ( $v > 3 );
+    my $bam_plus = "$otherfilesDir/rnaseq_plus.bam";
+    my $bam_minus = "$otherfilesDir/rnaseq_minus.bam";
+    my $bam_unstranded = "$otherfilesDir/rnaseq_unstranded.bam";
+    my @names;
+    if(-e $bam_plus){
+        push(@names, "plus");
+    }
+    if(-e $bam_minus){
+        push(@names, "minus");
+    }
+    if(-e $bam_unstranded){
+        push(@names, "unstranded");
+    }
+    foreach(@names){
+        print LOG "\# " . (localtime) . ": Creating wiggle file for $_...\n"
+            if ( $v > 3 );
+        $cmdString = "";
+        my $thisWigFile = "$otherfilesDir/bam_".$_.".bam";
         my $this_ep_hints_file = $thisWigFile;
         $thisWigFile =~ s/\.wig/\.ep\.hints/;
         if( not( uptodate( [$thisWigFile] , [$this_ep_hints_file] ) ) || $overwrite ){
@@ -8741,11 +9028,21 @@ sub bam2stranded_ep_hints {
             if( $nice ) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString .= "perl $string --margin=10 --minthresh=2 --minscore=4 "
-                       .  "--prune=0.1 --src=W --type=ep "
-                       .  "--UCSC=$otherfilesDir/unstranded.track --radius=4.5 "
-                       .  "--pri=4 --strand=\"$stranded[$i]\" > $this_ep_hints_file "
-                       .  "2> $errorfilesDir/wig2hints_$i.err";
+            $perlCmdString .= "perl $string --margin=10 --minthresh=2 "
+                           .  "--minscore=4 --prune=0.1 --src=W --type=ep "
+                           .  "--radius=4.5 --pri=4 ";
+            if($_ eq "plus"){
+                $perlCmdString .=  "--UCSC=$otherfilesDir/plus.track  "
+                               .  " --strand=\"+\"";
+            }elsif($_ eq "minus"){
+                $perlCmdString .=  "--UCSC=$otherfilesDir/minus.track  "
+                               .  " --strand=\"-\"";
+            }else{
+                $perlCmdString .=  "--UCSC=$otherfilesDir/unstranded.track  "
+                               .  " --strand=\".\"";
+            }
+            $perlCmdString .= "> $this_ep_hints_file "
+                           .  "2> $errorfilesDir/wig2hints_$_.err";
             print LOG "\# "
                 . (localtime)
                 . ": Converting wiggle file to exonpart hints for AUGUSTUS\n"
@@ -8761,10 +9058,11 @@ sub bam2stranded_ep_hints {
                 $cmdString .= "nice ";
             }
             $cmdString .= "cat $this_ep_hints_file >> $hintsfile "
-                   . "2> $errorfilesDir/cat_exonpart_to_hintsfile_$i.err";
+                   . "2> $errorfilesDir/cat_exonpart_to_hintsfile_$_.err";
             print LOG "\# "
                 . (localtime)
-                . ": Concatenating exonpart hints from $this_ep_hints_file to $hintsfile:\n"
+                . ": Concatenating exonpart hints from $this_ep_hints_file "
+                . "to $hintsfile:\n"
                 if ($v > 3);
             print LOG "$cmdString\n\n" if ($v > 3);
             system("$cmdString") == 0
