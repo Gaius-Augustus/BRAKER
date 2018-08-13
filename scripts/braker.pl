@@ -8869,7 +8869,7 @@ sub bam2stranded_wig{
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
     }
     # merging and sorting minus stranded bam files
-    if(scalar(@plus_index) > 1){
+    if(scalar(@minus_index) > 1){
         $cmdString = "";
         if ($nice) {
             $cmdString .= "nice ";
@@ -8885,7 +8885,7 @@ sub bam2stranded_wig{
         print LOG "\n$cmdString\n\n" if ( $v > 3 );
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
-    }elsif(scalar(@plus_index) == 1){
+    }elsif(scalar(@minus_index) == 1){
         $cmdString = "ln -s $bam[$minus_index[0]] $bam_minus";
         print LOG "\n$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
@@ -8932,13 +8932,13 @@ sub bam2stranded_wig{
         print LOG "\n$cmdString\n\n" if ( $v > 3 );
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
-    }elsif(scalar(@plus_index) == 1){
+    }elsif(scalar(@unstranded_index) == 1){
         $cmdString = "ln -s $bam[$unstranded_index[0]] $bam_unstranded";
         print LOG "\n$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
     }
-    if(scalar(@minus_index > 0)){
+    if(scalar(@unstranded_index > 0)){
         print LOG "\# " . (localtime) . ": sorting bam file $bam_unstranded...\n" 
             if ($v > 3);
         # create filename for sorted bam file
