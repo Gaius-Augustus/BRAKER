@@ -2842,7 +2842,7 @@ sub check_options {
     }
 
     if (@stranded) {
-        my @split_stranded = split(/,/, @stranded[0]);
+        my @split_stranded = split(/,/, $stranded[0]);
         @stranded = @split_stranded;
         foreach(@stranded){
             if(not($_ =~ m/\+/) && not($_ =~ m/-/) && not($_ =~ m/\./)){
@@ -8863,10 +8863,6 @@ sub bam2stranded_wig{
         print LOG "\n$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
-        $cmdString = "mv $thisSortedBamFile $bam_plus";
-        print LOG "\n$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
     }
     # merging and sorting minus stranded bam files
     if(scalar(@minus_index) > 1){
@@ -8907,10 +8903,6 @@ sub bam2stranded_wig{
                .  "$bam_minus "
                .  "1> $otherfilesDir/samtools_sort_minus_bam.stdout "
                .  "2> $errorfilesDir/samtools_sort_minus_bam.stderr";
-        print LOG "\n$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
-        $cmdString = "mv $thisSortedBamFile $bam_minus";
         print LOG "\n$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
@@ -8957,10 +8949,6 @@ sub bam2stranded_wig{
         print LOG "\n$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
-        $cmdString = "mv $thisSortedBamFile $bam_unstranded";
-        print LOG "\n$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
     }
     my @names;
     if(-e $bam_plus){
@@ -8974,12 +8962,12 @@ sub bam2stranded_wig{
     }
     foreach(@names){
         $cmdString = "";
-        my $thisWigFile = "$otherfilesDir/rnaseq_".$_.".bam";
-        $thisWigFile =~ s/\.bam/\.wig/;
+        my $thisWigFile = "$otherfilesDir/rnaseq_".$_.".s.bam";
+        $thisWigFile =~ s/\.s\.bam/\.wig/;
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString .= "$bam2wig $otherfilesDir/bam_".$_.".bam "
+        $cmdString .= "$bam2wig $otherfilesDir/rnaseq_".$_.".s.bam "
                .  "1>$thisWigFile "
                .  "2> $errorfilesDir/bam2wig_$_.err";
         print LOG "\n$cmdString\n" if ( $v > 3 );
@@ -8997,9 +8985,9 @@ sub stranded_wig2ep_hints {
     print LOG "\# " . (localtime)
         . ": Converting strand separated wig files to stranded ep hints.\n" 
         if ( $v > 3 );
-    my $bam_plus = "$otherfilesDir/rnaseq_plus.bam";
-    my $bam_minus = "$otherfilesDir/rnaseq_minus.bam";
-    my $bam_unstranded = "$otherfilesDir/rnaseq_unstranded.bam";
+    my $bam_plus = "$otherfilesDir/rnaseq_plus.s.bam";
+    my $bam_minus = "$otherfilesDir/rnaseq_minus.s.bam";
+    my $bam_unstranded = "$otherfilesDir/rnaseq_unstranded.s.bam";
     my @names;
     if(-e $bam_plus){
         push(@names, "plus");
@@ -9014,9 +9002,9 @@ sub stranded_wig2ep_hints {
         print LOG "\# " . (localtime) . ": Creating wiggle file for $_...\n"
             if ( $v > 3 );
         $cmdString = "";
-        my $thisWigFile = "$otherfilesDir/bam_".$_.".bam";
+        my $thisWigFile = "$otherfilesDir/rnaseq_".$_.".wig";
         my $this_ep_hints_file = $thisWigFile;
-        $thisWigFile =~ s/\.wig/\.ep\.hints/;
+        $this_ep_hints_file =~ s/\.wig/\.ep\.hints/;
         if( not( uptodate( [$thisWigFile] , [$this_ep_hints_file] ) ) || $overwrite ){
             $string = find(
                 "wig2hints.pl", $AUGUSTUS_BIN_PATH,
