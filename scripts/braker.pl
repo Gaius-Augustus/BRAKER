@@ -8295,9 +8295,9 @@ sub train_utr {
             open(MERGEDUTRS, ">", $utrs_file) or die ("ERROR in file " 
                 . __FILE__ . " at line " . __LINE__ . "\nFailed to open file "
                 . $utrs_file . " for writing!\n");
-            open(ONESTRANDUTRS, "<", "$otherfilesDir/rnaseq_".$_.".gff") or
+            open(ONESTRANDUTRS, "<", "$otherfilesDir/utrs_".$_.".gff") or
                 die("ERROR in file " . __FILE__ . " at line " . __LINE__ 
-                . "\nFailed to open file " . "$otherfilesDir/rnaseq_".$_.".gff" 
+                . "\nFailed to open file " . "$otherfilesDir/utrs_".$_.".gff" 
                 . " for reading!\n");
             while(<ONESTRANDUTRS>){
                 my @line = split(/\t/);
@@ -8307,7 +8307,7 @@ sub train_utr {
             }
             close(ONESTRANDUTRS) or die ("ERROR in file " 
                 . __FILE__ . " at line " . __LINE__ . "\nFailed to close file "
-                . "$otherfilesDir/rnaseq_".$_.".gff" . "!\n");
+                . "$otherfilesDir/utrs_".$_.".gff" . "!\n");
             close(MERGEDUTRS) or die ("ERROR in file " 
                 . __FILE__ . " at line " . __LINE__ . "\nFailed to close file "
                 . $utrs_file . "!\n");
