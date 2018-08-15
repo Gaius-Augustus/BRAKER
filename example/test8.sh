@@ -4,4 +4,4 @@ if [ -d $wd ]; then
     rm -r $wd
 fi
 
-( time braker.pl --genome=genome.fa --workingdir=$wd --cores=6 --softmasking --skipOptimize --esmode --cores=8 --skipOptimize ) &> test8.log
+( time braker.pl --genome=genome.fa --esmode --softmasking --workingdir=$wd ) &> test8.log
