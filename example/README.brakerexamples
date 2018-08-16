@@ -2,11 +2,11 @@
 %                                                                                                 %
 %           BRAKER2 example data                                                                  %
 %                                                                                                 %
-%           Authors: Simone Lange and Katharina J. Hoff                                           %
+%           Author: Katharina J. Hoff                                                             %
 %                                                                                                 %
 %           Contact: katharina.hoff@uni-greifswald.de                                             %
 %                                                                                                 %
-%           Date: March 13th 2018                                                                  %
+%           Date: August 15th 2018                                                                %
 %                                                                                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -20,13 +20,14 @@ This archive contains an example data set for testing the BRAKER2 pipeline, whic
 Download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and 
 http://exon.gatech.edu.
 
-Data corresponds to Drosophila melanogaster chromosome 2R from flybase release R5. 
+Data corresponds to Drosophila melanogaster chromosome 2R from flybase release R5, the porportion 
+of the sequence until base 12000000.
 
-RNA-Seq alignments were obtained by mapping Illumina paired-end libraries SRR023505, SRR023546, 
-SRR023608, SRR026433, SRR027108 against the complete genome using Tophat2 with the options 
---microexon-search   --mate-std-dev 26   --mate-inner-dist 38  --min-intron-length 30  
---min-coverage-intron 30 --min-segment-intron 30.
-The example data set contains only those RNA-Seq alignments that correspond to sequence 2R.
+RNA-Seq alignments were obtained by mapping the Illumina paired-end library SRR023505 against 
+the genomic sequence using STAR:
+STAR --runMode genomeGenerate --genomeDir star_genome --genomeFastaFiles genome.fa
+STAR --genomeDir star_genome --readFilesIn SRR023505_1.fastq SRR023505_2.fastq
+samtools view -bS Aligned.out.sam > RNAseq.bam
 
 Protein sequences from Drosophila ananassae release R1.05 were aligned to the genome sequence of
 Drosophila melanogaster chromosome R2 using GenomeThreader with parameters
@@ -35,8 +36,10 @@ Drosophila melanogaster chromosome R2 using GenomeThreader with parameters
 Protein sequence records of mapped proteins were stored in proteins.fa.
 
 For generating protein hints from proteins of longer evolutionary distance, proteins from the 
-eggNog database insect proportion were aligned to 
-Drosophila melanogaster chromosome 2R using the GaTech protein mapping pipline.
+eggNog database insect proportion (included Drosophila species were D. grimshawi, D. 
+D. virilis, D. willistoni, D. pseudoobscura, D. ananassae were aligned to the full genome of
+Drosophila melanogaster using the GaTech protein mapping pipline. Subsequently, hints of the
+target sequence were filtered by sequence name and coordinates.
 
 Files:
    genome.fa     - genome file in fasta format
@@ -44,6 +47,9 @@ Files:
    RNAseq.hints  - RNA-Seq intron hints file in gff format
    prot.fa       - protein sequence file in fasta format
    ep.hints      - protein hints of remote homology in gff format
+
+Please contact Alexandre Lomsadze if you need information on the GaTech protein mapping pipeline.
+
 
               2.  RUNNING BRAKER2 WITH EXAMPLE DATA
               -------------------------------------
@@ -57,19 +63,20 @@ BRAKER2 can be run with several input file combinations.
    b) with a file that contains intron "hints" extracted from RNA-Seq alignments in gff format
       instead of the alignment file:
 
-      braker --genome=example.fa  --hints=RNAseq.hints
+      braker --genome=genome.fa  --hints=RNAseq.hints
 
    c) with a file that contains intron "hints" from mapping proteins of distant homology to 
       the target genome in gff format:
 
       braker.pl --genome=genome.fa --hints=ep.hints --epmode
 
-   d) with a file that contains RNA-Seq alignments and a file taht contains "hints" from mapping
+   d) with a file that contains RNA-Seq alignments and a file that contains "hints" from mapping
       proteins of distant homology to the target genome in gff format:
 
       braker.pl --genome=genome.fa --hints=ep.hints --bam=RNAseq.bam --etpmode
 
-   e) with a genome file and a file with protein sequences of close homology
+   e) with a genome file and a file with protein sequences of close homology (does not execute
+      GeneMark):
 
       braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --trainFromGth
 
@@ -78,11 +85,20 @@ BRAKER2 can be run with several input file combinations.
 
       braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam
 
-   g) with a genome file, RNA-Seq data and a file with protein sequences of close homology for
-      using protein information	for training and prediction:
+   g) with a genome file, RNA-Seq data, and a file with protein sequences of close homology for
+      using protein information	for training and prediction (in addition to RNA-Seq data):
 
       braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam --gth2traingenes
 
    h) for running AUGUSTUS with evidence using already existing AUGUSTUS parameters:
 
       braker.pl --genome=genome.fa --bam=RNAseq.bam --species=fly --skipAllTraining
+
+   i) when run with genome file and a corresponding RNA-Seq alignment file, training of 
+      UTR paramters for AUGUSTUS is possible:
+
+      braker --genome=genome.fa --bam=RNAseq.bam --UTR=on
+
+   j) with a genome file, only:
+
+      braker --genome=genome.fa --esmode

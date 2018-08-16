@@ -1016,7 +1016,6 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                     . "does not exist!\n";
                 print LOG $prtStr;
                 print STDERR $prtStr;
-                print STDERR "I AM IN ONE";
                 exit(1);
             }
         }
@@ -1030,7 +1029,6 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                     . "does not exist!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
-            print STDERR "I AM IN TWO";
             exit(1);
         }
     }elsif( $UTR eq "on" && $skipAllTraining==1 ) {
@@ -1043,7 +1041,6 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                     . "does not exist!\n";
             print LOG $prtStr;
             print STDERR $prtStr;
-            print STDERR "I AM IN THREE";
             exit(1);
         }
     }
@@ -1176,9 +1173,9 @@ if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
     augustus("off");    # run augustus without UTR
 }
 
-if ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds)) && not($skipAllTraining) ) { # if you give this input, train parameters!
+if ( @bam && ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds) ) && not($skipAllTraining) ) ) { # if you give this input, train parameters!
     train_utr(); # includes bam2wig
-} else {
+} elsif (@bam) {
     if(!@stranded){
         bam2wig();
     }else{
@@ -2031,14 +2028,16 @@ sub set_ALIGNMENT_TOOL_PATH {
                         . "\$PATH.\n";
                     $logString .= $prtStr if ($v > 1);
                     my $epath = which 'gth';
-                    if ( -d dirname($epath) ) {
-                        $prtStr
-                            = "\# "
-                            . (localtime)
-                            . ": Setting \$ALIGNMENT_TOOL_PATH to "
-                            . dirname($epath) . "\n";
-                        $logString .= $prtStr if ($v > 1);
-                        $ALIGNMENT_TOOL_PATH = dirname($epath);
+                    if( length($epath) > 0 ) {
+                        if ( -d dirname($epath) ) {
+                            $prtStr
+                                = "\# "
+                                . (localtime)
+                                . ": Setting \$ALIGNMENT_TOOL_PATH to "
+                                . dirname($epath) . "\n";
+                            $logString .= $prtStr if ($v > 1);
+                            $ALIGNMENT_TOOL_PATH = dirname($epath);
+                        }
                     }
                     else {
                         $prtStr
@@ -6240,13 +6239,16 @@ sub training_augustus {
                 );
                 $errorfile  = "$errorfilesDir/optimize_augustus.stderr";
                 $stdoutfile = "$otherfilesDir/optimize_augustus.stdout";
-                my $k_fold;
+                my $k_fold = 8;
                 if($CPU > 1){
                     for(my $i=1; $i<=$CPU; $i++){
                         if ($t_b_t/$i > 200){
                             $k_fold = $i;
                         }
                     }   
+                }
+                if($k_fold < 8) {
+                    $k_fold = 8;
                 }
                 $perlCmdString = "";
                 if ($nice) {
@@ -6259,10 +6261,12 @@ sub training_augustus {
                 $perlCmdString  .= "--rounds=$rounds --species=$species "
                                  . "--kfold=$k_fold "
                                  . "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
-                                 . "--onlytrain=$otherfilesDir/train.gb.train.train "
-                                 . "--cpus=$k_fold "
-                                 . "$otherfilesDir/train.gb.train.test "
-                                 . "1>$stdoutfile 2>$errorfile";
+                                 . "--onlytrain=$otherfilesDir/train.gb.train.train ";
+                if($CPU > 1) {
+                    $perlCmdString .= "--cpus=$k_fold ";
+                }
+                $perlCmdString  .= "$otherfilesDir/train.gb.train.test "
+                                . "1>$stdoutfile 2>$errorfile";
                 print LOG "\# "
                     . (localtime)
                     . ": optimizing AUGUSTUS parameters\n" if ($v > 3);
