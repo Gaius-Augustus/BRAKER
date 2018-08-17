@@ -1175,7 +1175,7 @@ if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
 
 if ( @bam && ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds) ) && not($skipAllTraining) ) ) { # if you give this input, train parameters!
     train_utr(); # includes bam2wig
-} elsif (@bam) {
+} elsif (@bam && $UTR eq "on") {
     if(!@stranded){
         bam2wig();
     }else{
@@ -3082,7 +3082,8 @@ sub check_options {
     # check what what hint sources are in hints file
     if(@bam){
         $foundRNASeq = 1;
-    }elsif(@hints){
+    }
+    if(@hints){
          foreach (@hints) {
             $foundRNASeq += check_hints($_);
         }
@@ -5106,7 +5107,7 @@ sub GeneMark_ETP {
 ################################################################################
 
 sub filter_genemark {
-    print LOG "\# " . (localtime) . "Filtering output of GeneMark for "
+    print LOG "\# " . (localtime) . " Filtering output of GeneMark for "
         . "generating training genes for AUGUSTUS\n" if ($v > 2);
 
     if( not( $ESmode == 1 ) ) {
@@ -5414,7 +5415,7 @@ sub training_augustus {
         # set contents of trainGenesGtf file
         if ( not ($gth2traingenes) and not ($trainFromGth) ) {
             # create softlink from genemark.gtf to traingenes.gtf
-            print LOG "\#  "
+            print LOG "\# "
                 . (localtime)
                 . ": creating softlink from $gmGtf to $trainGenesGtf.\n"
                 if ($v > 3);
@@ -6117,11 +6118,11 @@ sub training_augustus {
             if ( $err_rate >= 0.5 ) {
                 print LOG "\n\# "
                     . (localtime)
-                    . "The appropriate value for \"stopCodonExcludedFromCDS\" "
+                    . ": The appropriate value for \"stopCodonExcludedFromCDS\" "
                     . "seems to be \"false\".\n" if ($v > 3);
                 print LOG "\n\# "
                     . (localtime)
-                    . "Setting value of \"stopCodonExcludedFromCDS\" in "
+                    . ": Setting value of \"stopCodonExcludedFromCDS\" in "
                     . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg "
                     . "to \"false\"\n" if ($v > 3);
                 setParInConfig(
@@ -7473,7 +7474,7 @@ sub run_augustus_with_joingenes_parallel {
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__
                 . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         } else {
-            print LOG "\# " . (localtime) . "WARNING: ETPmode enabled but "
+            print LOG "\# " . (localtime) . " WARNING: ETPmode enabled but "
                 . "$genemarkDir/evidence.gff does not exist!\n" if ($v > 0);
         }
     } else {

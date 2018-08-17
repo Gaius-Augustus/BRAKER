@@ -5,4 +5,4 @@ if [ -d $wd ]; then
 fi
 
 
-( time braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam --softmasking --workingdir=$wd ) &> test5.log
+( time braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam --softmasking --workingdir=$wd --cores=3 ) &> test5.log
