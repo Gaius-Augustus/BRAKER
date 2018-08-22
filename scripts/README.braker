@@ -37,7 +37,5 @@ BRAKER2 can also combine RNA-Seq and protein homology information.
               ---------------
 
 Installation instructions and further information on running BRAKER, bug reporting, citing BRAKER
-are provided in docs/userguide.pdf. In order to generate the userguide, type:
-
-  cd BRAKER/docs; pdflatex userguide; bibtex userguide; pdflatex userguide; pdflatex userguide
+are provided in docs/userguide.pdf.
 
