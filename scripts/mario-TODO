@@ -1,6 +1,0 @@
-In Dokumentation
- - Abhaengigkeiten auflisten
-   Perl module Scalar::Util::Numeric
-   install under Ubuntu with
-      sudo apt-get install libscalar-util-numeric-perl
-
