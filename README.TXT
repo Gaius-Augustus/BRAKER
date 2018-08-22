@@ -46,6 +46,11 @@ This repository currently contains three directories:
    * BRAKER/example/ - contains example data, a subdirectory tests/ with scripts for testing
                        BRAKER in different modes, and a subdirectory results/ with example
 		       results from the tests.
+		       Note: a large file with RNA-Seq alignments is hosted on gitub. You
+		       can download that files to the BRAKER/example/ folder from
+		       http://bioinf.uni-greifswald.de/bioinf/braker/RNAseq.bam (134 MB).
+		       This additional file will be required for executing some of the test
+		       scripts.
 	      
 
 
