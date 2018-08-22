@@ -27,11 +27,11 @@
 
 \section{What is BRAKER2?}
 
-The rapidly growing number of sequenced genomes requires fully automated methods for accurate gene structure annotation. With this goal in mind, we have developed BRAKER1 \cite{braker1}, a combination of GeneMark-ET \cite{GeneMark-ET} and AUGUSTUS \cite{AUGUSTUS}, that uses genomic and RNA-Seq data to automatically generate full gene structure annotations in novel genomes.
+The rapidly growing number of sequenced genomes requires fully automated methods for accurate gene structure annotation. With this goal in mind, we have developed BRAKER1 \cite{braker1}, a combination of GeneMark-ET \cite{GeneMark-ET} and AUGUSTUS \cite{AUGUSTUS,stanke2006gene}, that uses genomic and RNA-Seq data to automatically generate full gene structure annotations in novel genomes.
 
 However, the quality of RNA-Seq data that is available for annotating a novel genome is variable, and in some cases, RNA-Seq data is not available, at all.
 
-BRAKER2 is an extension of BRAKER1 which allows for \textbf{fully automated training} of the gene prediction tools GeneMark-EX\footnote{EX = ES/ET/EP/ETP, all available for download under the name \textit{GeneMark-ES/ET}} and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the \textbf{prediction}.
+BRAKER2 is an extension of BRAKER1 which allows for \textbf{fully automated training} of the gene prediction tools GeneMark-EX \cite{AlexandreLomsadze11282005,ter2008gene,GeneMark-ET}\footnote{EX = ES/ET/EP/ETP, all available for download under the name \textit{GeneMark-ES/ET}} and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the \textbf{prediction}.
 
 In contrast to other available methods that rely on protein homology information, BRAKER2 reaches high gene prediction accuracy even in the absence of the annotation of very closely related species and in the absence of RNA-Seq data. 
 
@@ -92,12 +92,12 @@ At the time of release, this BRAKER2 version was tested with:
 \begin{itemize}
 \item AUGUSTUS 3.3.1\footnote{Please use the latest version of AUGUSTUS distributed by the original developers, it is available from github at \url{https://github.com/Gaius-Augustus/Augustus}. Problems have been reported from users that tried to run BRAKER with AUGUSTUS releases maintained by third parties, i.e. Bioconda.}
    \item  GeneMark-ET 4.33
-   \item  BAMTOOLS 2.5.1
-   \item  SAMTOOLS 1.7-4-g93586ed
-   \item  GenomeThreader 1.7.0
-   \item  (Spaln 2.3.1)\footnote{Not tested in this release, we recommend using GenomeThreader, instead}
-   \item  (Exonerate 2.2.0)\footnote{Not tested in this release, we recommend using GenomeThreader, instead}
-   \item  NCBI BLAST+ 2.2.31+
+   \item  BAMTOOLS 2.5.1 \cite{barnett2011bamtools}
+   \item  SAMTOOLS 1.7-4-g93586ed \cite{li2009sequence}
+   \item  GenomeThreader 1.7.0 \cite{gremme2013}
+   \item  (Spaln 2.3.1 \cite{gotoh2008direct,gotoh2008space,iwata2012benchmarking})\footnote{Not tested in this release, we recommend using GenomeThreader, instead}
+   \item  (Exonerate 2.2.0 \cite{slater2005automated})\footnote{Not tested in this release, we recommend using GenomeThreader, instead}
+   \item  NCBI BLAST+ 2.2.31+ \cite{Altschul:1990,camacho2009blast+}
 \end{itemize}
 
 \section{BRAKER2}
@@ -556,10 +556,14 @@ seqname   source  feature  start   end   score   strand   frame  transcript ID a
 
 \chapter{Example data}
 
+An incomplete example data set is contained in the directory \texttt{BRAKER/example}. In order to complete the data set, please download the RNA-Seq alignment file (134 MB) with \texttt{wget}:
 
-Due to file size (140 MB), example data for testing BRAKER2 is separately available for download at 
-\url{http://bioinf.uni-greifswald.de/augustus/downloads/index.php} and \url{http://exon.gatech.edu/} as archive
-\texttt{BRAKER2examples.tar.gz}. The example data set was not compiled in order to achieve optimal prediction accuracy, but in order to test pipeline components.
+\begin{verbatim}
+cd BRAKER/example
+wget http://bioinf.uni-greifswald.de/bioinf/braker/RNAseq.bam
+\end{verbatim}
+
+The example data set was not compiled in order to achieve optimal prediction accuracy, but in order to test pipeline components.
 
 \section{Data description}
 
@@ -677,7 +681,11 @@ Runtime of this command is $\sim$ 606 minutes.
 
 \chapter{Bug reporting}
 
-If you found a bug, please contact katharina.hoff@uni-greifswald.de .
+Before reporting bugs, please check that you are using the most recent versions of AUGUSTUS and BRAKER. Also, check the list of \textit{Common Problems} (see section \ref{commonproblems} on page \pageref{commonproblems}), before reporting bugs.
+
+\section{Reporting bugs on github}
+
+If you found a bug, please open an issue at \url{https://github.com/Gaius-Augustus/BRAKER/issues} (or contact katharina.hoff@uni-greifswald.de).
 
 Information worth mentioning in your bug report:
 
@@ -731,6 +739,56 @@ problem occured. Some of the following files will not be present if they did not
 
 \end{itemize}
 
+\section{Common problems}\label{commonproblems}
+
+\begin{itemize}
+	\item \textit{BRAKER complains that the RNA-Seq file does not correspond to the provided genome file, but I am sure the files correspond to each other!}\\
+	Please check the headers of the genome FASTA file. If the headers are long and contain whitespaces, some RNA-Seq alignment tools will truncate sequence names in the BAM file. This leads to an error with BRAKER. Solution: shorten/simplify FASTA headers in the genome file before running the RNA-Seq alignment and BRAKER.
+	\item \textit{There are duplicate Loci in the \texttt{train.gb} file (after using GenomeThreader)!}\\ This issue arises if outdated versions of AUGUSTUS and BRAKER are used. Solution: Please update AUGUSTUS and BRAKER from github (\url{https://github.com/Gaius-Augustus/Augustus}, \url{https://github.com/Gaius-Augustus/BRAKER}).
+\end{itemize}
+
+\chapter{Citing BRAKER2 and software called by BRAKER2}
+
+Since BRAKER2 is a pipeline that calls several Bioinformatics tools, publication of results obtained by BRAKER2 requires that not only BRAKER2 is cited, but also the tools that are called by BRAKER2:
+
+\begin{itemize}
+	\item Always cite \underline{BRAKER1} and \underline{AUGUSTUS}: 
+	\begin{itemize}
+		\item Hoff, K.J., Lange, S., Lomsadze, A., Borodovsky, M. and Stanke, M. (2015). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5):767-769.
+		\item Stanke, M., Diekhans, M., Baertsch, R. and Haussler, D. (2008). Using native and syntenically mapped cDNA alignments to improve de novo gene finding. Bioinformatics, doi: 10.1093/bioinformatics/btn013.
+		\item Stanke. M., Sch\"{o}ffmann, O., Morgenstern, B. and Waack, S. (2006). Gene prediction in eukaryotes with a generalized hidden Markov model that uses hints from external sources. BMC Bioinformatics 7, 62. 
+	\end{itemize}
+    \item If any kind of AUGUSTUS training was performed by BRAKER2, cite \underline{NCBI-BLAST}:
+    \begin{itemize}
+    	\item Altschul, A.F., Gish, W., Miller, W., Myers, E.W. and Lipman, D.J. (1990). A basic local alignment
+    	search tool. J Mol Biol, 215:403–410.
+    	\item Camacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoulos, J.,
+    	Bealer, K., and Madden, T.L. (2009). Blast+: architecture and applications. BMC bioinformatics,
+    	10(1):421.
+    \end{itemize}
+	\item If BRAKER was executed with a genome file and no extrinsic evidence, cite \underline{GeneMark-ES}:
+	\begin{itemize}
+		\item Lomsadze, A., Ter-Hovhannisyan, V., Chernoff, Y.O. and Borodovsky, M. (2005). Gene identification
+		in novel eukaryotic genomes by self-training algorithm. Nucleic Acids Research,
+		33(20):6494–6506.
+		\item Ter-Hovhannisyan, V., Lomsadze, A., Chernoff, Y.O. and Borodovsky, M. (2008). 
+		Gene prediction in novel fungal genomes using an ab initio algorithm with unsupervised
+		training. Genome research, pages gr–081612, 2008.
+	\end{itemize}
+    \item If BRAKER was executed with RNA-Seq information or with information from proteins of remote homology, cite \underline{GeneMark-ET}:
+\begin{itemize}
+	\item Lomsadze, A., Burns, P.D. and Borodovsky, M. (2014). Integration of mapped RNA-Seq reads into automatic training of eukaryotic gene finding algorithm. Nucleic Acids Research, 42(15):e119.
+\end{itemize}
+    \item If BRAKER was executed with RNA-Seq alignments in bam-format, cite \underline{SAMtools} and\underline{ BamTools}:
+    \begin{itemize}
+    	\item Li, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., Marth, G., Abecasis, G., Durbin, R.; 1000 Genome Project Data Processing Subgroup (2009). The Sequence Alignment/Map format and SAMtools. Bioinformatics, 25(16):2078-9.
+    	\item Barnett, D.W., Garrison, E.K., Quinlan, A.R., Str\"{o}mberg, M.P. and Marth G.T. (2011). BamTools: a C++ API and toolkit for analyzing and managing BAM files. Bioinformatics, 27(12):1691-2
+    \end{itemize}
+	\item If BRAKER was executed with proteins of closely related species, cite \underline{GenomeThreader}: 
+	\begin{itemize}
+		\item Gremme, G. (2013). Computational Gene Structure Prediction. PhD thesis, Universit\"{a}t Hamburg.
+	\end{itemize}
+\end{itemize}
 
 \bibliographystyle{apalike}
 \bibliography{refs}
