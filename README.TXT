@@ -1,0 +1,57 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                                                 %
+%           BRAKER2                                                                               %
+%                                                                                                 %
+%           Authors: Katharina J. Hoff, Simone Lange, Alexandre Lomsadze, Mark Borodovsky,        %
+%                    Mario Stanke                                                                 %
+%                                                                                                 %
+%           Contact: katharina.hoff@uni-greifswald.de                                             %
+%                                                                                                 %
+%           Date: August 22nd 2018                                                                %
+%                                                                                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  1.  INTRODUCTION
+  2.  REPOSITORY STRUCTURE
+  3.  INSTALLATION & FURTHER INFORMATION
+
+              1. INTRODUCTION
+              ---------------
+The rapidly growing number of sequenced genomes requires fully automated methods for accurate gene
+structure annotation. With this goal in mind, we have developed BRAKER1 [Hoff et al., 2015], a 
+combination of GeneMark-ET [Lomsadze et al., 2014] and AUGUSTUS [Stanke et al., 2008, Stanke et al., 
+2006], that uses genomic and RNA-Seq data to automatically generate full gene structure annotations 
+in novel genomes.
+However, the quality of RNA-Seq data that is available for annotating a novel genome is variable, and
+in some cases, RNA-Seq data is not available, at all. BRAKER2 is an extension of BRAKER1 which 
+allows for fully automated training of the gene prediction tools GeneMark-EX [Lomsadze et al., 2005,
+Ter-Hovhannisyan et al., 2008, Lomsadze et al., 2014] and AUGUSTUS from RNA-Seq and/or protein 
+homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology 
+information into the prediction.
+In contrast to other available methods that rely on protein homology information, BRAKER2 reaches
+high gene prediction accuracy even in the absence of the annotation of very closely related species 
+and in the absence of RNA-Seq data.
+BRAKER2 can also combine RNA-Seq and protein homology information.
+
+
+              2. REPOSITORY STRUCTURE
+              -----------------------
+This repository currently contains three directories:
+
+   * BRAKER/scripts/ - all BRAKER source code resides in this folder; it also contains a
+                       subdirectory cfg/ with extrinsic.cfg files for running AUGUSTUS with
+		       different BRAKER-specific input file combinations
+   * BRAKER/docs/    - contains the userguide as PDF and source files and further subdirectories
+                       with slides and posters from conference presentations of BRAKER
+   * BRAKER/example/ - contains example data, a subdirectory tests/ with scripts for testing
+                       BRAKER in different modes, and a subdirectory results/ with example
+		       results from the tests.
+	      
+
+
+              3. INSTALLATION & FURTHER INFORMATION
+              -------------------------------------
+
+Installation instructions and further information on running BRAKER, bug reporting, citing BRAKER
+are provided in BRAKER/docs/userguide.pdf.
+
