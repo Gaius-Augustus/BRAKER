@@ -6,12 +6,13 @@
 %                                                                                                 %
 %           Contact: katharina.hoff@uni-greifswald.de                                             %
 %                                                                                                 %
-%           Date: August 15th 2018                                                                %
+%           Date: August 20th 2018                                                                %
 %                                                                                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   1.  DATA DESCRIPTION
   2.  RUNNING BRAKER2 WITH EXAMPLE DATA
+  3.  EXAMPLE RESULTS
 
               1. DATA DESCRIPTION
               -------------------
@@ -41,7 +42,7 @@ D. virilis, D. willistoni, D. pseudoobscura, D. ananassae were aligned to the fu
 Drosophila melanogaster using the GaTech protein mapping pipline. Subsequently, hints of the
 target sequence were filtered by sequence name and coordinates.
 
-Files:
+Example data files:
    genome.fa     - genome file in fasta format
    RNAseq.bam    - RNA-Seq alignment file in bam format
    RNAseq.hints  - RNA-Seq intron hints file in gff format
@@ -50,55 +51,122 @@ Files:
 
 Please contact Alexandre Lomsadze if you need information on the GaTech protein mapping pipeline.
 
+In addition, the archive contains a directory tests/ with shell scripts for executing BRAKER with 
+the provided test example data (test1.sh - test8.sh) and a subdirectory results that contains 
+the most important results files of each test run.
+
 
               2.  RUNNING BRAKER2 WITH EXAMPLE DATA
               -------------------------------------
 
 BRAKER2 can be run with several input file combinations.
 
-   a) with a genome file and a corresponding RNA-Seq alignment file:
+   a) with a genome file, only (test8.sh):
 
-      braker --genome=genome.fa --bam=RNAseq.bam
+      braker --genome=genome.fa --softmasking --esmode
+
+   a) with a genome file and a corresponding RNA-Seq alignment file (test1.sh): 
+
+      braker --genome=genome.fa --bam=RNAseq.bam --softmasking
 
    b) with a file that contains intron "hints" extracted from RNA-Seq alignments in gff format
       instead of the alignment file:
 
-      braker --genome=genome.fa  --hints=RNAseq.hints
+      braker --genome=genome.fa  --hints=RNAseq.hints --softmasking
 
    c) with a file that contains intron "hints" from mapping proteins of distant homology to 
-      the target genome in gff format:
+      the target genome in gff format (test2.sh):
 
-      braker.pl --genome=genome.fa --hints=ep.hints --epmode
+      braker.pl --genome=genome.fa --hints=ep.hints --epmode --softmasking
 
    d) with a file that contains RNA-Seq alignments and a file that contains "hints" from mapping
-      proteins of distant homology to the target genome in gff format:
+      proteins of distant homology to the target genome in gff format (test3.sh):
 
-      braker.pl --genome=genome.fa --hints=ep.hints --bam=RNAseq.bam --etpmode
+      braker.pl --genome=genome.fa --hints=ep.hints --bam=RNAseq.bam --etpmode --softmasking
 
-   e) with a genome file and a file with protein sequences of close homology (does not execute
-      GeneMark):
+   e) with a genome file, RNA-Seq data and a file with protein sequences of close homology for
+      using protein information in the prediction step, only (test5.sh):
 
-      braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --trainFromGth
+      braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam --softmasking
 
-   f) with a genome file, RNA-Seq data and a file with protein sequences of close homology for
-      using protein information in the prediction step, only:
 
-      braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam
+   f) with a genome file and a file with protein sequences of close homology (does not execute
+      GeneMark, test4.sh):
+
+      braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --trainFromGth --softmasking
 
    g) with a genome file, RNA-Seq data, and a file with protein sequences of close homology for
-      using protein information	for training and prediction (in addition to RNA-Seq data):
+      using protein information	for training and prediction (in addition to RNA-Seq data,
+      test6.sh):
 
-      braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam --gth2traingenes
+      braker.pl --genome=genome.fa --prot_seq=prot.fa --prg=gth --bam=RNAseq.bam \
+         --gth2traingenes --softmasking
 
-   h) for running AUGUSTUS with evidence using already existing AUGUSTUS parameters:
+   h) for running AUGUSTUS with evidence using already existing AUGUSTUS parameters (test7.sh):
 
-      braker.pl --genome=genome.fa --bam=RNAseq.bam --species=fly --skipAllTraining
+      braker.pl --genome=genome.fa --bam=RNAseq.bam --species=fly --skipAllTraining \
+         --softmasking
+      
+      (you may replace --bam=RNAseq.bam by --hints=RNAseq.hints or --hints=ep.hints, or a conca-
+      tenation of both files)
 
    i) when run with genome file and a corresponding RNA-Seq alignment file, training of 
-      UTR paramters for AUGUSTUS is possible:
+      UTR paramters for AUGUSTUS is possible by principle, but the provided example data
+      set is too small to yield a suffient amount of training UTR examples. Successful UTR training will
+      automatically lead to the integration of coverage information from RNA-Seq into gene prediction
+      with AUGUSTUS. The command for running BRAKER with UTR training and prediction with
+      sufficient data would be:
 
-      braker --genome=genome.fa --bam=RNAseq.bam --UTR=on
+      braker --genome=genome.fa --bam=RNAseq.bam --UTR=on --softmasking
 
-   j) with a genome file, only:
 
-      braker --genome=genome.fa --esmode
+              3.  EXAMPLE RESULTS
+              --------------------
+
+Different BRAKER running modes lead to different results. The results included in the BRAKER2
+example data archieve are a subset of the most important of all files produced by the individual
+BRAKER2 runs. The following files are included:
+
+test1/, test2/, test3/, test5/
+   augustus.hints.gtf
+   firsttest.out
+   genemark.gtf
+   hintsfile.gff
+   secondtest.stdout
+
+test4/
+   augustus.hints.gtf
+   firsttest.stdout
+   gthTrainGenes.gtf
+   hintsfile.gff
+   secondtest.stdout
+
+test6/
+   augustus.hints.gtf
+   firsttest.out
+   genemark.gtf
+   hintsfile.gff
+   secondtest.stdout
+   gthTrainGenes.gtf
+
+test7/
+   augustus.hints.gtf
+   hintsfile.gff
+
+test8/
+   augustus.ab_initio.gtf
+   genemark.gtf
+
+
+augustus.hints.gtf - GTF file with AUGUSTUS predictions with hints from extrinsic evidence
+augustus.ab_initio.gtf - GTF file with AUGUSTUS ab initio predictions
+genemark.gtf - GTF file with GeneMark predictions
+hintsfile.gff - hintsfile generated by BRAKER run (note: in some modes, BRAKER will execute
+                AUGUSTUS with several hints files that contain differently weighted hints;
+		the file provided here is a "consensus file" without different weighting).
+firsttest.out - result of first AUGUSTUS test on hold out test gene set (after etraining,
+                before optimize_augustus.pl).
+secondtest.out - result of second AUGUSTUS test on hold out test gene set (after
+                 optimize_augustus.pl).
+gthTrainGenes.gtf - GTF file with training genes produced from GenomeThreader protein to
+                    genome alignments.
