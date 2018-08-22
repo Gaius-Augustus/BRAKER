@@ -1,0 +1,4 @@
+# Katharina J. Hoff
+# August 22nd 2015
+
+The directory BRAKER/scripts/auxiliary contains scripts that are not called by braker.pl but that are sometimes useful in the context of processing BRAKER results.
