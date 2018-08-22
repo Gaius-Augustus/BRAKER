@@ -1,4 +1,7 @@
 # ----------------------------------------------------------------------
+# | usage of stranded RNA-Seq data | braker.pl (Hoff)     | 20.8.2018  |
+# | for UTR/coverage supported     |                      |            |
+# | prediction with AUGUSTUS       |                      |            |
 # | set lambda=2 and optimizedm    | braker.pl (Hoff)     | 3.7.2018   |
 # | utrrnaseq parameters,          |                      |            |
 # | threading for bam2hints in     |                      |            |

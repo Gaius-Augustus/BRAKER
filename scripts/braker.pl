@@ -9,12 +9,11 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: July 13th 2018                                                                  #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
 #                                                                                                  #
-# *EX = ES/ET/EP                                                                                   #
+# *EX = ES/ET/EP/ETP, currently distributed as GeneMark-ES/ET                                      #
 ####################################################################################################
 
 use Getopt::Long;
@@ -384,7 +383,6 @@ ENDUSAGE
 # Declartion of global variables ###############################################
 
 my $v = 4; # determines what is printed to log
-my $version = "2.1.0";    # braker.pl version number
 my $rootDir;
 my $logString = "";          # stores log messages produced before opening log file
 $logString .= "\# ". (localtime) . ": braker.pl version $version\n\n";
