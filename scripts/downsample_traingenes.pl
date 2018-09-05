@@ -61,21 +61,21 @@ GetOptions(
     );
 
 if(!$in_gtf) {
-	die ("Input file not defined (--int_gtf=file)!\n$usage");
+    die ("Input file not defined (--int_gtf=file)!\n$usage");
 }
 
 if(!$out_gtf) {
-	die ("Output file not defined (--out_gtf=file)!\n$usage");
+    die ("Output file not defined (--out_gtf=file)!\n$usage");
 }
 
 if ($help) {
-	print $usage;
-	exit;
+    print $usage;
+    exit;
 }
 
 if ($print_version) {
-	print "Version $version\n";
-	exit;
+    print "Version $version\n";
+    exit;
 }
 
 my %nIntrons;
@@ -85,31 +85,31 @@ my %tx;
 
 open(GTF, "<", $in_gtf) or die("Could not open file $in_gtf!\n");
 while(<GTF>){
-	if ( $_ =~ m/transcript_id \"(\S+)\"/) {
-		my $txid = $1;
-		push(@{$tx{$txid}}, $_);
-		if( $_ =~ m/\tCDS\t/ ) {
-			if(not(defined($nIntrons{$txid}))) {
-				$nIntrons{$txid} = 0;
-			}else {
-				$nIntrons{$txid}++;
-			}
-		}
+    if ( $_ =~ m/transcript_id \"(\S+)\"/) {
+	my $txid = $1;
+	push(@{$tx{$txid}}, $_);
+	if( $_ =~ m/\tCDS\t/ ) {
+	    if(not(defined($nIntrons{$txid}))) {
+		$nIntrons{$txid} = 0;
+	    }else {
+		$nIntrons{$txid}++;
+	    }
 	}
+    }
 }
 close(GTF) or die("Could not close file $in_gtf!\n");
 
 ####################### compute F(X) ###########################################
 
-# genes with more than this number always keep:
+# always keep genes with more than this number:
 my $max_intron_number = 5;
 my @F; # distribution function
 for (my $i = 0; $i <= $max_intron_number; $i++ ) {
-	if ( $i == 0 ) {
-		$F[$i] = P_X_is_k($i, $lambda);
-	}else{
-		$F[$i] = $F[$i-1] + P_X_is_k($i, $lambda);
-	}
+    if ( $i == 0 ) {
+	$F[$i] = P_X_is_k($i, $lambda);
+    }else{
+	$F[$i] = $F[$i-1] + P_X_is_k($i, $lambda);
+    }
 }
 
 ####################### Sample genes ###########################################
@@ -125,62 +125,46 @@ my $single_exon_gene_counter = 0;
 my %intronNumPrinted;
 
 while (my ($txid, $intronNum) = each %nIntrons ) {
-	if( $intronNum == 0 ) {
-		$single_exon_gene_counter++;
+    if( $intronNum == 0 ) {
+	$single_exon_gene_counter++;
+    }
+    my $u = rand(1);
+    my $index = $intronNum;
+    # For intron numbers between 0 and $max_intron_number compare a random Poisson distributed 
+    # random variable N with the intron number n and keep the gene unless N<n.
+    # In effect, genes with few introns are downsampled.
+    if($index > $max_intron_number || $u <= $F[$index]
+       || ($intronNum == 0 && $single_exon_gene_counter <= $min_single_exon_genes )){
+	foreach (@{$tx{$txid}}) {
+	    print OUT $_;
+	    if($intron_num_lst && not(defined($intronNumPrinted{$txid}))) {
+		print LST $intronNum."\t".$txid."\n";
+		$intronNumPrinted{$txid} = 1;
+	    }
 	}
-	my $u = rand(1);
-	my $index = $intronNum;
-	if($index <= $max_intron_number) {
-		if( $u <= $F[$index]) {
-			foreach (@{$tx{$txid}}) {
-				print OUT $_;
-				if($intron_num_lst && not(defined($intronNumPrinted{$txid}))) {
-					print LST $intronNum."\t".$txid."\n";
-					$intronNumPrinted{$txid} = 1;
-				}
-			}
-		} elsif ( $intronNum == 0 && $single_exon_gene_counter <= $min_single_exon_genes ) {
-
-			foreach (@{$tx{$txid}}) {
-				print OUT $_;
-				if($intron_num_lst && not(defined($intronNumPrinted{$txid}))) {
-					print LST $intronNum."\t".$txid."\n";
-					$intronNumPrinted{$txid} = 1;
-				}
-			}
-
-		}
-	}else{
-		foreach (@{$tx{$txid}}) {
-				print OUT $_;
-				if($intron_num_lst && not(defined($intronNumPrinted{$txid}))) {
-					print LST $intronNum."\t".$txid."\n";
-					$intronNumPrinted{$txid} = 1;
-				}
-			}
-	}
+    }
 }
 close (OUT) or die ("Could not close file $out_gtf!\n");
 
 
 if($intron_num_lst) {
-	close(LST) or die ("Could not close fiel $intron_num_lst!\n");
+    close(LST) or die ("Could not close fiel $intron_num_lst!\n");
 }
 
 if($single_exon_gene_counter < 20){
-	print STDOUT "WARNING: Number of single exon training genes is smaller "
-				."than 20. It is: $single_exon_gene_counter!\n";
+    print STDOUT "WARNING: Number of single exon training genes is smaller "
+      ."than 20. It is: $single_exon_gene_counter!\n";
 }
 ####################### P_X_is_k ###############################################
 # Computes the P(X=k), currently with Poisson distribution
 ################################################################################
 
 sub P_X_is_k {
-	my $k = shift;
-	my $L = shift;
-	my $e = exp(1);
-	my $result = ( $e ** (-1 * $L) ) * ( ( $L ** $k ) / ( factorial ($k) ) );
-	return $result;
+    my $k = shift;
+    my $L = shift;
+    my $e = exp(1);
+    my $result = ( $e ** (-1 * $L) ) * ( ( $L ** $k ) / ( factorial ($k) ) );
+    return $result;
 }
 
 ####################### factorial ##############################################
@@ -188,10 +172,10 @@ sub P_X_is_k {
 ################################################################################
 
 sub factorial {
-	my $n = shift;
-	my $result = 1;
+    my $n = shift;
+    my $result = 1;
 	for (my $i = 1; $i <= $n; $i++) {
-		$result = $result * $i;
+	    $result = $result * $i;
 	}
-	return $result;
+    return $result;
 }
