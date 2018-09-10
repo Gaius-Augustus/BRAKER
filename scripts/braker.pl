@@ -1223,6 +1223,17 @@ if ( $gff3 != 0) {
     all_preds_gtf2gff3();
 }
 
+if ($ab_initio) {
+    get_anno_fasta("$otherfilesDir/augustus.ab_initio.gtf");
+    if ($UTR eq "on") {
+        get_anno_fasta("$otherfilesDir/augustus.ab_initio_utr.gtf");
+    }
+}
+get_anno_fasta("$otherfilesDir/augustus.hints.gtf");
+if ($UTR eq "on") {
+    get_anno_fasta("$otherfilesDir/augustus.hints_utr.gtf");
+}
+
 if( $annot ) {
     evaluate();
 }
@@ -2613,9 +2624,6 @@ sub check_upfront {
         print STDERR $logString;
         exit(1);
     }
-
-    # check whether python/biopython/re are executable
-    # HERE I AM
 
     #    check whether bam2wig is executable
     $bam2wig = "$AUGUSTUS_BIN_PATH/../auxprogs/bam2wig/bam2wig";
@@ -7120,16 +7128,6 @@ sub augustus {
 
         }
     }
-    if ($ab_initio) {
-        get_anno_fasta("$otherfilesDir/augustus.ab_initio.gtf");
-        if ($UTR) {
-            get_anno_fasta("$otherfilesDir/augustus.ab_initio_utr.gtf");
-        }
-    }
-    get_anno_fasta("$otherfilesDir/augustus.hints.gtf");
-    if ($UTR) {
-        get_anno_fasta("$otherfilesDir/augustus.hints_utr.gtf");
-    }
 }
 
 ####################### assign_ex_cfg ##########################################
@@ -7939,17 +7937,20 @@ sub joingenes {
     $perlCmdString .= "perl $string --in_gff=$file1 "
                    .  "--jg_gff=$otherfilesDir/join$genesetId.gtf "
                    .  "--out_gff=$otherfilesDir/missed.genes$genesetId.gtf 1> "
-                   .  "/dev/null 2> $errorfilesDir/findGenesInIntrons$genesetId.err";
+                   .  "/dev/null 2> "
+                   .  "$errorfilesDir/findGenesInIntrons$genesetId.err";
     print LOG "$perlCmdString\n" if ($v > 3);
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
     if (-e "$otherfilesDir/missed.genes$genesetId.gtf") {
-        $cmdString = "cat $otherfilesDir/missed.genes$genesetId.gtf >> $otherfilesDir/join$genesetId.gtf";
+        $cmdString = "cat $otherfilesDir/missed.genes$genesetId.gtf >> "
+                   . "$otherfilesDir/join$genesetId.gtf";
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
-    $cmdString = "mv $otherfilesDir/join$genesetId.gtf $otherfilesDir/augustus.hints$genesetId.gtf";
+    $cmdString = "mv $otherfilesDir/join$genesetId.gtf "
+               . "$otherfilesDir/augustus.hints$genesetId.gtf";
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
@@ -7977,8 +7978,8 @@ sub get_anno_fasta {
     if ($nice) {
         $pythonCmdString .= "nice ";
     }
-    $pythonCmdString
-        .= "python3 $string -g $genome -f $AUG_pred -o $name_base 1> $outfile 2>$errorfile";
+    $pythonCmdString .= "$PYTHON3_PATH/python3 $string -g $genome -f $AUG_pred "
+                     .  "-o $name_base 1> $outfile 2>$errorfile";
 
     print LOG "$pythonCmdString\n\n" if ($v > 3);
     system("$pythonCmdString") == 0
