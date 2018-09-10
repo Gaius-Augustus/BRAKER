@@ -508,7 +508,7 @@ Compute AUGUSTUS \textit{ab initio} predictions in addition to AUGUSTUS predicti
 \subsection{\texttt{--augustus\_args=``--some\_arg=bla''}}     
 One or several command line arguments to be passed to AUGUSTUS, if several arguments are given, separated by whitespace, i.e.~\texttt{``--first\_arg=sth --second\_arg=sth''}. This may be be useful if you know that gene prediction in your particular species benefits from a particular AUGUSTUS argument during the prediction step.  
     
-\subsection{\texttt{--cores}}                              Specifies the maximum number of cores that can be used during computation. BRAKER2 has to run some steps on a single core, others can take advantage of multiple cores. The optimal core number of all steps is 8. If you use more than 8 cores, this will not speed up all parallelized steps, in particular, the time consuming \texttt{optimize\_augustus.pl} will not use more than 8 cores. However, if you don't mind some cores being idle, using more than 8 cores will speed up other steps.
+\subsection{\texttt{--cores=INT}}                              Specifies the maximum number of cores that can be used during computation. BRAKER2 has to run some steps on a single core, others can take advantage of multiple cores. The optimal core number of all steps is 8. If you use more than 8 cores, this will not speed up all parallelized steps, in particular, the time consuming \texttt{optimize\_augustus.pl} will not use more than 8 cores. However, if you don't mind some cores being idle, using more than 8 cores will speed up other steps.
 \subsection{\texttt{--fungus}}                             GeneMark-EX option: run algorithm with branch point model. Use this option if you genome is a fungus.
     \subsection{\texttt{--softmasking}}                        Softmasking option for soft masked genome files. (Disabled by default.)
    
@@ -526,20 +526,35 @@ One or several command line arguments to be passed to AUGUSTUS, if several argum
 
 \chapter{Output of BRAKER2}
 
-BRAKER2 produces three important output files in the working directory:
+BRAKER2 produces several important output files in the working directory:
 
-\begin{verbatim}
-hintsfile.gff             - The extrinsic evidence data extraced from RNAseq.bam and/or protein
-                            data. The introns are used for training GeneMark-EX, all features
-                            are used for predicting genes with AUGUSTUS. The file is in gff format.
-GeneMark-E*/genemark.gtf  - Genes predicted by GeneMark-EX in gtf format
-augustus.hints.gtf        - Genes predicted by AUGUSTUS with hints from given extrinsic evidence
-                            in gtf format
-\end{verbatim}
+\begin{itemize}
+	\item \underline{\texttt{augustus.hints.gtf}}: Genes predicted by AUGUSTUS with intron hints from given extrinsic evidence in GTF-format. This file will be missing if BRAKER was run with the option \texttt{-{}-esmode}.
+	
+	\item \underline{\texttt{augustus.hints.gff3}}: Genes predicted by AUGUSTUS with intron hints from given extrinsic evidence in GFF3-format. This file will only be present if BRAKER was run with the option \texttt{-{}-gff3}. This file will be missing if BRAKER was run with the option \texttt{-{}-esmode}.
+	
+	\item \underline{\texttt{augustus.hints\_utr.gtf}}: Genes predicted by AUGUSTUS with UTR parameters and coverage information from RNA-Seq data in GTF-format. The file will only be present if BRAKER was run with the option \texttt{-{}-UTR=on} and a RNA-Seq BAM-file. 
+	
+	\item \underline{\texttt{augustus.hints\_utr.gff3}}: Genes predicted by AUGUSTUS with UTR parameters and coverage information from RNA-Seq data in GFF3-format. The file will only be present if BRAKER was run with the option \texttt{-{}-UTR=on} and a RNA-Seq BAM-file, and with the option \texttt{-{}-gff3}.
+	
+	\item \underline{\texttt{augustus.ab\_initio.gtf}}: Genes predicted by AUGUSTUS in \textit{ab initio} mode in GTF-format. The file will always be present if AUGUSTUS has been run with the option \texttt{-{}-esmode}. Otherwise, it will only be present if BRAKER was run with the option \texttt{-{}-AUGUSTUS\_ab\_initio}.
+	
+	\item \underline{\texttt{augustus.ab\_initio.gff3}}: Genes predicted by AUGUSTUS in \textit{ab initio} mode in GFF3-format. The file will always be present if AUGUSTUS has been run with the options \texttt{-{}-esmode} and \texttt{-{}-gff3}. Otherwise, it will only be present if BRAKER was run with the options \texttt{-{}-AUGUSTUS\_ab\_initio} and \texttt{-{}-gff3}.
+	
+	\item \underline{\texttt{augustus.ab\_initio\_utr.gtf}}: Genes predicted by AUGUSTUS with UTR parameters in \textit{ab initio} mode in GTF-format. This file will only be present if BRAKER was executed with  the options \texttt{-{}-UTR=on} and a RNA-Seq BAM-file, and with the option \texttt{-{}-AUGUSTUS\_ab\_initio}.
+	
+	\item \underline{\texttt{augustus.ab\_initio\_utr.gff3}}: Genes predicted by AUGUSTUS with UTR parameters in \textit{ab initio} mode in GFF3-format. This file will only be present if BRAKER was executed with  the options \texttt{-{}-UTR=on} and a RNA-Seq BAM-file, and with the options \texttt{-{}-AUGUSTUS\_ab\_initio} and \texttt{-{}-gff3}.
+	
+	\item \underline{\texttt{GeneMark-E*/genemark.gtf}}: Genes predicted by GeneMark-ES/ET in GTF-format. This file will be missing if BRAKER was executed with proteins of close homology and the option \texttt{-{}-trainFromGth}.
+	
+	\item \underline{\texttt{hintsfile.gff}}: The extrinsic evidence data extracted from RNAseq.bam and/or protein
+	data. The introns are used for training GeneMark-ES/ET, all features
+	are used for predicting genes with AUGUSTUS. The file is in GFF-format.
+\end{itemize}
 
-\texttt{GeneMark-E*/genemark.gtf} is missing in case BRAKER2 is executed with GenomeThreader, only.
 
-For details about gtf format, see \url{http://www.sanger.ac.uk/Software/formats/GFF/}. A gtf format file
+
+For details about gtf format, see \url{http://www.sanger.ac.uk/Software/formats/GFF/}. A GTF-format file
 contains one line per predicted exon. Example:
 
 \begin{verbatim}
@@ -584,7 +599,7 @@ List of files:
 
 \begin{itemize}
  \item \texttt{genome.fa} - genome file in fasta format
- \item \texttt{RNAseq.bam} - RNA-Seq alignment file in bam format
+ \item \texttt{RNAseq.bam} - RNA-Seq alignment file in bam format (this file is not in github, it must be downloaded separately from \url{http://bioinf.uni-greifswald.de/bioinf/braker/RNAseq.bam})
  \item \texttt{RNAseq.hints} - RNA-Seq hints (can be used instead of RNAseq.bam as RNA-Seq input to BRAKER2)
  \item \texttt{prot.fa} - protein sequences of close homology in fasta format
  \item \texttt{ep.hints} - protein hints of remote homology in gff format
