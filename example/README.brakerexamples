@@ -6,9 +6,17 @@
 %                                                                                                 %
 %           Contact: katharina.hoff@uni-greifswald.de                                             %
 %                                                                                                 %
-%           Date: August 20th 2018                                                                %
+%           Date: August 22nd 2018                                                                %
 %                                                                                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+NOTE: this directory on github does not include the example file RNAseq.bam. Due to its size, it
+      is hosted, separately, at http://bioinf.uni-greifswald.de/bioinf/braker/RNAseq.bam .
+      Please execute the following command in the folder BRAKER/example
+
+      wget http://bioinf.uni-greifswald.de/bioinf/braker/RNAseq.bam
+
+      in order to obtain the missing RNA-Seq alignment bam file!
 
   1.  DATA DESCRIPTION
   2.  RUNNING BRAKER2 WITH EXAMPLE DATA
@@ -17,7 +25,7 @@
               1. DATA DESCRIPTION
               -------------------
 
-This archive contains an example data set for testing the BRAKER2 pipeline, which is availabe for 
+This directory contains an example data set for testing the BRAKER2 pipeline, which is availabe for 
 Download at http://bioinf.uni-greifswald.de/augustus/downloads/index.php and 
 http://exon.gatech.edu.
 
@@ -51,7 +59,7 @@ Example data files:
 
 Please contact Alexandre Lomsadze if you need information on the GaTech protein mapping pipeline.
 
-In addition, the archive contains a directory tests/ with shell scripts for executing BRAKER with 
+In addition, the directory contains a subdirectory tests/ with shell scripts for executing BRAKER with 
 the provided test example data (test1.sh - test8.sh) and a subdirectory results that contains 
 the most important results files of each test run.
 
@@ -124,7 +132,7 @@ BRAKER2 can be run with several input file combinations.
               --------------------
 
 Different BRAKER running modes lead to different results. The results included in the BRAKER2
-example data archieve are a subset of the most important of all files produced by the individual
+example subdirectory results are a subset of the most important of all files produced by the individual
 BRAKER2 runs. The following files are included:
 
 test1/, test2/, test3/, test5/
