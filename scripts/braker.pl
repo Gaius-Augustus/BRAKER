@@ -704,7 +704,7 @@ if ( not($trainFromGth) ) {
         $gth2traingenes = 1;    # enable if no genemark training is performed
     }
 }
-if( not($ESmode) ) {
+if( @bam ) {
     set_BAMTOOLS_PATH();
     set_SAMTOOLS_PATH();
 }
@@ -2588,7 +2588,7 @@ sub check_upfront {
     }
 
     # check whether bamtools is installed
-    if( ! $ESmode == 1) {
+    if( @bam ) {
         if ( system("which $BAMTOOLS_BIN_PATH/bamtools > /dev/null") != 0 ) {
             $prtStr
                 = "\# "
