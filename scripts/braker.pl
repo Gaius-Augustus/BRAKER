@@ -142,9 +142,6 @@ FREQUENTLY USED OPTIONS
 --workingdir=/path/to/wd/           Set path to working directory. In the
                                     working directory results and temporary
                                     files are stored
---fungus                            GeneMark-ET option: run algorithm with
-                                    branch point model (most useful for fungal
-                                    genomes)
 --nice                              Execute all system calls within braker.pl
                                     and its submodules with bash "nice"
                                     (default nice value)
@@ -158,6 +155,12 @@ FREQUENTLY USED OPTIONS
                                     accuracy than HMM parameters.
 --keepCrf                           keep CRF parameters even if they are not
                                     better than HMM parameters
+--UTR=on                            create UTR training examples from RNA-Seq
+                                    coverage data; requires options
+                                    --bam=rnaseq.bam and --softmasking.
+                                    Alternatively, if UTR parameters already
+                                    exist, training step will be skipped and
+                                    those pre-existing parameters are used.
 --prg=gth|exonerate|spaln           Alignment tool gth (GenomeThreader),
                                     exonerate (Exonerate) or Spaln2
                                     (spaln) that will be used to generate
@@ -236,6 +239,9 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     executables if not specified as
                                     environment variable. Has higher priority
                                     than environment variable.
+--PYTHON3_PATH=/path/to             Set path to python3 executable (if not 
+                                    specified as envirnonment variable and if
+                                    executable is not in your $PATH).
 
 EXPERT OPTIONS
 
@@ -290,25 +296,27 @@ EXPERT OPTIONS
                                     that gene.
 --skipOptimize                      Skip optimize parameter step (not
                                     recommended).
---UTR=on                            create UTR training examples from RNA-Seq
-                                    coverage data; requires options
-                                    --bam=rnaseq.bam and --softmasking.
-                                    Alternatively, if UTR parameters already
-                                    exist, training step will be skipped and
-                                    those pre-existing parameters are used.
-
-DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
-
---optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS
-                                    for running PPX (currently not
-                                    implemented)
---splice_sites=patterns             list of splice site patterns for UTR
-                                    prediction; default: GTAG, extend like this:
-                                    --splice_sites=GTAG,ATAC,...
+--skipGetAnnoFromFasta              Skip calling the python3 script
+                                    getAnnoFastaFromJoingenes.py from the
+                                    AUGUSTUS tool suite. This script requires
+                                    python3, biopython and re (regular 
+                                    expressions) to be installed. It produces
+                                    coding sequence and protein FASTA files 
+                                    from AUGUSTUS gene predictions and provides
+                                    information about genes with in-frame stop 
+                                    codons. If you enable this flag, these files 
+                                    will not be produced and python3 and 
+                                    the required modules will not be necessary
+                                    for running braker.pl.
+--fungus                            GeneMark-ET option: run algorithm with
+                                    branch point model (most useful for fungal
+                                    genomes)
 --rnaseq2utr_args=params            Expert option: pass alternative parameters
                                     to rnaseq2utr as string, default parameters:
                                     -r 76 -v 100 -n 15 -i 0.7 -m 0.3 -w 70 
                                     -c 100 -p 0.5 
+--eval=reference.gtf                Reference set to evaluate predictions
+                                    against (using the eval package)
 --AUGUSTUS_hints_preds=s            File with AUGUSTUS hints predictions; will
                                     use this file as basis for UTR training;
                                     only UTR training and prediction is
@@ -317,17 +325,11 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     specified if --AUGUSTUS_hints_preds is given
                                     (for UTR training in a separate braker.pl 
                                     run that builds on top of an existing run)
---eval=reference.gtf                Reference set to evaluate predictions
-                                    against (using the eval package)
 --verbosity=n                       0 -> run braker.pl quiet (no log)
                                     1 -> only log warnings
                                     2 -> also log configuration
                                     3 -> log all major steps
                                     4 -> very verbose, log also small steps
---extrinsicCfgFiles=file1,file2,... Depending on the mode in which braker.pl
-                                    is executed, it may require one ore several
-                                    extrinsicCfgFiles. Don't use this option
-                                    unless you know what you are doing!
 --downsampling_lambda=d             The distribution of introns in training
                                     gene structures generated by GeneMark-EX
                                     has a huge weight on single-exon and
@@ -341,6 +343,16 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     kept. Default value is 2. 
                                     If you want to avoid downsampling, you have 
                                     to specify 0. 
+
+DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
+
+--splice_sites=patterns             list of splice site patterns for UTR
+                                    prediction; default: GTAG, extend like this:
+                                    --splice_sites=GTAG,ATAC,...
+--extrinsicCfgFiles=file1,file2,... Depending on the mode in which braker.pl
+                                    is executed, it may require one ore several
+                                    extrinsicCfgFiles. Don't use this option
+                                    unless you know what you are doing!
 --stranded=+,-,+,-,...              If UTRs are trained, i.e.~strand-specific
                                     bam-files are supplied and coverage 
                                     information is extracted for gene prediction, 
@@ -358,6 +370,9 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     from all libraries treated as "unstranded"
                                     (because splice site filtering eliminates
                                     intron hints from the wrong strand, anyway).
+--optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS
+                                    for running PPX (currently not
+                                    implemented)
 
 DESCRIPTION
 
@@ -400,6 +415,7 @@ my $augustus_scripts_path;    # path to augustus scripts folder
 my $AUGUSTUS_CONFIG_PATH;
 my $AUGUSTUS_BIN_PATH;
 my $AUGUSTUS_SCRIPTS_PATH;
+my $PYTHON3_PATH;
 my @bam;                      # bam file names
 my @stranded;                 # contains +,-,+,-... corresponding to 
                               # bam files
@@ -457,6 +473,7 @@ my $skipGeneMarkETP = 0;
 my $skipGeneMarkES = 0;
 my $skipoptimize   = 0; # skip optimize parameter step
 my $skipAllTraining = 0;    # skip all training (including no GeneMark-EX run)
+my $skipGetAnnoFromFasta = 0; # requires python3 & biopython
 my $species;                # species name
 my $soft_mask = 0;          # soft-masked flag
 my $standard  = 0;          # index for standard malus/ bonus value
@@ -497,13 +514,14 @@ my ( $target_1, $target_2, $target_3, $target_4, $target_5) = 0;
                       # training steps
 my $prg;              # variable to store protein alignment tool
 my @prot_seq_files;   # variable to store protein sequence file name
-my @prot_aln_files;   # variable to store protein alingment file name
+my @prot_aln_files;   # variable to store protein alignment file name
 my $ALIGNMENT_TOOL_PATH;
          # stores path to binary of gth, spaln or exonerate for running
          # protein alignments
 my $ALIGNMENT_TOOL_PATH_OP;    # higher priority than environment variable
 my $BLAST_PATH; # path to blastall and formatdb ncbi blast executable
 my $blast_path; # command line argument value for $BLAST_PATH
+my $python3_path; # command line argument value for $PYTHON3_PATH
 my %hintTypes;    # stores hint types occuring over all generated and supplied
                   # hints for comparison
                   # additional parameters to be passed to rnaseq2utr
@@ -554,6 +572,7 @@ GetOptions(
     'AUGUSTUS_SCRIPTS_PATH=s'      => \$augustus_scripts_path,
     'ALIGNMENT_TOOL_PATH=s'        => \$ALIGNMENT_TOOL_PATH_OP,
     'BLAST_PATH=s'                 => \$blast_path,
+    'PYTHON3_PATH=s'               => \$python3_path,
     'bam=s'                        => \@bam,
     'BAMTOOLS_PATH=s'              => \$bamtools_path,
     'cores=i'                      => \$CPU,
@@ -573,6 +592,7 @@ GetOptions(
     'skipGeneMark-ETP!'            => \$skipGeneMarkETP,
     'skipOptimize!'                => \$skipoptimize,
     'skipAllTraining!'             => \$skipAllTraining,
+    'skipGetAnnoFromFasta!'        => \$skipGetAnnoFromFasta,
     'species=s'                    => \$species,
     'softmasking!'                 => \$soft_mask,
     'useexisting!'                 => \$useexisting,
@@ -693,6 +713,9 @@ if ( @prot_seq_files && !$ESmode ){
 }
 if (not ($skipAllTraining)){
     set_BLAST_PATH();
+}
+if (not ($skipGetAnnoFromFasta)){
+    set_PYTHON3_PATH();
 }
 $prtStr = "\# " . (localtime) . ": Configuration of BRAKER for using external "
         . "tools is complete!\n\n";
@@ -964,6 +987,11 @@ if ( !-d $errorfilesDir ) {
         . (localtime)
         . ": create working directory $errorfilesDir\n"
         . "mkdir $errorfilesDir\n\n" if ($v > 2);
+}
+
+# need to do this check after $errorfilesDir has been set:
+if (not($skipGetAnnoFromFasta)){
+    check_biopython();
 }
 
 print LOG "\# "
@@ -2283,6 +2311,190 @@ sub set_BLAST_PATH {
     }
 }
 
+####################### check_biopython ########################################
+# check whether biopython and python module re are available
+# (for getAnnoFastaFromJoingenes.py)
+################################################################################
+
+sub check_biopython{
+    my $missingPython3Module = 0;
+    $errorfile = $errorfilesDir."/find_python3_re.err";
+    $cmdString = "$PYTHON3_PATH/python3 -c \'import re\' 1> /dev/null 2> "
+               . "$errorfile";
+    if (system($cmdString) != 0) {
+        $prtStr = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Could not find python3 module re:\n";
+        open(PYERR, "<", $errorfile) or die ("\# " . (localtime) 
+            . " ERROR: in file " . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "Could not open file $errorfile!\n");
+        while(<PYERR>){
+            $prtStr .= $_;
+        }
+        close(PYERR) or die ("\# " . (localtime) . " ERROR: in file " 
+            . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "Could not close file $errorfile!\n");
+        $logString .= $prtStr;
+        $missingPython3Module = 1;
+    }
+    $errorfile = $errorfilesDir."/find_python3_biopython.err";
+    $cmdString = "$PYTHON3_PATH/python3 -c \'from Bio.Seq import Seq\' 1> /dev/null "
+               . "2> $errorfile";
+    if (system($cmdString) != 0) {
+        $prtStr = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Could not find python3 module biopython:\n";
+        open(PYERR, "<", $errorfile) or die ("\# " . (localtime) 
+            . " ERROR: in file " . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "Could not open file $errorfile!\n");
+        while(<PYERR>){
+            $prtStr .= $_;
+        }
+        close(PYERR) or die ("\# " . (localtime) . " ERROR: in file " 
+            . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "Could not close file $errorfile!\n");
+        $logString .= $prtStr;
+        $missingPython3Module = 1;
+    }
+    if($missingPython3Module == 1) {
+        print STDERR $logString;
+        exit(1);
+    }
+}
+
+####################### set_PYTHON3_PATH #######################################
+# * set path to python3 (for getAnnoFastaFromJoingenes.py)
+################################################################################
+
+sub set_PYTHON3_PATH {
+    # try to get path from ENV
+    if ( defined( $ENV{'PYTHON3_PATH'} ) && not (defined($python3_path)) ) {
+        if ( -e $ENV{'PYTHON3_PATH'} ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Found environment variable \$PYTHON3_PATH. Setting "
+                . "\$PYTHON3_PATH to ".$ENV{'PYTHON3_PATH'}."\n";
+            $logString .= $prtStr if ($v > 1);
+            $BLAST_PATH = $ENV{'PYTHON3_PATH'};
+        }
+    }
+    elsif(not(defined($python3_path))) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Did not find environment variable \$PYTHON3_PATH\n";
+        $logString .= $prtStr if ($v > 1);
+    }
+
+    # try to get path from command line
+    if ( defined($python3_path) ) {
+        my $last_char = substr( $python3_path, -1 );
+        if ( $last_char eq "\/" ) {
+            chop($python3_path);
+        }
+        if ( -d $python3_path ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$PYTHON3_PATH to command line argument "
+                . "--PYTHON3_PATH value $python3_path.\n";
+            $logString .= $prtStr if ($v > 1);
+            $PYTHON3_PATH = $python3_path;
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Command line argument --PYTHON3_PATH was "
+                . "supplied but value $python3_path is not a directory. Will not "
+                . "set \$PYTHON3_PATH to $python3_path!\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    # try to guess
+    if ( not( defined($PYTHON3_PATH) )
+        || length($PYTHON3_PATH) == 0 )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Trying to guess \$PYTHON3_PATH from location of python3"
+            . " executable that is available in your \$PATH.\n";
+        $logString .= $prtStr if ($v > 1);
+        my $epath = which 'python3';
+        if ( -d dirname($epath) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$PYTHON3_PATH to "
+                . dirname($epath) . "\n";
+            $logString .= $prtStr if ($v > 1);
+            $PYTHON3_PATH = dirname($epath);
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Guessing the location of \$PYTHON3_PATH "
+                . "failed. " . dirname($epath) . " is not a directory!\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    if ( not( defined($PYTHON3_PATH) ) ) {
+        my $python_err;
+        $python_err .= "Python3 is currently required for converting\n"
+                    .  "gene predictions in GTF-format and a genome\n"
+                    .  "file in FASTA-format to FASTA files with coding\n"
+                    .  "sequences and protein sequences using the AUGUSTUS\n"
+                    .  "script getAnnoFastaJoingenes.py with braker.pl.\n"
+                    .  "You can skip execution of getAnnoFastaJoingenes.py\n"
+                    .  "with the braker.pl command line flag --skipGetAnnoFromFasta.\n"
+                    .  "If you don't want to skip it, you have 3 different "
+                    .  "options to provide a path to python3 to braker.pl:\n"
+                    .  "   a) provide command-line argument\n"
+                    .  "      --PYTHON3_PATH=/your/path\n"
+                    .  "   b) use an existing environment variable\n"
+                    . "       \$PYTHON3_PATH\n"
+                    .  "      for setting the environment variable, run\n"
+                    .  "           export PYTHON3_PATH=/your/path\n"
+                    .  "      in your shell. You may append this to your "
+                    .  ".bashrc or .profile file in\n"
+                    .  "      order to make the variable available to all your\n"
+                    .  "      bash sessions.\n"
+                    .  "   c) braker.pl can try guessing the location of\n"
+                    .  "      \$PYTHON3_PATH from the location of a python3\n"
+                    .  "      executable that is available in your \$PATH\n"
+                    .  "      variable. If you try to rely on this option, you\n"
+                    . "       can check by typing\n"
+                    .  "           which python3\n"
+                    .  "      in your shell, whether there is a python3\n"
+                    .  "      executable in your \$PATH\n";
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            . " at line ". __LINE__ . "\n" . "\$PYTHON3_PATH not set!\n";
+        $logString .= $prtStr;
+        $logString .= $python_err if ($v > 1);
+        print STDERR $logString;
+        exit(1);
+    }
+    if ( not ( -x "$PYTHON3_PATH/python3" ) ) {
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "$PYTHON3_PATH/python3 is not an executable file!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+}
+
 ####################### check_upfront ##########################################
 # * check for scripts, perl modules, executables, extrinsic config files
 ################################################################################
@@ -2401,6 +2613,9 @@ sub check_upfront {
         print STDERR $logString;
         exit(1);
     }
+
+    # check whether python/biopython/re are executable
+    # HERE I AM
 
     #    check whether bam2wig is executable
     $bam2wig = "$AUGUSTUS_BIN_PATH/../auxprogs/bam2wig/bam2wig";
@@ -2626,9 +2841,9 @@ sub check_upfront {
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     find(
-        "getAnnoFasta.pl",      $AUGUSTUS_BIN_PATH,
+        "getAnnoFastaFromJoingenes.py", $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
+      );
     find(
         "gtf2gff.pl",           $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -6905,10 +7120,16 @@ sub augustus {
 
         }
     }
-    #if ($ab_initio) {
-    #    get_anno_fasta("$otherfilesDir/augustus.ab_initio.gff");
-    #}
-    #get_anno_fasta("$otherfilesDir/augustus.hints.gff");
+    if ($ab_initio) {
+        get_anno_fasta("$otherfilesDir/augustus.ab_initio.gtf");
+        if ($UTR) {
+            get_anno_fasta("$otherfilesDir/augustus.ab_initio_utr.gtf");
+        }
+    }
+    get_anno_fasta("$otherfilesDir/augustus.hints.gtf");
+    if ($UTR) {
+        get_anno_fasta("$otherfilesDir/augustus.hints_utr.gtf");
+    }
 }
 
 ####################### assign_ex_cfg ##########################################
@@ -7735,8 +7956,7 @@ sub joingenes {
 }
 
 ####################### get_anno_fasta #########################################
-# * can in principle extract codingseq, amino acids and mRNA sequence from
-#   AUGUSTUS predictions. Does not work on joingenes output, though.
+# * extract codingseq and protein sequences from AUGUSTUS output
 ################################################################################
 
 sub get_anno_fasta {
@@ -7748,19 +7968,20 @@ sub get_anno_fasta {
     @_ = split( /\//, $AUG_pred );
     my $name_base = substr( $_[-1], 0, -4 );
     my $string = find(
-        "getAnnoFasta.pl",      $AUGUSTUS_BIN_PATH,
+        "getAnnoFastaFromJoingenes.py",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
-    my $errorfile = "$errorfilesDir/getAnnoFasta.$name_base.stderr";
-    $perlCmdString = "";
+    my $errorfile = "$errorfilesDir/getAnnoFastaJoingenes.$name_base.stderr";
+    my $outfile = "$otherfilesDir/getAnnoFasta.$name_base.stdout";
+    my $pythonCmdString = "";
     if ($nice) {
-        $perlCmdString .= "nice ";
+        $pythonCmdString .= "nice ";
     }
-    my $perlCmdString
-        .= "perl $string $AUG_pred --seqfile=$genome 1> /dev/null 2>$errorfile";
+    $pythonCmdString
+        .= "python3 $string -g $genome -f $AUG_pred -o $name_base 1> $outfile 2>$errorfile";
 
-    print LOG "$perlCmdString\n\n" if ($v > 3);
-    system("$perlCmdString") == 0
+    print LOG "$pythonCmdString\n\n" if ($v > 3);
+    system("$pythonCmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $perlCmdString\n");
 }
@@ -7807,29 +8028,6 @@ sub make_gtf {
         print LOG "\# " . (localtime) . ": Skip making gtf file from $AUG_pred "
             . "because $gtf_file is up to date.\n" if ($v > 3);
     }
-    #if ($gff3) {
-    #    my $gff3_file  = substr( $AUG_pred, 0, -4 ) . ".gff3";
-    #    if( !uptodate([$AUG_pred], [$gff3_file]) || $overwrite ) {
-    #        my $errorfile  = "$errorfilesDir/gtf2gff.$name_base.gff3.stderr";
-    #        my $perlstring = find(
-    #            "gtf2gff.pl",           $AUGUSTUS_BIN_PATH,
-    #            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH );
-    #        $cmdString = "";
-    #        if ($nice) {
-    #            $cmdString .= "nice ";
-    #        }
-    #        my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon --gff3 --out=$gff3_file 2>$errorfile";
-    #        print LOG "\# " . (localtime)
-    #            . ": Making a gff3 file from $AUG_pred\n" if ($v > 3);
-    #        print LOG "$cmdString\n\n";
-    #        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-    #            . " at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
-    #    }else{
-    #        print LOG "\# " . (localtime)
-    #            . ": Skip making a gff3 file from $AUG_pred because $gff3_file "
-    #            . "is up to date.\n" if ($v > 3);
-    #    }
-    #}
 }
 
 ####################### evaluate ###############################################
@@ -9308,3 +9506,4 @@ sub clean_up {
             . "\nFailed to delete $otherfilesDir/tmp_opt_$species!\n");
     }
 }
+
