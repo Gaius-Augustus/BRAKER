@@ -306,6 +306,34 @@ Samtools is not required for running BRAKER2 if all your files are formatted, co
     \end{verbatim}
     
         Add the above line to a startup script (e.g.~\texttt{$\sim$/.bashrc}) in order to set the environment variable for all bash sessions.
+        
+\subsubsection{Python3 \& Biopython}
+
+If Python3 and Biopython are installed, BRAKER2 can generate FASTA-files with coding sequences and protein sequences predicted by AUGUSTUS. This is an optional step, it can be disabled with the command-line flag \texttt{-{}-skipGetAnnoFromFasta}; Python3 and Biopython are not required if this flag is set.
+
+On Ubuntu, Python3 is installed by default. Install the Python3 package manager with:
+
+\begin{verbatim}
+sudo apt-get install python3-pip
+\end{verbatim}
+
+Subsequently, install Biopython with:
+
+\begin{verbatim}
+sudo pip3 install biopython
+\end{verbatim}
+
+On Ubuntu, python3 will be in your \$PATH variable, by default, and BRAKER2 will automatically locate it. However, you have the option to specify the \texttt{python3} binary location in two other ways:
+
+\begin{enumerate}
+\item Export an environment variable \texttt{\$PYTHON3\_PATH}, e.g.~in your \texttt{$\sim$/.bashrc} file:
+\begin{verbatim}
+export PYTHON3_PATH=/path/to/python3/
+\end{verbatim}
+\item Specify the command line option \texttt{-{}-PYTHON3\_PATH=/path/to/python3/} to \texttt{braker.pl}.
+\end{enumerate}
+
+
 \subsubsection{GenomeThreader}
 
 This tool is required, only, if you would like to run protein to genome alignments with BRAKER2 using GenomeThreader. This is a suitable approach if an annotated species of short evolutionary distance to your target genome is available. Download GenomeThreader from \url{http://genomethreader.org/}. Unpack and install according to \texttt{gth/README}.
@@ -526,30 +554,34 @@ One or several command line arguments to be passed to AUGUSTUS, if several argum
 
 \chapter{Output of BRAKER2}
 
-BRAKER2 produces several important output files in the working directory:
+BRAKER2 produces several important output files in the working directory. 
+
 
 \begin{itemize}
-	\item \underline{\texttt{augustus.hints.gtf}}: Genes predicted by AUGUSTUS with intron hints from given extrinsic evidence in GTF-format. This file will be missing if BRAKER was run with the option \texttt{-{}-esmode}.
+	\item \underline{\texttt{augustus.hints.gtf}}: Genes predicted by AUGUSTUS with intron hints from given extrinsic evidence. This file will be missing if BRAKER was run with the option \texttt{-{}-esmode}. 
 	
-	\item \underline{\texttt{augustus.hints.gff3}}: Genes predicted by AUGUSTUS with intron hints from given extrinsic evidence in GFF3-format. This file will only be present if BRAKER was run with the option \texttt{-{}-gff3}. This file will be missing if BRAKER was run with the option \texttt{-{}-esmode}.
 	
 	\item \underline{\texttt{augustus.hints\_utr.gtf}}: Genes predicted by AUGUSTUS with UTR parameters and coverage information from RNA-Seq data in GTF-format. The file will only be present if BRAKER was run with the option \texttt{-{}-UTR=on} and a RNA-Seq BAM-file. 
 	
-	\item \underline{\texttt{augustus.hints\_utr.gff3}}: Genes predicted by AUGUSTUS with UTR parameters and coverage information from RNA-Seq data in GFF3-format. The file will only be present if BRAKER was run with the option \texttt{-{}-UTR=on} and a RNA-Seq BAM-file, and with the option \texttt{-{}-gff3}.
 	
 	\item \underline{\texttt{augustus.ab\_initio.gtf}}: Genes predicted by AUGUSTUS in \textit{ab initio} mode in GTF-format. The file will always be present if AUGUSTUS has been run with the option \texttt{-{}-esmode}. Otherwise, it will only be present if BRAKER was run with the option \texttt{-{}-AUGUSTUS\_ab\_initio}.
 	
-	\item \underline{\texttt{augustus.ab\_initio.gff3}}: Genes predicted by AUGUSTUS in \textit{ab initio} mode in GFF3-format. The file will always be present if AUGUSTUS has been run with the options \texttt{-{}-esmode} and \texttt{-{}-gff3}. Otherwise, it will only be present if BRAKER was run with the options \texttt{-{}-AUGUSTUS\_ab\_initio} and \texttt{-{}-gff3}.
-	
 	\item \underline{\texttt{augustus.ab\_initio\_utr.gtf}}: Genes predicted by AUGUSTUS with UTR parameters in \textit{ab initio} mode in GTF-format. This file will only be present if BRAKER was executed with  the options \texttt{-{}-UTR=on} and a RNA-Seq BAM-file, and with the option \texttt{-{}-AUGUSTUS\_ab\_initio}.
-	
-	\item \underline{\texttt{augustus.ab\_initio\_utr.gff3}}: Genes predicted by AUGUSTUS with UTR parameters in \textit{ab initio} mode in GFF3-format. This file will only be present if BRAKER was executed with  the options \texttt{-{}-UTR=on} and a RNA-Seq BAM-file, and with the options \texttt{-{}-AUGUSTUS\_ab\_initio} and \texttt{-{}-gff3}.
 	
 	\item \underline{\texttt{GeneMark-E*/genemark.gtf}}: Genes predicted by GeneMark-ES/ET in GTF-format. This file will be missing if BRAKER was executed with proteins of close homology and the option \texttt{-{}-trainFromGth}.
 	
 	\item \underline{\texttt{hintsfile.gff}}: The extrinsic evidence data extracted from RNAseq.bam and/or protein
 	data. The introns are used for training GeneMark-ES/ET, all features
 	are used for predicting genes with AUGUSTUS. The file is in GFF-format.
+\end{itemize}
+
+AUGUSTUS output files may be present with the following name endings and formats:
+
+\begin{itemize}
+	\item[\texttt{*.gtf}] GTF-format is always produced.
+	\item[\texttt{*.gff3}] GFF3-format is produced if the flat \texttt{-{}-gff3} was specified to BRAKER2.
+	\item[\texttt{*.codingseq}] Coding sequences in FASTA-format are produced if the flag \texttt{-{}-skipGetAnnoFromFasta} was not set.
+	\item[\texttt{*.aa}] Protein sequence files in FASTA-format are produced if the flag \texttt{-{}-skipGetAnnoFromFasta} was not set.
 \end{itemize}
 
 
