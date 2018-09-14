@@ -1,6 +1,5 @@
 ---
-bibliography:
-- 'refs.bib'
+bibliography: 'refs.bib'
 ---
 
 -   [BRAKER2 User Guide](#braker2-user-guide)
