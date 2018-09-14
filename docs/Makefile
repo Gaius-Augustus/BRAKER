@@ -3,7 +3,7 @@ userguide.pdf: userguide.tex refs.bib
 	bibtex userguide
 	pdflatex userguide.tex
 	pdflatex userguide.tex
-	pandoc --toc -s userguide.tex -o README.md
+	pandoc --toc --bibliography refs.bib -s userguide.tex -o README.md
 	cp README.md ../README.md
 
 clean:
