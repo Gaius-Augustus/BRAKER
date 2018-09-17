@@ -1,7 +1,3 @@
----
-bibliography: 'refs.bib'
----
-
 -   [BRAKER2 User Guide](#braker2-user-guide)
     -   [Authors and Contact
         Information](#authors-and-contact-information)
@@ -93,21 +89,21 @@ What is BRAKER2?
 
 The rapidly growing number of sequenced genomes requires fully automated
 methods for accurate gene structure annotation. With this goal in mind,
-we have developed BRAKER1 [@braker1], a combination of GeneMark-ET
-[@GeneMark-ET] and AUGUSTUS [@AUGUSTUS; @stanke2006gene], that uses
-genomic and RNA-Seq data to automatically generate full gene structure
-annotations in novel genomes.
+we have developed BRAKER1 (Hoff et al. 2015), a combination of
+GeneMark-ET (Lomsadze, Burns, and Borodovsky 2014) and AUGUSTUS (Stanke
+et al. 2008; Stanke et al. 2006), that uses genomic and RNA-Seq data to
+automatically generate full gene structure annotations in novel genomes.
 
 However, the quality of RNA-Seq data that is available for annotating a
 novel genome is variable, and in some cases, RNA-Seq data is not
 available, at all.
 
 BRAKER2 is an extension of BRAKER1 which allows for **fully automated
-training** of the gene prediction tools GeneMark-EX
-[@AlexandreLomsadze11282005; @ter2008gene; @GeneMark-ET][^1] and
-AUGUSTUS from RNA-Seq and/or protein homology information, and that
-integrates the extrinsic evidence from RNA-Seq and protein homology
-information into the **prediction**.
+training** of the gene prediction tools GeneMark-EX (Lomsadze et al.
+2005; Ter-Hovhannisyan et al. 2008; Lomsadze, Burns, and Borodovsky
+2014)[^1] and AUGUSTUS from RNA-Seq and/or protein homology information,
+and that integrates the extrinsic evidence from RNA-Seq and protein
+homology information into the **prediction**.
 
 In contrast to other available methods that rely on protein homology
 information, BRAKER2 reaches high gene prediction accuracy even in the
@@ -264,18 +260,19 @@ At the time of release, this BRAKER2 version was tested with:
 
 -   GeneMark-ET 4.33
 
--   BAMTOOLS 2.5.1 [@barnett2011bamtools]
+-   BAMTOOLS 2.5.1 (Barnett et al. 2011)
 
--   SAMTOOLS 1.7-4-g93586ed [@li2009sequence]
+-   SAMTOOLS 1.7-4-g93586ed (Li et al. 2009)
 
--   GenomeThreader 1.7.0 [@gremme2013]
+-   GenomeThreader 1.7.0 (Gremme 2013)
 
--   (Spaln 2.3.1
-    [@gotoh2008direct; @gotoh2008space; @iwata2012benchmarking])[^4]
+-   (Spaln 2.3.1 (Gotoh 2008b; Gotoh 2008a; Iwata and Gotoh 2012))[^4]
 
--   (Exonerate 2.2.0 [@slater2005automated])[^5]
+-   (Exonerate 2.2.0 (Slater and Birney 2005))[^5]
 
--   NCBI BLAST+ 2.2.31+ [@Altschul:1990; @camacho2009blast+]
+-   NCBI BLAST+ 2.2.31+ (Altschul et al. 1990;
+    [**???**]{.citeproc-not-found data-reference-id="camacho2009blast"}
+    +)
 
 BRAKER2
 -------
@@ -1233,9 +1230,10 @@ BRAKER2 is cited, but also the tools that are called by BRAKER2:
 
 -   Always cite and :
 
-    -   Hoff, K.J., Lange, S., Lomsadze, A., Borodovsky, M. and Stanke,
-        M. (2015). BRAKER1: unsupervised RNA-Seq-based genome annotation
-        with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5):767-769.
+    -   Hoff, K.J., Lange, S., Lomsadze, A., Borodovsky, M. and
+        Stanke, M. (2015). BRAKER1: unsupervised RNA-Seq-based genome
+        annotation with GeneMark-ET and AUGUSTUS. Bioinformatics,
+        32(5):767-769.
 
     -   Stanke, M., Diekhans, M., Baertsch, R. and Haussler, D. (2008).
         Using native and syntenically mapped cDNA alignments to improve
@@ -1302,6 +1300,129 @@ Licence
 All source code, i.e. `scripts/*.pl` or `scripts/*.py` are under the
 Artistic Licence (see
 <http://www.opensource.org/licenses/artistic-license.php>).
+
+<div id="refs" class="references">
+
+<div id="ref-Altschul:1990">
+
+Altschul, S.F., W. Gish, W. Miller, E.W. Myers, and D.J. Lipman. 1990.
+“Basic Local Alignment Search Tool.” *Journal of Molecular Biology* 215:
+403–10.
+
+</div>
+
+<div id="ref-barnett2011bamtools">
+
+Barnett, Derek W, Erik K Garrison, Aaron R Quinlan, Michael P Strömberg,
+and Gabor T Marth. 2011. “BamTools: A C++ Api and Toolkit for Analyzing
+and Managing Bam Files.” *Bioinformatics* 27 (12). Oxford University
+Press: 1691–2.
+
+</div>
+
+<div id="ref-gotoh2008space">
+
+Gotoh, Osamu. 2008a. “A Space-Efficient and Accurate Method for Mapping
+and Aligning cDNA Sequences onto Genomic Sequence.” *Nucleic Acids
+Research* 36 (8). Oxford University Press: 2630–8.
+
+</div>
+
+<div id="ref-gotoh2008direct">
+
+———. 2008b. “Direct Mapping and Alignment of Protein Sequences onto
+Genomic Sequence.” *Bioinformatics* 24 (21). Oxford University Press:
+2438–44.
+
+</div>
+
+<div id="ref-gremme2013">
+
+Gremme, G. 2013. “Computational Gene Structure Prediction.” PhD thesis,
+Universität Hamburg.
+
+</div>
+
+<div id="ref-braker1">
+
+Hoff, Katharina J, Simone Lange, Alexandre Lomsadze, Mark Borodovsky,
+and Mario Stanke. 2015. “BRAKER1: Unsupervised Rna-Seq-Based Genome
+Annotation with Genemark-et and Augustus.” *Bioinformatics* 32 (5).
+Oxford University Press: 767–69.
+
+</div>
+
+<div id="ref-iwata2012benchmarking">
+
+Iwata, Hiroaki, and Osamu Gotoh. 2012. “Benchmarking Spliced Alignment
+Programs Including Spaln2, an Extended Version of Spaln That
+Incorporates Additional Species-Specific Features.” *Nucleic Acids
+Research* 40 (20). Oxford University Press: e161–e161.
+
+</div>
+
+<div id="ref-li2009sequence">
+
+Li, Heng, Bob Handsaker, Alec Wysoker, Tim Fennell, Jue Ruan, Nils
+Homer, Gabor Marth, Goncalo Abecasis, and Richard Durbin. 2009. “The
+Sequence Alignment/Map Format and Samtools.” *Bioinformatics* 25 (16).
+Oxford University Press: 2078–9.
+
+</div>
+
+<div id="ref-AlexandreLomsadze11282005">
+
+Lomsadze, A., V. Ter-Hovhannisyan, Y.O. Chernoff, and M. Borodovsky.
+2005. “Gene identification in novel eukaryotic genomes by self-training
+algorithm.” *Nucleic Acids Research* 33 (20): 6494–6506.
+doi:[10.1093/nar/gki937](https://doi.org/10.1093/nar/gki937).
+
+</div>
+
+<div id="ref-GeneMark-ET">
+
+Lomsadze, Alexandre, Paul D Burns, and Mark Borodovsky. 2014.
+“Integration of Mapped Rna-Seq Reads into Automatic Training of
+Eukaryotic Gene Finding Algorithm.” *Nucleic Acids Research* 42 (15).
+Oxford University Press: e119–e119.
+
+</div>
+
+<div id="ref-slater2005automated">
+
+Slater, Guy St C, and Ewan Birney. 2005. “Automated Generation of
+Heuristics for Biological Sequence Comparison.” *BMC Bioinformatics* 6
+(1). BioMed Central: 31.
+
+</div>
+
+<div id="ref-AUGUSTUS">
+
+Stanke, Mario, Mark Diekhans, Robert Baertsch, and David Haussler. 2008.
+“Using Native and Syntenically Mapped cDNA Alignments to Improve de Novo
+Gene Finding.” *Bioinformatics* 24 (5). Oxford University Press: 637–44.
+
+</div>
+
+<div id="ref-stanke2006gene">
+
+Stanke, Mario, Oliver Schöffmann, Burkhard Morgenstern, and Stephan
+Waack. 2006. “Gene Prediction in Eukaryotes with a Generalized Hidden
+Markov Model That Uses Hints from External Sources.” *BMC
+Bioinformatics* 7 (1). BioMed Central: 62.
+
+</div>
+
+<div id="ref-ter2008gene">
+
+Ter-Hovhannisyan, Vardges, Alexandre Lomsadze, Yury O Chernoff, and Mark
+Borodovsky. 2008. “Gene Prediction in Novel Fungal Genomes Using an Ab
+Initio Algorithm with Unsupervised Training.” *Genome Research*. Cold
+Spring Harbor Lab, gr–081612.
+
+</div>
+
+</div>
 
 [^1]: EX = ES/ET/EP/ETP, all available for download under the name
     *GeneMark-ES/ET*
