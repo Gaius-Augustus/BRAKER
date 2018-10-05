@@ -917,30 +917,30 @@ Output of BRAKER2
 BRAKER2 produces several important output files in the working
 directory.
 
--   : Genes predicted by AUGUSTUS with intron hints from given extrinsic
-    evidence. This file will be missing if BRAKER was run with the
-    option `--esmode`.
+-   augustus.hints.gtf: Genes predicted by AUGUSTUS with intron hints
+    from given extrinsic evidence. This file will be missing if BRAKER was run
+    with the option `--esmode`.
 
--   : Genes predicted by AUGUSTUS with UTR parameters and coverage
-    information from RNA-Seq data in GTF-format. The file will only be
-    present if BRAKER was run with the option `--UTR=on` and a RNA-Seq
+-   augustus.hints_utr.gtf: Genes predicted by AUGUSTUS with UTR parameters
+    and coverage information from RNA-Seq data in GTF-format. The file will
+    only be present if BRAKER was run with the option `--UTR=on` and a RNA-Seq
     BAM-file.
 
--   : Genes predicted by AUGUSTUS in *ab initio* mode in GTF-format. The
-    file will always be present if AUGUSTUS has been run with the option
-    `--esmode`. Otherwise, it will only be present if BRAKER was run
+-   augustus.ab_initio.gtf: Genes predicted by AUGUSTUS in *ab initio* mode in
+    GTF-format. The file will always be present if AUGUSTUS has been run with
+    the option `--esmode`. Otherwise, it will only be present if BRAKER was run
     with the option `--AUGUSTUS_ab_initio`.
 
--   : Genes predicted by AUGUSTUS with UTR parameters in *ab initio*
-    mode in GTF-format. This file will only be present if BRAKER was
-    executed with the options `--UTR=on` and a RNA-Seq BAM-file, and
-    with the option `--AUGUSTUS_ab_initio`.
+-   augustus.ab_initio_utr.gtf: Genes predicted by AUGUSTUS with UTR
+    parameters in *ab initio* mode in GTF-format. This file will only be
+    present if BRAKER was executed with the options `--UTR=on` and a RNA-Seq
+    BAM-file, and with the option `--AUGUSTUS_ab_initio`.
 
--   : Genes predicted by GeneMark-ES/ET in GTF-format. This file will be
-    missing if BRAKER was executed with proteins of close homology and
-    the option `--trainFromGth`.
+-   GeneMark-E*/genemark.gtf: Genes predicted by GeneMark-ES/ET in GTF-format.
+    This file will be missing if BRAKER was executed with proteins of close
+    homology and the option `--trainFromGth`.
 
--   : The extrinsic evidence data extracted from RNAseq.bam and/or
+-   hintsfile.gff: The extrinsic evidence data extracted from RNAseq.bam and/or
     protein data. The introns are used for training GeneMark-ES/ET, all
     features are used for predicting genes with AUGUSTUS. The file is in
     GFF-format.
