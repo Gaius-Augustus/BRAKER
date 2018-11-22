@@ -7966,8 +7966,8 @@ sub get_anno_fasta {
         . (localtime)
         . ": Making a fasta file with protein sequences of $AUG_pred\n"
         if ($v > 2);
-    @_ = split( /\//, $AUG_pred );
-    my $name_base = substr( $_[-1], 0, -4 );
+    my $name_base = $AUG_pred;
+    $name_base = s/[^\.]+$//;
     my $string = find(
         "getAnnoFastaFromJoingenes.py",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
