@@ -1298,7 +1298,7 @@ Licence
 =======
 
 All source code, i.e. `scripts/*.pl` or `scripts/*.py` are under the
-Artistic Licence (see
+Artistic License (see
 <http://www.opensource.org/licenses/artistic-license.php>).
 
 <div id="refs" class="references">
