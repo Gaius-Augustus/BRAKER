@@ -7984,7 +7984,7 @@ sub get_anno_fasta {
     print LOG "$pythonCmdString\n\n" if ($v > 3);
     system("$pythonCmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nFailed to execute: $perlCmdString\n");
+            . "\nFailed to execute: $pythonCmdString\n");
 }
 
 ####################### make_gtf ###############################################
