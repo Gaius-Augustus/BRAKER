@@ -7968,12 +7968,13 @@ sub get_anno_fasta {
         if ($v > 2);
     my $name_base = $AUG_pred;
     $name_base =~ s/[^\.]+$//;
+    my @name_base_path_parts = split(/\//, $name_base);
     my $string = find(
         "getAnnoFastaFromJoingenes.py",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
-    my $errorfile = "$errorfilesDir/getAnnoFastaJoingenes.$name_base.stderr";
-    my $outfile = "$otherfilesDir/getAnnoFasta.$name_base.stdout";
+    my $errorfile = "$errorfilesDir/getAnnoFastaJoingenes.".$name_base_path_parts[scalar(@name_base_path_parts)-1]."stderr";
+    my $outfile = "$otherfilesDir/getAnnoFasta.".$name_base_path_parts[scalar(@name_base_path_parts)-1]."stdout";
     my $pythonCmdString = "";
     if ($nice) {
         $pythonCmdString .= "nice ";
