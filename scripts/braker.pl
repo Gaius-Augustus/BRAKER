@@ -2944,14 +2944,16 @@ sub check_gff {
     my $printedAllowedHints = 0;
     my %foundFeatures;
 
+    my $gffC = 0;
     while (<GFF>) {
+        $gffC++;
         my @gff_line = split( /\t/, $_ );
         if ( scalar(@gff_line) != 9 ) {
             $prtStr
                 = "\# "
                 . (localtime)
                 . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "File $gfffile is not in gff format!\n";
+                . "File $gfffile is not in gff format at line $gffC!\n";
             $logString .= $prtStr;
             print STDERR $logString;
             close(GFF) or die("ERROR in file " . __FILE__ ." at line "
