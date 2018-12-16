@@ -373,6 +373,9 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 --optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS
                                     for running PPX (currently not
                                     implemented)
+--checkSoftware                     Only check whether all required software
+                                    is installed.
+
 
 DESCRIPTION
 
@@ -419,6 +422,7 @@ my $PYTHON3_PATH;
 my @bam;                      # bam file names
 my @stranded;                 # contains +,-,+,-... corresponding to 
                               # bam files
+my $checkOnly = 0;
 my $bamtools_path;
 my $BAMTOOLS_BIN_PATH;
 my $bam2wig;
@@ -622,6 +626,7 @@ GetOptions(
     'splice_sites=s'               => \@splice_cmd_line,
     'flanking_DNA=i'               => \$flanking_DNA,
     'stranded=s'                   => \@stranded,
+    'checkSoftware!'               => \$checkOnly,
     'version!'                     => \$printVersion
 );
 
@@ -720,6 +725,16 @@ if (not ($skipGetAnnoFromFasta)){
 $prtStr = "\# " . (localtime) . ": Configuration of BRAKER for using external "
         . "tools is complete!\n\n";
 $logString .= $prtStr if ( $v > 2 );
+
+if($checkOnly){
+    $prtStr = "\# " . (localtime)
+            . ": Exiting braker.pl because it had been started with "
+            . "--softwareCheck option. No training or prediction or file format "
+            . "check will be performed.\n\n";
+    $logString .= $prtStr;
+    print $logString;
+    exit(0);
+}
 
 # check for known issues that may cause problems with braker.pl ################
 check_upfront();
