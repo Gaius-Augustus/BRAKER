@@ -5952,10 +5952,6 @@ sub training_augustus {
             }
             unlink("$trainGb3.train");
             print LOG "rm trainGb3.train\n\n" if ($v > 3);
-            system("$cmdString") == 0
-                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-                    $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ ."\nFailed to execute: rm $trainGb3.train\n");
         }
 
         # find those training genes in gtf that are still in gb
