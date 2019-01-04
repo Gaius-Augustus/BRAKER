@@ -5889,28 +5889,73 @@ sub training_augustus {
                 . __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
         # count how many genes are in trainGb3
-        if($v > 3) {
-            open (TRAINGB3, "<", $trainGb3) or
-                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                    "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Could not open file $trainGb3!\n");
-            my $nLociGb3 = 0;
-            while ( <TRAINGB3> ) {
-                if($_ =~ m/LOCUS/) {
-                    $nLociGb3++;
-                }
+        open (TRAINGB3, "<", $trainGb3) or
+            clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Could not open file $trainGb3!\n");
+        my $nLociGb3 = 0;
+        while ( <TRAINGB3> ) {
+            if($_ =~ m/LOCUS/) {
+                $nLociGb3++;
             }
-            close (TRAINGB3) or
-                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                    "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Could not close file $trainGb3!\n");
+        }
+        close (TRAINGB3) or
+            clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Could not close file $trainGb3!\n");
             print LOG "\# "
-                    . (localtime)
-                    . ": \$trainGb3 file $trainGb3 contains $nLociGb3 genes.\n";
+                . (localtime)
+                . ": \$trainGb3 file $trainGb3 contains $nLociGb3 genes.\n";
+
+        # reduce gene set size if >8000. We introduce this step because in esmode,
+        # sometimes, there is a such a huge number of putative training genes
+        # that optimize_augustus.pl runs into a memory access problem 
+        # (not understood why exactly, yet, but it is a parallelization issue)
+        # also, BLASTing a very high number of genes takes way too long
+        # might want to reconsider the threshold (8000?)
+        if($nLociGb3 > 8000){
+            print LOG "\# "
+                . (localtime)
+                . ": Reducing number of training genes by random selection to 8000.\n";
+            $string = find(
+                "randomSplit.pl",       $AUGUSTUS_BIN_PATH,
+                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+            );
+            $errorfile = "$errorfilesDir/randomSplit_8000.stderr";
+            $perlCmdString = "";
+            if ($nice) {
+                $perlCmdString .= "nice ";
+            }
+            $perlCmdString .= "perl $string $trainGb3 8000 2>$errorfile";
+            print LOG "$perlCmdString\n\n" if ($v > 3);
+            system("$perlCmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+            $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            $cmdString .= "mv $trainGb3.test $trainGb3";
+            print LOG "$cmdString\n\n" if ($v > 3);
+            system("$cmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nFailed to execute: $cmdString\n");
+            $cmdString = "";
+            if ($nice) {
+                $cmdString .= "nice ";
+            }
+            unlink("$trainGb3.train");
+            print LOG "rm trainGb3.train\n\n" if ($v > 3);
+            system("$cmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nFailed to execute: rm $trainGb3.train\n");
         }
 
         # find those training genes in gtf that are still in gb
