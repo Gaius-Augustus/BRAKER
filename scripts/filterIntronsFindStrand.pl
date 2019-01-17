@@ -113,15 +113,19 @@ if(! -f "$introns"){
 
 # genome file in fasta format
 open (FASTA, "<".$genome) or die "Cannot open file: $genome\n";
-$/="\n>";
 while(<FASTA>) {
-  /[>]*(.*)\n/;
-  $seqname = $1;
-  $seq = $';
-  $seq =~ s/>//;
-  $seq =~ s/\n//g;
-  $annos{$seqname} = $seq;
+  chomp;
+  if(m/^>(.*)/){
+    if(defined($seqname)){
+      $annos{$seqname} = $seq;
+    }
+    $seqname = $1;
+    $seq = "";
+  }else{
+    $seq .= $_;
+  }
 }
+$annos{$seqname} = $seq;
 close(FASTA) or die("Could not close fasta file $genome!\n");
 
 # introns hintsfile in gff format
