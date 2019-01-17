@@ -9029,11 +9029,18 @@ sub bam2wig {
     if ($nice) {
         $cmdString .= "nice ";
     }
+    # The following command is for current samtools versions:
     $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ "
                .($CPU-1) . " -o $otherfilesDir/merged.s.bam "
                .  "$otherfilesDir/merged.bam "
                .  "1> $otherfilesDir/samtools_sort_before_wig.stdout "
                .  "2> $errorfilesDir/samtools_sort_before_wig.stderr";
+    # If you happen to use an older samtools version, adapt the line above to
+    # look as follows:
+    # $cmdString .= "$SAMTOOLS_PATH/samtools sort -\@ " .($CPU-1) 
+    #    . " $otherfilesDir/merged.bam " . "$otherfilesDir/merged.s " 
+    #    . "1> $otherfilesDir/samtools_sort_before_wig.stdout " 
+    #    . "2> $errorfilesDir/samtools_sort_before_wig.stderr";
     print LOG "\n$cmdString\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__
         . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
