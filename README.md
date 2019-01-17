@@ -169,7 +169,7 @@ and pipelines:
 
     ![BRAKER pipeline A: training GeneMark-ES on genome data, only; *ab
     initio* gene prediction with
-    AUGUSTUS.\[braker-main-a\]](figs/braker-es.pdf)
+    AUGUSTUS.\[braker-main-a\]](docs/figs/braker-es.pdf)
 
 -   genome and RNA-Seq file from the same species (see figure
     \[braker-main-b\]); this approach is suitable for RNA-Seq libraries
@@ -180,7 +180,7 @@ and pipelines:
     ![BRAKER pipeline B: training GeneMark-ET supported by RNA-Seq
     spliced alignment information, prediction with AUGUSTUS with that
     same spliced alignment
-    information.\[braker-main-b\]](figs/braker1.pdf)
+    information.\[braker-main-b\]](docs/figs/braker1.pdf)
 
 -   genome file and database of proteins that may be of longer
     evolutionary distance to the target species (see figure
@@ -195,7 +195,7 @@ and pipelines:
     ![BRAKER pipeline C: training GeneMark-EP on protein spliced
     alignment information, prediction with AUGUSTUS with that same
     spliced alignment information. Proteins used here can be of longer
-    evolutionary distance.\[braker-main-c\]](./figs/braker2_ep.pdf)
+    evolutionary distance.\[braker-main-c\]](./docs/figs/braker2_ep.pdf)
 
 -   genome and RNA-Seq file from the same species, and proteins that may
     be of longer evolutionary distance to the target species (see figure
@@ -210,7 +210,7 @@ and pipelines:
     both RNA-Seq and protein alignment information are treated as “true
     positive introns”, their prediction in gene structures by
     GeneMark-ETP and AUGUSTUS is
-    enforced.\[braker-main-d\]](./figs/braker2_ep_rnaseq.pdf)
+    enforced.\[braker-main-d\]](./docs/figs/braker2_ep_rnaseq.pdf)
 
 -   genome file and file with proteins of short evolutionary distance
     (see figure \[braker2-sidetrack-b\]); this approach is suitable if
@@ -220,7 +220,7 @@ and pipelines:
     ![Additional pipeline B: training AUGUSTUS on the basis of spliced
     alignment information from proteins of a very closely related
     species against the target
-    genome.\[braker2-sidetrack-b\]](./figs/braker2_gth.pdf)
+    genome.\[braker2-sidetrack-b\]](./docs/figs/braker2_gth.pdf)
 
 -   genome and RNA-Seq file and proteins of short evolutionary distance
     (see figures \[braker2-sidetrack-a\] and \[braker2-sidetrack-c\]).
@@ -239,14 +239,14 @@ and pipelines:
     alignment information from RNA-Seq data and with gene features
     determined by alignments from proteins of a very closely related
     species against the target
-    genome.\[braker2-sidetrack-a\]](./figs/braker2.pdf)
+    genome.\[braker2-sidetrack-a\]](./docs/figs/braker2.pdf)
 
     ![Additional pipeline C: training GeneMark-ET on the basis of
     RNA-Seq spliced alignment information, training AUGUSTUS on a set of
     training gene structures compiled from RNA-Seq supported gene
     structures predicted by GeneMark-ET and spliced alignment of
     proteins of a very closely related
-    species.\[braker2-sidetrack-c\]](./figs/braker2_train_from_both.pdf)
+    species.\[braker2-sidetrack-c\]](./docs/figs/braker2_train_from_both.pdf)
 
 Installation
 ============
@@ -725,7 +725,7 @@ evolutionary distance to the target species may be used in this case.
 The pipeline is illustrated in figure \[gatech\].
 
 ![Protein mapping pipeline for proteins of longer evolutionary
-distance.\[gatech\]](./figs/gatech-prot-pipeline.pdf)
+distance.\[gatech\]](./docs/figs/gatech-prot-pipeline.pdf)
 
 Running BRAKER2 with proteins of longer evolutionary distance requires
 the preparation of “protein hints” before running BRAKER2, itself.
