@@ -343,12 +343,24 @@ EXPERT OPTIONS
                                     kept. Default value is 2. 
                                     If you want to avoid downsampling, you have 
                                     to specify 0. 
+--checkSoftware                     Only check whether all required software
+                                    is installed, no execution of BRAKER
+--cleanup                           Delete all files that are typically not 
+                                    used in an annotation project after 
+                                    running braker.pl. (For tracking any 
+                                    problems with a braker.pl run, you 
+                                    might want to keep these files, therefore
+                                    cleanup is not switched on by default.)
+
 
 DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 
 --splice_sites=patterns             list of splice site patterns for UTR
                                     prediction; default: GTAG, extend like this:
                                     --splice_sites=GTAG,ATAC,...
+                                    this option only affects UTR training
+                                    example generation, not gene prediction
+                                    by AUGUSTUS
 --extrinsicCfgFiles=file1,file2,... Depending on the mode in which braker.pl
                                     is executed, it may require one ore several
                                     extrinsicCfgFiles. Don't use this option
@@ -373,8 +385,7 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 --optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS
                                     for running PPX (currently not
                                     implemented)
---checkSoftware                     Only check whether all required software
-                                    is installed.
+
 
 
 DESCRIPTION
@@ -554,7 +565,7 @@ my $lambda = 2; # labmda of poisson distribution for downsampling of training ge
 my @splice_cmd_line;
 my @splice;
 my $AUGUSTUS_hints_preds; # for UTR training only (updating existing runs)
-
+my $cleanup; # enable file and directory cleanup after successful run
 # list of forbidden words for species name
 @forbidden_words = (
     "system",    "exec",  "passthru", "run",    "fork",   "qx",
@@ -627,6 +638,7 @@ GetOptions(
     'flanking_DNA=i'               => \$flanking_DNA,
     'stranded=s'                   => \@stranded,
     'checkSoftware!'               => \$checkOnly,
+    'cleanup!'                     => \$cleanup,
     'version!'                     => \$printVersion
 );
 
@@ -2893,6 +2905,10 @@ sub check_upfront {
     );
     find(
         "gtf2gff.pl",       $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    find(
+        "fix_joingenes_gtf.pl",       $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
 
@@ -8007,6 +8023,22 @@ sub joingenes {
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
+    my $string = find(
+        "fix_joingenes_gtf.pl",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "perl $string < $otherfilesDir/join$genesetId.gtf "
+                   .  "> $otherfilesDir/augustus.hints$genesetId.gtf";
+    print LOG "$perlCmdString\n" if ($v > 3);
+    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
+        . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    print LOG "\# " . (localtime) . "rm $otherfilesDir/join$genesetId.gtf\n";
+    unlink "$otherfilesDir/join$genesetId.gtf" or die("ERROR in file " . __FILE__
+        . " at line ". __LINE__ ."\nFailed to execute: rm $otherfilesDir/join$genesetId.gtf!\n");
     $cmdString = "mv $otherfilesDir/join$genesetId.gtf "
                . "$otherfilesDir/augustus.hints$genesetId.gtf";
     print LOG "$cmdString\n" if ($v > 3);
@@ -9572,6 +9604,21 @@ sub clean_up {
         rmtree( ["$otherfilesDir/tmp_opt_$species"] ) or die ("ERROR in file "
             . __FILE__ ." at line ". __LINE__
             . "\nFailed to delete $otherfilesDir/tmp_opt_$species!\n");
+    }
+    if($cleanup){
+        $string = find(
+            "braker_cleanup.pl", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $perlCmdString = "";
+        if($nice){
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string --wdir=$otherfilesDir &> $otherfilesDir/braker.log";
+        print LOG "$perlCmdString\n\n" if ($v > 3);
+        system("$perlCmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $perlCmdString\n");
     }
 }
 
