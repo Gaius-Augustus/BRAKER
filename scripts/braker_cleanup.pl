@@ -17,6 +17,7 @@
 
 use Getopt::Long;
 use File::Path;
+use File::Spec::Functions qw(rel2abs);
 use strict;
 use warnings;
 
@@ -56,6 +57,20 @@ if(not(defined($wdir))){
             . "(option --wdir=WDIR)\n";
     print $usage;
 	exit(1)
+}
+
+$wdir = rel2abs($wdir);
+if(not(-d $wdir)){
+	my @t = split(/\//, $wdir);
+	$wdir = "";
+	for(my $i=0; $i<(scalar(@t) - 1); $i++){
+		$wdir .= "/".$t[$i]
+	}
+	if(not(-d $wdir)){
+		print "ERROR: in file " . __FILE__ ." at line "
+            . __LINE__ . "\n" . "wdir $wdir is not a directory!\n";
+	exit(1)
+	}
 }
 
 my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.stdout", 
