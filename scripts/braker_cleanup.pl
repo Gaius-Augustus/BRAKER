@@ -91,12 +91,14 @@ my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneM
 
 foreach(@files){
 	if(-e $wdir."/".$_){
+		print "Deleting file ".$wdir."/".$_."\n";
 		unlink($wdir."/".$_);
 	}
 }
 
 foreach(@dirs){
 	if(-d $wdir."/".$_){
+		print "Deleting directory ".$wdir."/".$_."\n";
 		rmtree($wdir."/".$_);
 	}
 }
