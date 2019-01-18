@@ -18,6 +18,7 @@
 
 use Getopt::Long;
 use File::Compare;
+use File::HomeDir;
 use File::Path qw(make_path rmtree);
 use Module::Load::Conditional qw(can_load check_install requires);
 use Scalar::Util::Numeric qw(isint);
