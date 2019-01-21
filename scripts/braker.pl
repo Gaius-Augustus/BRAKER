@@ -1137,7 +1137,7 @@ my $totalScaffSize = 0;
 foreach( values %scaffSizes) {
     $totalScaffSize += $_;
 }
-# unsure what is an approriate limit, because it depends on the kernel and
+# unsure what is an appropriate limit, because it depends on the kernel and
 # on the stack size. Use 30000 just to be sure. This will result in ~90000 files in the
 # augustus_tmp folder.
 if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
@@ -3751,10 +3751,10 @@ sub check_fasta_headers {
     my $prot                     = 0;
     my $dna                      = 0;
     my $scaffName;
-    my $mapFile = "$otherfilesDir/header.map";
+    my $mapFile = "$otherfilesDir/genome_header.map";
     my $stdStr = "This may later on cause problems! The pipeline will create "
                . "a new file without spaces or \"|\" characters and a "
-               . "header.map file to look up the old and new headers. This "
+               . "genome_header.map file to look up the old and new headers. This "
                . "message will be suppressed from now on!\n";
 
     if ( !uptodate( [$genome], ["$otherfilesDir/genome.fa"] ) || $overwrite )
@@ -8024,7 +8024,7 @@ sub joingenes {
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
-    my $string = find(
+    $string = find(
         "fix_joingenes_gtf.pl",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
@@ -9615,11 +9615,10 @@ sub clean_up {
         if($nice){
             $perlCmdString .= "nice ";
         }
-        $perlCmdString .= "perl $string --wdir=$otherfilesDir &> $otherfilesDir/braker.log";
+        $perlCmdString .= "perl $string --wdir=$otherfilesDir";
         print LOG "$perlCmdString\n\n" if ($v > 3);
-        system("$perlCmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nFailed to execute: $perlCmdString\n");
+        my $loginfo = `$perlCmdString`;
+        print LOG $loginfo;
     }
 }
 
