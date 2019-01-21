@@ -125,7 +125,10 @@ sub ReadGff {
                 push( @{$introns{$t[0]}}, \%intron);
             }
             push (@{$transcripts{$1}{'lines'}}, $_);
+        }elsif($_ =~ m/.*\t.*\ttranscript\t\d+\t\d+\t.*\t.*\t.*\t(\S+)/){
+            push (@{$transcripts{$1}{'lines'}}, $_);
         }
+
 
     }
     close($IN) or die("$!, error on close file $in_gff_file!\n");
