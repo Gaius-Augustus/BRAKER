@@ -8040,11 +8040,8 @@ sub joingenes {
     print LOG "\# " . (localtime) . "rm $otherfilesDir/join$genesetId.gtf\n";
     unlink "$otherfilesDir/join$genesetId.gtf" or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to execute: rm $otherfilesDir/join$genesetId.gtf!\n");
-    $cmdString = "mv $otherfilesDir/join$genesetId.gtf "
-               . "$otherfilesDir/augustus.hints$genesetId.gtf";
+    $cmdString = "rm $otherfilesDir/join$genesetId.gtf";
     print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute: $cmdString!\n");
 }
 
 ####################### get_anno_fasta #########################################
