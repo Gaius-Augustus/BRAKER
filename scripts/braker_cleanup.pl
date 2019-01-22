@@ -40,6 +40,7 @@ ENDUSAGE
 
 my $help;
 my $wdir;
+my $homedir = $ENV{HOME};
 
 GetOptions(
 	'wdir=s'  => \$wdir,
@@ -59,7 +60,15 @@ if(not(defined($wdir))){
 	exit(1)
 }
 
-$wdir = rel2abs($wdir);
+if($wdir =~ m/^~/){
+	$wdir =~ s/^~//;
+	$wdir = File::Spec->catfile($homedir, $wdir);
+}
+
+if(not($wdir =~ m/^\//)){
+	$wdir = rel2abs($wdir);
+}
+
 if(not(-d $wdir)){
 	my @t = split(/\//, $wdir);
 	$wdir = "";
@@ -96,7 +105,7 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"train.gb.train.train", "traingenes.good.fa", "traingenes.gtf", "utr.aa2nonred.stdout",
 	"utr.gb", "utr.gb.test", "utr.gb.train", "utr.gb.train.test", "utr.gb.train.train", "utr_genes_in_gb.fa",
 	"utr_genes_in_gb.nr.fa", "utr.nonred.loci.lst", "utrs.gff", "downsample_traingenes.log", "firstetraining.stdout", 
-	"secondetraining.stdout");
+	"secondetraining.stdout", "startAlign_gth.log", "protein_alignment_gth.gff3");
 
 my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneMark-ES/run",
 	"GeneMark-ET/data", "GeneMark-ET/info", "GeneMark-ET/output", "GeneMark-ET/run",
@@ -116,5 +125,12 @@ foreach(@dirs){
 		print "Deleting directory ".$wdir."/".$_."\n";
 		rmtree($wdir."/".$_);
 	}
+}
+
+my $gth_index = 0;
+while(-d $wdir."/align_gth".$gth_index){
+	print "Deleting directory ".$wdir."/align_gth".$gth_index."\n";
+	rmtree($wdir."/align_gth".$gth_index);
+	$gth_index = $gth_index + 1;
 }
 
