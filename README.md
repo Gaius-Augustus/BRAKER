@@ -608,7 +608,7 @@ alignments with BRAKER2 using Spaln. This is a suitable approach if an
 annotated species of short evolutionary distance to your target genome
 is available. (We recommend the usage of GenomeThreader instad of
 Spaln.) Download Spaln from
-<http://www.genome.ist.i.kyoto-u.ac.jp/~aln_user>. Unpack and install
+<https://github.com/ogotoh/spaln/releases>. Unpack and install
 according to `spaln/doc/SpalnReadMe22.pdf`.
 
 BRAKER2 will try to locate the Spaln executable by using an environment
