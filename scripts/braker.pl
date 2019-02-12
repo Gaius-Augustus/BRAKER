@@ -4056,7 +4056,7 @@ sub check_bam_headers {
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString .= "$SAMTOOLS_PATH/samtools view $bamFile > $samFile";
+                $cmdString .= "$SAMTOOLS_PATH/samtools view -\@ ".($CPU-1)." $bamFile > $samFile";
                 print LOG "\# "
                     . (localtime)
                     . ": convert BAM to SAM file $samFile\n" if ($v > 3);
@@ -4107,7 +4107,7 @@ sub check_bam_headers {
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString = "$SAMTOOLS_PATH/samtools view -bSh $samFile > $otherfilesDir/"
+                $cmdString = "$SAMTOOLS_PATH/samtools view -\@ ".($CPU-1)." -bSh $samFile > $otherfilesDir/"
                            . $_[0] . ".bam";
                 print LOG "\# "
                     . (localtime)
