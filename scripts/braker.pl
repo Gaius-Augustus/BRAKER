@@ -5219,8 +5219,16 @@ sub GeneMark_ET {
             }
 
             # consider removing --verbose, later
-            $perlCmdString .= "perl $string --verbose --sequence=$genome "
-                           .  "--ET=$genemark_hintsfile --et_score 10 "
+            $perlCmdString .= "perl $string --verbose ";
+            if(defined($transmasked_fasta)){
+                  $perlCmdString .= "--sequence=$transmasked_fasta ";
+            }else{
+                  $perlCmdString .= "--sequence=$genome ";
+            }
+            if(defined($min_contig)){
+                  $perlCmdString .= "--min_contig=$min_contig ";
+            }
+            $perlCmdString .= "--ET=$genemark_hintsfile --et_score 10 "
                            .  "--max_intergenic 50000 --cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
@@ -5280,8 +5288,16 @@ sub GeneMark_EP {
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString .= "perl $string --verbose --seq $genome "
-                           .  "--max_intergenic 50000 --ep_score 4 --EP "
+            $perlCmdString .= "perl $string --verbose ";
+            if(defined($transmasked_fasta)){
+                  $perlCmdString .= "--seq=$transmasked_fasta ";
+            }else{
+                  $perlCmdString .= "--seq $genome ";
+            }
+            if(defined($min_contig)){
+                  $perlCmdString .= "--min_contig=$min_contig ";
+            }
+            $perlCmdString .= "--max_intergenic 50000 --ep_score 4 --EP "
                            .  "$genemark_hintsfile --cores=$CPU";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
@@ -5345,8 +5361,16 @@ sub GeneMark_ETP {
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString .= "perl $string --verbose --seq $genome "
-                           .  "--max_intergenic 50000 ";
+            $perlCmdString .= "perl $string --verbose ";
+            if(defined($transmasked_fasta)){
+                  $perlCmdString .= "--seq=$transmasked_fasta ";
+            }else{
+                  $perlCmdString .= "--seq $genome ";
+            }
+            if(defined($min_contig)){
+                  $perlCmdString .= "--min_contig=$min_contig ";
+            }
+            $perlCmdString .= "--max_intergenic 50000 ";
             if(-e "$genemarkDir/evidence.gff"){
                 $perlCmdString .= "--evidence $genemarkDir/evidence.gff ";
             }
