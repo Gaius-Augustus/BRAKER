@@ -5,7 +5,8 @@
 # braker.pl                                                                                        #
 # Pipeline for predicting genes with GeneMark-EX* and AUGUSTUS                                     #
 #                                                                                                  #
-# Authors: Katharina Hoff, Simone Lange, Mario Stanke, Alexandre Lomsadze, Mark Borodovsky         #
+# Authors: Katharina Hoff, Simone Lange, Mario Stanke, Alexandre Lomsadze, Tomas Bruna,            #
+#          Mark Borodovsky                                                                         # 
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
@@ -386,7 +387,19 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 --optCfgFile=ppx.cfg                Optional custom config file for AUGUSTUS
                                     for running PPX (currently not
                                     implemented)
-
+--grass                             Switch this flag on if you are using braker.pl 
+                                    for predicting genes in grasses with 
+                                    GeneMark-ES/ET. The flag will enable
+                                    GeneMark-ES/ET to handle GC-heterogenicity
+                                    within genes more properly.
+                                    NOTHING IMPLEMENTED FOR GRASS YET!
+--transmasked_fasta=file.fa         Transmasked genome FASTA file for GeneMark
+                                    (to be used instead of the regular genome
+                                    FASTA file).  
+--min_contig=INT                    Minimal contig length for GeneMark, could
+                                    for example be set to 10000 if transmasked_fasta
+                                    option is used because transmasking might
+                                    introduce many very short contigs.
 
 
 DESCRIPTION
@@ -413,7 +426,7 @@ ENDUSAGE
 # Declartion of global variables ###############################################
 
 my $v = 4; # determines what is printed to log
-my $version = "2.1.2";
+my $version = "2.1.3";
 my $rootDir;
 my $logString = "";          # stores log messages produced before opening log file
 $logString .= "\# ". (localtime) . ": braker.pl version $version\n\n";
@@ -568,6 +581,10 @@ my @splice;
 my $AUGUSTUS_hints_preds; # for UTR training only (updating existing runs)
 my $cleanup; # enable file and directory cleanup after successful run
 # list of forbidden words for species name
+my $transmasked_fasta; # transmaked genome file for GeneMark
+my $min_contig; # min contig length for GeneMark, e.g. to be used in combination 
+                # with transmasked_fasta
+my $grass; # switch on GC treatment for GeneMark-ES/ET
 @forbidden_words = (
     "system",    "exec",  "passthru", "run",    "fork",   "qx",
     "backticks", "chmod", "chown",    "chroot", "unlink", "do",
@@ -640,6 +657,9 @@ GetOptions(
     'stranded=s'                   => \@stranded,
     'checkSoftware!'               => \$checkOnly,
     'cleanup!'                     => \$cleanup,
+    'grass!'                       => \$grass,
+    'transmasked_fasta=s'          => \$transmasked_fasta,
+    'min_contig=s'                 => \$min_contig,
     'version!'                     => \$printVersion
 );
 
@@ -1426,7 +1446,7 @@ sub set_AUGUSTUS_CONFIG_PATH {
         . "      Be aware: the \$AUGUSTUS_CONFIG_PATH must be writable for\n"
         . "                braker.pl because braker.pl is a pipeline that\n"
         . "                optimizes parameters that reside in that\n"
-        . "                directory. This might be problmatic in case you\n"
+        . "                directory. This might be problematic in case you\n"
         . "                are using a system-wide installed augustus \n"
         . "                installation that resides in a directory that is\n"
         . "                not writable to you as a user.\n";
@@ -5128,15 +5148,22 @@ sub GeneMark_ES {
 
             # consider removing --verbose, later
             $perlCmdString
-                .= "perl $string --verbose --sequence=$genome --cores=$CPU "
-                .  "--ES ";
+                .= "perl $string --verbose --cores=$CPU --ES ";
+            if(defined($transmasked_fasta)){
+                  $perlCmdString .= "--sequence=$transmasked_fasta ";
+            }else{
+                  $perlCmdString .= "--sequence=$genome ";
+            }
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
             if ($soft_mask) {
-                $perlCmdString .= " --soft_mask 1000"
-                    ; # version prior to 4.29, apparently also in version 4.33
+                $perlCmdString .= " --soft_mask=1000";
+                      # version prior to 4.29, apparently also in version 4.33
                       #     $perlCmdString .= " --soft 1000"; # version 4.29
+            }
+            if (defined($min_contig)) {
+                  $perlCmdString .= " --min_contig=10000";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Executing gmes_petap.pl\n" 
