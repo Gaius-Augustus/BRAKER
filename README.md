@@ -37,6 +37,7 @@
         -   [–lambda=int](#lambdaint)
         -   [–UTR=on](#utron)
         -   [–stranded=+,-,.,...](#stranded-....)
+	-   [–makehub –email=your@mail.de](#makehub)
 -   [Output of BRAKER2](#output-of-braker2)
 -   [Example data](#example-data)
     -   [Data description](#data-description)
@@ -560,10 +561,13 @@ set the environment variable for all bash sessions.
 #### Python3 & Biopython
 
 If Python3 and Biopython are installed, BRAKER2 can generate FASTA-files
-with coding sequences and protein sequences predicted by AUGUSTUS. This
-is an optional step, it can be disabled with the command-line flag
-`--skipGetAnnoFromFasta`; Python3 and Biopython are not required if this
-flag is set.
+with coding sequences and protein sequences predicted by AUGUSTUS and
+generate track data hubs for visualization of a BRAKER run with MakeHub.
+Both are an optional steps. The first can be disabled with the
+command-line flag `--skipGetAnnoFromFasta`, the latter can be activated
+by using the command-line options `--makehub --email=your@mail.de`;
+Python3 and Biopython are not required if neither of this steps shall
+be performed.
 
 On Ubuntu, Python3 is installed by default. Install the Python3 package
 manager with:
@@ -596,9 +600,9 @@ target genome is available. Download GenomeThreader from
 `gth/README`.
 
 BRAKER2 will try to locate the GenomeThreader executable by using an
-environment variable\
+environment variable
 `$ALIGNMENT_TOOL_PATH`. Alternatively, this can be supplied as command
-line argument\
+line argument
 (`–ALIGNMENT_TOOL_PATH=/your/path/to/gth`).
 
 #### Spaln
@@ -613,7 +617,7 @@ according to `spaln/doc/SpalnReadMe22.pdf`.
 
 BRAKER2 will try to locate the Spaln executable by using an environment
 variable `$ALIGNMENT_TOOL_PATH`. Alternatively, this can be supplied as
-command line argument\
+command line argument
 (`–ALIGNMENT_TOOL_PATH=/your/path/to/spaln`).
 
 #### Exonerate
@@ -629,10 +633,30 @@ to `exonerate/README`. (On Ubuntu, download and install by typing
 `sudo apt-get install exonerate`.)
 
 BRAKER2 will try to locate the Exonerate executable by using an
-environment variable\
+environment variable 
 `$ALIGNMENT_TOOL_PATH`. Alternatively, this can be supplied as command
-line argument\
+line argument
 (`–ALIGNMENT_TOOL_PATH=/your/path/to/exonerate`).
+
+
+#### MakeHub
+
+If you wish to automaticaly generate a track data hub of your BRAKER
+run, the MakeHub software, available at
+<https://github.com/Gaius-Augustus/MakeHub> is required.
+Download the software (either by running
+`git clone https://github.com/Gaius-Augustus/MakeHub.git`, or by
+picking a release from
+<https://github.com/Gaius-Augustus/MakeHub/releases>. Extract the
+release package if you downloaded a release (e.g. `unzip MakeHub.zip`
+or `tar -zxvf MakeHub.tar.gz`.
+
+BRAKER2 will try to locate the make_hub.py script by using an
+environment variable
+`$MAKEHUB_PATH`. Alternatively, this can be supplied as command
+line argument
+(`–MAKEHUB_PATH=/your/path/to/MakeHub/`). BRAKER can also try to
+guess the location of MakeHub on your system.
 
 Running BRAKER2
 ===============
@@ -911,6 +935,14 @@ strands of the bam files (`+` for plus strand, `-` for minus strand, `.`
 for unstranded). Note that unstranded data will be used in the gene
 prediction step, only, if the parameter `–stranded=...` is set.
 
+
+### –makehub –email=your@mail.de
+
+If `–makehub` and `–email=your@mail.de` (with your valid e-mail adress)
+are provided, a track data hub for visualizing results with the UCSC
+Genome Browser will be generated using MakeHub
+(<https://github.com/Gaius-Augustus/MakeHub>).
+
 Output of BRAKER2
 =================
 
@@ -969,6 +1001,12 @@ contains one line per predicted exon. Example:
 The columns (fields) contain:
 
     seqname source feature start end score strand frame transcript ID and gene ID
+
+If the –makehub option was used and MakeHub is available on your system,
+a hub directory beginning with the name `hub_` will be created. Copy this
+directory to a publicly accessible web server. A file `hub.txt` resides in
+the directory. Provide the link to that file to the UCSC Genome Browser
+for visualizing results.
 
 Example data
 ============
@@ -1275,8 +1313,7 @@ BRAKER2 is cited, but also the tools that are called by BRAKER2:
         of mapped RNA-Seq reads into automatic training of eukaryotic
         gene finding algorithm. Nucleic Acids Research, 42(15):e119.
 
--   If BRAKER was executed with RNA-Seq alignments in bam-format, cite
-    and:
+-   If BRAKER was executed with RNA-Seq alignments in bam-format, cite:
 
     -   Li, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J.,
         Homer, N., Marth, G., Abecasis, G., Durbin, R.; 1000 Genome
@@ -1289,10 +1326,17 @@ BRAKER2 is cited, but also the tools that are called by BRAKER2:
         analyzing and managing BAM files. Bioinformatics, 27(12):1691-2
 
 -   If BRAKER was executed with proteins of closely related species,
-    cite :
+    cite:
 
     -   Gremme, G. (2013). Computational Gene Structure Prediction. PhD
         thesis, Universität Hamburg.
+
+-  If BRAKER called MakeHub for creating a track data hub for
+   visualization of BRAKER results with the UCSC Genome Browser, cite:
+
+   -   Hoff, K.J. (2019) MakeHub: Fully automated generation of UCSC
+       Genome Browser Assembly Hubs. Preprint on bioarXive,
+       doi: <https://doi.org/10.1101/550145>.
 
 Licence
 =======
