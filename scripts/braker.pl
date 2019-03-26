@@ -1226,6 +1226,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
         } elsif ( $EPmode == 1 ) {
             # remove reformatting of hintsfile, later!
             format_ep_hints();
+            create_evidence_gff();
             check_genemark_hints();
             GeneMark_EP();
             filter_genemark();
@@ -2570,7 +2571,7 @@ sub check_upfront {
         "Scalar::Util::Numeric", "POSIX", "List::Util",
         "FindBin", "File::Which", "Cwd", "File::Spec::Functions",
         "File::Basename", "File::Copy", "Term::ANSIColor",
-        "strict", "warnings"
+        "strict", "warnings", "File::HomeDir"
     );
 
     foreach my $module (@module_list) {
@@ -4995,14 +4996,17 @@ sub format_ep_hints {
 # * introns supported by protein alignment and RNA-Seq alignment are true
 #   positives
 # * AUGUSTUS can also use these introns as manual hints
+# * also "src=M" hints from protein mapping pipeline go into this file
 ################################################################################
 
 sub create_evidence_gff {
     print LOG "\# " . (localtime) . " Creating evidence.gtf file for "
-        . "GeneMark-ETP\n" if ($v > 2);
+        . "GeneMark\n" if ($v > 2);
     my $evidenceFile = "$genemarkDir/evidence.gff";
     my %rnaseq;
     my %prot;
+    my %manual;
+    my $manualExists = 0;
     open ( HINTS, "<", $genemark_hintsfile ) or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -5023,6 +5027,9 @@ sub create_evidence_gff {
                 push ( @{$prot{$hint{'locus'}}}, \%hint);
             }elsif ( $9 =~ m/src=E/ ) {
                 push (@{$rnaseq{$hint{'locus'}}}, \%hint);
+            }elsif( $9 =~ m/src=M/ ) {
+                push (@{$manual{$hint{'locus'}}}, \%hint);
+                $manualExists = 1; # could also be tested by computing size of %manual contents
             }
         }
     }
@@ -5034,15 +5041,25 @@ sub create_evidence_gff {
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not open file $evidenceFile!\n");
-    foreach my $locus (keys %rnaseq) {
-        if( defined ($prot{$locus}) ) {
-            foreach my $hint (@{$rnaseq{$locus}}) {
-                foreach my $otherHint (@{$prot{$locus}}) {
-                    if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
-                        print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
-                        ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
+    if( $ETPmode == 1 ) {
+        foreach my $locus (keys %rnaseq) {
+            if( defined ($prot{$locus}) ) {
+                foreach my $hint (@{$rnaseq{$locus}}) {
+                    foreach my $otherHint (@{$prot{$locus}}) {
+                        if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
+                            print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
+                            ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
+                        }
                     }
                 }
+            }
+        }
+    }
+    if( $manualExists == 1 ) {
+        foreach my $locus (keys %manual) {
+            foreach my $hint (@{$manual{$locus}}){
+                print EV $locus."\t".$hint->{'source'}."\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
+                            ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
             }
         }
     }
@@ -5299,6 +5316,9 @@ sub GeneMark_EP {
             }
             $perlCmdString .= "--max_intergenic 50000 --ep_score 4 --EP "
                            .  "$genemark_hintsfile --cores=$CPU";
+            if(-e "$genemarkDir/evidence.gff"){
+                $perlCmdString .= "--evidence $genemarkDir/evidence.gff ";
+            }
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
