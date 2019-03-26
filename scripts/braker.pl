@@ -9786,7 +9786,7 @@ sub all_preds_gtf2gff3 {
 sub make_hub {
     print LOG  "\# " . (localtime) . ": generating track data hub for UCSC "
            . " Genome Browser\n" if ($v > 2);
-    my $cmdStr = $PYTHON3_PATH . "/python3 " . $MAKEHUB_PATH . "/make_hyb.py -g " . $genome 
+    my $cmdStr = $PYTHON3_PATH . "/python3 " . $MAKEHUB_PATH . "/make_hub.py -g " . $genome 
             . " -e " . $email . " -l " . "hub_" . substr($species, 0, 3) 
             . " -L " . $species . " -X " . $otherfilesDir . " -P ";
     if ($annot) {
