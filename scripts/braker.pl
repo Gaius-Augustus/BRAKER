@@ -1303,6 +1303,10 @@ if( $annot ) {
     evaluate();
 }
 
+if ( $makehub ) {
+    make_hub();
+}
+
 clean_up();         # delete all empty files
 
 close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -9774,12 +9778,12 @@ sub all_preds_gtf2gff3 {
     }
 }
 
-####################### makehub ################################################
+####################### make_hub ################################################
 # create track data hub for visualizing BRAKER results with the UCSC Genome
 # Browser using make_hub.py
-####################### makehub ################################################
+####################### make_hub ################################################
 
-sub makehub {
+sub make_hub {
     print LOG  "\# " . (localtime) . ": generating track data hub for UCSC "
            . " Genome Browser\n" if ($v > 2);
     my $cmdStr = $PYTHON3_PATH . "/python3 " . $MAKEHUB_PATH . " -g " . $genome 
