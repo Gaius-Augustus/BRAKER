@@ -769,7 +769,7 @@ if (not ($skipGetAnnoFromFasta)){
     set_PYTHON3_PATH();
 }
 if ( $makehub ) {
-    set_MAKHUB_PATH();
+    set_MAKEHUB_PATH();
 }
 $prtStr = "\# " . (localtime) . ": Configuration of BRAKER for using external "
         . "tools is complete!\n\n";
