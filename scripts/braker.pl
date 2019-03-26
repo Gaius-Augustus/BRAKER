@@ -244,6 +244,8 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
 --PYTHON3_PATH=/path/to             Set path to python3 executable (if not 
                                     specified as envirnonment variable and if
                                     executable is not in your $PATH).
+--MAKEHUB_PATH=/path/to             Set path to make_hub.py (if option --makehub
+                                    is used).
 
 EXPERT OPTIONS
 
@@ -400,6 +402,10 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     for example be set to 10000 if transmasked_fasta
                                     option is used because transmasking might
                                     introduce many very short contigs.
+--makehub                           Create track data hub with make_hub.py 
+                                    for visualizing BRAKER results with the
+                                    UCSC GenomeBrowser
+--email                             E-mail address for creating track data hub
 
 
 DESCRIPTION
@@ -444,6 +450,9 @@ my $AUGUSTUS_CONFIG_PATH;
 my $AUGUSTUS_BIN_PATH;
 my $AUGUSTUS_SCRIPTS_PATH;
 my $PYTHON3_PATH;
+my $MAKEHUB_PATH;
+my $makehub_path;
+my $email; # for make_hub.py
 my @bam;                      # bam file names
 my @stranded;                 # contains +,-,+,-... corresponding to 
                               # bam files
@@ -523,6 +532,7 @@ my $workDir;        # in the working directory results and temporary files are
                     # stored
 my $filterOutShort; # filterOutShort option (see help)
 my $augustusHintsPreds; # already existing AUGUSTUS hints prediction without UTR
+my $makehub; # flag for creating track data hub
 
 # Hint type from input hintsfile will be checked
 # a) GeneMark-ET (requires intron hints) and
@@ -606,6 +616,7 @@ GetOptions(
     'ALIGNMENT_TOOL_PATH=s'        => \$ALIGNMENT_TOOL_PATH_OP,
     'BLAST_PATH=s'                 => \$blast_path,
     'PYTHON3_PATH=s'               => \$python3_path,
+    'MAKEHUB_PATH=s'               => \$makehub_path,
     'bam=s'                        => \@bam,
     'BAMTOOLS_PATH=s'              => \$bamtools_path,
     'cores=i'                      => \$CPU,
@@ -660,6 +671,8 @@ GetOptions(
     'grass!'                       => \$grass,
     'transmasked_fasta=s'          => \$transmasked_fasta,
     'min_contig=s'                 => \$min_contig,
+    'makehub!'                     => \$makehub,
+    'email=s'                      => \$email,
     'version!'                     => \$printVersion
 );
 
@@ -754,6 +767,9 @@ if (not ($skipAllTraining)){
 }
 if (not ($skipGetAnnoFromFasta)){
     set_PYTHON3_PATH();
+}
+if ( $makehub ) {
+    set_MAKHUB_PATH();
 }
 $prtStr = "\# " . (localtime) . ": Configuration of BRAKER for using external "
         . "tools is complete!\n\n";
@@ -2442,7 +2458,7 @@ sub set_PYTHON3_PATH {
                 . ": Found environment variable \$PYTHON3_PATH. Setting "
                 . "\$PYTHON3_PATH to ".$ENV{'PYTHON3_PATH'}."\n";
             $logString .= $prtStr if ($v > 1);
-            $BLAST_PATH = $ENV{'PYTHON3_PATH'};
+            $PYTHON3_PATH = $ENV{'PYTHON3_PATH'};
         }
     }
     elsif(not(defined($python3_path))) {
@@ -2515,9 +2531,13 @@ sub set_PYTHON3_PATH {
                     .  "gene predictions in GTF-format and a genome\n"
                     .  "file in FASTA-format to FASTA files with coding\n"
                     .  "sequences and protein sequences using the AUGUSTUS\n"
-                    .  "script getAnnoFastaJoingenes.py with braker.pl.\n"
+                    .  "script getAnnoFastaJoingenes.py with braker.pl,\n"
+                    .  "and for creating track data hubs for visualizing\n"
+                    .  "gene predictions with the UCSC Genome Browser.\n"
                     .  "You can skip execution of getAnnoFastaJoingenes.py\n"
                     .  "with the braker.pl command line flag --skipGetAnnoFromFasta.\n"
+                    .  "You can skip generation of track data hubs by not providing\n"
+                    .  "the command line option --makehub."
                     .  "If you don't want to skip it, you have 3 different "
                     .  "options to provide a path to python3 to braker.pl:\n"
                     .  "   a) provide command-line argument\n"
@@ -2549,6 +2569,131 @@ sub set_PYTHON3_PATH {
         $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
             ." at line ". __LINE__ ."\n"
             . "$PYTHON3_PATH/python3 is not an executable file!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+}
+
+
+####################### set_MAKEHUB_PATH #######################################
+# * set path to make_hub.py
+################################################################################
+
+sub set_MAKEHUB_PATH {
+    # try to get path from ENV
+    if ( defined( $ENV{'MAKEHUB_PATH'} ) && not (defined($makehub_path)) ) {
+        if ( -e $ENV{'MAKEHUB_PATH'} ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Found environment variable \$MAKEHUB_PATH. Setting "
+                . "\$MAKEHUB_PATH to ".$ENV{'MAKEHUB_PATH'}."\n";
+            $logString .= $prtStr if ($v > 1);
+            $MAKEHUB_PATH = $ENV{'MAKEHUB_PATH'};
+        }
+    }elsif(not(defined($makehub_path))) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Did not find environment variable \$MAKEHUB_PATH\n";
+        $logString .= $prtStr if ($v > 1);
+    }
+
+    # try to get path from command line
+    if ( defined($makehub_path) ) {
+        my $last_char = substr( $makehub_path, -1 );
+        if ( $last_char eq "\/" ) {
+            chop($makehub_path);
+        }
+        if ( -d $makehub_path ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$MAKEHUB_PATH to command line argument "
+                . "--MAKEHUB_PATH value $makehub_path.\n";
+            $logString .= $prtStr if ($v > 1);
+            $MAKEHUB_PATH = $makehub_path;
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Command line argument --MAKEHUB_PATH was "
+                . "supplied but value $makehub_path is not a directory. Will not "
+                . "set \$MAKEHUB_PATH to $makehub_path!\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    # try to guess
+    if ( not( defined($MAKEHUB_PATH) )
+        || length($MAKEHUB_PATH) == 0 )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Trying to guess \$MAKEHUB_PATH from location of make_hub.py"
+            . " executable that is available in your \$PATH.\n";
+        $logString .= $prtStr if ($v > 1);
+        my $epath = which 'make_hub.py';
+        if ( -d dirname($epath) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$MAKEHUB_PATH to "
+                . dirname($epath) . "\n";
+            $logString .= $prtStr if ($v > 1);
+            $MAKEHUB_PATH = dirname($epath);
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Guessing the location of \$MAKEHUB_PATH "
+                . "failed. " . dirname($epath) . " is not a directory!\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    if ( not( defined($MAKEHUB_PATH) ) ) {
+        my $makehub_err;
+        $makehub_err .= "make_hub.py is required for generating track data\n"
+                    .  "hubs for visualizing gene predictions with the UCSC\n"
+                    .  "Genome Browser. You can skip execution of make_hub.py\n"
+                    .  "with the braker.pl by not providing the command line flag\n"
+                    .  "--makehub.\n"
+                    .  "If you don't want to skip it, you have 3 different "
+                    .  "options to provide a path to make_hub.py to braker.pl:\n"
+                    .  "   a) provide command-line argument\n"
+                    .  "      --MAKEHUB_PATH=/your/path\n"
+                    .  "   b) use an existing environment variable\n"
+                    . "       \$MAKEHUB_PATH\n"
+                    .  "      for setting the environment variable, run\n"
+                    .  "           export MAKEHUB_PATH=/your/path\n"
+                    .  "      in your shell. You may append this to your "
+                    .  ".bashrc or .profile file in\n"
+                    .  "      order to make the variable available to all your\n"
+                    .  "      bash sessions.\n"
+                    .  "   c) braker.pl can try guessing the location of\n"
+                    .  "      \$MAKEHUB_PATH from the location of a make_hub.py\n"
+                    .  "      executable that is available in your \$PATH\n"
+                    .  "      variable. If you try to rely on this option, you\n"
+                    . "       can check by typing\n"
+                    .  "           which make_hub.py\n"
+                    .  "      in your shell, whether there is a make_hub.py\n"
+                    .  "      executable in your \$PATH\n";
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            . " at line ". __LINE__ . "\n" . "\$MAKEHUB_PATH not set!\n";
+        $logString .= $prtStr;
+        $logString .= $makehub_err if ($v > 1);
+        print STDERR $logString;
+        exit(1);
+    }
+    if ( not ( -x "$MAKEHUB_PATH/make_hub.py" ) ) {
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "$MAKEHUB_PATH/make_hub.py is not an executable file!\n";
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
@@ -3756,6 +3901,24 @@ sub check_options {
         exit(1);
     }
 
+    if ($makehub && not($email)){
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "If --makehub option is used, --email argument value must be provided.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    } elsif (not($makehub && $email)) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "If --email option will only take effect in combination with --makehub option.\n";
+        $logString .= $prtStr;
+        print STDOUT $logString;
+    }
 }
 
 ####################### check_fasta_headers ####################################
@@ -9609,6 +9772,39 @@ sub all_preds_gtf2gff3 {
             gtf2gff3($gtf, $gff3);
         }
     }
+}
+
+####################### makehub ################################################
+# create track data hub for visualizing BRAKER results with the UCSC Genome
+# Browser using make_hub.py
+####################### makehub ################################################
+
+sub makehub {
+    print LOG  "\# " . (localtime) . ": generating track data hub for UCSC "
+           . " Genome Browser\n" if ($v > 2);
+    my $cmdStr = $PYTHON3_PATH . "/python3 " . $MAKEHUB_PATH . " -g " . $genome 
+            . " -e " . $email . " -l " . "hub_" . substr($species, 0, 3) 
+            . " -L " . $species . " -X " . $otherfilesDir . " -P ";
+    if ($annot) {
+        $cmdStr .= "-a $annot";
+    }
+    $cmdStr .= " > $otherfilesDir/makehub.log 2> $errorfilesDir/makehub.err";
+    print LOG $cmdStr . "\n"  if ($v > 3);
+    if (@bam) {
+        print LOG "BAM tracks are not automatically generated for saving "
+               . "run time; if you want to "
+               . "add BAM track(s), run:\n" 
+               .  $PYTHON3_PATH . "/python3 " . $MAKEHUB_PATH . " -l " 
+               . "hub_" . substr($species, 0, 3) . " -e " . $email . " -A " 
+               . " -B ";
+        foreach(@bam){
+            print LOG "$_ ";
+        }
+        print LOG "-c " . $CPU . "\n";
+    }
+    system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
 }
 
 ####################### clean_up ###############################################
