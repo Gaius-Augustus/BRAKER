@@ -1,33 +1,37 @@
 # BRAKER User Guide
 
-Katharina J. Hoff<sup name="aff1">[a](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>, Simone Lange<sup name="aff1">[a](#aff1)</sup>, Alexandre Lomsadze<sup name="aff3">[c](#aff3)</sup>, Tomas Bruna<sup name="aff3">[c](#aff3)</sup>,
-Mark Borodovsky<sup name="aff3">[c](#aff3)</sup><sup name="aff4">[d](#aff4)</sup><sup name="aff5">[e](#aff5)</sup>, Mario Stanke<sup name="aff1">[a](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>
+Katharina J. Hoff<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>,
 
 E-Mail contact for BRAKER software & BRAKER User Guide: katharina.hoff@uni-greifswald.de
 
 
-<b id="aff1">[a]</b>University of Greifswald,
+<b id="aff1">[a]</b> University of Greifswald,
 Institute for Mathematics and Computer Science,
 Walther-Rathenau-Str. 47,
 17489 Greifswald,
 Germany [↩](#aff1)
 
 
-<b id="aff2">[b]</b>University of Greifswald,
+<b id="aff2">[b]</b> University of Greifswald,
 Center for Functional Genomics of Microbes,
 Felix-Hausdorff-Str. 8,
 17489 Greifswald,
 Germany [↩](#aff2)
 
-<b id="aff3">[c]</b>Joint Georgia Tech and Emory University Wallace H Coulter Department of Biomedical Engineering,
+Co-authors of BRAKER are:
+
+Simone Lange<sup name="aff1">[a](#aff1)</sup>, Alexandre Lomsadze<sup name="aff3">[c](#aff3)</sup>, Tomas Bruna<sup name="aff3">[c](#aff3)</sup>,
+Mark Borodovsky<sup name="aff3">[c, ](#aff3)</sup><sup name="aff4">[d, ](#aff4)</sup><sup name="aff5">[e](#aff5)</sup>, Mario Stanke<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>
+
+<b id="aff3">[c]</b> Joint Georgia Tech and Emory University Wallace H Coulter Department of Biomedical Engineering,
 30332 Atlanta,
 USA [↩](#aff3)
 
-<b id="aff4">[d]</b>School of Computational Science and Engineering,
+<b id="aff4">[d]</b> School of Computational Science and Engineering,
 30332 Atlanta,
 USA [↩](#aff4)
 
-<b id="aff5">[e]</b>Moscow Institute of Physics and Technology,
+<b id="aff5">[e]</b> Moscow Institute of Physics and Technology,
 Moscow Region 141701,
 Dolgoprudny,
 Russia [↩](#aff5)
@@ -55,23 +59,23 @@ Contents
         -   [BRAKER with proteins of short evolutionary distance](#braker-with-proteins-of-short-evolutionary-distance)
         -   [BRAKER with RNA-Seq and protein data](#braker-with-rna-seq-and-protein-data)
     -   [Description of selected BRAKER command line options](#description-of-selected-braker-command-line-options)
-        -   [--ab_initio](#ab_initio)
-        -   [--augustus_args=--some\_arg=bla](#augustus_argssome_argbla)
-        -   [--cores=INT](#coresint)
-        -   [--fungus](#fungus)
-        -   [--softmasking](#softmasking)
-        -   [--useexisting](#useexisting)
-        -   [--crf](#crf)
-        -   [--lambda=int](#lambdaint)
-        -   [--UTR=on](#utron)
-        -   [--stranded=+,-,.,...](#stranded-....)
-	    -   [--makehub --email=your@mail.de](#makehub)
+        -   [--ab_initio](#--ab_initio)
+        -   [--augustus_args=--some\_arg=bla](#--augustus_argssome_argbla)
+        -   [--cores=INT](#--coresint)
+        -   [--fungus](#--fungus)
+        -   [--softmasking](#--softmasking)
+        -   [--useexisting](#--useexisting)
+        -   [--crf](#--crf)
+        -   [--lambda=int](#--lambdaint)
+        -   [--UTR=on](#--utron)
+        -   [--stranded=+,-,.,...](#--stranded-....)
+	    -   [--makehub --email=your@mail.de](#--makehub)
 -   [Output of BRAKER](#output-of-braker)
 -   [Example data](#example-data)
     -   [Data description](#data-description)
     -   [Testing BRAKER with RNA-Seq data](#testing-braker-with-rna-seq-data)
-    -   [Testing BRAKER with hints from proteins of remote homology](#testing-braker-with-hints-from-proteins-of-remote-homology)
-    -   [Testing BRAKER with hints from proteins of remote homology and RNA-Seq](#testing-braker-with-hints-from-proteins-of-remote-homology-and-rna-seq)
+    -   [Testing BRAKER with hints from proteins of unknown evolutionary distance](#testing-braker-with-hints-from-proteins-of-unknown-evolutionary-distance)
+    -   [Testing BRAKER with hints from proteins of unknown evolutionary distance and RNA-Seq](#testing-braker-with-hints-from-proteins-of-unknown-evolutionary-distance-and-rna-seq)
     -   [Testing BRAKER with proteins of close homology](#testing-braker-with-proteins-of-close-homology)
     -   [Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq supported training)](#testing-braker-with-proteins-of-close-homology-and-rna-seq-data-rna-seq-supported-training)
     -   [Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training)](#testing-braker-with-proteins-of-close-homoogy-and-rna-seq-data-rna-seq-and-protein-supported-training)
@@ -175,14 +179,12 @@ and pipelines:
     accuracy than all other here described pipelines. (see Figure
     [1](#fig1)),
 
-    <p align="center">
-    <a name="fig1"></a>
-    ![braker2-main-a](docs/figs/braker-es.png)
 
-    Figure 1: BRAKER pipeline A: training GeneMark-ES on genome data, only; *ab
-    initio* gene prediction with
-    AUGUSTUS
-    </p>
+![braker2-main-a\[fig1\]](docs/figs/braker-es.png)
+
+Figure 1: BRAKER pipeline A: training GeneMark-ES on genome data, only; *ab
+initio* gene prediction withAUGUSTUS
+
 
 -   Genome and RNA-Seq file from the same species (see figure
     [2](#fig2)); this approach is suitable for RNA-Seq libraries
@@ -190,14 +192,12 @@ and pipelines:
     approach requires that each intron is covered by many alignments,
     i.e. it does not work with assembled transcriptome mappings.
 
-    <p align="center">
-    <a name="fig2"></a>
-    ![braker2-main-b](docs/figs/braker1.png)
+![braker2-main-b\[fig2\]](docs/figs/braker1.png)
 
-    Figure 2: BRAKER pipeline B: training GeneMark-ET supported by RNA-Seq
-    spliced alignment information, prediction with AUGUSTUS with that
-    same spliced alignment information.
-    </p>
+Figure 2: BRAKER pipeline B: training GeneMark-ET supported by RNA-Seq
+spliced alignment information, prediction with AUGUSTUS with that
+same spliced alignment information.
+
 
 
 -   Genome file and database of proteins that may be of **unknown**
@@ -212,15 +212,12 @@ and pipelines:
     corresponding authors for this pipeline are Alexandre Lomsadze and
     Tomas Bruna (Georgia Tech).
 
-    <p align="center">
-    <a name="fig3"></a>
-    ![braker2-main-c](docs/figs/braker2_ep.png)
+![braker2-main-c\[fig3\]](docs/figs/braker2_ep.png)
 
-    Figure 3: BRAKER pipeline C: training GeneMark-EP on protein spliced
-    alignment information, prediction with AUGUSTUS with that same
-    spliced alignment information. Proteins used here can be of longer
-    evolutionary distance.
-    </p>
+Figure 3: BRAKER pipeline C: training GeneMark-EP on protein spliced
+alignment information, prediction with AUGUSTUS with that same
+spliced alignment information. Proteins used here can be of longer
+evolutionary distance.
 
 -   Genome and RNA-Seq file from the same species, and proteins that may
     be of longer evolutionary distance to the target species (see figure
@@ -228,32 +225,27 @@ and pipelines:
     of protein families, i.e. many representatives of each protein
     family must be present in the database.
 
-    <p align="center">
-    <a name="fig4"></a>
-    ![braker2-main-d](docs/figs/braker2_ep_rnaseq.png)
 
-    Figure 4: BRAKER pipeline D: training GeneMark-ETP supported by RNA-Seq
-    alignment information and protein spliced alignment information
-    (proteins can be of longer evolutionary distance), prediction with
-    AUGUSTUS using the same alignment information. Introns supported by
-    both RNA-Seq and protein alignment information are treated as “true
-    positive introns”, their prediction in gene structures by
-    GeneMark-ETP and AUGUSTUS is enforced.
-    </p>
+![braker2-main-d\[fig4\]](docs/figs/braker2_ep_rnaseq.png)
+
+Figure 4: BRAKER pipeline D: training GeneMark-ETP supported by RNA-Seq
+alignment information and protein spliced alignment information
+(proteins can be of longer evolutionary distance), prediction with
+AUGUSTUS using the same alignment information. Introns supported by
+both RNA-Seq and protein alignment information are treated as “true
+positive introns”, their prediction in gene structures by
+GeneMark-ETP and AUGUSTUS is enforced.
 
 -   Genome file and file with proteins of short evolutionary distance
     (see Figure [5](#fig5)); this approach is suitable if
     RNA-Seq data is not available and if the reference species is very
     closely related.
 
-    <p align="center">
-    <a name="fig5"></a>
-    ![braker2-sidetrack-b](docs/figs/braker2_gth.png)
+![braker2-sidetrack-b\[fig5\]](docs/figs/braker2_gth.png)
 
-    Figure 5: Additional pipeline B: training AUGUSTUS on the basis of spliced
-    alignment information from proteins of a very closely related
-    species against the target genome.
-    </p>
+Figure 5: Additional pipeline B: training AUGUSTUS on the basis of spliced
+alignment information from proteins of a very closely related
+species against the target genome.
 
 -   Genome and RNA-Seq file and proteins of short evolutionary distance
     (see Figures [6](#fig6) and [7](#fig7)).
@@ -267,28 +259,21 @@ and pipelines:
     for AUGUSTUS, and if a very closely related and already annotated
     species is available.
 
-    <p align="center">
-    <a name="fig6"></a>
-    ![braker2-sidetrack-b](docs/figs/braker2.png)
+![braker2-sidetrack-b\[fig6\]](docs/figs/braker2.png)
 
-    Figure 6: Additional pipeline A: training GeneMark-ET supported by RNA-Seq
-    spliced alignment information, prediction with AUGUSTUS with spliced
-    alignment information from RNA-Seq data and with gene features
-    determined by alignments from proteins of a very closely related
-    species against the targetgenome.
-    </p>
+Figure 6: Additional pipeline A: training GeneMark-ET supported by RNA-Seq
+spliced alignment information, prediction with AUGUSTUS with spliced
+alignment information from RNA-Seq data and with gene features
+determined by alignments from proteins of a very closely related
+species against the targetgenome.
 
-    <p align="center">
-    <a name="fig7"></a>
-    ![braker2-sidetrack-c](docs/figs/braker2_train_from_both.png)
+![braker2-sidetrack-c\[fig7\]](docs/figs/braker2_train_from_both.png)
 
-    Figure 7: Additional pipeline C: training GeneMark-ET on the basis of
-    RNA-Seq spliced alignment information, training AUGUSTUS on a set of
-    training gene structures compiled from RNA-Seq supported gene
-    structures predicted by GeneMark-ET and spliced alignment of
-    proteins of a very closely related
-    species.
-    </p>
+Figure 7: Additional pipeline C: training GeneMark-ET on the basis of
+RNA-Seq spliced alignment information, training AUGUSTUS on a set of
+training gene structures compiled from RNA-Seq supported gene
+structures predicted by GeneMark-ET and spliced alignment of
+proteins of a very closely related species.
 
 
 Installation
@@ -483,7 +468,12 @@ shebang of all GeneMark-EX scripts to use that perl version:
 
 ```
 cd gm_et_linux_64/gmes_petap/
-for f in bet_to_gff.pl bp_seq_select.pl build_mod.pl calc_introns_from_gtf.pl change_path_in_perl_scripts.pl gc_distr.pl get_sequence_from_GTF.pl gmes_petap.pl histogram.pl hmm_to_gtf.pl make_nt_freq_mat.pl parse_by_introns.pl parse_ET.pl parse_gibbs.pl parse_set.pl predict_genes.pl reformat_fasta.pl reformat_gff.pl rescale_gff.pl rnaseq_introns_to_gff.pl run_es.pl run_hmm_pbs.pl scan_for_bp.pl star_to_gff.pl verify_evidence_gmhmm.pl;
+for f in bet_to_gff.pl bp_seq_select.pl build_mod.pl calc_introns_from_gtf.pl \
+change_path_in_perl_scripts.pl gc_distr.pl get_sequence_from_GTF.pl \
+gmes_petap.pl histogram.pl hmm_to_gtf.pl make_nt_freq_mat.pl \
+parse_by_introns.pl parse_ET.pl parse_gibbs.pl parse_set.pl predict_genes.pl \
+reformat_fasta.pl reformat_gff.pl rescale_gff.pl rnaseq_introns_to_gff.pl \
+run_es.pl run_hmm_pbs.pl scan_for_bp.pl star_to_gff.pl verify_evidence_gmhmm.pl;
 do
    cat $f | perl -pe 's/\/usr\/bin\/perl/\/usr\/bin\/env perl/' > $f.tmp
    mv $f.tmp $f
@@ -796,7 +786,7 @@ call!
 
 This approach is suitable for genomes of species for which RNA-Seq
 libraries with a good coverage of the transcriptome are available. The
-pipeline is illustrated in figure \[braker-main-b\].
+pipeline is illustrated in Figure [1](#fig1).
 
 BRAKER can either extract RNA-Seq spliced alignment information from
 `bam` files, or it can use such extracted information, directly.
@@ -878,16 +868,13 @@ is not an issue. A database of proteins (with possibly longer
 evolutionary distance to the target species) may be used in this case.
 The protein mapping pipeline is illustrated in figure [8](#fig8).
 
-    <p align="center">
-    <a name="fig8"></a>
-    ![braker2-main-a](docs/figs/gatech-prot-pipeline.png)
+![braker2-main-a](docs/figs/gatech-prot-pipeline.png)
 
-    Figure 8: Protein mapping pipeline for proteins of unkown evolutionary
+Figure 8: Protein mapping pipeline for proteins of unkown evolutionary
 distance (pipeline is maintained at Georgia Tech and may change at any point
 in time). Current version will not only produce intron hints, but also
 hints for CDS regions. Pipeline automatically determines which alignments
 are from close relatives, and which are from rather distant relatives.
-    </p>
 
 Running BRAKER with proteins of longer evolutionary distance requires
 the preparation of “protein hints” before running BRAKER, itself.
@@ -1272,67 +1259,78 @@ We give runtime estimations derived from computing on a single core
 *Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz*.
 
 Testing BRAKER with RNA-Seq data
------------------------------------------------------
+--------------------------------
 
-The following command will test the pipeline according to figure
-\[braker-main-b\] (implemented in `test1.sh`):
+The following command will test the pipeline according to
+Figure [2](#fig2) (implemented in `test1.sh`):
 
+```
     braker.pl --genome=genome.fa --bam=RNAseq.bam \
        --softmasking
+```
 
 Runtime of this command is ~185 minutes.
 
-Testing BRAKER with hints from proteins of remote homology (only) (`test2.sh`)
--------------------------------------------------------------------------------
+Testing BRAKER with hints from proteins of unknown evolutionary distance
+-------------------------------------------------------------------------
 
-The following command will test the pipeline according to figure
-\[braker-main-c\]:
+The following command will test the pipeline according to
+Figure [3](#fig3) (implemented in `test2.sh`):
 
+```
     braker.pl --genome=genome.fa --hints=ep.hints \
        --epmode --softmasking
+```
 
 Runtime of this command is ~275 minutes.
 
-Testing BRAKER with hints from proteins of remote homology and RNA-Seq (`test3.sh`)
+Testing BRAKER with hints from proteins of unknown evolutionary distance and RNA-Seq
 ------------------------------------------------------------------------------------
 
 The following command will test a pipeline that first trains
 GeneMark-ETP with protein and RNA-Seq hints and subsequently trains
 AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions
-are also performed with hints from both sources.
+are also performed with hints from both sources, see Figure [4](#fig4),
+implemented in `test3.sh`:
 
+```
     braker.pl --genome=genome.fa --hints=ep.hints \
        --bam=RNAseq.bam --etpmode --softmasking
+```
 
 Runtime of this command is ~380 minutes.
 
-Testing BRAKER with proteins of close homology (only) (`test4.sh`)
--------------------------------------------------------------------
+Testing BRAKER with proteins of close homology
+----------------------------------------------
 
-The following command will test the pipeline according to figure
-\[BRAKER-sidetrack-b\]:
+The following command will test the pipeline according to Figure [5](#fig5)
+(implemented in `test4.sh`):
 
+```
     braker.pl --genome=genome.fa --prot_seq=prot.fa \
        --prg=gth --trainFromGth --softmasking
+```
 
 Runtime of this command is ~137 minutes.
 
-Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq supported training) (`test5.sh`)
-----------------------------------------------------------------------------------------------------------
+Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq supported training)
+--------------------------------------------------------------------------------------------
 
-The following command will test the pipeline according to figure
-\[BRAKER-sidetrack-a\]:
+The following command will test the pipeline according to Figure [6](#fig6)
+(implemented in `test5.sh`):
 
+```
     braker.pl --genome=genome.fa --prot_seq=prot.fa \
        --prg=gth --bam=RNAseq.bam --softmasking
+```
 
 Runtime of this command is ~214 minutes.
 
-Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training) (`test6.sh`
---------------------------------------------------------------------------------------------------------------------
+Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training)
+-------------------------------------------------------------------------------------------------------
 
-The following command will test the pipeline according to figure
-\[BRAKER-sidetrack-c\]:
+The following command will test the pipeline according to Figure [7](#fig7)
+(implemented in `test6.sh`):
 
     braker.pl --genome=genome.fa --prot_seq=prot.fa \
        --prg=gth --bam=RNAseq.bam --gth2traingenes \
@@ -1340,25 +1338,29 @@ The following command will test the pipeline according to figure
 
 Runtime of this command is ~346 minutes.
 
-Testing BRAKER with pre-trained parameters (prediction only) (`test7.sh`)
---------------------------------------------------------------------------
+Testing BRAKER with pre-trained parameters
+------------------------------------------
 
 The training step of all pipelines can be skipped with the option
 `--skipAllTraining`. This means, only AUGUSTUS predictions will be
 performed, using pre-trained, already existing parameters. For example,
-you can predict genes with the command:
+you can predict genes with the command (implemented in `test7.sh`):
 
+```
     braker.pl --genome=genome.fa --bam=RNAseq.bam \
        --species=fly --skipAllTraining --softmasking
+```
 
 Runtime of this command is ~54 minutes.
 
-Testing BRAKER with genome sequence, only (`text8.sh`)
--------------------------------------------------------
+Testing BRAKER with genome sequence
+-----------------------------------
 
-Call:
+Implemented in `test8.sh`. Call:
 
+```
     braker.pl --genome=genome.fa --esmode --softmasking
+```
 
 Runtime of this command is ~606 minutes.
 
@@ -1366,8 +1368,8 @@ Bug reporting
 =============
 
 Before reporting bugs, please check that you are using the most recent
-versions of AUGUSTUS and BRAKER. Also, check the list of *Common
-Problems* (see section \[commonproblems\]), before reporting bugs.
+versions of GeneMark-EX, AUGUSTUS and BRAKER. Also, check the list of 
+[Common problems](#common-problems), before reporting bugs.
 
 Reporting bugs on github
 ------------------------
@@ -1433,12 +1435,13 @@ files will not be present if they did not contain any errors.
 -   `braker/yourSpecies/errors/augustus*.stderr` - contain AUGUSTUS
     execution errors
 
-Common problems {#commonproblems}
+Common problems
 ---------------
 
 -   *BRAKER complains that the RNA-Seq file does not correspond to the
     provided genome file, but I am sure the files correspond to each
-    other!*\
+    other!*
+
     Please check the headers of the genome FASTA file. If the headers
     are long and contain whitespaces, some RNA-Seq alignment tools will
     truncate sequence names in the BAM file. This leads to an error with
@@ -1446,11 +1449,24 @@ Common problems {#commonproblems}
     before running the RNA-Seq alignment and BRAKER.
 
 -   *There are duplicate Loci in the `train.gb` file (after using
-    GenomeThreader)!*\
+    GenomeThreader)!*
+
     This issue arises if outdated versions of AUGUSTUS and BRAKER are
     used. Solution: Please update AUGUSTUS and BRAKER from github
     (<https://github.com/Gaius-Augustus/Augustus>,
     <https://github.com/Gaius-Augustus/BRAKER>).
+
+-   *GeneMark fails!*
+
+    GeneMark-EX requires a valid hidden key file in your home directory
+    (`~/.gm_key`). The fiel expires after 200 days. Please check
+    whether you have a valid key file before reporting an issue about
+    this. Also, BRAKER may issue a WARNING that GeneMark is likely
+    going to file due to limited extrinsic evidence. If you see that
+    warning, please don't open an issue but try a different approach
+    towards annotating your genome. For example, you can add more
+    evidence data, you can try the protein mapping pipeline approach,
+    you can try running `--esmode` without extrinsic evidence, ...
 
 Citing BRAKER and software called by BRAKER
 =============================================
@@ -1459,7 +1475,7 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools,
 publication of results obtained by BRAKER requires that not only
 BRAKER is cited, but also the tools that are called by BRAKER:
 
--   Always cite and :
+-   Always cite:
 
     -   Hoff, K.J., Lange, S., Lomsadze, A., Borodovsky, M. and
         Stanke, M. (2015). BRAKER1: unsupervised RNA-Seq-based genome
@@ -1476,7 +1492,8 @@ BRAKER is cited, but also the tools that are called by BRAKER:
         Markov model that uses hints from external sources. BMC
         Bioinformatics 7, 62.
 
--   If any kind of AUGUSTUS training was performed by BRAKER, cite :
+-   If any kind of AUGUSTUS training was performed by BRAKER, NCBI BLAST
+    will have been used, therefore cite:
 
     -   Altschul, A.F., Gish, W., Miller, W., Myers, E.W. and Lipman,
         D.J. (1990). A basic local alignment search tool. J Mol Biol,
@@ -1487,7 +1504,7 @@ BRAKER is cited, but also the tools that are called by BRAKER:
         and applications. BMC bioinformatics, 10(1):421.
 
 -   If BRAKER was executed with a genome file and no extrinsic evidence,
-    cite :
+    cite, then GeneMark-ES was used, cite:
 
     -   Lomsadze, A., Ter-Hovhannisyan, V., Chernoff, Y.O. and
         Borodovsky, M. (2005). Gene identification in novel eukaryotic
@@ -1500,13 +1517,14 @@ BRAKER is cited, but also the tools that are called by BRAKER:
         research, pages gr--081612, 2008.
 
 -   If BRAKER was executed with RNA-Seq information or with information
-    from proteins of remote homology, cite :
+    from proteins of remote homology, then GeneMark-EX was used; cite:
 
     -   Lomsadze, A., Burns, P.D. and Borodovsky, M. (2014). Integration
         of mapped RNA-Seq reads into automatic training of eukaryotic
         gene finding algorithm. Nucleic Acids Research, 42(15):e119.
 
--   If BRAKER was executed with RNA-Seq alignments in bam-format, cite:
+-   If BRAKER was executed with RNA-Seq alignments in bam-format, 
+    then SAMtools was used, cite:
 
     -   Li, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J.,
         Homer, N., Marth, G., Abecasis, G., Durbin, R.; 1000 Genome
@@ -1519,7 +1537,7 @@ BRAKER is cited, but also the tools that are called by BRAKER:
         analyzing and managing BAM files. Bioinformatics, 27(12):1691-2
 
 -   If BRAKER was executed with proteins of closely related species,
-    cite:
+    cite GenomeThreader:
 
     -   Gremme, G. (2013). Computational Gene Structure Prediction. PhD
         thesis, Universität Hamburg.
