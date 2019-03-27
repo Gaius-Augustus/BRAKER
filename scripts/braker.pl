@@ -5494,7 +5494,7 @@ sub GeneMark_EP {
             $perlCmdString .= "--max_intergenic 50000 --ep_score 4 --EP "
                            .  "$genemark_hintsfile --cores=$CPU";
             if(-e "$genemarkDir/evidence.gff"){
-                $perlCmdString .= "--evidence $genemarkDir/evidence.gff ";
+                $perlCmdString .= " --evidence $genemarkDir/evidence.gff ";
             }
             if ($fungus) {
                 $perlCmdString .= " --fungus";
