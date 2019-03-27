@@ -4998,7 +4998,7 @@ sub get_genemark_hints {
     while (<HINTS>) {
         if ( $_ =~ m/\tintron\t.*src=E/ ) {
             print OUTRNASEQ $_;
-        }elsif ( $_ =~ m/\tintron\t/i && $_ =~ m/src=P/ ) {
+        }elsif ( $_ =~ m/\tintron\t/i && ( ( $_ =~ m/src=P/) or $_ =~ m/src=M/ ) ) {
             $_ =~ s/intron/Intron/;
             print OUTPROT $_;
         }
@@ -5128,9 +5128,19 @@ sub format_ep_hints {
         print OUT "$t[0]\t$t[1]\t$t[2]\t$t[3]\t$t[4]\t$t[5]\t$t[6]\t$t[7]\t";
         if ($t[8] =~ m/Parent=/){
             if ( $t[5] == 1 ) {
-                print OUT "pri=4;src=P\n";
+                print OUT "pri=4;";
+                if($t[7] =~ m/src=([^;])/){
+                    print OUT "src=".$1."\n";
+                }else{
+                    print OUT "src=P\n";
+                }
             } else {
-                print OUT "mult=$t[5];pri=4;src=P\n";
+                print OUT "mult=$t[5];pri=4;";
+                if($t[7] =~ m/src=([^;])/){
+                    print OUT "src=".$1."\n";
+                }else{
+                    print OUT "src=P\n";
+                }
             }
         }elsif( $t[8] =~ m/so?u?rce?=/){
             if(not($_ =~ m/prio?r?i?t?y?=/)){
@@ -5237,7 +5247,7 @@ sub create_evidence_gff {
     if(-z $evidenceFile){
         print LOG "\# "
         . (localtime)
-        . ": File $evidenceFile is empty, deleteing file\n" if ($v > 2);
+        . ": File $evidenceFile is empty, deleting file\n" if ($v > 2);
         unlink $evidenceFile;
     }
 
