@@ -2404,7 +2404,7 @@ sub check_biopython{
     if (system($cmdString) != 0) {
         $prtStr = "\# "
                 . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "Could not find python3 module re:\n";
         open(PYERR, "<", $errorfile) or die ("\# " . (localtime) 
             . " ERROR: in file " . __FILE__
@@ -2426,7 +2426,7 @@ sub check_biopython{
     if (system($cmdString) != 0) {
         $prtStr = "\# "
                 . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "Could not find python3 module biopython:\n";
         open(PYERR, "<", $errorfile) or die ("\# " . (localtime) 
             . " ERROR: in file " . __FILE__
@@ -2443,8 +2443,13 @@ sub check_biopython{
         $missingPython3Module = 1;
     }
     if($missingPython3Module == 1) {
+        $prtStr = "Setting option --skipGetAnnoFromFasta. No FASTA"
+                . " files of the gene predictions will be produced. Please "
+                . " install re and biopython if you want those files produced "
+                . " in future BRAKER runs.\n";
+        $logString .= $prtStr;
+        $skipGetAnnoFromFasta = 1;
         print STDERR $logString;
-        exit(1);
     }
 }
 
