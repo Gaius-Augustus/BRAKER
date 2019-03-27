@@ -1054,7 +1054,7 @@ if ( !-d $errorfilesDir ) {
 }
 
 # need to do this check after $errorfilesDir has been set:
-if (not($skipGetAnnoFromFasta)){
+if (not($skipGetAnnoFromFasta) || $makehub){
     check_biopython();
 }
 
@@ -2449,6 +2449,14 @@ sub check_biopython{
                 . " in future BRAKER runs.\n";
         $logString .= $prtStr;
         $skipGetAnnoFromFasta = 1;
+        if( $makehub ) {
+            $prtStr = "MakeHub requires the python modules re and "
+                    . "biopython. No hub will be created because dependencies "
+                    . " are missing. Please install re and biopython if you want "
+                    . "hubs to be produced in future BRAKER runs.\n";
+            $logString .= $prtStr;
+            $makehub = 0;
+        }
         print STDERR $logString;
     }
 }
