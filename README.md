@@ -1,49 +1,23 @@
+
+
 # BRAKER User Guide
 
-Katharina J. Hoff<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>,
+Katharina J. Hoff
+University of Greifswald
+Germany
 
-E-Mail contact for BRAKER software & BRAKER User Guide: katharina.hoff@uni-greifswald.de
-
-
-<b id="aff1">[a]</b> University of Greifswald,
-Institute for Mathematics and Computer Science,
-Walther-Rathenau-Str. 47,
-17489 Greifswald,
-Germany [↩](#aff1)
-
-
-<b id="aff2">[b]</b> University of Greifswald,
-Center for Functional Genomics of Microbes,
-Felix-Hausdorff-Str. 8,
-17489 Greifswald,
-Germany [↩](#aff2)
-
-Co-authors of BRAKER are:
-
-Simone Lange<sup name="aff1">[a](#aff1)</sup>, Alexandre Lomsadze<sup name="aff3">[c](#aff3)</sup>, Tomas Bruna<sup name="aff3">[c](#aff3)</sup>,
-Mark Borodovsky<sup name="aff3">[c, ](#aff3)</sup><sup name="aff4">[d, ](#aff4)</sup><sup name="aff5">[e](#aff5)</sup>, Mario Stanke<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>
-
-<b id="aff3">[c]</b> Joint Georgia Tech and Emory University Wallace H Coulter Department of Biomedical Engineering,
-30332 Atlanta,
-USA [↩](#aff3)
-
-<b id="aff4">[d]</b> School of Computational Science and Engineering,
-30332 Atlanta,
-USA [↩](#aff4)
-
-<b id="aff5">[e]</b> Moscow Institute of Physics and Technology,
-Moscow Region 141701,
-Dolgoprudny,
-Russia [↩](#aff5)
+katharina.hoff@uni-greifswald.de
++49 3834 420 4624
+https://github.com/Gaius-Augustus/BRAKER
 
 
 Contents
 ========
 
--   [Introduction](#introduction)
-    -   [What is BRAKER?](#what-is-braker)
-    -   [Keys to successful gene prediction](#keys-to-successful-gene-prediction)
-    -   [Overview of modes for running BRAKER](#overview-of-modes-for-running-braker)
+-   [Contributors](#contributors)
+-   [What is BRAKER?](#what-is-braker)
+-   [Keys to successful gene prediction](#keys-to-successful-gene-prediction)
+-   [Overview of modes for running BRAKER](#overview-of-modes-for-running-braker)
 -   [Installation](#installation)
     -   [Supported software versions](#supported-software-versions)
     -   [BRAKER](#braker)
@@ -87,12 +61,43 @@ Contents
 -   [Citing BRAKER and software called by BRAKER](#citing-braker-and-software-called-by-braker)
 -   [License](#license)
 
-
-Introduction
+Contributors
 ============
 
+Authors of BRAKER are:
+
+Katharina J. Hoff<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>, Simone Lange<sup name="aff1">[a](#aff1)</sup>, Alexandre Lomsadze<sup name="aff3">[c](#aff3)</sup>, Tomas Bruna<sup name="aff3">[c](#aff3)</sup>,
+Mark Borodovsky<sup name="aff3">[c, ](#aff3)</sup><sup name="aff4">[d, ](#aff4)</sup><sup name="aff5">[e](#aff5)</sup>, Mario Stanke<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>
+
+<b id="aff1">[a]</b> University of Greifswald,
+Institute for Mathematics and Computer Science,
+Walther-Rathenau-Str. 47,
+17489 Greifswald,
+Germany
+
+
+<b id="aff2">[b]</b> University of Greifswald,
+Center for Functional Genomics of Microbes,
+Felix-Hausdorff-Str. 8,
+17489 Greifswald,
+Germany
+
+<b id="aff3">[c]</b> Joint Georgia Tech and Emory University Wallace H Coulter Department of Biomedical Engineering,
+30332 Atlanta,
+USA
+
+<b id="aff4">[d]</b> School of Computational Science and Engineering,
+30332 Atlanta,
+USA
+
+<b id="aff5">[e]</b> Moscow Institute of Physics and Technology,
+Moscow Region 141701,
+Dolgoprudny,
+Russia
+
+
 What is BRAKER?
-----------------
+===============
 
 The rapidly growing number of sequenced genomes requires fully automated
 methods for accurate gene structure annotation. With this goal in mind,
@@ -122,7 +127,7 @@ In this user guide, we will refer to BRAKER1 and BRAKER2 simply as
 **BRAKER** because they are executed by the same script (```braker.pl```).
 
 Keys to successful gene prediction
-----------------------------------
+==================================
 
 -   Use a high quality genome assembly. If you have a huge number of
     very short scaffolds in your genome assembly, those short scaffolds
@@ -162,7 +167,7 @@ Keys to successful gene prediction
     context with extrinsic evidence data.
 
 Overview of modes for running BRAKER
--------------------------------------
+====================================
 
 BRAKER mainly features semi-unsupervised, extrinsic evidence data
 (RNA-Seq and/or protein spliced alignment information) supported
