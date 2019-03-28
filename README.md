@@ -90,7 +90,7 @@ With this goal in mind, we have developed BRAKER1<sup name="a1">[R1](#f1)</sup>,
 However, the quality of RNA-Seq data that is available for annotating a novel genome is variable, and in some cases, RNA-Seq data is not
 available, at all.
 
-BRAKER2 is an extension of BRAKER1 which allows for **fully automated training** of the gene prediction tools GeneMark-EX <sup name="a14">[R14, ](#f14)</sup><sup name="a15">[R15](#f15)</sup>[^*1] and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the **prediction**.
+BRAKER2 is an extension of BRAKER1 which allows for **fully automated training** of the gene prediction tools GeneMark-EX <sup name="a14">[R14, ](#f14)</sup><sup name="a15">[R15](#f15)</sup><sup name="g1">[F1](#g1)</sup> and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the **prediction**.
 
 In contrast to other available methods that rely on protein homology information, BRAKER2 reaches high gene prediction accuracy even in the absence of the annotation of very closely related species and in the absence of RNA-Seq data.
 
@@ -112,7 +112,7 @@ Keys to successful gene prediction
 Overview of modes for running BRAKER
 ====================================
 
-BRAKER mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq and/or protein spliced alignment information) supported training of GeneMark-EX[^*2] and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER. In the following, we give an overview of possible input files and pipelines:
+BRAKER mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq and/or protein spliced alignment information) supported training of GeneMark-EX<sup name="g1">[F1]</sup> and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER. In the following, we give an overview of possible input files and pipelines:
 
 -   Genome file, only. In this mode, GeneMark-ES is trained on the genome sequence, alone. Long genes predicted by GeneMark-ES are selected for training AUGUSTUS. Final predictions by AUGUSTUS are *ab initio*. This approach will likely yield lower prediction accuracy than all other here described pipelines. (see Figure [1](#fig1)),
 
@@ -168,7 +168,7 @@ Supported software versions
 
 At the time of release, this BRAKER version was tested with:
 
--   AUGUSTUS 3.3.1[^*3]
+-   AUGUSTUS 3.3.1<sup name="g2">[F2](#g2)</sup>
 
 -   GeneMark-ET 4.33
 
@@ -178,9 +178,9 @@ At the time of release, this BRAKER version was tested with:
 
 -   GenomeThreader 1.7.0<sup name="a7">[R7](#f7)</sup>
 
--   (Spaln 2.3.1 <sup name="a8">[R8, ](#f8)</sup><sup name="a9">[R9, ](#f9)</sup><sup name="a10">[R10](#f10)</sup>)[^*4]
+-   (Spaln 2.3.1 <sup name="a8">[R8, ](#f8)</sup><sup name="a9">[R9, ](#f9)</sup><sup name="a10">[R10](#f10)</sup>)<sup name="g3">[F3](#g3)</sup>
 
--   (Exonerate 2.2.0 <sup name="a11">[R11](#f11)</sup>)[^*5]
+-   (Exonerate 2.2.0 <sup name="a11">[R11](#f11)</sup>)<sup name="g3">[F3]</sup>
 
 -   NCBI BLAST+ 2.2.31+ <sup name="a12">[R12, ](#f12)</sup><sup name="a13">[R13](#f13)</sup>
 
@@ -210,7 +210,7 @@ installed:
 
 -   `YAML`
 
-On Ubuntu, for example, install the modules with CPANminus[^*6]: `sudo cpanm Module::Name`, e.g. `sudo cpanm Hash::Merge`.
+On Ubuntu, for example, install the modules with CPANminus<sup name="g4">[F4](#g4)</sup>: `sudo cpanm Module::Name`, e.g. `sudo cpanm Hash::Merge`.
 
 BRAKER also uses a Perl module `helpMod.pm` that is not available on CPAN. This module is part of the BRAKER release and does not require
 separate installation.
@@ -293,7 +293,7 @@ BRAKER calls upon various bioinformatics software tools that are not part of BRA
 
 #### GeneMark-EX
 
-Download GeneMark-EX[^*7] from <http://exon.gatech.edu/GeneMark/license_download.cgi>. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
+Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/GeneMark/license_download.cgi>. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
 
 If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl`, automatically. Otherwise, BRAKER can find GeneMark-EX executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark-EX/gmes_petap/`).
 
@@ -303,7 +303,7 @@ In order to set the environment variable for your current Bash session, type:
     export GENEMARK_PATH=/your_path_to_GeneMark-ET/gmes_petap/
 ```
 
-Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.[^*8]
+Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.<sup name="g5">[F5](#g5)</sup>
 
 **Important:** GeneMark-EX will only run if a valid key file resides in your home directory. The key file will expire after 200 days, which means that you have to download a new GeneMark-EX release and a new key file after 200 days. The key file is downloaded as ```gm_key.gz```. Unpack the key file and move it to a hidden file **in your home directory** as follows:
 
@@ -393,7 +393,7 @@ BAMTOOLS by typing the following in your shell:
 ```
 
 If already in your `$PATH` variable, BRAKER will find bamtools, automatically. Otherwise, BRAKER can locate the bamtools binary either
-by using an environment variable `$BAMTOOLS_PATH`, or by taking a command line argument (`--BAMTOOLS_PATH=/your_path_to_bamtools/bin/`[^*9]). In order to set the environment variable e.g. for your current bash session, type:
+by using an environment variable `$BAMTOOLS_PATH`, or by taking a command line argument (`--BAMTOOLS_PATH=/your_path_to_bamtools/bin/`<sup name="g6">[F6](#g6)</sup>). In order to set the environment variable e.g. for your current bash session, type:
 
 ```
     export BAMTOOLS_PATH=/your_path_to_bamtools/bin/
@@ -1025,6 +1025,22 @@ License
 
 All source code, i.e. `scripts/*.pl` or `scripts/*.py` are under the Artistic License (see <http://www.opensource.org/licenses/artistic-license.php>).
 
+Footnotes
+=========
+
+<b id="g1">[F1]</b> EX = ES/ET/EP/ETP, all available for download under the name *GeneMark-ES/ET* [↩](#g1)
+
+<b id="g2">[F2]</b> Please use the latest version of AUGUSTUS distributed by the original developers, it is available from github at <https://github.com/Gaius-Augustus/Augustus>. Problems have been reported from users that tried to run BRAKER with AUGUSTUS releases maintained by third parties, i.e. Bioconda. [↩](#g2)
+
+<b id="g3">[F3]</b> Not tested in this release, we recommend using GenomeThreader, instead  [↩](#g3)
+
+<b id="g4">[F4]</b> install with `sudo apt-get install cpanminus` [↩](#g4)
+
+<b id="g5">[F5]</b> GeneMark-EX is not a mandatory tool if AUGUSTUS is to be trained from GenomeThreader aligments with the option `--trainFromGth`. [↩](#g5)
+
+<b id="g6">[F6]</b> The binary may e.g. reside in bamtools/build/src/toolkit [↩](#g6)
+
+
 References
 ==========
 
@@ -1062,22 +1078,3 @@ Oxford University Press: 2078--9.[↩](#a6)
 
 <b id="f16">[R16]</b> Hoff, K.J. 2019. MakeHub: Fully automated generation of UCSC Genome Browser Assembly Hubs. Preprint on bioarXive, doi: <https://doi.org/10.1101/550145>.[↩](#a16)
 
-
-
-[^*1]: EX = ES/ET/EP/ETP, all available for download under the name *GeneMark-ES/ET*
-
-[^*2]: EX=ES/ET/EP
-
-[^*3]: Please use the latest version of AUGUSTUS distributed by the original developers, it is available from github at <https://github.com/Gaius-Augustus/Augustus>. Problems have been reported from users that tried to run BRAKER with AUGUSTUS releases maintained by third parties, i.e. Bioconda.
-
-[^*4]: Not tested in this release, we recommend using GenomeThreader, instead
-
-[^*5]: Not tested in this release, we recommend using GenomeThreader, instead
-
-[^*6]: install with `sudo apt-get install cpanminus`
-
-[^*7]: EX=ES/ET/EP/ETP, available as *GeneMark-ES/ET*
-
-[^*8]: GeneMark-EX is not a mandatory tool if AUGUSTUS is to be trained from GenomeThreader aligments with the option `--trainFromGth`.
-
-[^*9]: The binary may e.g. reside in bamtools/build/src/toolkit
