@@ -1261,6 +1261,11 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
     training_augustus();
 }
 
+if ( $skipAllTraining == 1 && ($ETPmode or $EPmode) ){
+    format_ep_hints();
+    create_evidence_gff(); # otherwise no manual etp hints...
+}
+
 if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
     augustus("off");    # run augustus without UTR
 }
@@ -6817,7 +6822,8 @@ sub training_augustus {
                 if ($nice) {
                     $perlCmdString .= "--nice "
                 }
-                $perlCmdString  .= "--rounds=$rounds --species=$species "
+                $perlCmdString  .= "--aug_exec_dir=$AUGUSTUS_BIN_PATH --rounds=$rounds "
+                                 . "--species=$species "
                                  . "--kfold=$k_fold "
                                  . "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
                                  . "--onlytrain=$otherfilesDir/train.gb.train.train ";
