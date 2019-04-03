@@ -20,6 +20,7 @@
 use Getopt::Long;
 use File::Compare;
 use File::HomeDir;
+use File::Copy;
 use File::Path qw(make_path rmtree);
 use Module::Load::Conditional qw(can_load check_install requires);
 use Scalar::Util::Numeric qw(isint);
@@ -8252,22 +8253,84 @@ sub joingenes {
     my $genesetId = shift;
     print LOG "\# " . (localtime) . ": Executing joingenes on files $file1 and "
         . "$file2\n" if ($v > 2);
+    # determine which source set of P and E supports more transcripts
+    my $string = find(
+        "filter_augustus_gff.pl",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "perl $string --in=$file1 --src=P > $otherfilesDir/file1_ntx";
+    print LOG "# Counting the number of transcripts with support from src=P in file $file1...\n";
+    print LOG "$perlCmdString\n" if ($v > 3);
+    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
+        . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    open(NTX1, "<", "$otherfilesDir/file1_ntx") or die("ERROR in file " . __FILE__
+        . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/file1_ntx for reading!\n");
+    my $n_tx_1 = <NTX1>;
+    close(NTX1) or die("ERROR in file " . __FILE__
+        . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/file1_ntx!\n");
+    $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "perl $string --in=$file2 --src=E > $otherfilesDir/file2_ntx";
+    print LOG "# Counting the number of transcripts with support from src=E in file $file2...\n";
+    print LOG "$perlCmdString\n" if ($v > 3);
+    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
+        . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    open(NTX2, "<", "$otherfilesDir/file2_ntx") or die("ERROR in file " . __FILE__
+        . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/file2_ntx for reading!\n");
+    my $n_tx_2 = <NTX2>;
+    close(NTX1) or die("ERROR in file " . __FILE__
+        . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/file2_ntx!\n");
+    print LOG "rm $otherfilesDir/file1_ntx $otherfilesDir/file2_ntx\n";
+    unlink("$otherfilesDir/file1_ntx");
+    unlink("$otherfilesDir/file2_ntx");
+    print LOG "# File $file1 has $n_tx_1 supported transcripts, $file2 has $n_tx_2 supported transcripts\n";
+    # filter only supported transcripts from the file with fewer supported transcripts and build joingenes command
+    my $join_basis;
+    my $join_on_top;
+    if($n_tx_1 < $n_tx_2){
+        $join_basis = $file2;
+        $join_on_top = $otherfilesDir."/".$file1."_filtered";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string --in=$file1 --src=P --out=$join_on_top";
+        print LOG "# Filtering those genes that have evidence by src=P from $file1...\n";
+        print LOG "$perlCmdString\n" if ($v > 3);
+        system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
+                                            . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    }else {
+        $join_basis = $file1;
+        $join_on_top = $otherfilesDir."/".$file2."_filtered";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string --in=$file2 --src=E --out=$join_on_top";
+        print LOG "# Filtering those genes that have evidence by src=P from $file2...\n";
+        print LOG "$perlCmdString\n" if ($v > 3);
+        system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
+                                            . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    }
+    # join two prediction files (join the less supported set on top of the better supported set)
     my $joingenespath = "$AUGUSTUS_BIN_PATH/joingenes";
     $cmdString = "";
     if($nice){
         $cmdString .= "nice ";
     }
-    $cmdString .= "$joingenespath --genesets=$file1,$file2 ";
-    if( $ETPmode == 0 ){
-        $cmdString .= "--priorities=1,2 "
-    }else{
-        $cmdString .= "--priorities=2,1 "
-    }
-    $cmdString .= "--output=$otherfilesDir/join$genesetId.gtf 1> /dev/null 2> "
+    $cmdString .= "$joingenespath --genesets=$join_basis,$join_on_top --priorities=1,2 "
+               .  "--output=$otherfilesDir/join$genesetId.gtf 1> /dev/null 2> "
                .  "$errorfilesDir/joingenes$genesetId.err";
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    # find genes in introns from first gene set
     my $string = find(
         "findGenesInIntrons.pl",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -8276,14 +8339,95 @@ sub joingenes {
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    $perlCmdString .= "perl $string --in_gff=$file1 "
+    $perlCmdString .= "perl $string --in_gff=$join_basis "
                    .  "--jg_gff=$otherfilesDir/join$genesetId.gtf "
-                   .  "--out_gff=$otherfilesDir/missed.genes$genesetId.gtf 1> "
+                   .  "--out_gff=$otherfilesDir/missed.genes$genesetId"."_1.gtf 1> "
                    .  "/dev/null 2> "
-                   .  "$errorfilesDir/findGenesInIntrons$genesetId.err";
+                   .  "$errorfilesDir/findGenesInIntrons$genesetId"."_1.err";
     print LOG "$perlCmdString\n" if ($v > 3);
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    # find genes in introns from second (filtered) gene set
+        $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "perl $string --in_gff=$join_on_top "
+                   .  "--jg_gff=$otherfilesDir/join$genesetId.gtf "
+                   .  "--out_gff=$otherfilesDir/missed.genes$genesetId"."_2.gtf 1> "
+                   .  "/dev/null 2> "
+                   .  "$errorfilesDir/findGenesInIntrons$genesetId"."_2.err";
+    print LOG "$perlCmdString\n" if ($v > 3);
+    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
+        . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    # merge missed genes in a nonredundant fashion
+    if ( (-e "$otherfilesDir/missed.genes$genesetId"."_1.gtf") && (-e "$otherfilesDir/missed.genes$genesetId"."_2.gtf") ) {
+        my %tx_lines;
+        my %tx_structures;
+        open(MISSED1, "<", "$otherfilesDir/missed.genes$genesetId"."_1.gtf") or die("ERROR in file " . __FILE__
+             . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/missed.genes$genesetId"."_1.gtf for reading!\n");
+        while(<MISSED1>){
+            # need to rename transcripts because names could be the same for different txs in both files
+            $_ =~ m/(g\d+\.t\d+)/;
+            my $tx_id = "m1-".$1;
+            $_ =~ m/(g\d+)/;
+            my $g_id = "m1-".$1;
+            $_ =~ s/g\d+/$g_id/g;
+            push(@{$tx_lines{$tx_id}}, $_);
+            if( ($_ =~ m/CDS/) or ($_ =~ m/UTR/) ) {
+                my @t = split(/\t/);
+                if(not(defined(tx_structures{$tx_id}))){
+                    $tx_structures{$tx_id} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+                }else{
+                    $tx_structures{$tx_id} .= "_".$t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+                }
+            }
+        }
+        close(MISSED1) or die("ERROR in file " . __FILE__
+              . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/missed.genes$genesetId"."_1.gtf!\n");
+        open(MISSED2, "<", "$otherfilesDir/missed.genes$genesetId"."_2.gtf") or die("ERROR in file " . __FILE__
+             . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/missed.genes$genesetId"."_2.gtf for reading!\n");
+        while(<MISSED2>){
+            $_ =~ m/(g\d+\.t\d+)/;
+            my $tx_id = $1;
+            push(@{$tx_lines{$tx_id}});
+            if( ($_ =~ m/CDS/) or ($_ =~m/UTR/) ) {
+                my @t = split(/\t/);
+                if(not(defined(tx_structures{$tx_id}))){
+                    $tx_structures{$tx_id} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+                }else{
+                    $tx_structures{$tx_id} .= "_".$t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+                }
+            }
+        }
+        close(MISSED2) or die("ERROR in file " . __FILE__
+              . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/missed.genes$genesetId"."_2.gtf!\n");
+        # identify unique transcript structures
+        my %tx_to_keep;
+        while (my ($key, $value) = each (%tx_structures)) {
+            $tx_to_keep{$value} = $key;
+        }
+        open(MISSED, ">", $otherfilesDir."/missed.genes$genesetId.gtf") or die("ERROR in file " . __FILE__
+             . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir./missed.genes$genesetId.gtf for writing!\n");
+        while(my ($key, $value) = each(%tx_to_keep)){
+            foreach(@{$value}){
+                print MISSED $_;
+            }
+        }
+        close(MISSED) or die("ERROR in file " . __FILE__
+             . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir./missed.genes$genesetId.gtf!\n");
+    }elsif(-e  "$otherfilesDir/missed.genes$genesetId"."_1.gtf"){
+        move("$otherfilesDir/missed.genes$genesetId"."_1.gtf", "$otherfilesDir/missed.genes$genesetId".".gtf") or die(
+            "ERROR in file " . __FILE__
+             . " at line ". __LINE__ ."\nFailed to to move file $otherfilesDir/missed.genes$genesetId"."_1.gtf to "
+             . "$otherfilesDir/missed.genes$genesetId".".gtf!\n");
+    }elsif(-e  "$otherfilesDir/missed.genes$genesetId"."_2.gtf"){
+        move("$otherfilesDir/missed.genes$genesetId"."_2.gtf", "$otherfilesDir/missed.genes$genesetId".".gtf") or die(
+            "ERROR in file " . __FILE__
+             . " at line ". __LINE__ ."\nFailed to to move file $otherfilesDir/missed.genes$genesetId"."_2.gtf to "
+             . "$otherfilesDir/missed.genes$genesetId".".gtf!\n");
+    }
+
     if (-e "$otherfilesDir/missed.genes$genesetId.gtf") {
         $cmdString = "cat $otherfilesDir/missed.genes$genesetId.gtf >> "
                    . "$otherfilesDir/join$genesetId.gtf";
