@@ -8328,7 +8328,7 @@ sub joingenes {
     if($nice){
         $cmdString .= "nice ";
     }
-    $cmdString .= "$joingenespath --genesets=$join_basis,$join_on_top --priorities=1,2 "
+    $cmdString .= "$joingenespath --genesets=$join_basis,$join_on_top --priorities=2,1 "
                .  "--output=$otherfilesDir/join$genesetId.gtf 1> /dev/null 2> "
                .  "$errorfilesDir/joingenes$genesetId.err";
     print LOG "$cmdString\n" if ($v > 3);
