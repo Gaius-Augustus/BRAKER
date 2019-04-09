@@ -1001,7 +1001,7 @@ if ( !-d $otherfilesDir ) {
 # open log file
 $prtStr = "\# "
         . (localtime)
-        . ": Logfile: $logfile!\n";
+        . ": Log information is stored in file $logfile\n";
 print STDOUT $prtStr;
 
 open( LOG, ">" . $logfile ) or die("ERROR in file " . __FILE__ ." at line "
@@ -1227,9 +1227,12 @@ if (@hints && not ( defined($AUGUSTUS_hints_preds) )) {
     add_other_hints();
 }
 
-# extract intron hints from hintsfile.gff for GeneMark
-if (! $trainFromGth && $skipAllTraining==0 && $ESmode == 0 
-    && not ( defined($AUGUSTUS_hints_preds) ) ) {
+
+
+
+# extract intron hints from hintsfile.gff for GeneMark (in ETP mode also used for AUGUSTUS)
+if (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) || $ESmode == 1 
+    || not ( defined($AUGUSTUS_hints_preds) ) ) {
     get_genemark_hints();
 }
 
@@ -1265,6 +1268,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
 if ( $skipAllTraining == 1 && ($ETPmode or $EPmode) ){
     format_ep_hints();
     create_evidence_gff(); # otherwise no manual etp hints...
+    check_genemark_hints();
 }
 
 if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
@@ -3933,7 +3937,7 @@ sub check_options {
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
-    } elsif (not($makehub && $email)) {
+    } elsif (not($makehub) && $email) {
         $prtStr
             = "\# "
             . (localtime)
@@ -5196,7 +5200,7 @@ sub format_ep_hints {
 ################################################################################
 
 sub create_evidence_gff {
-    print LOG "\# " . (localtime) . " Creating evidence.gtf file for "
+    print LOG "\# " . (localtime) . " Creating evidence.gff file for "
         . "GeneMark\n" if ($v > 2);
     my $evidenceFile = "$genemarkDir/evidence.gff";
     my %rnaseq;
@@ -7952,7 +7956,7 @@ sub run_augustus_single_core_hints {
 ################################################################################
 
 sub adjust_pri {
-    print LOG "\# " . (localtime) . "Adjusting priority for protein hints for "
+    print LOG "\# " . (localtime) . ": Adjusting priority for protein hints for "
         . "running AUGUSTUS with RNA-Seq and protein hints simultaneously\n"
         if ($v > 2);
     my $hints = shift;
@@ -8087,8 +8091,8 @@ sub run_augustus_with_joingenes_parallel {
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E$genesetId.gff" );
     clean_aug_jobs("E$genesetId");
     make_gtf("$otherfilesDir/augustus.E$genesetId.gff");
-    joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gtf",
-        "$otherfilesDir/augustus.E$genesetId.gtf", $genesetId);
+    joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gff",
+        "$otherfilesDir/augustus.E$genesetId.gff", $genesetId);
 }
 
 ####################### run_augustus_with_joingenes_single_core ################
@@ -8187,8 +8191,8 @@ sub run_augustus_with_joingenes_single_core {
     if( !uptodate(["$otherfilesDir/augustus.Ppri5$genesetId.gtf", 
         "$otherfilesDir/augustus.E$genesetId.gtf"], 
         ["$otherfilesDir/augustus.hints$genesetId.gtf"]) || $overwrite ) {
-        joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gtf",
-            "$otherfilesDir/augustus.E$genesetId.gtf", $genesetId);
+        joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gff",
+            "$otherfilesDir/augustus.E$genesetId.gff", $genesetId);
     }else{
         print LOG "\# " . (localtime) . ": Skip running joingenes with input "
             . "files $otherfilesDir/augustus.E$genesetId.gtf and "
@@ -8244,7 +8248,7 @@ sub clean_aug_jobs {
 }
 
 ####################### joingenes ##############################################
-# * join two AUGUSTUS prediction sets in gtf formats into one
+# * join two AUGUSTUS prediction sets in gff formats into one
 ################################################################################
 
 sub joingenes {
@@ -8284,7 +8288,7 @@ sub joingenes {
     open(NTX2, "<", "$otherfilesDir/file2_ntx") or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/file2_ntx for reading!\n");
     my $n_tx_2 = <NTX2>;
-    close(NTX1) or die("ERROR in file " . __FILE__
+    close(NTX2) or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/file2_ntx!\n");
     print LOG "rm $otherfilesDir/file1_ntx $otherfilesDir/file2_ntx\n";
     unlink("$otherfilesDir/file1_ntx");
@@ -8295,7 +8299,7 @@ sub joingenes {
     my $join_on_top;
     if($n_tx_1 < $n_tx_2){
         $join_basis = $file2;
-        $join_on_top = $otherfilesDir."/".$file1."_filtered";
+        $join_on_top = $file1."_filtered";
         $perlCmdString = "";
         if ($nice) {
             $perlCmdString .= "nice ";
@@ -8307,7 +8311,7 @@ sub joingenes {
                                             . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
     }else {
         $join_basis = $file1;
-        $join_on_top = $otherfilesDir."/".$file2."_filtered";
+        $join_on_top = $file2."_filtered";
         $perlCmdString = "";
         if ($nice) {
             $perlCmdString .= "nice ";
@@ -8331,7 +8335,7 @@ sub joingenes {
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
     # find genes in introns from first gene set
-    my $string = find(
+    $string = find(
         "findGenesInIntrons.pl",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
@@ -8376,7 +8380,7 @@ sub joingenes {
             push(@{$tx_lines{$tx_id}}, $_);
             if( ($_ =~ m/CDS/) or ($_ =~ m/UTR/) ) {
                 my @t = split(/\t/);
-                if(not(defined(tx_structures{$tx_id}))){
+                if(not(defined($tx_structures{$tx_id}))){
                     $tx_structures{$tx_id} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
                 }else{
                     $tx_structures{$tx_id} .= "_".$t[0]."_".$t[3]."_".$t[4]."_".$t[6];
@@ -8390,7 +8394,7 @@ sub joingenes {
         while(<MISSED2>){
             $_ =~ m/(g\d+\.t\d+)/;
             my $tx_id = $1;
-            push(@{$tx_lines{$tx_id}});
+            push(@{$tx_lines{$tx_id}}, $_);
             if( ($_ =~ m/CDS/) or ($_ =~m/UTR/) ) {
                 my @t = split(/\t/);
                 if(not(defined(tx_structures{$tx_id}))){
@@ -8410,7 +8414,7 @@ sub joingenes {
         open(MISSED, ">", $otherfilesDir."/missed.genes$genesetId.gtf") or die("ERROR in file " . __FILE__
              . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir./missed.genes$genesetId.gtf for writing!\n");
         while(my ($key, $value) = each(%tx_to_keep)){
-            foreach(@{$value}){
+            foreach(@{$tx_lines{$value}}){
                 print MISSED $_;
             }
         }
@@ -9432,7 +9436,7 @@ sub train_utr {
 
 ####################### bam2wig ################################################
 # convert merged and sorted bam files to wig file (unstranded data)
-####################### filter_augustus ########################################
+################################################################################
 
 sub bam2wig {
     print LOG "\# " . (localtime)
@@ -9501,7 +9505,7 @@ sub bam2wig {
 
 ####################### bam2stranded_wig #######################################
 # convert strand separated bam files to  two separate wig files
-####################### filter_augustus ########################################
+################################################################################
 
 sub bam2stranded_wig{
     print LOG "\# " . (localtime)
@@ -10015,8 +10019,9 @@ sub clean_up {
         . " at line ". __LINE__
         . "\nFailed to open directory $otherfilesDir!\n");
     while ( my $file = readdir(DIR) ) {
-        if( $file =~ m/\.lst/ || $file =~ m/aug_ab_initio_/ || $file =~ m/Ppri5/ || $file =~ m/augustus\.E/
-            || $file =~ m/gff\.E/ || $file =~ m/missed/ || $file =~ m/prot_hintsfile\.aln2hints\.temp\.gff/ ||
+        if( $file =~ m/\.lst/ || $file =~ m/aug_ab_initio_/ || $file =~ m/Ppri5/ || $file =~ m/augustus\.E/ 
+            || $file =~ m/gff\.E/ || 
+            $file =~ m/missed/ || $file =~ m/prot_hintsfile\.aln2hints\.temp\.gff/ ||
             $file =~ m/aa2nonred\.stdout/ || $file =~ m/augustus\.hints\.tmp\.gtf/ ||
             $file =~ m/firstetraining\.stdout/ || $file =~ m/gbFilterEtraining\.stdout/
             || $file =~ m/secondetraining\.stdout/ || $file =~ m/traingenes\.good\.fa/ ||
