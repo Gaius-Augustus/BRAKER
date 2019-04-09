@@ -9693,7 +9693,7 @@ sub bam2stranded_wig{
 
 ####################### stranded_wig2ep_hints ##################################
 # convert stranded wig files to exonpart hints for AUGUSTUS
-####################### filter_augustus ########################################
+################################################################################
 
 sub stranded_wig2ep_hints {
     my $ep_hints_file = "$otherfilesDir/ep.hints";
@@ -9783,7 +9783,7 @@ sub stranded_wig2ep_hints {
 # filter AUGUSTUS genes for those that have support by RNA-Seq hints with
 # a minimal multiplicity of 10 in all introns (those genes will be used as
 # starting point for UTR identification). Single exon genes are discarded.
-####################### filter_augustus ########################################
+################################################################################
 
 sub filter_augustus {
     my $augustus_file = shift;
