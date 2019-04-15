@@ -1231,7 +1231,7 @@ if (@hints && not ( defined($AUGUSTUS_hints_preds) )) {
 
 
 # extract intron hints from hintsfile.gff for GeneMark (in ETP mode also used for AUGUSTUS)
-if (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) || $ESmode == 1 
+if (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) || $ESmode == 0 
     || not ( defined($AUGUSTUS_hints_preds) ) ) {
     get_genemark_hints();
 }
