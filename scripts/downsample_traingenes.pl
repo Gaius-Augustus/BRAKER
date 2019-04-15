@@ -43,7 +43,7 @@ DESCRIPTION
 
 ENDUSAGE
 
-srand 10; # make downsampling reprocucible
+srand 10; # make downsampling reproducible
 
 my $lambda = 0;
 my $in_gtf;
