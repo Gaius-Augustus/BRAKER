@@ -43,6 +43,8 @@ DESCRIPTION
 
 ENDUSAGE
 
+srand 10; # make downsampling reprocucible
+
 my $lambda = 0;
 my $in_gtf;
 my $out_gtf;
@@ -123,14 +125,12 @@ open(OUT, ">", $out_gtf) or die("Could not open file $out_gtf!\n");
 my $min_single_exon_genes = 20;
 my $single_exon_gene_counter = 0;
 my %intronNumPrinted;
-my $iter = 0; # for reproducing the same random numbers
 
 while (my ($txid, $intronNum) = each %nIntrons ) {
     if( $intronNum == 0 ) {
 	$single_exon_gene_counter++;
     }
-    my $u = srand($iter);
-    $iter++;
+    my $u = rand(1);
     my $index = $intronNum;
     # For intron numbers between 0 and $max_intron_number compare a random Poisson distributed 
     # random variable N with the intron number n and keep the gene unless N<n.
