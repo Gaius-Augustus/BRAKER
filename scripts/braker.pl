@@ -242,6 +242,11 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     not specified as environment
                                     ALIGNMENT_TOOL_PATH variable. Has higher
                                     priority than environment variable.
+--DIAMOND_PATH=/path/to/diamond     Set path to diamond, this is an alternative
+                                    to NCIB blast; you only need to specify one 
+                                    out of DIAMOND_PATH or BLAST_PATH, not both.
+                                    DIAMOND is a lot faster that BLAST and yields 
+                                    highly similar results for BRAKER.
 --BLAST_PATH=/path/to/blastall      Set path to NCBI blastall and formatdb
                                     executables if not specified as
                                     environment variable. Has higher priority
@@ -559,6 +564,8 @@ my $ALIGNMENT_TOOL_PATH;
          # stores path to binary of gth, spaln or exonerate for running
          # protein alignments
 my $ALIGNMENT_TOOL_PATH_OP;    # higher priority than environment variable
+my $DIAMOND_PATH; # path to diamond, alternative to BLAST
+my $diamond_path; # command line argument value for $DIAMOND_PATH
 my $BLAST_PATH; # path to blastall and formatdb ncbi blast executable
 my $blast_path; # command line argument value for $BLAST_PATH
 my $python3_path; # command line argument value for $PYTHON3_PATH
@@ -615,6 +622,7 @@ GetOptions(
     'AUGUSTUS_BIN_PATH=s'          => \$augustus_bin_path,
     'AUGUSTUS_SCRIPTS_PATH=s'      => \$augustus_scripts_path,
     'ALIGNMENT_TOOL_PATH=s'        => \$ALIGNMENT_TOOL_PATH_OP,
+    'DIAMOND_PATH=s'               => \$diamond_path,
     'BLAST_PATH=s'                 => \$blast_path,
     'PYTHON3_PATH=s'               => \$python3_path,
     'MAKEHUB_PATH=s'               => \$makehub_path,
@@ -764,7 +772,7 @@ if ( @prot_seq_files && !$ESmode ){
     set_ALIGNMENT_TOOL_PATH();
 }
 if (not ($skipAllTraining)){
-    set_BLAST_PATH();
+    set_BLAST_or_DIAMOND_PATH();
 }
 if (not ($skipGetAnnoFromFasta) || $makehub){
     set_PYTHON3_PATH();
@@ -824,33 +832,18 @@ if ( !-d $rootDir ) {
 }
 
 # set other directories
-if ( $wdGiven == 1 ) {
-    if ( $EPmode == 0 && $ETPmode == 0 && $ESmode == 0) {
-        $genemarkDir = "$rootDir/GeneMark-ET";
-    }elsif ( $ETPmode == 1 ) {
-        $genemarkDir = "$rootDir/GeneMark-ETP";
-    }elsif ($ESmode == 1 ) {
-        $genemarkDir = "$rootDir/GeneMark-ES";
-    } else {
-        $genemarkDir = "$rootDir/GeneMark-EP";
-    }
-    $parameterDir  = "$rootDir/species";
-    $otherfilesDir = "$rootDir";
-    $errorfilesDir = "$rootDir/errors";
+if ( $EPmode == 0 && $ETPmode == 0 && $ESmode == 0) {
+    $genemarkDir = "$rootDir/GeneMark-ET";
+}elsif ( $ETPmode == 1 ) {
+    $genemarkDir = "$rootDir/GeneMark-ETP";
+}elsif ($ESmode == 1 ) {
+    $genemarkDir = "$rootDir/GeneMark-ES";
 } else {
-    if ( $EPmode == 0 && $ETPmode == 0 && $ESmode == 0) {
-        $genemarkDir = "$rootDir/$species/GeneMark-ET";
-    } elsif ( $ETPmode == 1 ) {
-        $genemarkDir = "$rootDir/$species/GeneMark-ETP"
-    } elsif ( $ESmode == 1 ) {
-        $genemarkDir = "$rootDir/$species/GeneMark-ES";
-    } else {
-        $genemarkDir = "$rootDir/$species/GeneMark-EP";
-    }
-    $parameterDir  = "$rootDir/$species/species";
-    $otherfilesDir = "$rootDir/$species";
-    $errorfilesDir = "$rootDir/$species/errors";
+    $genemarkDir = "$rootDir/GeneMark-EP";
 }
+$parameterDir  = "$rootDir/species";
+$otherfilesDir = "$rootDir";
+$errorfilesDir = "$rootDir/errors";
 
 # if esmode, no hintsfile is given, only ab initio predictions possible
 if( $ESmode == 1 ) {
@@ -1227,14 +1220,11 @@ if (@hints && not ( defined($AUGUSTUS_hints_preds) )) {
     add_other_hints();
 }
 
-
-
-
 # extract intron hints from hintsfile.gff for GeneMark (in ETP mode also used for AUGUSTUS)
-if (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) 
-    || not ( defined($AUGUSTUS_hints_preds) ) ) {
-    if($ESmode == 0){
-        get_genemark_hints();
+
+if ( (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) ) && ($ESmode == 0)) {
+    if (not ( defined($AUGUSTUS_hints_preds)) ){
+       get_genemark_hints();
     }
 }
 
@@ -2276,32 +2266,114 @@ sub set_ALIGNMENT_TOOL_PATH {
     }
 }
 
-####################### set_BLAST_PATH #########################################
-# * set path to blastp and formatdb
+####################### set_BLAST_or_DIAMOND_PATH ##############################
+# * set path to diamond (preferred) or to blastp and formatdb
 ################################################################################
 
-sub set_BLAST_PATH {
-    # try to get path from ENV
-    if ( defined( $ENV{'BLAST_PATH'} ) && not (defined($blast_path)) ) {
-        if ( -e $ENV{'BLAST_PATH'} ) {
+sub set_BLAST_or_DIAMOND_PATH {
+    # first try to set DIAMOND_PATH because that is much faster
+
+    if(not(defined($blast_path))){ # unless blast_path is given explicitely on command line
+        # try to get path from ENV
+        if ( defined( $ENV{'DIAMOND_PATH'} ) && not (defined($diamond_path)) ) {
+            if ( -e $ENV{'DIAMOND_PATH'} ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Found environment variable \$DIAMOND_PATH. Setting "
+                    . "\$DIAMOND_PATH to ".$ENV{'DIAMOND_PATH'}."\n";
+                $logString .= $prtStr if ($v > 1);
+                $DIAMOND_PATH = $ENV{'DIAMOND_PATH'};
+            }
+        }
+        elsif(not(defined($diamond_path))) {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Found environment variable \$BLAST_PATH. Setting "
-                . "\$BLAST_PATH to ".$ENV{'BLAST_PATH'}."\n";
+                . ": Did not find environment variable \$DIAMOND_PATH\n";
             $logString .= $prtStr if ($v > 1);
-            $BLAST_PATH = $ENV{'BLAST_PATH'};
+        }
+
+        # try to get path from command line
+        if ( defined($diamond_path) ) {
+            my $last_char = substr( $diamond_path, -1 );
+            if ( $last_char eq "\/" ) {
+                chop($diamond_path);
+            }
+            if ( -d $diamond_path ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$DIAMOND_PATH to command line argument "
+                    . "--DIAMOND_PATH value $diamond_path.\n";
+                $logString .= $prtStr if ($v > 1);
+                $DIAMOND_PATH = $diamond_path;
+            }
+            else {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": WARNING: Command line argument --DIAMOND_PATH was "
+                    . "supplied but value $diamond_path is not a directory. Will not "
+                    . "set \$DIAMOND_PATH to $diamond_path!\n";
+                $logString .= $prtStr if ($v > 0);
+            }
+        }
+
+        # try to guess
+        if ( not( defined($DIAMOND_PATH) )
+            || length($DIAMOND_PATH) == 0 )
+        {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Trying to guess \$DIAMOND_PATH from location of diamond"
+                . " executable that is available in your \$PATH.\n";
+            $logString .= $prtStr if ($v > 1);
+            my $epath = which 'diamond';
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$DIAMOND_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $DIAMOND_PATH = dirname($epath);
+            }
+            else {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": WARNING: Guessing the location of \$DIAMOND_PATH "
+                    . "failed. " . dirname($epath) . " is not a directory!\n";
+                $logString .= $prtStr if ($v > 0);
+            }
         }
     }
-    elsif(not(defined($blast_path))) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": Did not find environment variable \$BLAST_PATH\n";
-        $logString .= $prtStr if ($v > 1);
+
+    if(not(defined($DIAMOND_PATH))){
+        # try to get path from ENV
+        if ( defined( $ENV{'BLAST_PATH'} ) && not (defined($blast_path)) ) {
+            if ( -e $ENV{'BLAST_PATH'} ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Found environment variable \$BLAST_PATH. Setting "
+                    . "\$BLAST_PATH to ".$ENV{'BLAST_PATH'}."\n";
+                $logString .= $prtStr if ($v > 1);
+                $BLAST_PATH = $ENV{'BLAST_PATH'};
+            }
+        }
+        elsif(not(defined($blast_path))) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Did not find environment variable \$BLAST_PATH\n";
+            $logString .= $prtStr if ($v > 1);
+        }
     }
 
-    # try to get path from command line
+    # try to get path from command line, overrule $DIAMOND_PATH
     if ( defined($blast_path) ) {
         my $last_char = substr( $blast_path, -1 );
         if ( $last_char eq "\/" ) {
@@ -2328,42 +2400,68 @@ sub set_BLAST_PATH {
     }
 
     # try to guess
-    if ( not( defined($BLAST_PATH) )
-        || length($BLAST_PATH) == 0 )
-    {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": Trying to guess \$BLAST_PATH from location of blastp"
-            . " executable that is available in your \$PATH.\n";
-        $logString .= $prtStr if ($v > 1);
-        my $epath = which 'blastp';
-        if ( -d dirname($epath) ) {
+    if(not(defined($DIAMOND_PATH))){
+        if ( not( defined($BLAST_PATH) )
+            || length($BLAST_PATH) == 0 )
+        {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": Setting \$BLAST_PATH to "
-                . dirname($epath) . "\n";
+                . ": Trying to guess \$BLAST_PATH from location of blastp"
+                . " executable that is available in your \$PATH.\n";
             $logString .= $prtStr if ($v > 1);
-            $BLAST_PATH = dirname($epath);
-        }
-        else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Guessing the location of \$BLAST_PATH "
-                . "failed. " . dirname($epath) . " is not a directory!\n";
-            $logString .= $prtStr if ($v > 0);
+            my $epath = which 'blastp';
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$BLAST_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $BLAST_PATH = dirname($epath);
+            }
+            else {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": WARNING: Guessing the location of \$BLAST_PATH "
+                    . "failed. " . dirname($epath) . " is not a directory!\n";
+                $logString .= $prtStr if ($v > 0);
+            }
         }
     }
 
-    if ( not( defined($BLAST_PATH) ) ) {
+    if ( not( defined($BLAST_PATH) ) && not ( defined($DIAMOND_PATH)) ) {
         my $blast_err;
-        $blast_err .= "There are 3 alternative ways to set this variable for "
-                   .  " aa2nonred.pl:\n"
+        $blast_err .= "aa2nonred.pl can be exectued either with DIAMOND\n"
+                   .  "or with BLAST (much slower than DIAMOND). We recommend\n"
+                   .  "using DIAMOND.\n"
+                   .  "There are 6 different ways to set one of the required\n"
+                   .  "variables \$DIAMOND_PATH or \$BLAST_PATH. Please be\n"
+                   .  "aware that you need to set only one of them, not both!\n"
                    .  "   a) provide command-line argument\n"
-                   .  "      --BLAST_PATH=/your/path\n"
+                   .  "      --DIAMOND_PATH=/your/path\n"
                    .  "   b) use an existing environment variable\n"
+                   . "       \$DIAMOND_PATH\n"
+                   .  "      for setting the environment variable, run\n"
+                   .  "           export DIAMOND_PATH=/your/path\n"
+                   .  "      in your shell. You may append this to your "
+                   .  ".bashrc or .profile file in\n"
+                   .  "      order to make the variable available to all your\n"
+                   .  "      bash sessions.\n"
+                   .  "   c) aa2nonred.pl can try guessing the location of\n"
+                   .  "      \$DIAMOND_PATH from the location of a diamond\n"
+                   .  "      executable that is available in your \$PATH\n"
+                   .  "      variable. If you try to rely on this option, you\n"
+                   . "       can check by typing\n"
+                   .  "           which diamond\n"
+                   .  "      in your shell, whether there is a diamond\n"
+                   .  "      executable in your \$PATH\n"
+                   .  "   d) provide command-line argument\n"
+                   .  "      --BLAST_PATH=/your/path\n"
+                   .  "      This will enforce the usage of BLAST in case you"
+                   .  "      have installed both BLAST and DIAMOND\n"
+                   .  "   e) use an existing environment variable\n"
                    . "       \$BLAST_PATH\n"
                    .  "      for setting the environment variable, run\n"
                    .  "           export BLAST_PATH=/your/path\n"
@@ -2371,14 +2469,17 @@ sub set_BLAST_PATH {
                    .  ".bashrc or .profile file in\n"
                    .  "      order to make the variable available to all your\n"
                    .  "      bash sessions.\n"
-                   .  "   c) aa2nonred.pl can try guessing the location of\n"
+                   .  "      BRAKER will only check for this variable if it was\n"
+                   .  "      previously unable to set a \$DIAMOND_PATH.\n"
+                   .  "   f) aa2nonred.pl can try guessing the location of\n"
                    .  "      \$BLAST_PATH from the location of a blastp\n"
                    .  "      executable that is available in your \$PATH\n"
                    .  "      variable. If you try to rely on this option, you\n"
-                   . "       can check by typing\n"
+                   .  "      can check by typing\n"
                    .  "           which blastp\n"
                    .  "      in your shell, whether there is a blastp\n"
-                   .  "      executable in your \$PATH\n";
+                   .  "      executable in your \$PATH\n"
+                   .  "      BRAKER will only try this if it did not find diamond.\n";
         $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
             . " at line ". __LINE__ . "\n" . "\$BLAST_PATH not set!\n";
         $logString .= $prtStr;
@@ -2386,20 +2487,32 @@ sub set_BLAST_PATH {
         print STDERR $logString;
         exit(1);
     }
-    if ( not ( -x "$BLAST_PATH/blastp" ) ) {
-        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
-            ." at line ". __LINE__ ."\n"
-            . "$BLAST_PATH/blastp is not an executable file!\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
-    }elsif( not ( -x "$BLAST_PATH/makeblastdb" ) ){
-        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
-            . " at line ". __LINE__ ."\n"
-            . "$BLAST_PATH/makeblastdb is not an executable file!\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
+
+    if(defined($DIAMOND_PATH) and not(defined($blast_path))){
+        if ( not ( -x "$DIAMOND_PATH/diamond" ) ) {
+            $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+                ." at line ". __LINE__ ."\n"
+                . "$DIAMOND_PATH/diamond is not an executable file!\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+        }
+    }else{
+        if ( not ( -x "$BLAST_PATH/blastp" ) ) {
+            $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+                ." at line ". __LINE__ ."\n"
+                . "$BLAST_PATH/blastp is not an executable file!\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+        }elsif( not ( -x "$BLAST_PATH/makeblastdb" ) ){
+            $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+                . " at line ". __LINE__ ."\n"
+                . "$BLAST_PATH/makeblastdb is not an executable file!\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+        }
     }
 }
 
@@ -5202,9 +5315,9 @@ sub format_ep_hints {
 ################################################################################
 
 sub create_evidence_gff {
-    print LOG "\# " . (localtime) . " Creating evidence.gff file for "
-        . "GeneMark\n" if ($v > 2);
-    my $evidenceFile = "$genemarkDir/evidence.gff";
+    print LOG "\# " . (localtime) . " Creating evidence.gff with hints from both "
+        . "RNA-Seq and proteins...\n" if ($v > 2);
+    my $evidenceFile = "$otherfilesDir/evidence.gff";
     my %rnaseq;
     my %prot;
     my %manual;
@@ -5518,8 +5631,8 @@ sub GeneMark_EP {
             }
             $perlCmdString .= "--max_intergenic 50000 --ep_score 4 --EP "
                            .  "$genemark_hintsfile --cores=$CPU";
-            if(-e "$genemarkDir/evidence.gff"){
-                $perlCmdString .= " --evidence $genemarkDir/evidence.gff ";
+            if(-e "$otherfilesDir/evidence.gff"){
+                $perlCmdString .= " --evidence $otherfilesDir/evidence.gff ";
             }
             if ($fungus) {
                 $perlCmdString .= " --fungus";
@@ -5593,8 +5706,8 @@ sub GeneMark_ETP {
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
             $perlCmdString .= "--max_intergenic 50000 ";
-            if(-e "$genemarkDir/evidence.gff"){
-                $perlCmdString .= "--evidence $genemarkDir/evidence.gff ";
+            if(-e "$otherfilesDir/evidence.gff"){
+                $perlCmdString .= "--evidence $otherfilesDir/evidence.gff ";
             }
             $perlCmdString .=  "--et_score 10 --ET $genemark_hintsfile "
                            .  "--cores=$CPU";
@@ -6304,7 +6417,11 @@ sub training_augustus {
         if ($nice) {
             $perlCmdString .= "nice ";
         }
-        $perlCmdString .= "perl $string $otherfilesDir/traingenes.good.fa $otherfilesDir/traingenes.good.nr.fa --BLAST_PATH=$BLAST_PATH --cores=$CPU 1> $stdoutfile 2>$errorfile";
+        if(defined($DIAMOND_PATH) and not(defined($blast_path))){
+            $perlCmdString .= "perl $string $otherfilesDir/traingenes.good.fa $otherfilesDir/traingenes.good.nr.fa --DIAMOND_PATH=$DIAMOND_PATH --cores=$CPU --diamond 1> $stdoutfile 2>$errorfile";
+        }else{
+            $perlCmdString .= "perl $string $otherfilesDir/traingenes.good.fa $otherfilesDir/traingenes.good.nr.fa --BLAST_PATH=$BLAST_PATH --cores=$CPU 1> $stdoutfile 2>$errorfile";
+        }
         print LOG "\# "
             . (localtime)
             . ": BLAST training gene structures against themselves:\n" if ($v > 3);
@@ -8035,14 +8152,14 @@ sub run_augustus_with_joingenes_parallel {
         }else{
             adjust_pri( $hintsfile, $adjustedHintsFile, "P", 5);
         }
-        if ( $ETPmode == 1 && -e "$genemarkDir/evidence.gff") {
-            $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+        if ( $ETPmode == 1 && -e "$otherfilesDir/evidence.gff") {
+            $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
             print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__
                 . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         } else {
             print LOG "\# " . (localtime) . " WARNING: ETPmode enabled but "
-                . "$genemarkDir/evidence.gff does not exist!\n" if ($v > 0);
+                . "$otherfilesDir/evidence.gff does not exist!\n" if ($v > 0);
         }
     } else {
         print LOG "\# " . (localtime) . " Skip creating adjusted hints file "
@@ -8070,8 +8187,8 @@ sub run_augustus_with_joingenes_parallel {
     make_gtf("$otherfilesDir/augustus.Ppri5$genesetId.gff");
     $adjustedHintsFile = "$hintsfile.E";
     get_rnaseq_hints($hintsfile, $adjustedHintsFile);
-    if ( $ETPmode == 1 && ( -e "$genemarkDir/evidence.gff" ) ) {
-        $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+    if ( $ETPmode == 1 && ( -e "$otherfilesDir/evidence.gff" ) ) {
+        $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             ." at line ". __LINE__ . "\nFailed to execute: $cmdString!\n");
@@ -8121,8 +8238,8 @@ sub run_augustus_with_joingenes_single_core {
         }else{
             adjust_pri( $hintsfile, $adjustedHintsFile, "P", 5);
         }
-        if ( $ETPmode == 1 && (-e  "$genemarkDir/evidence.gff" )) {
-            $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+        if ( $ETPmode == 1 && (-e  "$otherfilesDir/evidence.gff" )) {
+            $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
             print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__
                 . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
@@ -8160,7 +8277,7 @@ sub run_augustus_with_joingenes_single_core {
     if ( !uptodate( [$hintsfile], [$adjustedHintsFile] ) || $overwrite ) {
         get_rnaseq_hints($hintsfile, $adjustedHintsFile);
         if ( $ETPmode == 1 ) {
-            $cmdString = "cat $genemarkDir/evidence.gff >> $adjustedHintsFile";
+            $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
             print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__
                 . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
