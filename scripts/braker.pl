@@ -6349,12 +6349,6 @@ sub training_augustus {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $cmdString\n");
-            $cmdString = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-            unlink("$trainGb3.train");
-            print LOG "rm trainGb3.train\n\n" if ($v > 3);
         }
 
         # find those training genes in gtf that are still in gb
@@ -6518,18 +6512,6 @@ sub training_augustus {
             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
             "ERROR in file " . __FILE__ ." at line ". __LINE__
             ."\nFailed to execute: $cmdString!\n");
-        print LOG "\# "
-            . (localtime)
-            . ": Deleting intermediate training gene structure files:\n"
-            . "rm $trainGb2 $trainGb3 $otherfilesDir/traingenes.good.nr.fa $otherfilesDir/nonred.loci.lst $otherfilesDir/traingenes.good.gtf $otherfilesDir/etrain.bad.lst $goodLstFile\n" if ($v > 3);
-        foreach ( ($trainGb2, $trainGb3, "$otherfilesDir/traingenes.good.nr.fa", "$otherfilesDir/nonred.loci.lst", "$otherfilesDir/traingenes.good.gtf", "$otherfilesDir/etrain.bad.lst", $goodLstFile) ) {
-            if (-e $_ ) {
-                unlink ( $_ ) or clean_abort(
-                    "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                    "ERROR in file " . __FILE__ ." at line ". __LINE__
-                    . "\nFailed to delete file $_!\n");
-            }
-        }
 
         # split into training and test set
         if (!uptodate(
@@ -6578,8 +6560,13 @@ sub training_augustus {
                     = "\# "
                     . (localtime)
                     . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Number of good genes is 0, so the parameters cannot "
-                    . "be optimized. Recommended are at least 600 genes\n";
+                    . "Number of reliable training genes is 0, so the parameters cannot "
+                    . "be optimized. Recommended are at least 600 genes\n"
+                    . "You may try --esmode (running BRAKER without evidence, if you haven't done) "
+                    . "this already), in order "
+                    . "to obtain species specific parameters for your species, and later "
+                    . "re-run BRAKER with evidence with --skipAllTraining, using the previously "
+                    . "trained parameters. However, prediction accuracy may be low.\n";
                 print LOG $prtStr;
                 clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, $prtStr);
@@ -6587,7 +6574,7 @@ sub training_augustus {
             if ( $gb_good_size < 600 ) {
                 $prtStr = "\# "
                     . (localtime)
-                    . " WARNING: Number of good genes is low ($gb_good_size). "
+                    . " WARNING: Number of reliable training genes is low ($gb_good_size). "
                     . "Recommended are at least 600 genes\n";
                 print LOG $prtStr if ($v > 0);
                 print STDOUT $prtStr if ($v > 0);
@@ -8516,7 +8503,7 @@ sub joingenes {
             push(@{$tx_lines{$tx_id}}, $_);
             if( ($_ =~ m/CDS/) or ($_ =~m/UTR/) ) {
                 my @t = split(/\t/);
-                if(not(defined(tx_structures{$tx_id}))){
+                if(not(defined($tx_structures{$tx_id}))){
                     $tx_structures{$tx_id} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
                 }else{
                     $tx_structures{$tx_id} .= "_".$t[0]."_".$t[3]."_".$t[4]."_".$t[6];
@@ -10153,11 +10140,16 @@ sub clean_up {
             $file =~ m/utr_genes_in_gb\.nr\.fa/ || $file =~ m/utr\.gb\.test/ ||
             $file =~ m/utr\.gb\.train/ || $file =~ m/utr\.gb\.train\.test/ ||
             $file =~ m/utr\.gb\.train\.train/ || $file =~ m/ep\.hints/ || 
-            $file =~ m/rnaseq\.utr\.hints/ || $file =~ m/stops\.and\.starts.gff/){
+            $file =~ m/rnaseq\.utr\.hints/ || $file =~ m/stops\.and\.starts.gff/ ||
+            $file =~ m/trainGb3\.train/ || $file =~ m/traingenes\.good\.nr.\fa/ ||
+            $file =~ m/nonred\.loci\.lst/ || $file =~ m/traingenes\.good\.gtf/ ||
+            $file =~ m/etrain\.bad\.lst/ || $file =~ m/etrain\.bad\.lst/ ||
+            $file =~ m/train\.f*\.gb/ || $file =~ m/good_genes\.lst/){
             print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
             unlink( "$otherfilesDir/$file" );
         }
     }
+
     if(-e "$otherfilesDir/seqlist"){
         unlink ( "$otherfilesDir/seqlist" );
     }
