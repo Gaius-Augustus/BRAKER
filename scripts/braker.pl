@@ -1435,8 +1435,17 @@ sub set_AUGUSTUS_CONFIG_PATH {
         or length($AUGUSTUS_CONFIG_PATH) == 0 )
     {
         my $epath = which 'augustus';
-        $AUGUSTUS_CONFIG_PATH = dirname( abs_path($epath) ) . "/../config";
-        $augustus_cfg_path    = $AUGUSTUS_CONFIG_PATH;
+        if(defined($epath)){
+            $AUGUSTUS_CONFIG_PATH = dirname( abs_path($epath) ) . "/../config";
+            $augustus_cfg_path    = $AUGUSTUS_CONFIG_PATH;
+        }else{
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "Tried to find augustus binary with which but failed.\n";
+            $logString .= $prtStr;
+        }
         if ( not( -d $AUGUSTUS_CONFIG_PATH ) ) {
             $prtStr
                 = "\# "
@@ -1796,14 +1805,16 @@ sub set_BAMTOOLS_PATH {
             . " executable that is available in your \$PATH.\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'bamtools';
-        if ( -d dirname($epath) ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": Setting \$BAMTOOLS_BIN_PATH to "
-                . dirname($epath) . "\n";
-            $logString .= $prtStr if ($v > 1);
-            $BAMTOOLS_BIN_PATH = dirname($epath);
+        if(defined($epath)){
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$BAMTOOLS_BIN_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $BAMTOOLS_BIN_PATH = dirname($epath);
+            }
         }
         else {
             $prtStr
@@ -1921,14 +1932,14 @@ sub set_GENEMARK_PATH {
                     . dirname($epath) . "\n";
                 $logString .= $prtStr if ($v > 1);
                 $GENEMARK_PATH = dirname($epath);
-            } else {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": WARNING: Guessing the location of \$GENEMARK_PATH "
-                    . "failed. " . dirname($epath) . " is not a directory!\n";
-                $logString .= $prtStr if ($v > 0);
             }
+        } else {
+            $prtStr
+                 = "\# "
+                   . (localtime)
+                   . ": WARNING: Guessing the location of \$GENEMARK_PATH "
+                   . "failed. " . dirname($epath) . " is not a directory!\n";
+            $logString .= $prtStr if ($v > 0);
         }
     }
 
@@ -2027,14 +2038,16 @@ sub set_SAMTOOLS_PATH {
             . "executable in your \$PATH.\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'samtools';
-        if ( -d dirname($epath) ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": Setting \$SAMTOOLS_PATH to "
-                . dirname($epath) . "\n";
-            $logString .= $prtStr if ($v > 1);
-            $SAMTOOLS_PATH = dirname($epath);
+        if(defined($epath)){
+            if ( -d dirname($epath) ) {
+                  $prtStr
+                        = "\# "
+                        . (localtime)
+                        . ": Setting \$SAMTOOLS_PATH to "
+                        . dirname($epath) . "\n";
+                        $logString .= $prtStr if ($v > 1);
+                        $SAMTOOLS_PATH = dirname($epath);
+            }
         }
         else {
             $prtStr
@@ -2137,7 +2150,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                         . "\$PATH.\n";
                     $logString .= $prtStr if ($v > 1);
                     my $epath = which 'gth';
-                    if( length($epath) > 0 ) {
+                    if( defined($epath) ) {
                         if ( -d dirname($epath) ) {
                             $prtStr
                                 = "\# "
@@ -2168,14 +2181,16 @@ sub set_ALIGNMENT_TOOL_PATH {
                         . "location of Exonerate executable in your \$PATH.\n";
                     $logString .= $prtStr if ($v > 1);
                     my $epath = which 'exonerate';
-                    if ( -d dirname($epath) ) {
-                        $prtStr
-                            = "\# "
-                            . (localtime)
-                            . ": Setting \$ALIGNMENT_TOOL_PATH to "
-                            . dirname($epath) . "\n";
-                        $logString .= $prtStr if ($v > 1);
-                        $ALIGNMENT_TOOL_PATH = dirname($epath);
+                    if(defined($epath)){
+                        if ( -d dirname($epath) ) {
+                            $prtStr
+                                = "\# "
+                                . (localtime)
+                                . ": Setting \$ALIGNMENT_TOOL_PATH to "
+                                . dirname($epath) . "\n";
+                            $logString .= $prtStr if ($v > 1);
+                            $ALIGNMENT_TOOL_PATH = dirname($epath);
+                        }
                     }
                     else {
                         $prtStr
@@ -2197,14 +2212,16 @@ sub set_ALIGNMENT_TOOL_PATH {
                         . "from location of Spaln executable in your \$PATH.\n";
                     $logString .= $prtStr if ($v > 1);
                     my $epath = which 'spaln';
-                    if ( -d dirname($epath) ) {
-                        $prtStr
-                            = "\# "
-                            . (localtime)
-                            . ": Setting \$ALIGNMENT_TOOL_PATH to "
-                            . dirname($epath) . "\n";
-                        $logString .= $prtStr if ($v > 1);
-                        $ALIGNMENT_TOOL_PATH = dirname($epath);
+                    if(defined($epath)){
+                        if ( -d dirname($epath) ) {
+                            $prtStr
+                                = "\# "
+                                . (localtime)
+                                . ": Setting \$ALIGNMENT_TOOL_PATH to "
+                                . dirname($epath) . "\n";
+                            $logString .= $prtStr if ($v > 1);
+                            $ALIGNMENT_TOOL_PATH = dirname($epath);
+                        }
                     }
                     else {
                         $prtStr
@@ -2331,14 +2348,16 @@ sub set_BLAST_or_DIAMOND_PATH {
                 . " executable that is available in your \$PATH.\n";
             $logString .= $prtStr if ($v > 1);
             my $epath = which 'diamond';
-            if ( -d dirname($epath) ) {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": Setting \$DIAMOND_PATH to "
-                    . dirname($epath) . "\n";
-                $logString .= $prtStr if ($v > 1);
-                $DIAMOND_PATH = dirname($epath);
+            if(defined($epath)){
+                if ( -d dirname($epath) ) {
+                    $prtStr
+                        = "\# "
+                        . (localtime)
+                        . ": Setting \$DIAMOND_PATH to "
+                        . dirname($epath) . "\n";
+                    $logString .= $prtStr if ($v > 1);
+                    $DIAMOND_PATH = dirname($epath);
+                }
             }
             else {
                 $prtStr
@@ -2411,14 +2430,16 @@ sub set_BLAST_or_DIAMOND_PATH {
                 . " executable that is available in your \$PATH.\n";
             $logString .= $prtStr if ($v > 1);
             my $epath = which 'blastp';
-            if ( -d dirname($epath) ) {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": Setting \$BLAST_PATH to "
-                    . dirname($epath) . "\n";
-                $logString .= $prtStr if ($v > 1);
-                $BLAST_PATH = dirname($epath);
+            if(defined($epath)){
+                if ( -d dirname($epath) ) {
+                    $prtStr
+                        = "\# "
+                        . (localtime)
+                        . ": Setting \$BLAST_PATH to "
+                        . dirname($epath) . "\n";
+                    $logString .= $prtStr if ($v > 1);
+                    $BLAST_PATH = dirname($epath);
+                }
             }
             else {
                 $prtStr
@@ -2648,14 +2669,16 @@ sub set_PYTHON3_PATH {
             . " executable that is available in your \$PATH.\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'python3';
-        if ( -d dirname($epath) ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": Setting \$PYTHON3_PATH to "
-                . dirname($epath) . "\n";
-            $logString .= $prtStr if ($v > 1);
-            $PYTHON3_PATH = dirname($epath);
+        if(defined($epath)){
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$PYTHON3_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $PYTHON3_PATH = dirname($epath);
+            }
         }
         else {
             $prtStr
@@ -2779,14 +2802,16 @@ sub set_MAKEHUB_PATH {
             . " executable that is available in your \$PATH.\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'make_hub.py';
-        if ( -d dirname($epath) ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": Setting \$MAKEHUB_PATH to "
-                . dirname($epath) . "\n";
-            $logString .= $prtStr if ($v > 1);
-            $MAKEHUB_PATH = dirname($epath);
+        if(defined($epath)){
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$MAKEHUB_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $MAKEHUB_PATH = dirname($epath);
+            }
         }
         else {
             $prtStr
@@ -8784,7 +8809,14 @@ sub eval_gene_pred {
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     my $epath = which 'evaluate_gtf.pl';
-    $epath = dirname( abs_path($epath) );
+    if(defined($epath)){
+        $epath = dirname( abs_path($epath) );
+    }else{
+        print LOG "\# "
+            . (localtime)
+            . ": ERROR: Cannot find validate_gtf because which did not find evaluate_gtf.pl!\n";
+        exit(1);
+    }
     my $validate_gtf = "$epath/validate_gtf.pl";
     if ( not( -e $validate_gtf ) ) {
         print LOG "\# "
