@@ -134,15 +134,17 @@ $/="\n";
 while(<INTRONS>){
     chomp;
     my @line = split(/\t/, $_);
+    if(scalar(@line) == 9){
     my $strand = findStrand($line[0], $line[3], $line[4]);
-    if( $strand eq "+" || $strand eq "-") {
-        my $score;
-        if($mult_score){
-            $score = getScore($line[8]);
-        }else{
-            $score = $line[5];
-        }
-        print "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$score\t$strand\t$line[7]\t$line[8]\n";
+      if( $strand eq "+" || $strand eq "-") {
+          my $score;
+          if($mult_score){
+              $score = getScore($line[8]);
+          }else{
+              $score = $line[5];
+          }
+          print "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$score\t$strand\t$line[7]\t$line[8]\n";
+      }
     }
 }
 close(INTRONS) or die("Could not close introns file $introns!\n");
