@@ -4503,6 +4503,7 @@ sub make_rnaseq_hints {
     print LOG "\# "
         . (localtime)
         . ": Converting bam files to hints\n" if ($v > 2);
+    # step 1: run augustus bam2hints in parallel
     my $bam_hints;
     my $hintsfile_temp = "$otherfilesDir/hintsfile.temp.gff";
     my $bam_temp; 
@@ -4511,46 +4512,48 @@ sub make_rnaseq_hints {
         $errorfile = "$errorfilesDir/bam2hints.$i.stderr";
         $stdoutfile = "$errorfilesDir/bam2hints.$i.stdout";
         $bam_temp = "$otherfilesDir/bam2hints.temp.$i.gff";
-        if ( !uptodate( [ $bam[$i] ], [$hintsfile] ) || $overwrite ) {
-            $bam[$i] = check_bam_headers( $bam[$i] );
-            if ( -e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints" ) {
-                $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
-            }
-            else {
-                $augpath = "$AUGUSTUS_BIN_PATH/bam2hints";
-            }
-            $cmdString = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-            $cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 1> $stdoutfile 2>$errorfile";
-            print LOG "\# "
-                . (localtime)
-                . ": make hints from BAM file $bam[$i]\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
-            my $jid = $pj->start and next;
-            system("$cmdString") == 0
-                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-                    $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ ."\nFailed to execute: $cmdString!\n");
-            $cmdString = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-            $cmdString .= "cat $bam_temp >>$hintsfile_temp";
-            print LOG "\n\# "
-                . (localtime)
-                . ": add hints from BAM file $bam[$i] to hints file\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
-            system("$cmdString") == 0
-                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-                    $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ ."\nfailed to execute: $cmdString!\n");
-            $pj->finish;
+        $bam[$i] = check_bam_headers( $bam[$i] );
+        if ( -e "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints" ) {
+            $augpath = "$AUGUSTUS_CONFIG_PATH/../bin/bam2hints";
         }
+        else {
+            $augpath = "$AUGUSTUS_BIN_PATH/bam2hints";
+        }
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "$augpath --intronsonly --in=$bam[$i] --out=$bam_temp 1> $stdoutfile 2>$errorfile";
+        print LOG "\# "
+            . (localtime)
+            . ": make hints from BAM file $bam[$i]\n" if ($v > 3);
+        print LOG "$cmdString\n\n" if ($v > 3);
+        my $jid = $pj->start and next;
+        system("$cmdString") == 0
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to execute: $cmdString!\n");
+        $pj->finish;
     }
     $pj->wait_all_children;
-    unlink($bam_temp);
+    # step 2: concatenate results of bam2hints (should not be run parallel)
+    for ( my $i = 0; $i < scalar(@bam); $i++ ) {
+        $bam_temp = "$otherfilesDir/bam2hints.temp.$i.gff";
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "cat $bam_temp >>$hintsfile_temp";
+        print LOG "\n\# "
+            . (localtime)
+            . ": add hints from BAM file $bam[$i] to hints file\n" if ($v > 3);
+        print LOG "$cmdString\n\n" if ($v > 3);
+        system("$cmdString") == 0
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nfailed to execute: $cmdString!\n");
+        unlink($bam_temp);
+    }
     if ( -f $hintsfile_temp || $overwrite ) {
         if ( !uptodate( [$hintsfile_temp], [$hintsfile] ) || $overwrite ) {
             join_mult_hints( $hintsfile_temp, "rnaseq" );
