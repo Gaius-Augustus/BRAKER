@@ -5472,7 +5472,8 @@ sub check_genemark_hints {
             . ": WARNING: \n"
             . "The file $genemark_hintsfile contains less than 150 "
             . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
-            . "total, $nIntrons unique introns are contained. $nIntronsAboveThreshold have a multiplicity >= 10.) Possibly, you "
+            . "total, $nIntrons unique introns are contained. "
+            .  "$nIntronsAboveThreshold have a multiplicity >= 10.) Possibly, you "
             . "are trying to run braker.pl on data that does not supply "
             . "multiplicity information. This will e.g. happen if you try to "
             . "use introns generated from assembled RNA-Seq transcripts; or if "
@@ -6015,7 +6016,9 @@ sub new_species {
                 if ($nice) {
                     $perlCmdString .= "nice ";
                 }
-                $perlCmdString .= "perl $string --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH 1> /dev/null 2>$errorfile";
+                $perlCmdString .= "perl $string --species=$species "
+                               .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                               .  "1> /dev/null 2>$errorfile";
                 print LOG "\# "
                     . (localtime)
                     . ": new_species.pl will create parameter files for "
@@ -6028,8 +6031,7 @@ sub new_species {
                     . "check write permissions in "
                     . "$AUGUSTUS_CONFIG_PATH/species directory! "
                     . "Command was $perlCmdString\n\n");
-            }
-            else {
+            } else {
                 $prtStr = "\# "
                         . (localtime)
                         . ": ERROR: in file " . __FILE__ ." at line ". __LINE__
@@ -6041,8 +6043,7 @@ sub new_species {
                 print STDERR $prtStr;
                 exit(1);
             }
-        }
-        else {
+        } else {
             $prtStr = "\# "
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__
@@ -6448,13 +6449,19 @@ sub training_augustus {
             $perlCmdString .= "nice ";
         }
         if(defined($DIAMOND_PATH) and not(defined($blast_path))){
-            $perlCmdString .= "perl $string $otherfilesDir/traingenes.good.fa $otherfilesDir/traingenes.good.nr.fa --DIAMOND_PATH=$DIAMOND_PATH --cores=$CPU --diamond 1> $stdoutfile 2>$errorfile";
+            $perlCmdString .= "perl $string $otherfilesDir/traingenes.good.fa "
+                           .  "$otherfilesDir/traingenes.good.nr.fa "
+                           .  "--DIAMOND_PATH=$DIAMOND_PATH --cores=$CPU "
+                           .  "--diamond 1> $stdoutfile 2>$errorfile";
         }else{
-            $perlCmdString .= "perl $string $otherfilesDir/traingenes.good.fa $otherfilesDir/traingenes.good.nr.fa --BLAST_PATH=$BLAST_PATH --cores=$CPU 1> $stdoutfile 2>$errorfile";
+            $perlCmdString .= "perl $string $otherfilesDir/traingenes.good.fa "
+                           .  "$otherfilesDir/traingenes.good.nr.fa "
+                           .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU 1> "
+                           .  "$stdoutfile 2>$errorfile";
         }
         print LOG "\# "
             . (localtime)
-            . ": BLAST training gene structures against themselves:\n" if ($v > 3);
+            . ": BLAST or DIAMOND training gene structures against themselves:\n" if ($v > 3);
         print LOG "$perlCmdString\n\n" if ($v > 3);
         system("$perlCmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -7006,7 +7013,10 @@ sub training_augustus {
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
+            $cmdString .= "$augpath --species=$species "
+                       .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                       .  "$otherfilesDir/train.gb.train 1>$stdoutfile "
+                       .  "2>$errorfile";
             print LOG "\# " . (localtime) . ": Second etraining\n" if ($v > 3);
             print LOG "$cmdString\n\n" if ($v > 3);
             system("$cmdString") == 0
@@ -7030,7 +7040,9 @@ sub training_augustus {
                 $cmdString .= "nice ";
             }
             $cmdString
-                .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test >$stdoutfile 2>$errorfile";
+                .= "$augpath --species=$species "
+                .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                .  "$otherfilesDir/train.gb.test >$stdoutfile 2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": Second AUGUSTUS accuracy test\n" if ($v > 3);
@@ -7061,7 +7073,10 @@ sub training_augustus {
             if ($nice) {
                 $cmdString .= "nice ";
             }
-            $cmdString .= "$augpath --species=$species --CRF=1 --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
+            $cmdString .= "$augpath --species=$species --CRF=1 "
+                       .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                       .  "$otherfilesDir/train.gb.train 1>$stdoutfile "
+                       .  "2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": Third etraining - now with CRF\n" if ($v > 3);
@@ -7088,7 +7103,10 @@ sub training_augustus {
                 if ($nice) {
                     $cmdString .= "nice ";
                 }
-                $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.test >$stdoutfile 2>$errorfile";
+                $cmdString .= "$augpath --species=$species "
+                           .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                           .  "$otherfilesDir/train.gb.test >$stdoutfile "
+                           .  "2>$errorfile";
                 print LOG "\# "
                     . (localtime)
                     . ": Third AUGUSTUS accuracy test\n" if ($v > 3);
@@ -7126,7 +7144,8 @@ sub training_augustus {
                 )
                 )
             {
-                $cmdString = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ $AUGUSTUS_CONFIG_PATH/species/$species/$_" . ".CRF";
+                $cmdString = "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ "
+                           . "$AUGUSTUS_CONFIG_PATH/species/$species/$_" . ".CRF";
                 print LOG "$cmdString\n" if ($v > 3);
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -7184,7 +7203,8 @@ sub training_augustus {
 }
 
 ####################### combine_gm_and_gth_gtf #################################
-# * combine gth and genemark gtf files
+# * combine gth and genemark gtf files for creating a joined training set for
+#   AUGUSTUS (note: that's apparently not a very good approach)
 # * find those genes in gth.gtf that overlap on genome level with genemark.gtf
 #   and print them
 # * TODO: better method for joining gene sets
@@ -7496,11 +7516,10 @@ sub augustus {
                 run_augustus_jobs( "$otherfilesDir/ab_initio$genesetId.job.lst" );
                 join_aug_pred( $augustus_dir_ab_initio,
                     "$otherfilesDir/augustus.ab_initio$genesetId.gff" );
-                make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
             } else {
                 run_augustus_single_core_ab_initio( $localUTR , $genesetId);
-                make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
             }
+            make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
         } else {
             print LOG "\# " . (localtime) . ": Skipping predicting genes with "
                 . "AUGUSTUS ab initio because file "
@@ -7947,7 +7966,12 @@ sub join_aug_pred {
     $string = find(
         "join_aug_pred.pl",     $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    my $cat_file = "$otherfilesDir/augustus.tmp.gff";
+    my $cat_file;
+    if(-e "$otherfilesDir/augustus.tmp1.gff"){
+        $cat_file = "$otherfilesDir/augustus.tmp2.gff";
+    }else{
+        $cat_file = "$otherfilesDir/augustus.tmp1.gff";
+    }
     my @t = split(/\//, $pred_dir);
     $t[scalar(@t)-1] =~ s/\///;
     my $error_cat_file = "$errorfilesDir/augustus_".$t[scalar(@t)-1].".err";
@@ -7955,7 +7979,7 @@ sub join_aug_pred {
         . ": Concatenating AUGUSTUS output files in $pred_dir\n" if ($v > 3);
     opendir( DIR, $pred_dir ) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to open directory $pred_dir!\n");
-    # need to contenate gff files in the correct order along chromosomes for
+    # need to concatenate gff files in the correct order along chromosomes for
     # join_aug_pred.pl
     my %gff_files;
     my %err_files;
@@ -8020,11 +8044,13 @@ sub join_aug_pred {
     system("$perlCmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             ."\nFailed to execute $perlCmdString\n");
-    print LOG "\# " . (localtime) . ": Deleting $pred_dir\n" if ($v > 3);
-    rmtree( ["$pred_dir"] ) or die ("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to delete $pred_dir!\n");
-    print LOG "\# " . (localtime) . ": Deleting $cat_file\n" if ($v > 3);
-    unlink($cat_file);
+    if($cleanup){
+        print LOG "\# " . (localtime) . ": Deleting $pred_dir\n" if ($v > 3);
+        rmtree( ["$pred_dir"] ) or die ("ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nFailed to delete $pred_dir!\n");
+        print LOG "\# " . (localtime) . ": Deleting $cat_file\n" if ($v > 3);
+        unlink($cat_file);
+    }
 }
 
 ####################### run_augustus_single_core_ab_initio #####################
@@ -8366,23 +8392,61 @@ sub copy_ex_cfg {
 
 ####################### clean_aug_jobs #########################################
 # * clean up AUGUSTUS job files from parallelization
+# * if not --cleanup: move job files to a separate folder
+# * if --cleanup: delete job files
 ################################################################################
 
 sub clean_aug_jobs {
     my $hintId = shift;
-    # deleting files from AUGUSTUS parallelization
-    print LOG "\# " . (localtime) . ": deleting files from AUGUSTUS "
-        . "parallelization\n" if ($v > 3);
     opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__
         . " at line ". __LINE__
         . "\nFailed to open directory $otherfilesDir!\n");
-    while ( my $file = readdir(DIR) ) {
-        my $searchStr = "aug_".$hintId."_";
-        if( $file =~ m/$searchStr/){
-            print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
-            unlink( "$otherfilesDir/$file" ) or die ("ERROR in file "
-                . __FILE__ ." at line ". __LINE__
-                . "\nFailed to delete file $otherfilesDir/$file!\n");
+    if( $cleanup ) {
+        # deleting files from AUGUSTUS parallelization
+        print LOG "\# " . (localtime) . ": deleting files from AUGUSTUS "
+            . "parallelization\n" if ($v > 3);
+
+        while ( my $file = readdir(DIR) ) {
+            my $searchStr = "aug_".$hintId."_";
+            if( $file =~ m/$searchStr/){
+                print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
+                unlink( "$otherfilesDir/$file" ) or die ("ERROR in file "
+                    . __FILE__ ." at line ". __LINE__
+                    . "\nFailed to delete file $otherfilesDir/$file!\n");
+            }
+        }
+
+    } else {
+        # moving files for AUGUSTUS prallelization to a separate folder
+        print LOG "\# " . (localtime) . ": moving files from AUGUSTUS "
+            . "parallelization to directory "
+            . "$otherfilesDir/augustus_files_$hintId\n" if ($v > 3);
+        if ( !-d "$otherfilesDir/augustus_files_$hintId" ) {
+            $prtStr = "\# "
+                    . (localtime)
+                    . ": creating directory "
+                    . "$otherfilesDir/augustus_files_$hintId.\n"
+                    . "mkdir $otherfilesDir/augustus_files_$hintId\n\n";
+            $logString .= $prtStr if ( $v > 2 );
+            make_path("$otherfilesDir/augustus_files_$hintId") or 
+                die("ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to create directory "
+                . "$otherfilesDir/augustus_files_$hintId!\n");
+        }
+        while ( my $file = readdir(DIR) ) {
+            my $searchStr1 = "aug_".$hintId."_";
+            my $searchStr2 = "aug_".$hintId.".";
+            my $searchStr3 = "hintsfile.gff.".$hintId;
+            my $searchStr4 = $hintId.".job.lst";
+            if( $file =~ m/($searchStr1|$searchStr2|$searchStr3|$searchStr4)/){
+                print LOG "mv $otherfilesDir/$file "
+                     . "$otherfilesDir/augustus_files_$hintId/$file\n" if ($v > 3);
+                move("$otherfilesDir/$file", "$otherfilesDir/augustus_files_$hintId/$file") or
+                    die ("ERROR in file "
+                    . __FILE__ ." at line ". __LINE__
+                    . "\nFailed to move $otherfilesDir/$file "
+                    . "to $otherfilesDir/augustus_files_$hintId/$file!\n");
+            }
         }
     }
     closedir(DIR) or die("ERROR in file " . __FILE__ ." at line "
@@ -8399,11 +8463,16 @@ sub joingenes {
     my $genesetId = shift;
     print LOG "\# " . (localtime) . ": Executing joingenes on files $file1 and "
         . "$file2\n" if ($v > 2);
-    # determine which source set of P and E supports more transcripts
+    # determine which source set of P and E supports more transcripts to decide
+    # which gene set is to be prioritized higher (the one with more support)
+    # use filter_augustus_gff.pl with --src=(P|E) as tool for counting
     my $string = find(
         "filter_augustus_gff.pl",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
+    # file1 is should have predictions with protein hints -> count src=P
+    # file2 has predictions with protein and RNA-Seq hints but RNA-Seq had
+    # higher priority when running AUGUSTUS -> count src=E
     $perlCmdString = "";
     if ($nice) {
         $perlCmdString .= "nice ";
@@ -8433,8 +8502,10 @@ sub joingenes {
     close(NTX2) or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/file2_ntx!\n");
     print LOG "rm $otherfilesDir/file1_ntx $otherfilesDir/file2_ntx\n";
-    unlink("$otherfilesDir/file1_ntx");
-    unlink("$otherfilesDir/file2_ntx");
+    if( $cleanup ) {
+        unlink("$otherfilesDir/file1_ntx");
+        unlink("$otherfilesDir/file2_ntx");
+    }
     print LOG "# File $file1 has $n_tx_1 supported transcripts, $file2 has $n_tx_2 supported transcripts\n";
     # filter only supported transcripts from the file with fewer supported transcripts and build joingenes command
     my $join_basis;
@@ -10077,7 +10148,7 @@ sub gtf2gff3 {
             . "\nFailed to execute: $perlCmdString\n");
     }else{
         print LOG "\# " . (localtime) . ": skipping format conversion because "
-        . "files are up to date.\n" if ($v > 2);
+            . "files are up to date.\n" if ($v > 2);
     }
 }
 
@@ -10090,6 +10161,8 @@ sub gtf2gff3 {
 ####################### all_preds_gtf2gff3 #####################################
 
 sub all_preds_gtf2gff3 {
+    print LOG "\# " . (localtime) . ": converting essential output files "
+        . "to gff3 format.\n" if ($v > 2);
     my @files = ("$otherfilesDir/augustus.ab_initio.gtf", 
         "$otherfilesDir/augustus.hints.gtf",
         "$otherfilesDir/augustus.ab_initio_utr.gtf",
@@ -10162,51 +10235,61 @@ sub clean_up {
         }
     }
     # deleting files from AUGUSTUS parallelization
-    print LOG "\# " . (localtime) . ": deleting job lst files (if existing)\n"
-        if ($v > 3);
-    opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__
-        . " at line ". __LINE__
-        . "\nFailed to open directory $otherfilesDir!\n");
-    while ( my $file = readdir(DIR) ) {
-        if( $file =~ m/\.lst/ || $file =~ m/aug_ab_initio_/ || $file =~ m/Ppri5/ || $file =~ m/augustus\.E/ 
-            || $file =~ m/gff\.E/ || 
-            $file =~ m/missed/ || $file =~ m/prot_hintsfile\.aln2hints\.temp\.gff/ ||
-            $file =~ m/aa2nonred\.stdout/ || $file =~ m/augustus\.hints\.tmp\.gtf/ ||
-            $file =~ m/firstetraining\.stdout/ || $file =~ m/gbFilterEtraining\.stdout/
-            || $file =~ m/secondetraining\.stdout/ || $file =~ m/traingenes\.good\.fa/ ||
-            $file =~ m/aa2nonred\.stdout/ || $file =~ m/singlecds\.hints/ ||
-            $file =~ m/augustus\.hints\.tmp\.gtf/ || $file =~ m/train\.gb\./ ||
-            $file =~ m/traingenes\.good\.fa/ || $file =~ m/augustus\.ab_initio\.tmp\.gtf/
-            || $file =~ m/augustus\.ab_initio_utr\.tmp\.gtf/ || $file =~ m/augustus\.hints_utr\.tmp\.gtf/
-            || $file =~ m/genes\.gtf/ || $file =~ m/genes_in_gb\.gtf/ ||
-            $file =~ m/merged\.s\.bam/ || $file =~ m/utr_genes_in_gb\.fa/ ||
-            $file =~ m/utr_genes_in_gb\.nr\.fa/ || $file =~ m/utr\.gb\.test/ ||
-            $file =~ m/utr\.gb\.train/ || $file =~ m/utr\.gb\.train\.test/ ||
-            $file =~ m/utr\.gb\.train\.train/ || $file =~ m/ep\.hints/ || 
-            $file =~ m/rnaseq\.utr\.hints/ || $file =~ m/stops\.and\.starts.gff/ ||
-            $file =~ m/trainGb3\.train/ || $file =~ m/traingenes\.good\.nr.\fa/ ||
-            $file =~ m/nonred\.loci\.lst/ || $file =~ m/traingenes\.good\.gtf/ ||
-            $file =~ m/etrain\.bad\.lst/ || $file =~ m/etrain\.bad\.lst/ ||
-            $file =~ m/train\.f*\.gb/ || $file =~ m/good_genes\.lst/){
-            print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
-            unlink( "$otherfilesDir/$file" );
-        }
-    }
-
-    if(-e "$otherfilesDir/seqlist"){
-        unlink ( "$otherfilesDir/seqlist" );
-    }
-    if(-d "$otherfilesDir/genome_split" ) {
-        rmtree( ["$otherfilesDir/genome_split"] ) or die ("ERROR in file "
-            . __FILE__ ." at line ". __LINE__
-            . "\nFailed to delete $otherfilesDir/genome_split!\n");
-    }
-    if(-d "$otherfilesDir/tmp_opt_$species") {
-        rmtree( ["$otherfilesDir/tmp_opt_$species"] ) or die ("ERROR in file "
-            . __FILE__ ." at line ". __LINE__
-            . "\nFailed to delete $otherfilesDir/tmp_opt_$species!\n");
-    }
     if($cleanup){
+        print LOG "\# " . (localtime) . ": deleting job lst files (if existing)\n"
+            if ($v > 3);
+        opendir( DIR, $otherfilesDir ) or die("ERROR in file " . __FILE__
+            . " at line ". __LINE__
+            . "\nFailed to open directory $otherfilesDir!\n");
+        while ( my $file = readdir(DIR) ) {
+            if( $file =~ m/\.lst/ || $file =~ m/aug_ab_initio_/ || $file =~ m/Ppri5/ || $file =~ m/augustus\.E/ 
+                || $file =~ m/gff\.E/ || 
+                $file =~ m/missed/ || $file =~ m/prot_hintsfile\.aln2hints\.temp\.gff/ ||
+                $file =~ m/aa2nonred\.stdout/ || $file =~ m/augustus\.hints\.tmp\.gtf/ ||
+                $file =~ m/firstetraining\.stdout/ || $file =~ m/gbFilterEtraining\.stdout/
+                || $file =~ m/secondetraining\.stdout/ || $file =~ m/traingenes\.good\.fa/ ||
+                $file =~ m/aa2nonred\.stdout/ || $file =~ m/singlecds\.hints/ ||
+                $file =~ m/augustus\.hints\.tmp\.gtf/ || $file =~ m/train\.gb\./ ||
+                $file =~ m/traingenes\.good\.fa/ || $file =~ m/augustus\.ab_initio\.tmp\.gtf/
+                || $file =~ m/augustus\.ab_initio_utr\.tmp\.gtf/ || $file =~ m/augustus\.hints_utr\.tmp\.gtf/
+                || $file =~ m/genes\.gtf/ || $file =~ m/genes_in_gb\.gtf/ ||
+                $file =~ m/merged\.s\.bam/ || $file =~ m/utr_genes_in_gb\.fa/ ||
+                $file =~ m/utr_genes_in_gb\.nr\.fa/ || $file =~ m/utr\.gb\.test/ ||
+                $file =~ m/utr\.gb\.train/ || $file =~ m/utr\.gb\.train\.test/ ||
+                $file =~ m/utr\.gb\.train\.train/ || $file =~ m/ep\.hints/ || 
+                $file =~ m/rnaseq\.utr\.hints/ || $file =~ m/stops\.and\.starts.gff/ ||
+                $file =~ m/trainGb3\.train/ || $file =~ m/traingenes\.good\.nr.\fa/ ||
+                $file =~ m/nonred\.loci\.lst/ || $file =~ m/traingenes\.good\.gtf/ ||
+                $file =~ m/etrain\.bad\.lst/ || $file =~ m/etrain\.bad\.lst/ ||
+                $file =~ m/train\.f*\.gb/ || $file =~ m/good_genes\.lst/){
+                print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
+                unlink( "$otherfilesDir/$file" );
+            }
+        }
+
+        if(-e "$otherfilesDir/seqlist"){
+            unlink ( "$otherfilesDir/seqlist" );
+        }
+        if(-d "$otherfilesDir/genome_split" ) {
+            rmtree( ["$otherfilesDir/genome_split"] ) or die ("ERROR in file "
+                . __FILE__ ." at line ". __LINE__
+                . "\nFailed to delete $otherfilesDir/genome_split!\n");
+        }
+        if(-d "$otherfilesDir/tmp_opt_$species") {
+            rmtree( ["$otherfilesDir/tmp_opt_$species"] ) or die ("ERROR in file "
+                . __FILE__ ." at line ". __LINE__
+                . "\nFailed to delete $otherfilesDir/tmp_opt_$species!\n");
+        }
+        if(-d "$otherfilesDir/augustus_files_E"){
+            rmtree ( ["$otherfilesDir/augustus_files_E"] ) or die ("ERROR in file "
+                . __FILE__ ." at line ". __LINE__
+                . "\nFailed to delete $otherfilesDir/augustus_files_E!\n");
+        }
+        if(-d "$otherfilesDir/augustus_files_Ppri5"){
+            rmtree ( ["$otherfilesDir/augustus_files_Ppri5"] ) or die ("ERROR in file "
+                . __FILE__ ." at line ". __LINE__
+                . "\nFailed to delete $otherfilesDir/augustus_files_Ppri5!\n");
+        }
         $string = find(
             "braker_cleanup.pl", $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
