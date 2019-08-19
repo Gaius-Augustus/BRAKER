@@ -6226,6 +6226,39 @@ sub training_augustus {
             . "\nCould not close file $goodLstFile!\n" );
         }
 
+        # check whether goodLstFile has any content
+        open (GOODLST, "<", $goodLstFile) or clean_abort(
+             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+             "ERROR in file " . __FILE__ ." at line ". __LINE__
+             . "\nCould not open file $goodLstFile!\n" );
+        while(<GOODLST>){};
+        my $nGoodGenes = $.;
+        close (GOODLST) or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $goodLstFile!\n" );
+        if($nGoodGenes < 1){
+            $prtStr = "\# "
+                . (localtime)
+                . " ERROR: file $goodLstFile contains no good training genes."
+                . " This means that with RNA-Seq data, there was insufficient"
+                . " coverage of introns; or with protein data, there was "
+                . "insufficient support from protein alignments/GaTech protein"
+                . " mapping pipeline hints; or without any evidence, there "
+                . " were only very short genes. In most cases, you will see "
+                . " this happening if BRAKER was executed with some kind of "
+                . " extrinsic evidence (either/or RNA-Seq/protein). You can then "
+                . " try to re-run BRAKER without any evidence for training "
+                . " and later use the such trained AUGUSTUS parameters for a "
+                . " BRAKER run without any training and the available evidence."
+                . " Accuracy of training without any evidence is lower than with "
+                . " good evidence.\n";
+            print LOG $prtStr;
+            print STDERR $prtStr;
+            clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $   useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nNo genes for training in file $goodLstFile!\n");
+        }
 
         # filter good genes from trainGb1 into trainGb2
         $string = find(
