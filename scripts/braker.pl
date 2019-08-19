@@ -4157,11 +4157,12 @@ sub check_fasta_headers {
             # look for whitespaces in fasta file
             if ( $_ =~ m/\s/ ) {
                 if ( $spaces == 0 ) {
-                    print LOG "\# "
+                    $prtStr = "\# "
                         . (localtime)
                         . " WARNING: Detected whitespace in fasta header of "
-                        . "file $fastaFile. "
-                        . $stdStr if ($v > 2);
+                        . "file $fastaFile. " . $stdStr;
+                    print LOG $prtStr if ($v > 2);
+                    print STDERR $prtStr;
                     $spaces++;
                 }
             }
@@ -4169,10 +4170,12 @@ sub check_fasta_headers {
             # look for | in fasta file
             if ( $_ =~ m/\|/ ) {
                 if ( $orSign == 0 ) {
-                    print LOG "\# "
+                    $prtStr =  "\# "
                         . (localtime)
                         . " WARNING: Detected | in fasta header of file "
-                        . "$fastaFile. " . $stdStr if ($v > 2);
+                        . "$fastaFile. " . $stdStr;
+                    print LOG $prtStr if ($v > 2);
+                    print STDERR $prtStr;
                     $orSign++;
                 }
             }
@@ -4180,13 +4183,15 @@ sub check_fasta_headers {
             # look for special characters in headers
             if ( ( $_ !~ m/[>a-zA-Z0-9]/ ) && ( $_ =~ m/^>/ ) ) {
                 if ( $someThingWrongWithHeader == 0 ) {
-                    print LOG "\# "
+                    $prtStr = "\# "
                         . (localtime)
                         . " WARNING: Fasta headers in file $fastaFile seem to "
                         . "contain non-letter and non-number characters. That "
                         . "means they may contain some kind of special "
                         . "characters. "
-                        . $stdStr if ($v > 2);
+                        . $stdStr;
+                    print LOG $prtStr if ($v > 2);
+                    print STDERR $prtStr;
                     $someThingWrongWithHeader++;
                 }
             }
