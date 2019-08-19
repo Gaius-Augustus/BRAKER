@@ -10185,7 +10185,8 @@ sub clean_up {
                 $file =~ m/trainGb3\.train/ || $file =~ m/traingenes\.good\.nr.\fa/ ||
                 $file =~ m/nonred\.loci\.lst/ || $file =~ m/traingenes\.good\.gtf/ ||
                 $file =~ m/etrain\.bad\.lst/ || $file =~ m/etrain\.bad\.lst/ ||
-                $file =~ m/train\.f*\.gb/ || $file =~ m/good_genes\.lst/){
+                $file =~ m/train\.f*\.gb/ || $file =~ m/good_genes\.lst/ || 
+                $file =~ m/traingenes\.good\.nr\.fa/){
                 print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
                 unlink( "$otherfilesDir/$file" );
             }
