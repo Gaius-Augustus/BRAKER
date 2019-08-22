@@ -6549,19 +6549,21 @@ sub training_augustus {
                 . __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
         # count how many genes are in trainGb4
-        my $nLociGb4 = count_genes_in_gb_file($trainGb4);
-        if( $nLociGb4 == 0){
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "Training gene file in genbank format $trainGb4 does not "
-                . "contain any training genes. Possibly, something went wrong "
-                . "while BRAKER attempted to remove redundant genes from the "
-                . "training set.\n";
-            print STDERR $prtStr;
-                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                    $prtStr);
+        my $gb_good_size = count_genes_in_gb_file($trainGb4);
+        if( $gb_good_size == 0){
+            $prtStr = "\# "
+                    . (localtime)
+                    . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Number of reliable training genes is 0, so the parameters cannot "
+                    . "be optimized. Recommended are at least 600 genes\n"
+                    . "You may try --esmode (running BRAKER without evidence, if you haven't done) "
+                    . "this already), in order "
+                    . "to obtain species specific parameters for your species, and later "
+                    . "re-run BRAKER with evidence with --skipAllTraining, using the previously "
+                    . "trained parameters. However, prediction accuracy may be low.\n";
+                print LOG $prtStr;
+                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, $prtStr);
         }
 
         # making trainGb4 the trainGb file
@@ -6593,28 +6595,6 @@ sub training_augustus {
                 $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
             );
             $errorfile = "$errorfilesDir/randomSplit.stderr";
-
-            # count how many genes are in trainGb
-            $gb_good_size = count_genes_in_gb_file($trainGb1);
-            print LOG "\# "
-                    . (localtime)
-                    . ": \$trainGb1 file $trainGb1 contains $gb_good_size genes.\n";
-            if ( $gb_good_size == 0 ) {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Number of reliable training genes is 0, so the parameters cannot "
-                    . "be optimized. Recommended are at least 600 genes\n"
-                    . "You may try --esmode (running BRAKER without evidence, if you haven't done) "
-                    . "this already), in order "
-                    . "to obtain species specific parameters for your species, and later "
-                    . "re-run BRAKER with evidence with --skipAllTraining, using the previously "
-                    . "trained parameters. However, prediction accuracy may be low.\n";
-                print LOG $prtStr;
-                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-                    $useexisting, $prtStr);
-            }
             if ( $gb_good_size < 600 ) {
                 $prtStr = "\# "
                     . (localtime)
@@ -6663,16 +6643,8 @@ sub training_augustus {
                         . " $otherfilesDir/train.gb.test will be used for "
                         . "measuring AUGUSTUS accuracy after training\n" if ($v > 3);
             if($v > 3) {
-                my $n_traingbtest_genes = count_genes_in_gb_file("$otherfilesDir/train.gb.test");
-                print LOG "\# "
-                        . (localtime)
-                        . ": $otherfilesDir/train.gb.test file contains "
-                        . "$n_traingbtest_genes genes.\n";
-                my $n_traingbtrain_genes = count_genes_in_gb_file("$otherfilesDir/train.gb.train");
-                print LOG "\# "
-                        . (localtime)
-                        . ": $otherfilesDir/train.gb.train file contains "
-                        . "$n_traingbtrain_genes genes.\n";
+                count_genes_in_gb_file("$otherfilesDir/train.gb.test");
+                count_genes_in_gb_file("$otherfilesDir/train.gb.train");
             }
             $perlCmdString = "";
             if ($nice) {
@@ -6686,16 +6658,8 @@ sub training_augustus {
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n");
 
             if($v > 3) {
-                my $n_traingbtraintrain_genes = count_genes_in_gb_file("$otherfilesDir/train.gb.train.train");
-                print LOG "\# "
-                        . (localtime)
-                        . ": $otherfilesDir/train.gb.train.train file contains "
-                        . "$n_traingbtraintrain_genes genes.\n";
-                my $n_traingbtraintest_genes = count_genes_in_gb_file("$otherfilesDir/train.gb.train.test");
-                print LOG "\# "
-                        . (localtime)
-                        . ": $otherfilesDir/train.gb.train.test file contains "
-                        . "$n_traingbtraintest_genes genes.\n";
+                count_genes_in_gb_file("$otherfilesDir/train.gb.train.train");
+                count_genes_in_gb_file("$otherfilesDir/train.gb.train.test");
             }
 
             print LOG "\# "
