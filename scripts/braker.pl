@@ -441,7 +441,11 @@ my $v = 4; # determines what is printed to log
 my $version = "2.1.3";
 my $rootDir;
 my $logString = "";          # stores log messages produced before opening log file
-$logString .= "\# ". (localtime) . ": braker.pl version $version\n\n";
+$logString .= "\#**********************************************************************************\n";
+$logString .= "\#                               BRAKER CONFIGURATION                               \n";
+$logString .= "\#**********************************************************************************\n";
+$logString .= "\# BRAKER CALL: ". $0 . " ". (join " ", @ARGV) . "\n";
+$logString .= "\# ". (localtime) . ": braker.pl version $version\n";
 my $prtStr;
 my $alternatives_from_evidence = "true";
                  # output alternative transcripts based on explicit evidence
@@ -465,7 +469,6 @@ my @stranded;                 # contains +,-,+,-... corresponding to
 my $checkOnly = 0;
 my $bamtools_path;
 my $BAMTOOLS_BIN_PATH;
-my $bam2wig;
 my $bool_species = "true";     # false, if $species contains forbidden words
 my $cmdString;    # to store shell commands
 my $CPU        = 1;      # number of CPUs that can be used
@@ -716,7 +719,7 @@ if ( !defined $workDir ) {
     my $tmp_dir_name = abs_path($workDir);
     $workDir = $tmp_dir_name;
     if ( not( -d $workDir ) ) {
-        $prtStr = "\# " . (localtime) . ": Creating directory $workDir.\n\n";
+        $prtStr = "\# " . (localtime) . ": Creating directory $workDir.\n";
         $logString .= $prtStr if ( $v > 2 );
         mkdir($workDir) or die ("ERROR: in file " . __FILE__ ." at line "
             . __LINE__ ."\nFailed to create directory $workDir!\n");
@@ -745,7 +748,7 @@ if ( !-w $workDir ) {
 $prtStr
     = "\# "
     . (localtime)
-    . ": Configuring of BRAKER for using external tools...\n\n";
+    . ": Configuring of BRAKER for using external tools...\n";
 $logString .= $prtStr if ( $v > 2 );
 set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
@@ -780,15 +783,12 @@ if (not ($skipGetAnnoFromFasta) || $makehub){
 if ( $makehub ) {
     set_MAKEHUB_PATH();
 }
-$prtStr = "\# " . (localtime) . ": Configuration of BRAKER for using external "
-        . "tools is complete!\n\n";
-$logString .= $prtStr if ( $v > 2 );
 
 if($checkOnly){
     $prtStr = "\# " . (localtime)
             . ": Exiting braker.pl because it had been started with "
             . "--softwareCheck option. No training or prediction or file format "
-            . "check will be performed.\n\n";
+            . "check will be performed.\n";
     $logString .= $prtStr;
     print $logString;
     exit(0);
@@ -801,6 +801,10 @@ check_upfront();
 check_options();
 
 # Starting braker pipeline #####################################################
+
+$logString .= "\#**********************************************************************************\n";
+$logString .= "\#                               CREATING DIRECTORY STRUCTURE                       \n";
+$logString .= "\#**********************************************************************************\n";
 
 # check whether $rootDir already exists
 if ( $wdGiven == 1 ) {
@@ -825,7 +829,7 @@ if ( !-d $rootDir ) {
     $prtStr = "\# "
         . (localtime)
         . ": create working directory $rootDir.\n"
-        . "mkdir $rootDir\n\n";
+        . "mkdir $rootDir\n";
     make_path($rootDir) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to create direcotry $rootDir!\n");
     $logString .= $prtStr if ( $v > 2 );
@@ -985,7 +989,7 @@ if ( !-d $otherfilesDir ) {
     $prtStr = "\# "
         . (localtime)
         . ": create working directory $otherfilesDir.\n"
-        . "mkdir $otherfilesDir\n\n";
+        . "mkdir $otherfilesDir\n";
     $logString .= $prtStr if ( $v > 2 );
     make_path($otherfilesDir) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to create directory $otherfilesDir!\n");
@@ -1007,7 +1011,7 @@ if ( !-d $genemarkDir ) {
     print LOG "\# "
         . (localtime)
         . ": create working directory $genemarkDir.\n" if ($v > 2);
-    print LOG "mkdir $genemarkDir\n\n" if ($v > 2);
+    print LOG "mkdir $genemarkDir\n" if ($v > 2);
 }
 
 # check gthTrainGeneFile
@@ -1024,7 +1028,7 @@ if ( defined($geneMarkGtf) ) {
     $cmdString =  "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
     print LOG "$cmdString\n" if ($v > 2);
     system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to execute: $cmdString!\n");
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
 }
 
 # create parameter directory
@@ -1034,7 +1038,7 @@ if ( !-d $parameterDir ) {
     print LOG "\# "
         . (localtime)
         . ": create working directory $parameterDir\n"
-        . "mkdir $parameterDir\n\n" if ($v > 2);
+        . "mkdir $parameterDir\n" if ($v > 2);
 }
 
 # create error file directory
@@ -1044,7 +1048,7 @@ if ( !-d $errorfilesDir ) {
     print LOG "\# "
         . (localtime)
         . ": create working directory $errorfilesDir\n"
-        . "mkdir $errorfilesDir\n\n" if ($v > 2);
+        . "mkdir $errorfilesDir\n" if ($v > 2);
 }
 
 # need to do this check after $errorfilesDir has been set:
@@ -1055,7 +1059,7 @@ if (not($skipGetAnnoFromFasta) || $makehub){
 print LOG "\# "
     . (localtime)
     . ": changing into working directory $rootDir\n"
-    . "cd $rootDir\n\n" if ($v > 2);
+    . "cd $rootDir\n" if ($v > 2);
 
 chdir $rootDir or die("ERROR in file " . __FILE__ ." at line ".
     __LINE__ ."\nCould not change into directory $rootDir.\n");
@@ -1204,6 +1208,12 @@ if(! $trainFromGth && ! $ESmode && not ( defined($AUGUSTUS_hints_preds) )) {
     $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
 }
 
+if($ESmode==0){
+    print LOG "\#**********************************************************************************\n"
+            . "\#                               PROCESSING HINTS                                   \n"
+            . "\#**********************************************************************************\n";
+}
+
 # make hints from RNA-Seq
 if ( @bam ) {
     make_rnaseq_hints();
@@ -1228,9 +1238,13 @@ if ( (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) ) && ($ESmode == 0
     }
 }
 
+
 # train gene predictors
 if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
     if ( not($trainFromGth) ) {
+        print LOG "\#**********************************************************************************\n"
+                . "\#                              RUNNING GENEMARK-EX                                 \n"
+                . "\#**********************************************************************************\n";
         if ( $EPmode == 0 && $ETPmode==0 && $ESmode == 0 ) {
             check_genemark_hints();
             GeneMark_ET();    # run GeneMark-ET
@@ -1253,6 +1267,9 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
             filter_genemark();
         }
     }
+    print LOG "\#**********************************************************************************\n"
+            . "\#                               TRAIN AUGUSTUS                                     \n"
+            . "\#**********************************************************************************\n";
     # train AUGUSTUS
     training_augustus();
 }
@@ -1264,10 +1281,16 @@ if ( $skipAllTraining == 1 && ($ETPmode or $EPmode) ){
 }
 
 if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
+    print LOG "\#**********************************************************************************\n"
+            . "\#                               PREDICTING GENES WITH AUGUSTUS (NO UTRS)           \n"
+            . "\#**********************************************************************************\n";
     augustus("off");    # run augustus without UTR
 }
 
 if ( @bam && ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds) ) && not($skipAllTraining) ) ) { # if you give this input, train parameters!
+    print LOG "\#**********************************************************************************\n"
+            . "\#                               TRAINING AUGUSTUS UTR PARAMETERS                   \n"
+            . "\#**********************************************************************************\n";
     train_utr(); # includes bam2wig
 } elsif (@bam && $UTR eq "on") {
     if(!@stranded){
@@ -1283,6 +1306,9 @@ if ( $UTR eq "on") {
     }else{
         stranded_wig2ep_hints();
     }
+    print LOG "\#**********************************************************************************\n"
+            . "\#                               PREDICTING GENES WITH AUGUSTUS (UTRS)              \n"
+            . "\#**********************************************************************************\n";
     augustus("on"); # run augustus with UTR
 }
 
@@ -1306,10 +1332,16 @@ if( $annot ) {
 }
 
 if ( $makehub ) {
+    print LOG "\#**********************************************************************************\n"
+            . "\#                               GENERATING TRACK DATA HUB                          \n"
+            . "\#**********************************************************************************\n";
     make_hub();
 }
 
 clean_up();         # delete all empty files
+print LOG "\#**********************************************************************************\n"
+        . "\#                               BRAKER RUN FINISHED                                \n"
+        . "\#**********************************************************************************\n";
 
 close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
     ."\nCould not close log file $logfile!\n");
@@ -1644,7 +1676,7 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Did not find environment variable \$AUGUSTUS_SCRIPTS_PATH"
+            . ": Did not find environment variable \$AUGUSTUS_SCRIPTS_PATH "
             . "(either variable does not exist, or the path given in variable "
             . "does not exist). Will try to set this variable in a different "
             . "way, later.\n";
@@ -2997,37 +3029,6 @@ sub check_upfront {
         exit(1);
     }
 
-    #    check whether bam2wig is executable
-    $bam2wig = "$AUGUSTUS_BIN_PATH/../auxprogs/bam2wig/bam2wig";
-    if ( $UTR eq "on" && $skipAllTraining == 0 )
-    {    # MIGHT WANT TO CHANGE THIS!
-        if ( not( -x $bam2wig ) ) {
-            if ( !-f $bam2wig ) {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "bam2wig executable not found at $bam2wig.\n";
-                $logString .= $prtStr;
-            }
-            else {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "$bam2wig not executable on this machine.\n";
-                $logString .= $prtStr;
-            }
-            $prtStr
-                = "       UTR training from RNA-Seq is enabled. This requires "
-                . "bam2wig. Please check README.TXT of AUGUSTUS to compile "
-                . "bam2wig.\n";
-            $logString .= $prtStr;
-            print STDERR $logString;
-            exit(1);
-        }
-    }
-
     # check whether rnaseq2utr is executable
     $rnaseq2utr = "$AUGUSTUS_BIN_PATH/utrrnaseq";
     if ( $UTR eq "on" && $skipAllTraining == 0 ) {
@@ -3224,6 +3225,12 @@ sub check_upfront {
         "getAnnoFastaFromJoingenes.py", $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
       );
+    if($UTR=="on"){
+        find(
+            "bamToWig.py", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+      );
+    }
     find(
         "gtf2gff.pl",           $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -3297,7 +3304,7 @@ sub check_gff {
     $prtStr
         = "\# "
         . (localtime)
-        . ": Checking if input file $gfffile is in gff format\n\n";
+        . ": Checking if input file $gfffile is in gff format\n";
     $logString .= $prtStr if ($v > 2);
     open( GFF, $gfffile ) or die ( "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nCannot open file: $gfffile\n" );
@@ -3768,14 +3775,14 @@ sub check_options {
             exit(1);
         }
         if ( $bool_species eq "false" ) {
-            $prtStr = "\# " . (localtime) . ": Program will use $species instead.\n\n";
+            $prtStr = "\# " . (localtime) . ": Program will use $species instead.\n";
             $logString .= $prtStr if ($v > 0);
         }
         else {
             $prtStr
                 = "\# "
                 . (localtime)
-                . ": No species was set. Program will use $species.\n\n";
+                . ": No species was set. Program will use $species.\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -4123,7 +4130,7 @@ sub check_fasta_headers {
     {
         print LOG "\# " . (localtime) . ": check_fasta_headers(): Checking "
                         . "fasta headers of file "
-                        . "$fastaFile\n\n" if ($v > 2);
+                        . "$fastaFile\n" if ($v > 2);
         open( FASTA, "<", $fastaFile )
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -4300,7 +4307,7 @@ sub check_bam_headers {
         print LOG "\# "
             . (localtime)
             . ": create header file $samHeaderFile\n" if ($v > 3);
-        print LOG "$cmdString\n\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         open( SAM, "<", $samHeaderFile )
@@ -4427,7 +4434,7 @@ sub check_bam_headers {
                 print LOG "\# "
                     . (localtime)
                     . ": convert BAM to SAM file $samFile\n" if ($v > 3);
-                print LOG "$cmdString\n\n" if ($v > 3);
+                print LOG "$cmdString\n" if ($v > 3);
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                         . "\nfailed to execute: $cmdString!\n");
@@ -4462,7 +4469,7 @@ sub check_bam_headers {
                 print LOG "\# "
                     . (localtime)
                     . ": concatenate new header and SAM file\n" if ($v > 3);
-                print LOG "$cmdString\n\n" if ($v > 3);
+                print LOG "$cmdString\n" if ($v > 3);
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                         . "\nfailed to execute: $cmdString!\n");
@@ -4479,7 +4486,7 @@ sub check_bam_headers {
                 print LOG "\# "
                     . (localtime)
                     . ": Converting new SAM file to BAM format\n" if ($v > 3);
-                print LOG "$cmdString\n\n" if ($v > 3);
+                print LOG "$cmdString\n" if ($v > 3);
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                         . "\nfailed to execute: $cmdString!\n");
@@ -4527,7 +4534,7 @@ sub make_rnaseq_hints {
         print LOG "\# "
             . (localtime)
             . ": make hints from BAM file $bam[$i]\n" if ($v > 3);
-        print LOG "$cmdString\n\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
         my $jid = $pj->start and next;
         system("$cmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -4544,10 +4551,10 @@ sub make_rnaseq_hints {
             $cmdString .= "nice ";
         }
         $cmdString .= "cat $bam_temp >>$hintsfile_temp";
-        print LOG "\n\# "
+        print LOG "\# "
             . (localtime)
             . ": add hints from BAM file $bam[$i] to hints file\n" if ($v > 3);
-        print LOG "$cmdString\n\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -4573,7 +4580,7 @@ sub make_rnaseq_hints {
             print LOG "\# "
                 . (localtime)
                 . ": filter introns, find strand and change score to \'mult\' entry\n" if ($v > 3);
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -4637,21 +4644,21 @@ sub make_prot_hints {
                     .= "perl $string --genome=$genome --prot=$prot_seq_files[$i] --ALIGNMENT_TOOL_PATH=$ALIGNMENT_TOOL_PATH ";
                 if ( $prg eq "gth" ) {
                     $perlCmdString .= "--prg=gth ";
-                    print LOG "\n\# "
+                    print LOG "\# "
                         . (localtime)
                         . ": running Genome Threader to produce protein to "
                         . "genome alignments\n"  if ($v > 3);
                 }
                 elsif ( $prg eq "exonerate" ) {
                     $perlCmdString .= "--prg=exonerate ";
-                    print LOG "\n\# "
+                    print LOG "\# "
                         . (localtime)
                         . ": running Exonerate to produce protein to "
                         . "genome alignments\n" if ($v > 3);
                 }
                 elsif ( $prg eq "spaln" ) {
                     $perlCmdString .= "--prg=spaln ";
-                    print LOG "\n\# "
+                    print LOG "\# "
                         . (localtime)
                         . ": running Spaln to produce protein to "
                         . "genome alignments\n" if ($v > 3);
@@ -4663,7 +4670,7 @@ sub make_prot_hints {
                     $perlCmdString .= "--nice ";
                 }
                 $perlCmdString .= ">> $logfile 2>>$errorfile";
-                print LOG "$perlCmdString\n\n" if ($v > 3);
+                print LOG "$perlCmdString\n" if ($v > 3);
                 system("$perlCmdString") == 0
                     or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                      $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -4677,7 +4684,7 @@ sub make_prot_hints {
                     print LOG "\# "
                         . (localtime)
                         . ": concatenating alignment file to $alignment_outfile\n" if ($v > 3);
-                    print LOG "$cmdString\n\n" if ($v > 3);
+                    print LOG "$cmdString\n" if ($v > 3);
                     system("$cmdString") == 0
                         or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                             $useexisting, "ERROR in file " . __FILE__
@@ -4689,7 +4696,7 @@ sub make_prot_hints {
                         . "$otherfilesDir/align_$prg/$prg.concat.aln in round $i "
                         . "was empty.\n" if ($v > 3);
                 }
-                print LOG "\n\# "
+                print LOG "\# "
                     . (localtime)
                     . ": moving startAlign output files\n" if ($v > 3);
                 $cmdString = "mv $otherfilesDir/align_$prg $otherfilesDir/align_$prg$i";
@@ -4697,7 +4704,7 @@ sub make_prot_hints {
                 system("$cmdString") == 0
                     or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                         $useexisting, "ERROR in file " . __FILE__ ." at line "
-                        . __LINE__ ."\nFailed to execute: $cmdString!\n\n");
+                        . __LINE__ ."\nFailed to execute: $cmdString!\n");
             }
             else {
                 $prtStr
@@ -4800,7 +4807,7 @@ sub make_prot_hints {
                     . __LINE__ ."\nFailed to execute: $cmdString!\n");
             print LOG "Deleting $prot_hints_file_temp\n" if ($v > 3);
             unlink($prot_hints_file_temp);
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": joining protein and RNA-Seq hints files -> appending "
                 . "$prot_hintsfile to $hintsfile\n" if ($v > 3);
@@ -4810,10 +4817,10 @@ sub make_prot_hints {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $cmdString!\n");
-            print LOG "\n\# " . (localtime) . ": Deleting $prot_hintsfile\n" if ($v > 3);
+            print LOG "\# " . (localtime) . ": Deleting $prot_hintsfile\n" if ($v > 3);
             unlink($prot_hintsfile);
             my $toBeSortedHintsFile = "$otherfilesDir/hintsfile.tmp.gff";
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": Moving $hintsfile to $toBeSortedHintsFile to enable "
                 . "sorting\n" if ($v > 3);
@@ -4823,7 +4830,7 @@ sub make_prot_hints {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $cmdString!\n");
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": Sorting hints file $hintsfile\n" if ($v > 3);
             $cmdString
@@ -4833,7 +4840,7 @@ sub make_prot_hints {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $cmdString!\n");
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": Deleting file $toBeSortedHintsFile\n" if ($v > 3);
             print LOG "rm $toBeSortedHintsFile\n" if ($v > 3);
@@ -4842,7 +4849,7 @@ sub make_prot_hints {
     }
     if ( -z $prot_hintsfile ) {
         $prtStr
-            = "\n\# "
+            = "\# "
             . (localtime)
             . " ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "The hints file is empty. There were no protein "
@@ -4855,7 +4862,7 @@ sub make_prot_hints {
         if (@prot_aln_files) {
             foreach (@prot_aln_files) {
                 $cmdString = "cat $_ >> $alignment_outfile";
-                print LOG "\n\# "
+                print LOG "\# "
                     . (localtime)
                     . ": Concatenating protein alignment input file $_ to "
                     . "$alignment_outfile\n" if ($v > 3);
@@ -4882,7 +4889,7 @@ sub aln2hints {
         my $out_file_name
             = "$otherfilesDir/prot_hintsfile.aln2hints.temp.gff";
         my $final_out_file = shift;
-        print LOG "\n\# "
+        print LOG "\# "
             . (localtime)
             . ": Converting protein alignment file $aln_file to hints for "
             . "AUGUSTUS\n" if ($v > 3);
@@ -4911,7 +4918,7 @@ sub aln2hints {
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nFailed to execute: $perlCmdString\n");
         $cmdString = "cat $out_file_name >> $final_out_file";
-        print LOG "\n\# "
+        print LOG "\# "
             . (localtime)
             . ": concatenating protein hints from $out_file_name to "
             . "$final_out_file\n" if ($v > 3);
@@ -5043,7 +5050,7 @@ sub add_other_hints {
                 . (localtime)
                 . ": filter introns, find strand and change score to \'mult\' "
                 . "entry\n" if ($v > 3);
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5053,21 +5060,21 @@ sub add_other_hints {
                 $cmdString .= "nice ";
             }
             $cmdString .= "cat $filteredHintsFile >> $hintsfile";
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": adding hints from file $filteredHintsFile to $hintsfile\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $cmdString!\n");
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": deleting file $filteredHintsFile\n" if ($v > 3);
             unlink ( $filteredHintsFile ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to delete file $filteredHintsFile!\n");
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": deleting file $replacedHintsFile\n" if ($v > 3);
             unlink ( $replacedHintsFile ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -5095,8 +5102,8 @@ sub join_mult_hints {
     }
     $cmdString
         .= "cat $hints_file_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
-    print LOG "\n\# " . (localtime) . ": sort hints of type $type\n" if ($v > 3);
-    print LOG "$cmdString\n\n" if ($v > 3);
+    print LOG "\# " . (localtime) . ": sort hints of type $type\n" if ($v > 3);
+    print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0 or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -5114,7 +5121,7 @@ sub join_mult_hints {
     $perlCmdString
         .= "perl $string <$hintsfile_temp_sort >$hints_file_temp 2>$errorfile";
     print LOG "\# " . (localtime) . ": join multiple hints\n" if ($v > 3);
-    print LOG "$perlCmdString\n\n" if ($v > 3);
+    print LOG "$perlCmdString\n" if ($v > 3);
     system("$perlCmdString") == 0
         or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
             $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -5156,7 +5163,7 @@ sub get_genemark_hints {
     if ($v > 2);
     my $gm_hints_rnaseq = "$genemark_hintsfile.rnaseq";
     my $gm_hints_prot = "$genemark_hintsfile.prot";
-    print LOG "\n\# "
+    print LOG "\# "
         . (localtime)
         . ": Filtering intron hints for GeneMark from $hintsfile...\n"
         if ($v > 3);
@@ -5340,7 +5347,7 @@ sub format_ep_hints {
     close(INTRONS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $genemark_hintsfile!\n");
     $cmdString = "mv $otherfilesDir/tmp.hints $genemark_hintsfile";
-    print LOG "$cmdString\n\n" if ($v > 3);
+    print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString\n");
 }
@@ -5446,7 +5453,7 @@ sub check_genemark_hints {
     else {
         $GeneMarkIntronThreshold = 10;
     }
-    print LOG "\n\# "
+    print LOG "\# "
         . (localtime)
         . ": Checking whether file $genemark_hintsfile contains "
         . "sufficient multiplicity information...\n" if ($v > 2);
@@ -5499,11 +5506,11 @@ sub GeneMark_ES {
         if (!uptodate( [ $genome], ["$genemarkDir/genemark.gtf"] ) || $overwrite
             ){
             $cmdString = "cd $genemarkDir";
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": changing into GeneMark-ES directory $genemarkDir\n"
                 if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             chdir $genemarkDir
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5540,7 +5547,7 @@ sub GeneMark_ES {
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Executing gmes_petap.pl\n" 
                 if ($v > 3);
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5549,13 +5556,13 @@ sub GeneMark_ES {
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             chdir $rootDir
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nCould not change to directory $rootDir.\n");
         } else {
-            print LOG "\n\# " . (localtime) . ": skipping GeneMark-ES because "
+            print LOG "\# " . (localtime) . ": skipping GeneMark-ES because "
                 . "$genemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
         }
     }
@@ -5571,11 +5578,11 @@ sub GeneMark_ET {
         if (!uptodate( [ $genome, $genemark_hintsfile ], 
             ["$genemarkDir/genemark.gtf"] ) || $overwrite ) {
             $cmdString = "cd $genemarkDir";
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": changing into GeneMark-ET directory $genemarkDir\n"
                 if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             chdir $genemarkDir
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5613,7 +5620,7 @@ sub GeneMark_ET {
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Executing gmes_petap.pl\n" 
                 if ($v > 3);
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5622,13 +5629,13 @@ sub GeneMark_ET {
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             chdir $rootDir
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nCould not change to directory $rootDir.\n");
         } else {
-            print LOG "\n\# " . (localtime) . ": skipping GeneMark-ET because "
+            print LOG "\# " . (localtime) . ": skipping GeneMark-ET because "
                 . "$genemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
         }
     }
@@ -5644,11 +5651,11 @@ sub GeneMark_EP {
         if (!uptodate( [ $genome, $genemark_hintsfile ], 
             ["$genemarkDir/genemark.gtf"] ) || $overwrite ) {
             $cmdString = "cd $genemarkDir";
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": changing into GeneMark-EP directory $genemarkDir\n"
                 if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             chdir $genemarkDir
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nCould not change into directory $genemarkDir.\n");
@@ -5683,7 +5690,7 @@ sub GeneMark_EP {
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
                 if ($v > 3);
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5692,13 +5699,13 @@ sub GeneMark_EP {
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             chdir $rootDir
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nCould not change to directory $rootDir.\n");
         } else{
-            print LOG "\n\# " . (localtime) . ": skipping GeneMark-EP because "
+            print LOG "\# " . (localtime) . ": skipping GeneMark-EP because "
                 . "$genemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
         }
     } 
@@ -5720,11 +5727,11 @@ sub GeneMark_ETP {
             )
         {
             $cmdString = "cd $genemarkDir";
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": changing into GeneMark-ETP directory $genemarkDir\n" 
                 if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             chdir $genemarkDir
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nCould not change into directory $genemarkDir.\n");
@@ -5760,7 +5767,7 @@ sub GeneMark_ETP {
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
                 if ($v > 3);
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5769,13 +5776,13 @@ sub GeneMark_ETP {
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             chdir $rootDir
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nCould not change to directory $rootDir.\n");
         } else{
-            print LOG "\n\# " . (localtime) . ": skipping GeneMark-ETP because "
+            print LOG "\# " . (localtime) . ": skipping GeneMark-ETP because "
                 . "$genemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
         }
     }
@@ -5881,7 +5888,7 @@ sub filter_genemark {
                 $perlCmdString .= "--singeCDSfile=$otherfilesDir/singlecds.hints ";
             }
             $perlCmdString .= "1>$stdoutfile 2>$errorfile";
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5974,7 +5981,7 @@ sub filter_genemark {
                            .  "--lambda=$lambda "
                            .  "1> $otherfilesDir/downsample_traingenes.log "
                            .  "2> $errorfilesDir/downsample_traingenes.err";
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5995,7 +6002,7 @@ sub filter_genemark {
 
 sub new_species {
     print LOG "\# " . (localtime) . ": Creating parameter template files for "
-                    . "AUGUSTUS with new_species.pl\n\n" if ($v > 2);
+                    . "AUGUSTUS with new_species.pl\n" if ($v > 2);
     $augpath = "$AUGUSTUS_CONFIG_PATH/species/$species";
     if ((   !uptodate(
                 [ $augpath . "/$species\_metapars.cfg" ],
@@ -6027,13 +6034,13 @@ sub new_species {
                     . ": new_species.pl will create parameter files for "
                     . "species $species in "
                     . "$AUGUSTUS_CONFIG_PATH/species/$species\n" if ($v > 3);
-                print LOG "$perlCmdString\n\n" if ($v > 3);
+                print LOG "$perlCmdString\n" if ($v > 3);
                 system("$perlCmdString") == 0 or die(
                     "ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nFailed to create new species with new_species.pl, "
                     . "check write permissions in "
                     . "$AUGUSTUS_CONFIG_PATH/species directory! "
-                    . "Command was $perlCmdString\n\n");
+                    . "Command was $perlCmdString\n");
             } else {
                 $prtStr = "\# "
                         . (localtime)
@@ -6275,7 +6282,7 @@ sub training_augustus {
         print LOG "\# "
             . (localtime)
             . ": Filtering train.gb for \"good\" mRNAs:\n" if ($v > 3);
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
             $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -6314,7 +6321,7 @@ sub training_augustus {
             . (localtime)
             . ": Running etraining to catch gene structure inconsistencies:\n"
             if ($v > 3);
-        print LOG "$cmdString\n\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -6355,7 +6362,7 @@ sub training_augustus {
         print LOG "\# "
             . (localtime)
             . ": Filtering $trainGb2 file to remove inconsistent gene structures:\n" if ($v > 3);
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -6399,7 +6406,7 @@ sub training_augustus {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string $trainGb3 8000 2>$errorfile";
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -6409,7 +6416,7 @@ sub training_augustus {
                 $cmdString .= "nice ";
             }
             $cmdString .= "mv $trainGb3.test $trainGb3";
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -6490,7 +6497,7 @@ sub training_augustus {
         print LOG "\# "
             . (localtime)
             . ": BLAST or DIAMOND training gene structures against themselves:\n" if ($v > 3);
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -6542,7 +6549,7 @@ sub training_augustus {
         print LOG "\# "
             . (localtime)
             . ": Filtering nonredundant loci into $trainGb4:\n" if ($v > 3);
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -6633,7 +6640,7 @@ sub training_augustus {
             }
             $perlCmdString
                 .= "perl $string $trainGb1 $testsize1 2>$errorfile";
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -6651,7 +6658,7 @@ sub training_augustus {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString .= "perl $string $otherfilesDir/train.gb.train $testsize2 2>$errorfile";
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -6684,7 +6691,7 @@ sub training_augustus {
             )
         {
             # set "stopCodonExcludedFromCDS" to true
-            print LOG "\n\# "
+            print LOG "\# "
                 . (localtime)
                 . ": Setting value of \"stopCodonExcludedFromCDS\" in "
                 . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg "
@@ -6705,7 +6712,7 @@ sub training_augustus {
             }
             $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/train.gb.train 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": first etraining\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute $cmdString\n");
@@ -6730,11 +6737,11 @@ sub training_augustus {
                 . ": Error rate of missing stop codon is $err_rate\n"
                  if ($v > 3);
             if ( $err_rate >= 0.5 ) {
-                print LOG "\n\# "
+                print LOG "\# "
                     . (localtime)
                     . ": The appropriate value for \"stopCodonExcludedFromCDS\" "
                     . "seems to be \"false\".\n" if ($v > 3);
-                print LOG "\n\# "
+                print LOG "\# "
                     . (localtime)
                     . ": Setting value of \"stopCodonExcludedFromCDS\" in "
                     . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg "
@@ -6745,10 +6752,10 @@ sub training_augustus {
                     "stopCodonExcludedFromCDS",
                     "false"
                 );
-                print LOG "\n\# "
+                print LOG "\# "
                     . (localtime)
                     . ": Trying etraining again\n" if ($v > 3);
-                print LOG "$cmdString\n\n" if ($v > 3);
+                print LOG "$cmdString\n" if ($v > 3);
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line "
                         . __LINE__ ."\nFailed to execute $cmdString\n");
@@ -6820,7 +6827,7 @@ sub training_augustus {
             print LOG "\# "
                 . (localtime)
                 . ": First AUGUSTUS accuracy test\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nFailed to execute: $cmdString!\n");
@@ -6886,7 +6893,7 @@ sub training_augustus {
                 print LOG "\# "
                     . (localtime)
                     . ": optimizing AUGUSTUS parameters\n" if ($v > 3);
-                print LOG "$perlCmdString\n\n" if ($v > 3);
+                print LOG "$perlCmdString\n" if ($v > 3);
                 system("$perlCmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                         . "\nFailed to execute: $perlCmdString!\n");
@@ -6915,7 +6922,7 @@ sub training_augustus {
                        .  "$otherfilesDir/train.gb.train 1>$stdoutfile "
                        .  "2>$errorfile";
             print LOG "\# " . (localtime) . ": Second etraining\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nFailed to execute: $cmdString!\n");
@@ -6943,7 +6950,7 @@ sub training_augustus {
             print LOG "\# "
                 . (localtime)
                 . ": Second AUGUSTUS accuracy test\n" if ($v > 3);
-            print LOG "$cmdString\n\n";
+            print LOG "$cmdString\n";
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nFailed to execute: $cmdString\n");
@@ -6977,7 +6984,7 @@ sub training_augustus {
             print LOG "\# "
                 . (localtime)
                 . ": Third etraining - now with CRF\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nfailed to execute: $cmdString\n");
@@ -7007,7 +7014,7 @@ sub training_augustus {
                 print LOG "\# "
                     . (localtime)
                     . ": Third AUGUSTUS accuracy test\n" if ($v > 3);
-                print LOG "$cmdString\n\n" if ($v > 3);
+                print LOG "$cmdString\n" if ($v > 3);
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                         . "\nFailed to execute: $cmdString\n");
@@ -7093,7 +7100,7 @@ sub training_augustus {
             . (localtime)
             . ": Copying optimized parameters to working directory"
             . " $parameterDir\n" if ($v > 3);
-        print LOG "$cmdString\n\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
@@ -7397,7 +7404,7 @@ sub gtf2gb {
             .= "perl $string $gtf $genome $flanking_DNA $gb 2>$errorfile";
         print LOG "\# " . (localtime) . ": create genbank file $gb\n"
             if ($v > 3);
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                 . "\nFailed to execute: $perlCmdString\n");
@@ -7966,7 +7973,7 @@ sub join_aug_pred {
         $perlCmdString .= "nice ";
     }
     $perlCmdString .= "perl $string < $cat_file > $target_file";
-    print LOG "$perlCmdString\n\n" if ($v > 3);
+    print LOG "$perlCmdString\n" if ($v > 3);
     system("$perlCmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             ."\nFailed to execute $perlCmdString\n");
@@ -8003,7 +8010,7 @@ sub run_augustus_single_core_ab_initio {
         . (localtime)
         . ": Running AUGUSTUS in ab initio mode for file $genome with "
         . "gensetsetId $genesetId.\n" if ($v > 2);
-    print LOG "$cmdString\n\n" if ($v > 3);
+    print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString!\n");
@@ -8039,7 +8046,7 @@ sub run_augustus_single_core_hints {
     print LOG "\# "
         . (localtime)
         . ": Running AUGUSTUS with $hintId for file $genome\n" if ($v > 2);
-    print LOG "$cmdString\n\n" if ($v > 3);
+    print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString!\n");
@@ -8310,7 +8317,7 @@ sub copy_ex_cfg {
     print LOG "\# "
         . (localtime)
         . ": copy extrinsic file $thisCfg to working directory\n" if ($v > 2);
-    print LOG "$cmdString\n\n" if ($v > 2);
+    print LOG "$cmdString\n" if ($v > 2);
     system("$cmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line "
             . __LINE__ ."\nFailed to execute: $cmdString!\n");
@@ -8352,7 +8359,7 @@ sub clean_aug_jobs {
                     . (localtime)
                     . ": creating directory "
                     . "$otherfilesDir/augustus_files_$hintId.\n"
-                    . "mkdir $otherfilesDir/augustus_files_$hintId\n\n";
+                    . "mkdir $otherfilesDir/augustus_files_$hintId\n";
             $logString .= $prtStr if ( $v > 2 );
             make_path("$otherfilesDir/augustus_files_$hintId") or 
                 die("ERROR in file " . __FILE__ ." at line "
@@ -8625,7 +8632,7 @@ sub get_anno_fasta {
     $pythonCmdString .= "$PYTHON3_PATH/python3 $string -g $genome -f $AUG_pred "
                      .  "-o $name_base 1> $outfile 2>$errorfile";
 
-    print LOG "$pythonCmdString\n\n" if ($v > 3);
+    print LOG "$pythonCmdString\n" if ($v > 3);
     system("$pythonCmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $pythonCmdString\n");
@@ -8653,7 +8660,7 @@ sub make_gtf {
             $cmdString .= "nice ";
         }
         my $cmdString .= "cat $AUG_pred | perl -ne 'if(m/\\tAUGUSTUS\\t/) {print \$_;}' | perl $perlstring --printExon --out=$gtf_file_tmp 2>$errorfile";
-        print LOG "$cmdString\n\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line ". __LINE__ ."\nFailed to execute: $cmdString\n");
         open (GTF, "<", $gtf_file_tmp) or die("ERROR in file " . __FILE__
@@ -9296,7 +9303,7 @@ sub train_utr {
             . (localtime)
             . ": BLAST training gene structures (with UTRs) against "
             . "themselves:\n" if ($v > 3);
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__
@@ -9344,7 +9351,7 @@ sub train_utr {
         print LOG "\# " . (localtime)
             . ": Filtering nonredundant loci into $otherfilesDir/utr.nr.gb:\n"
             if ($v > 3);
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__
@@ -9453,7 +9460,7 @@ sub train_utr {
             print LOG "\# "
                 . (localtime)
                 . ": Fourth AUGUSTUS accuracy test (no UTR parameters on UTR test set)\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nFailed to execute: $cmdString\n");
@@ -9561,7 +9568,7 @@ sub train_utr {
                 . (localtime)
                 . ": Fifth AUGUSTUS accuracy test (with UTR parameters on UTR "
                 . "test set)\n" if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "\nFailed to execute: $cmdString\n");
@@ -9602,7 +9609,7 @@ sub bam2wig {
         $cmdString .= "-out $otherfilesDir/merged.bam "
                    .  "1> $otherfilesDir/bam.merge.log "
                    .  "2> $errorfilesDir/bam.merge.err";
-        print LOG "\n$cmdString\n\n" if ( $v > 3 );
+        print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
                 . " at line " . __LINE__
                 . "\nFailed to execute: $cmdString!\n" );
@@ -9637,16 +9644,22 @@ sub bam2wig {
         . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
     print LOG "\# " . (localtime) . ": Creating wiggle file...\n"
         if ( $v > 3 );
-    $cmdString = "";
+    my $string = find(
+        "bamToWig.py",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    my $pythonCmdString = "";
     if ($nice) {
-        $cmdString .= "nice ";
+        $pythonCmdString .= "nice ";
     }
-    $cmdString .= "$bam2wig $otherfilesDir/merged.s.bam "
-               .  "1>$otherfilesDir/merged.wig "
-               .  "2> $errorfilesDir/bam2wig.err";
-    print LOG "\n$cmdString\n" if ( $v > 3 );
-    system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
-        . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
+    $pythonCmdString .= "$PYTHON3_PATH/python3 $string -b "
+                     .  "$otherfilesDir/merged.s.bam -g $genome "
+                     .  "-o $otherfilesDir/merged.wig "
+                     .  "2> $errorfilesDir/bamToWig.err";
+    print LOG "$pythonCmdString\n" if ($v > 3);
+    system("$pythonCmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $pythonCmdString\n");
 }
 
 ####################### bam2stranded_wig #######################################
@@ -9696,7 +9709,7 @@ sub bam2stranded_wig{
         $cmdString .= "-out $bam_plus "
                    .  "1> $otherfilesDir/bam_plus.merge.log "
                    .  "2> $errorfilesDir/bam_plus.merge.err";
-        print LOG "\n$cmdString\n\n" if ( $v > 3 );
+        print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
     }elsif(scalar(@plus_index) == 1){
@@ -9739,7 +9752,7 @@ sub bam2stranded_wig{
         $cmdString .= "-out $bam_minus "
                    .  "1> $otherfilesDir/bam_minus.merge.log "
                    .  "2> $errorfilesDir/bam_minus.merge.err";
-        print LOG "\n$cmdString\n\n" if ( $v > 3 );
+        print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
     }elsif(scalar(@minus_index) == 1){
@@ -9782,7 +9795,7 @@ sub bam2stranded_wig{
         $cmdString .= "-out $bam_unstranded "
                    .  "1> $otherfilesDir/bam_unstranded.merge.log "
                    .  "2> $errorfilesDir/bam_unstranded.merge.err";
-        print LOG "\n$cmdString\n\n" if ( $v > 3 );
+        print LOG "\n$cmdString\n" if ( $v > 3 );
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n");
     }elsif(scalar(@unstranded_index) == 1){
@@ -9825,15 +9838,21 @@ sub bam2stranded_wig{
         $cmdString = "";
         my $thisWigFile = "$otherfilesDir/rnaseq_".$_.".s.bam";
         $thisWigFile =~ s/\.s\.bam/\.wig/;
+        my $string = find(
+            "bamToWig.py",      $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        my $pythonCmdString = "";
         if ($nice) {
-            $cmdString .= "nice ";
+            $pythonCmdString .= "nice ";
         }
-        $cmdString .= "$bam2wig $otherfilesDir/rnaseq_".$_.".s.bam "
-               .  "1>$thisWigFile "
-               .  "2> $errorfilesDir/bam2wig_$_.err";
-        print LOG "\n$cmdString\n" if ( $v > 3 );
-        system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
+        $pythonCmdString .= "$PYTHON3_PATH/python3 $string -b $otherfilesDir/rnaseq_"
+                         .$_.".s.bam -g $genome -o $thisWigFile 2> $errorfilesDir/bamToWig_"
+                         .$_.".err";
+        print LOG "$pythonCmdString\n" if ($v > 3);
+        system("$pythonCmdString") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $pythonCmdString\n");
     }
 }
 
@@ -9898,7 +9917,7 @@ sub stranded_wig2ep_hints {
                 . (localtime)
                 . ": Converting wiggle file to exonpart hints for AUGUSTUS\n"
                 if ($v > 3);
-            print LOG "$perlCmdString\n\n" if ($v > 3);
+            print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                 . "\nFailed to execute: $perlCmdString\n");
@@ -9915,7 +9934,7 @@ sub stranded_wig2ep_hints {
                 . ": Concatenating exonpart hints from $this_ep_hints_file "
                 . "to $hintsfile:\n"
                 if ($v > 3);
-            print LOG "$cmdString\n\n" if ($v > 3);
+            print LOG "$cmdString\n" if ($v > 3);
             system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                 . "\nFailed to execute: $cmdString\n");
@@ -10021,7 +10040,7 @@ sub wig2hints {
             . (localtime)
             . ": Converting wiggle file to exonpart hints for AUGUSTUS\n"
             if ($v > 3);
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $perlCmdString\n");
@@ -10036,7 +10055,7 @@ sub wig2hints {
             . (localtime)
             . ": Concatenating exonpart hints from $ep_hints_file to $hintsfile:\n"
             if ($v > 3);
-        print LOG "$cmdString\n\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
@@ -10068,7 +10087,7 @@ sub gtf2gff3 {
                        .  "print \$_;}' | perl $string --gff3 --out=$gff3 "
                        .   ">> $otherfilesDir/gtf2gff3.log "
                        .   "2>> $errorfilesDir/gtf2gff3.err";
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $perlCmdString\n");
@@ -10226,7 +10245,7 @@ sub clean_up {
             $perlCmdString .= "nice ";
         }
         $perlCmdString .= "perl $string --wdir=$otherfilesDir";
-        print LOG "$perlCmdString\n\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
         my $loginfo = `$perlCmdString`;
         print LOG $loginfo;
     }
