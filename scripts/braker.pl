@@ -40,7 +40,7 @@ use File::Basename qw(dirname basename);
 use File::Copy;
 
 use helpMod
-    qw( find checkFile formatDetector relToAbs setParInConfig uptodate gtf2fasta clean_abort );
+    qw( find checkFile formatDetector relToAbs setParInConfig addParToConfig uptodate gtf2fasta clean_abort );
 use Term::ANSIColor qw(:constants);
 
 use strict;
@@ -6072,7 +6072,7 @@ sub new_species {
                     addParToConfig($AUGUSTUS_CONFIG_PATH
                                    . "/species/$species/$species\_parameters.cfg",
                                      "translation_table", "$ttable");
-                    if($ttable =~ m/^(10|13|25|30|31)$/){
+                    if($ttable =~ m/^(10|25|30|31)$/){
                         print LOG "\# " . (localtime)
                                   . ": Setting frequency of stop codon opalprob (TGA) to 0\n" if ($v > 3);
                         setParInConfig($AUGUSTUS_CONFIG_PATH . "/species/$species/$species\_parameters.cfg",
@@ -6516,7 +6516,7 @@ sub training_augustus {
 
         # convert those training genes to protein fasta file
         gtf2fasta ($genome, "$otherfilesDir/traingenes.good.gtf",
-            "$otherfilesDir/traingenes.good.fa");
+            "$otherfilesDir/traingenes.good.fa", $ttable);
 
         # blast or diamond good training genes to exclude redundant sequences
         $string = find(
@@ -6853,7 +6853,7 @@ sub training_augustus {
                         . "/species/$species/$species\_parameters.cfg",
                     "/Constant/opalprob", $freqOfTga
                 );
-            }elsif($ttable =~ m/^(10|13|25|30|31)$/){
+            }elsif($ttable =~ m/^(10|25|30|31)$/){
                 print LOG "\# " . (localtime)
                           . ": Setting frequency of stop codon opalprob (TGA) to 0\n" if ($v > 3);
                 setParInConfig($AUGUSTUS_CONFIG_PATH . "/species/$species/$species\_parameters.cfg",

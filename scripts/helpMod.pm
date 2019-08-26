@@ -17,8 +17,8 @@ package helpMod;
 
 use Exporter 'import';
 
-@EXPORT_OK = qw( find tildeConvert checkFile formatDetector relToAbs setParInConfig uptodate
-    gtf2fasta clean_abort );
+@EXPORT_OK = qw( find tildeConvert checkFile formatDetector relToAbs setParInConfig addParToConfig 
+    uptodate gtf2fasta clean_abort );
 
 use strict;
 use Cwd;
@@ -30,7 +30,8 @@ use File::Path qw(rmtree);
 ####################################################################################################
 # genetic code (use only one for training gene blast all-against-all, not gene prediction)         #
 ####################################################################################################
-my(%genetic_code) = (
+my %genetic_code;
+$genetic_code{1} = {
     'TCA' => 'S', # Serine
     'TCC' => 'S', # Serine
     'TCG' => 'S', # Serine
@@ -95,7 +96,45 @@ my(%genetic_code) = (
     'GGC' => 'G', # Glycine
     'GGG' => 'G', # Glycine
     'GGT' => 'G'  # Glycine
-);
+};
+
+$genetic_code{6} = $genetic_code{1};
+$genetic_code{6}{'TAA'} = 'Q'; # Glutamine
+$genetic_code{6}{'TAG'} = 'Q';  # Glutamine
+
+$genetic_code{10} = $genetic_code{1};
+$genetic_code{10}{'TGA'} = 'C'; # Cysteine
+
+$genetic_code{12} = $genetic_code{1};
+$genetic_code{12}{'CTG'} = 'S'; # Serine
+
+$genetic_code{25} = $genetic_code{1};
+$genetic_code{25}{'TGA'} = 'G'; # Glycine
+
+$genetic_code{26} = $genetic_code{1};
+$genetic_code{26}{'CTG'} = 'A'; # Alanine
+
+$genetic_code{27} = $genetic_code{1};
+$genetic_code{27}{'TAG'} = 'Q'; # Glutamine
+$genetic_code{27}{'TAA'} = 'Q';  # Glutamine
+# cannot differentiate between TGA Stop or Tryptophane, make stop codon always
+
+$genetic_code{28} = $genetic_code{1};
+# cannot differentiate between alternative translation of stop codons, keep table 1
+
+$genetic_code{29} = $genetic_code{1};
+$genetic_code{29}{'TAA'} = 'Y'; # Tyrosine
+$genetic_code{29}{'TAG'} = 'Y';  # Tyrosine
+
+$genetic_code{30} = $genetic_code{1};
+$genetic_code{30}{'TAA'} = 'E'; # Glutamic Acid
+$genetic_code{30}{'TAG'} = 'E';  # Glutamic Acid
+
+$genetic_code{31} = $genetic_code{1};
+$genetic_code{31}{'TGA'} = 'W'; # Tryptophane
+# cannot differentiale alternative translation of other codons, keep table 1
+
+
 
 ####################################################################################################
 # extract DNA sequence of CDS in gtf from genome fasta file, write to CDS fasta file               #
@@ -104,6 +143,7 @@ sub gtf2fasta {
     my $genome_file = shift;
     my $gtf_file = shift;
     my $fasta_file = shift;
+    my $table = shift;
     my %gtf;
     my %genome;
     open (GTF, "<", $gtf_file ) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__
@@ -183,7 +223,7 @@ sub gtf2fasta {
     open (FASTA, ">", $fasta_file) or die ("ERROR: in file " . __FILE__ ." at line " . __LINE__
         . "\nCould not close file $fasta_file!\n");
     while ( my ( $txid, $dna ) = each %cds_seq ) {
-        print FASTA ">$txid\n".dna2aa($dna)."\n";
+        print FASTA ">$txid\n".dna2aa($dna, $table)."\n";
     }
     close (FASTA) or die ("ERROR: in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $fasta_file!\n");
@@ -206,6 +246,7 @@ sub reverse_complement {
 
 sub dna2aa {
     my $seq = shift;
+    my $code = shift;
     $seq = uc($seq);
     my @codons = $seq =~ /(.{1,3})/g;
     my $aa = "";
@@ -213,7 +254,7 @@ sub dna2aa {
         if($_ =~ m/N/i){
             $aa .= "X";
         }else{
-            $aa .= $genetic_code{$_};
+            $aa .= $genetic_code{$code}{$_};
         }
     }
     return $aa;
@@ -459,6 +500,27 @@ sub setParInConfig {
     foreach my $line (@lines) {
         $line =~ s/(\s*$parName +)(\S+?)(\s|\#|$)/$1$value$3/;
     }
+    seek( CFGFILE, 0, 0 );
+    print CFGFILE @lines or die("Could not write $configFileName");
+    truncate( CFGFILE, tell(CFGFILE) );
+    close(CFGFILE);
+}
+
+####################################################################################################
+# add a parameter in to a config file                                                              #
+# assume the format                                                                                #
+# parName    value   # comment                                                                     #
+####################################################################################################
+
+sub addParToConfig {
+    my $configFileName = shift;
+    my $parName        = shift;
+    my $value          = shift;
+    open( CFGFILE, "+<$configFileName" )
+        or die("Could not read config file $configFileName\n");
+    my @lines = <CFGFILE>;
+    push(@lines, '# ADDITIONAL PARAMTERS ADDED TO CFG BY BRAKER:\n');
+    push(@lines, '$parName    $value\n');
     seek( CFGFILE, 0, 0 );
     print CFGFILE @lines or die("Could not write $configFileName");
     truncate( CFGFILE, tell(CFGFILE) );
