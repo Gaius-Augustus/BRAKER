@@ -1328,7 +1328,9 @@ if ($ab_initio) {
         get_anno_fasta("$otherfilesDir/augustus.ab_initio_utr.gtf");
     }
 }
-get_anno_fasta("$otherfilesDir/augustus.hints.gtf");
+if ($ESmode==0){
+    get_anno_fasta("$otherfilesDir/augustus.hints.gtf");
+}
 if ($UTR eq "on") {
     get_anno_fasta("$otherfilesDir/augustus.hints_utr.gtf");
 }
@@ -5323,7 +5325,7 @@ sub get_genemark_hints {
 sub format_ep_hints {
     print LOG "\# "
         . (localtime)
-        . ": Reformating hints file for GeneMark-EP and AUGUSTUS\n" if ($v > 2);
+        . ": Reformating hints file for GeneMark-E(T)P and AUGUSTUS\n" if ($v > 2);
     open( INTRONS, "<", $genemark_hintsfile )
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nCould not open file $genemark_hintsfile!\n");
@@ -5384,7 +5386,7 @@ sub format_ep_hints {
 ################################################################################
 
 sub create_evidence_gff {
-    print LOG "\# " . (localtime) . " Creating evidence.gff with hints from both "
+    print LOG "\# " . (localtime) . ": Creating evidence.gff with hints from both "
         . "RNA-Seq and proteins...\n" if ($v > 2);
     my $evidenceFile = "$otherfilesDir/evidence.gff";
     my %rnaseq;
