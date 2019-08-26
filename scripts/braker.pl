@@ -412,6 +412,10 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     for example be set to 10000 if transmasked_fasta
                                     option is used because transmasking might
                                     introduce many very short contigs.
+--translation_table=INT             Change translation table from non-standard
+                                    to something else. 
+                                    DOES NOT WORK YET BECAUSE BRAKER DOESNT
+                                    SWITCH TRANSLATION TABLE FOR GENEMARK-EX, YET!
 
 
 DESCRIPTION
@@ -606,6 +610,7 @@ my $transmasked_fasta; # transmaked genome file for GeneMark
 my $min_contig; # min contig length for GeneMark, e.g. to be used in combination 
                 # with transmasked_fasta
 my $grass; # switch on GC treatment for GeneMark-ES/ET
+my $ttable = 1; # translation table to be used
 @forbidden_words = (
     "system",    "exec",  "passthru", "run",    "fork",   "qx",
     "backticks", "chmod", "chown",    "chroot", "unlink", "do",
@@ -685,7 +690,8 @@ GetOptions(
     'min_contig=s'                 => \$min_contig,
     'makehub!'                     => \$makehub,
     'email=s'                      => \$email,
-    'version!'                     => \$printVersion
+    'version!'                     => \$printVersion,
+    'translation_table=s'          => \$ttable
 );
 
 if ($help) {
@@ -3271,6 +3277,23 @@ sub check_upfront {
     find_ex_cfg ("cfg/rnaseq_utr.cfg");
     find_ex_cfg ("cfg/ep_utr.cfg");
     find_ex_cfg ("cfg/gth_utr.cfg");
+
+    # check whether provided translation table is compatible
+    # BRAKER has only been implemented to alter to nuclear code
+    # tables, instead of table 1 ...\
+    if(not($ttable eq 1)){
+        if(not($ttable =~ m/^(6|10|12|25|26|27|28|29|30|31)$/)){
+            $prtStr = "\# "
+                    . (localtime)
+                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "BRAKER is only compatible with translation tables " 
+                  . "1, 6, 10, 12, 25, 26, 27, 28, 29, 30, 31. You "
+                  . "specified table " + $ttable + ".\n";
+                $logString .= $prtStr;
+                print STDERR $logString;
+                exit(1);
+        }
+    }
 }
 
 ####################### find_ex_cfg ############################################
@@ -6041,6 +6064,29 @@ sub new_species {
                     . "check write permissions in "
                     . "$AUGUSTUS_CONFIG_PATH/species directory! "
                     . "Command was $perlCmdString\n");
+                if(not($ttable == 1)){
+                    print LOG "\# "
+                        . (localtime)
+                        . ": setting translation_table to $ttable in file "
+                        . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg\n" if ($v > 3);
+                    addParToConfig($AUGUSTUS_CONFIG_PATH
+                                   . "/species/$species/$species\_parameters.cfg",
+                                     "translation_table", "$ttable");
+                    if($ttable =~ m/^(10|13|25|30|31)$/){
+                        print LOG "\# " . (localtime)
+                                  . ": Setting frequency of stop codon opalprob (TGA) to 0\n" if ($v > 3);
+                        setParInConfig($AUGUSTUS_CONFIG_PATH . "/species/$species/$species\_parameters.cfg",
+                                       "/Constant/opalprob", 0);
+                    }elsif($ttable =~ m/^(6|27|29)$/){
+                        print LOG "\# " . (localtime)
+                                  . ": Setting frequencies of stop codons ochreprob (TAA) and amberprob (TAG) to 0\n" if ($v > 3);
+                        setParInConfig($AUGUSTUS_CONFIG_PATH . "/species/$species/$species\_parameters.cfg",
+                            "/Constant/ochreprob", 0);
+                        setParInConfig($AUGUSTUS_CONFIG_PATH . "/species/$species/$species\_parameters.cfg",
+                            "/Constant/amberprob", 0);
+                    }
+                }
+
             } else {
                 $prtStr = "\# "
                         . (localtime)
@@ -6787,25 +6833,56 @@ sub training_augustus {
             }
             close(TRAIN) or die("ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nCould not close gff file $stdoutfile!\n");
-            print LOG "\# "
-                . (localtime)
-                . ": Setting frequency of stop codons to tag=$freqOfTag, "
-                . "taa=$freqOfTaa, tga=$freqOfTga.\n" if ($v > 3);
-            setParInConfig(
-                $AUGUSTUS_CONFIG_PATH
-                    . "/species/$species/$species\_parameters.cfg",
-                "/Constant/amberprob", $freqOfTag
-            );
-            setParInConfig(
-                $AUGUSTUS_CONFIG_PATH
-                    . "/species/$species/$species\_parameters.cfg",
-                "/Constant/ochreprob", $freqOfTaa
-            );
-            setParInConfig(
-                $AUGUSTUS_CONFIG_PATH
-                    . "/species/$species/$species\_parameters.cfg",
-                "/Constant/opalprob", $freqOfTga
-            );
+            if($ttable == 1){
+                print LOG "\# "
+                    . (localtime)
+                    . ": Setting frequency of stop codons to tag=$freqOfTag, "
+                    . "taa=$freqOfTaa, tga=$freqOfTga.\n" if ($v > 3);
+                setParInConfig(
+                    $AUGUSTUS_CONFIG_PATH
+                        . "/species/$species/$species\_parameters.cfg",
+                    "/Constant/amberprob", $freqOfTag
+                );
+                setParInConfig(
+                    $AUGUSTUS_CONFIG_PATH
+                        . "/species/$species/$species\_parameters.cfg",
+                    "/Constant/ochreprob", $freqOfTaa
+                );
+                setParInConfig(
+                    $AUGUSTUS_CONFIG_PATH
+                        . "/species/$species/$species\_parameters.cfg",
+                    "/Constant/opalprob", $freqOfTga
+                );
+            }elsif($ttable =~ m/^(10|13|25|30|31)$/){
+                print LOG "\# " . (localtime)
+                          . ": Setting frequency of stop codon opalprob (TGA) to 0\n" if ($v > 3);
+                setParInConfig($AUGUSTUS_CONFIG_PATH . "/species/$species/$species\_parameters.cfg",
+                               "/Constant/opalprob", 0);
+                if(not($freqOfTga == 0)){ # distribute false probablity to the other two codons
+                    $freqOfTaa = $freqOfTaa + $freqOfTga/2;
+                    $freqOfTag = $freqOfTag + $freqOfTga/2;
+                }
+                setParInConfig(
+                    $AUGUSTUS_CONFIG_PATH
+                        . "/species/$species/$species\_parameters.cfg",
+                    "/Constant/amberprob", $freqOfTag
+                );
+                setParInConfig(
+                    $AUGUSTUS_CONFIG_PATH
+                        . "/species/$species/$species\_parameters.cfg",
+                    "/Constant/ochreprob", $freqOfTaa
+                );
+            }elsif($ttable =~ m/^(6|27|29)$/){
+                        print LOG "\# " . (localtime)
+                                  . ": Setting frequencies of stop codons ochreprob (TAA) and " 
+                                  . "amberprob (TAG) to 0 and opalprob (TGA) to 1\n" if ($v > 3);
+                        setParInConfig($AUGUSTUS_CONFIG_PATH . "/species/$species/$species\_parameters.cfg",
+                            "/Constant/ochreprob", 0);
+                        setParInConfig($AUGUSTUS_CONFIG_PATH . "/species/$species/$species\_parameters.cfg",
+                            "/Constant/amberprob", 0);
+                        setParInConfig( $AUGUSTUS_CONFIG_PATH . "/species/$species/$species\_parameters.cfg",
+                            "/Constant/opalprob", 1);
+            }
         }
 
         # first test
@@ -8623,13 +8700,17 @@ sub get_anno_fasta {
         "getAnnoFastaFromJoingenes.py",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
-    my $errorfile = "$errorfilesDir/getAnnoFastaJoingenes.".$name_base_path_parts[scalar(@name_base_path_parts)-1].".stderr";
-    my $outfile = "$otherfilesDir/getAnnoFasta.".$name_base_path_parts[scalar(@name_base_path_parts)-1].".stdout";
+    my $errorfile = "$errorfilesDir/getAnnoFastaFromJoingenes.".$name_base_path_parts[scalar(@name_base_path_parts)-1].".stderr";
+    my $outfile = "$otherfilesDir/getAnnoFastaFromJoingenes.".$name_base_path_parts[scalar(@name_base_path_parts)-1].".stdout";
     my $pythonCmdString = "";
     if ($nice) {
         $pythonCmdString .= "nice ";
     }
-    $pythonCmdString .= "$PYTHON3_PATH/python3 $string -g $genome -f $AUG_pred "
+    $pythonCmdString .= "$PYTHON3_PATH/python3 $string ";
+    if (not($ttable == 1)){
+        $pythonCmdString .= "-t $ttable ";
+    }
+    $pythonCmdString .= "-g $genome -f $AUG_pred "
                      .  "-o $name_base 1> $outfile 2>$errorfile";
 
     print LOG "$pythonCmdString\n" if ($v > 3);
