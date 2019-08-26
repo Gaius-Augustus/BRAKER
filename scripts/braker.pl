@@ -2649,7 +2649,7 @@ sub check_biopython{
 }
 
 ####################### set_PYTHON3_PATH #######################################
-# * set path to python3 (for getAnnoFastaFromJoingenes.py)
+# * set path to python3 (for getAnnoFastaFromJoingenes.py and make_hub.py)
 ################################################################################
 
 sub set_PYTHON3_PATH {
@@ -3225,7 +3225,7 @@ sub check_upfront {
         "getAnnoFastaFromJoingenes.py", $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
       );
-    if($UTR=="on"){
+    if($UTR eq "on"){
         find(
             "bamToWig.py", $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -3523,7 +3523,7 @@ sub check_options {
     }
 
     # if UTR is on, check whether splice site patterns are given
-    if( $UTR ) {
+    if( $UTR eq "on") {
         if( @splice_cmd_line ){
             my $gtag_ever_seen = 0;
             foreach(@splice_cmd_line){
