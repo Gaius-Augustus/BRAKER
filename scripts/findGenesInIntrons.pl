@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # ==============================================================
 # Katharina J. Hoff
 # When two gene sets are merged with joingenes, genes that
@@ -6,7 +6,7 @@
 # a gtf file and identifies those transcripts that are
 # in introns (of the same transcript file).
 #
-# last changes: February 23rd 2018
+# last changes: August 29th 2019
 # ==============================================================
 
 use strict;

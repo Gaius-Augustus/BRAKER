@@ -1,8 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # Author: Katharina J. Hoff and Mario Stanke
 # Contact: katharina.hoff@uni-greifswald.de
-# Laste modification: September 10th 2018
+# Last modification: August 29th 2019
 
 # This script samples training gene gene structures according to their intron number
 # Original observation is: if training gene structures originate from GeneMark-EX,

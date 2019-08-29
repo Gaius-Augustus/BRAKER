@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ####################################################################################################
 #                                                                                                  #
@@ -9,7 +9,7 @@
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
-# Release date: February 9th 2018                                                                   #
+# Last modification: August 29th 2019                                                              #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
