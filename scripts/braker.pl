@@ -1329,16 +1329,16 @@ if ( $gff3 != 0) {
 }
 
 if ($ab_initio) {
-    get_anno_fasta("$otherfilesDir/augustus.ab_initio.gtf");
+    get_anno_fasta("$otherfilesDir/augustus.ab_initio.gtf", "ab_initio_final");
     if ($UTR eq "on") {
-        get_anno_fasta("$otherfilesDir/augustus.ab_initio_utr.gtf");
+        get_anno_fasta("$otherfilesDir/augustus.ab_initio_utr.gtf", "ab_initio_utr_final");
     }
 }
 if ($ESmode==0){
-    get_anno_fasta("$otherfilesDir/augustus.hints.gtf");
+    get_anno_fasta("$otherfilesDir/augustus.hints.gtf", "hints_final");
 }
 if ($UTR eq "on") {
-    get_anno_fasta("$otherfilesDir/augustus.hints_utr.gtf");
+    get_anno_fasta("$otherfilesDir/augustus.hints_utr.gtf", "hints_utr_final");
 }
 
 if( $annot ) {
@@ -2663,7 +2663,8 @@ sub check_biopython{
 }
 
 ####################### set_PYTHON3_PATH #######################################
-# * set path to python3 (for getAnnoFastaFromJoingenes.py and make_hub.py)
+# * set path to python3 (for getAnnoFastaFromJoingenes.py, 
+#   fix_in_frame_stop_codon_genes.py and make_hub.py)
 ################################################################################
 
 sub set_PYTHON3_PATH {
@@ -7211,11 +7212,26 @@ sub training_augustus {
 #   if the stop codon is spliced/contains an intron
 # * this function re-predicts in regions with IFSs genes using AUGUSTUS mea
 #   (instead of Viterbi)
+# * arguments:
+#   $label -> unique identifier for the AUGUSTUS run that is postprocessed
+#   $gtf_in -> gtf output file of AUGUSTUS run
+#   $bad_lst -> output file of getAnnoFastaFromJoingenes.py
+#   $utr_here -> on/off
+#   $masking -> on/off 
+#   $spec -> augustus species name 
+#   $clean -> on/off
+#   $aug_c_p -> AUGUSTUS_CONFIG_PATH
+#   $aug_b_p -> AUGUSTUS_BIN_PATH
+#   $aug_s_p -> AUGUSTUS_SCRIPTS_PATH
+#   Optional:
+#   $h_file -> hints file for this AUGUSTUS run
+#   $cfg_file -> extrinsic config file for hints
 ################################################################################
 
 sub fix_ifs_genes{
-    my ($label, $gtf_in, $bad_lst, $utr_here, $fix_ifs_out_stem, $masking, $spec, 
+    my ($label, $gtf_in, $bad_lst, $utr_here, $masking, $spec, 
         $clean, $aug_c_p, $aug_b_p, $aug_s_p, $h_file, $cfg_file) = @_;
+    my $fix_ifs_out_stem = $label."_fix_ifs_";
     my $print_utr_here = "off";
     if($utr_here == "on"){
         $print_utr_here = "on";
@@ -8750,6 +8766,7 @@ sub joingenes {
 
 sub get_anno_fasta {
     my $AUG_pred = shift;
+    my $label = shift;
     print LOG "\# "
         . (localtime)
         . ": Making a fasta file with protein sequences of $AUG_pred\n"
@@ -8762,8 +8779,8 @@ sub get_anno_fasta {
         "getAnnoFastaFromJoingenes.py",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
-    my $errorfile = "$errorfilesDir/getAnnoFastaFromJoingenes.".$name_base_path_parts[scalar(@name_base_path_parts)-1].".stderr";
-    my $outfile = "$otherfilesDir/getAnnoFastaFromJoingenes.".$name_base_path_parts[scalar(@name_base_path_parts)-1].".stdout";
+    my $errorfile = "$errorfilesDir/getAnnoFastaFromJoingenes.".$name_base_path_parts[scalar(@name_base_path_parts)-1]."_".$label.".stderr";
+    my $outfile = "$otherfilesDir/getAnnoFastaFromJoingenes.".$name_base_path_parts[scalar(@name_base_path_parts)-1]."_".$label.".stdout";
     my $pythonCmdString = "";
     if ($nice) {
         $pythonCmdString .= "nice ";
