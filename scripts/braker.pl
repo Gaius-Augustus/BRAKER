@@ -7214,16 +7214,35 @@ sub training_augustus {
 ################################################################################
 
 sub fix_ifs_genes{
-    my ($gtf_in, $bad_lst, $utr_here, $fix_ifs_out_stem, $masking, $spec, $clean, $hintsfile, $cfg_file) = @_;
+    my ($label, $gtf_in, $bad_lst, $utr_here, $fix_ifs_out_stem, $masking, $spec, 
+        $clean, $aug_c_p, $aug_b_p, $aug_s_p, $h_file, $cfg_file) = @_;
     my $print_utr_here = "off";
     if($utr_here == "on"){
         $print_utr_here = "on";
     }
-
-   # -g $genome -t $gtf_in -b $bad_lst 
     print LOG "\# " . (localtime) . ": fixing AUGUSTUS genes with in frame "
             . "stop codons..." if ($v > 2);
 
+    $string = find( "fix_in_frame_stop_codon_genes.py", $aug_b_p, 
+        $aug_s_p, $aug_c_p );
+
+
+    my $cmdStr = $PYTHON3_PATH . "/python3 " . $string ." -g " . $genome 
+            . " -t $gtf_in -b $bad_lst -o $fix_ifs_out_stem -s $spec -m $masking "
+            . "--UTR $utr_here --print_utr $print_utr_here -a $aug_c_p "
+            . "-A $aug_b_p -S $aug_s_p";
+    if ( defined($h_file) and defined($cfg_file) ) {
+        $cmdStr .= "-H $h_file -e $cfg_file ";
+    }
+    if( $clean == "off" ){
+        $cmdStr .= "-n";
+    }
+    $cmdStr .= " > $otherfilesDir/fix_in_frame_stop_codon_genes_".$label.".log "
+            ."2> $errorfilesDir/fix_in_frame_stop_codon_genes_".$label.".err";
+    print LOG $cmdStr . "\n"  if ($v > 3);
+    system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
 }
 
 
