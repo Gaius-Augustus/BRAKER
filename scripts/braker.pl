@@ -416,6 +416,9 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     to something else. 
                                     DOES NOT WORK YET BECAUSE BRAKER DOESNT
                                     SWITCH TRANSLATION TABLE FOR GENEMARK-EX, YET!
+--skip_fixing_broken_genes          If you do not have python3, you can choose
+                                    to skip the fixing of stop codon including
+                                    genes (not recommendedn)
 
 
 DESCRIPTION
@@ -611,6 +614,7 @@ my $min_contig; # min contig length for GeneMark, e.g. to be used in combination
                 # with transmasked_fasta
 my $grass; # switch on GC treatment for GeneMark-ES/ET
 my $ttable = 1; # translation table to be used
+my $skip_fixing_broken_genes; # skip execution of fix_in_frame_stop_codon_genes.py
 @forbidden_words = (
     "system",    "exec",  "passthru", "run",    "fork",   "qx",
     "backticks", "chmod", "chown",    "chroot", "unlink", "do",
@@ -691,7 +695,8 @@ GetOptions(
     'makehub!'                     => \$makehub,
     'email=s'                      => \$email,
     'version!'                     => \$printVersion,
-    'translation_table=s'          => \$ttable
+    'translation_table=s'          => \$ttable,
+    'skip_fixing_broken_genes!'    => \$skip_fixing_broken_genes
 );
 
 if ($help) {
@@ -783,7 +788,7 @@ if ( @prot_seq_files && !$ESmode ){
 if (not ($skipAllTraining)){
     set_BLAST_or_DIAMOND_PATH();
 }
-if (not ($skipGetAnnoFromFasta) || $makehub){
+if ( not ($skipGetAnnoFromFasta) || $makehub || not ($skip_fixing_broken_genes)){
     set_PYTHON3_PATH();
 }
 if ( $makehub ) {
@@ -2749,11 +2754,14 @@ sub set_PYTHON3_PATH {
                     .  "sequences and protein sequences using the AUGUSTUS\n"
                     .  "script getAnnoFastaJoingenes.py with braker.pl,\n"
                     .  "and for creating track data hubs for visualizing\n"
-                    .  "gene predictions with the UCSC Genome Browser.\n"
+                    .  "gene predictions with the UCSC Genome Browser, and\n"
+                    .  " for fixing genes with in frame stop codons.\n"
                     .  "You can skip execution of getAnnoFastaJoingenes.py\n"
                     .  "with the braker.pl command line flag --skipGetAnnoFromFasta.\n"
                     .  "You can skip generation of track data hubs by not providing\n"
                     .  "the command line option --makehub."
+                    .  "You can skip the fixing of genes with stop codons with the\n"
+                    .  " braker.pl command line flag --skip_fixing_broken_genes.\n"
                     .  "If you don't want to skip it, you have 3 different "
                     .  "options to provide a path to python3 to braker.pl:\n"
                     .  "   a) provide command-line argument\n"
@@ -3272,6 +3280,12 @@ sub check_upfront {
         "fix_joingenes_gtf.pl",       $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
+    if(not($skip_fixing_broken_genes)){
+        find(
+            "fix_in_frame_stop_codon_genes.py", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+    }
 
     # check whether all extrinsic cfg files are available
     find_ex_cfg ("cfg/rnaseq.cfg");
@@ -7200,9 +7214,16 @@ sub training_augustus {
 ################################################################################
 
 sub fix_ifs_genes{
+    my ($gtf_in, $bad_lst, $utr_here, $fix_ifs_out_stem, $masking, $spec, $clean, $hintsfile, $cfg_file) = @_;
+    my $print_utr_here = "off";
+    if($utr_here == "on"){
+        $print_utr_here = "on";
+    }
+
+   # -g $genome -t $gtf_in -b $bad_lst 
     print LOG "\# " . (localtime) . ": fixing AUGUSTUS genes with in frame "
             . "stop codons..." if ($v > 2);
-    
+
 }
 
 
