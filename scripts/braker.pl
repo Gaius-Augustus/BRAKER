@@ -1273,6 +1273,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
             filter_genemark();
         }
     }
+
     print LOG "\#**********************************************************************************\n"
             . "\#                               TRAIN AUGUSTUS                                     \n"
             . "\#**********************************************************************************\n";
@@ -5393,7 +5394,13 @@ sub create_evidence_gff {
     my %prot;
     my %manual;
     my $manualExists = 0;
-    open ( HINTS, "<", $genemark_hintsfile ) or clean_abort(
+    my $mixed_hints;
+    if($prg = "gth"){
+        $mixed_hints = $otherfilesDir."/hintsfile.gff";
+    }else{
+        $mixed_hints = $genemark_hintsfile;
+    }
+    open ( HINTS, "<", $mixed_hints ) or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not open file $genemark_hintsfile!\n");
@@ -6227,7 +6234,7 @@ sub training_augustus {
         if ( not ( $trainFromGth ) ) {
             if (not($lambda)){
                 # get good genemark genes
-                print LOG "\#  "
+                print LOG "\# "
                     . (localtime)
                     . ": concatenating good GeneMark training genes to "
                     . "$goodLstFile.\n" if ($v > 3);
@@ -7183,6 +7190,19 @@ sub training_augustus {
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__
             ." at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
+}
+
+####################### fix_ifs_genes ##########################################
+# * AUGUSTUS sometimes predicts genes with in frame stop codons (IFSs)
+#   if the stop codon is spliced/contains an intron
+# * this function re-predicts in regions with IFSs genes using AUGUSTUS mea
+#   (instead of Viterbi)
+################################################################################
+
+sub fix_ifs_genes{
+    print LOG "\# " . (localtime) . ": fixing AUGUSTUS genes with in frame "
+            . "stop codons..." if ($v > 2);
+    
 }
 
 
