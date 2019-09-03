@@ -7596,7 +7596,7 @@ sub augustus {
                 run_augustus_single_core_ab_initio( $localUTR , $genesetId);
             }
             make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
-            get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId."_tmp");
+            get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId."tmp");
 
             fix_ifs_genes("augustus.ab_initio".$genesetId, 
                           "$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", 
@@ -7675,7 +7675,7 @@ sub augustus {
                     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
                     clean_aug_jobs($hintId);
                     make_gtf("$otherfilesDir/augustus.$hintId.gff");
-                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId."_tmp");
+                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", "tmp");
                     fix_ifs_genes("augustus.$hintId", 
                           "$otherfilesDir/augustus.$hintId.gtf", 
                           $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
@@ -7737,6 +7737,22 @@ sub augustus {
                     run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile,
                         $localUTR, $hintId);
                     make_gtf("$otherfilesDir/augustus.$hintId.gff");
+                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", "tmp");
+                    fix_ifs_genes("augustus.$hintId", 
+                          "$otherfilesDir/augustus.$hintId.gtf", 
+                          $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                          $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                          $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
+                    print LOG "\# " . (localtime) . ": Moving gene prediction file "
+                            . "without in frame stop codons to location of "
+                            . "original file (overwriting it)...\n" if ($v > 2);
+                    my $cmdString = "mv $otherfilesDir/augustus.$hintId"
+                       . "_fix_ifs_.gtf $otherfilesDir/augustus.$hintId.gtf";
+                    print LOG $cmdString."\n" if ($v > 3);
+                    system("$cmdString") == 0
+                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                        . "\nFailed to execute: $cmdString\n");
+                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
                 }else{
                     run_augustus_with_joingenes_single_core($localUTR, $genesetId);
                 }
