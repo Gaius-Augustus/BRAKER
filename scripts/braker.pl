@@ -8434,6 +8434,12 @@ sub run_augustus_with_joingenes_single_core {
         run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
             $localUTR, "Ppri5$genesetId");
         make_gtf("$otherfilesDir/augustus.Ppri5$genesetId.gff");
+        get_anno_fasta("$otherfilesDir/augustus.Ppri5$genesetId.gtf", "tmp");
+        fix_ifs_genes("augustus.Ppri5$genesetId", 
+                      "$otherfilesDir/augustus.Ppri5$genesetId.gtf", 
+                      $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                      $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                      $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
     }else{
         print LOG "\# " . (localtime) . ": Skip making file "
             . "$otherfilesDir/augustus.Ppri5$genesetId.gff because file is up "
@@ -8469,6 +8475,11 @@ sub run_augustus_with_joingenes_single_core {
         run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
             $localUTR, "E$genesetId");
         make_gtf("$otherfilesDir/augustus.E$genesetId.gff");
+        fix_ifs_genes("augustus.E$genesetId", 
+                      "$otherfilesDir/augustus.E$genesetId.gtf", 
+                      $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                      $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                      $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
     } else {
         print LOG "\# " . (localtime) . ": Skip making file "
             . "$otherfilesDir/augustus.E$genesetId.gff because file is up "
@@ -8477,8 +8488,8 @@ sub run_augustus_with_joingenes_single_core {
     if( !uptodate(["$otherfilesDir/augustus.Ppri5$genesetId.gtf", 
         "$otherfilesDir/augustus.E$genesetId.gtf"], 
         ["$otherfilesDir/augustus.hints$genesetId.gtf"]) || $overwrite ) {
-        joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gff",
-            "$otherfilesDir/augustus.E$genesetId.gff", $genesetId);
+        joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gtf",
+            "$otherfilesDir/augustus.E$genesetId.gtf", $genesetId);
     }else{
         print LOG "\# " . (localtime) . ": Skip running joingenes with input "
             . "files $otherfilesDir/augustus.E$genesetId.gtf and "
