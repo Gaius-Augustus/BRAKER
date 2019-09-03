@@ -1328,19 +1328,6 @@ if ( $gff3 != 0) {
     all_preds_gtf2gff3();
 }
 
-if ($ab_initio) {
-    get_anno_fasta("$otherfilesDir/augustus.ab_initio.gtf", "ab_initio_final");
-    if ($UTR eq "on") {
-        get_anno_fasta("$otherfilesDir/augustus.ab_initio_utr.gtf", "ab_initio_utr_final");
-    }
-}
-if ($ESmode==0){
-    get_anno_fasta("$otherfilesDir/augustus.hints.gtf", "hints_final");
-}
-if ($UTR eq "on") {
-    get_anno_fasta("$otherfilesDir/augustus.hints_utr.gtf", "hints_utr_final");
-}
-
 if( $annot ) {
     evaluate();
 }
@@ -5410,7 +5397,7 @@ sub create_evidence_gff {
     my %manual;
     my $manualExists = 0;
     my $mixed_hints;
-    if($prg = "gth"){
+    if($prg == "gth"){
         $mixed_hints = $otherfilesDir."/hintsfile.gff";
     }else{
         $mixed_hints = $genemark_hintsfile;
@@ -7217,9 +7204,7 @@ sub training_augustus {
 #   $gtf_in -> gtf output file of AUGUSTUS run
 #   $bad_lst -> output file of getAnnoFastaFromJoingenes.py
 #   $utr_here -> on/off
-#   $masking -> on/off 
 #   $spec -> augustus species name 
-#   $clean -> on/off
 #   $aug_c_p -> AUGUSTUS_CONFIG_PATH
 #   $aug_b_p -> AUGUSTUS_BIN_PATH
 #   $aug_s_p -> AUGUSTUS_SCRIPTS_PATH
@@ -7229,29 +7214,32 @@ sub training_augustus {
 ################################################################################
 
 sub fix_ifs_genes{
-    my ($label, $gtf_in, $bad_lst, $utr_here, $masking, $spec, 
-        $clean, $aug_c_p, $aug_b_p, $aug_s_p, $h_file, $cfg_file) = @_;
+    my ($label, $gtf_in, $bad_lst, $utr_here, $spec, 
+         $aug_c_p, $aug_b_p, $aug_s_p, $h_file, $cfg_file) = @_;
+    #print("Overview of fix_ifs_genes arguments:\n");
+    #foreach(@_){
+    #    print $_."\n";
+    #}
     my $fix_ifs_out_stem = $label."_fix_ifs_";
     my $print_utr_here = "off";
-    if($utr_here == "on"){
+    if($utr_here eq "on"){
         $print_utr_here = "on";
     }
     print LOG "\# " . (localtime) . ": fixing AUGUSTUS genes with in frame "
             . "stop codons..." if ($v > 2);
-
     $string = find( "fix_in_frame_stop_codon_genes.py", $aug_b_p, 
         $aug_s_p, $aug_c_p );
-
-
     my $cmdStr = $PYTHON3_PATH . "/python3 " . $string ." -g " . $genome 
-            . " -t $gtf_in -b $bad_lst -o $fix_ifs_out_stem -s $spec -m $masking "
-            . "--UTR $utr_here --print_utr $print_utr_here -a $aug_c_p "
-            . "-A $aug_b_p -S $aug_s_p";
+               . " -t $gtf_in -b $bad_lst -o $fix_ifs_out_stem -s $spec ";
+    if($soft_mask){
+        $cmdStr .= "-m on ";
+    }else{
+        $cmdStr .= "-m off ";
+    }
+    $cmdStr .= "--UTR $utr_here --print_utr $print_utr_here -a $aug_c_p "
+             . "-A $aug_b_p -S $aug_s_p";
     if ( defined($h_file) and defined($cfg_file) ) {
         $cmdStr .= "-H $h_file -e $cfg_file ";
-    }
-    if( $clean == "off" ){
-        $cmdStr .= "-n";
     }
     $cmdStr .= " > $otherfilesDir/fix_in_frame_stop_codon_genes_".$label.".log "
             ."2> $errorfilesDir/fix_in_frame_stop_codon_genes_".$label.".err";
@@ -7608,12 +7596,33 @@ sub augustus {
                 run_augustus_single_core_ab_initio( $localUTR , $genesetId);
             }
             make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
+            get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId."_tmp");
+
+            fix_ifs_genes("augustus.ab_initio".$genesetId, 
+                          "$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", 
+                          $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                          $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                          $AUGUSTUS_SCRIPTS_PATH);
+            print LOG "\# " . (localtime) . ": Moving gene prediction file "
+                            . "without in frame stop codons to location of "
+                            . "original file (overwriting it)...\n" if ($v > 2);
+            my $cmdString = "mv $otherfilesDir/augustus.ab_initio".$genesetId
+                       . "_fix_ifs_.gtf $otherfilesDir/augustus.ab_initio".$genesetId.".gtf";
+            print LOG $cmdString."\n" if ($v > 3);
+            system("$cmdString") == 0
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nFailed to execute: $cmdString\n");
+            get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId);
+
         } else {
             print LOG "\# " . (localtime) . ": Skipping predicting genes with "
                 . "AUGUSTUS ab initio because file "
                 . "$otherfilesDir/augustus.ab_initio$genesetId.gtf is up to "
                 . "date.\n" if ($v > 3);
         }
+
+
+
     }
 
     if( ! $ESmode == 1 ) {
