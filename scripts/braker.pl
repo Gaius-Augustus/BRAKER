@@ -7237,7 +7237,7 @@ sub fix_ifs_genes{
         $cmdStr .= "-m off ";
     }
     $cmdStr .= "--UTR $utr_here --print_utr $print_utr_here -a $aug_c_p "
-             . "-A $aug_b_p -S $aug_s_p";
+             . "-A $aug_b_p -S $aug_s_p ";
     if ( defined($h_file) and defined($cfg_file) ) {
         $cmdStr .= "-H $h_file -e $cfg_file ";
     }
@@ -7620,9 +7620,6 @@ sub augustus {
                 . "$otherfilesDir/augustus.ab_initio$genesetId.gtf is up to "
                 . "date.\n" if ($v > 3);
         }
-
-
-
     }
 
     if( ! $ESmode == 1 ) {
@@ -7678,6 +7675,22 @@ sub augustus {
                     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
                     clean_aug_jobs($hintId);
                     make_gtf("$otherfilesDir/augustus.$hintId.gff");
+                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId."_tmp");
+                    fix_ifs_genes("augustus.$hintId", 
+                          "$otherfilesDir/augustus.$hintId.gtf", 
+                          $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                          $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                          $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
+                    print LOG "\# " . (localtime) . ": Moving gene prediction file "
+                            . "without in frame stop codons to location of "
+                            . "original file (overwriting it)...\n" if ($v > 2);
+                    my $cmdString = "mv $otherfilesDir/augustus.$hintId"
+                       . "_fix_ifs_.gtf $otherfilesDir/augustus.$hintId.gtf";
+                    print LOG $cmdString."\n" if ($v > 3);
+                    system("$cmdString") == 0
+                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                        . "\nFailed to execute: $cmdString\n");
+                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
                 }else{
                     run_augustus_with_joingenes_parallel($genome_dir, $localUTR, $genesetId);
                 }
