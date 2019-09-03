@@ -7605,7 +7605,6 @@ sub augustus {
             }
             make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
             get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId."tmp");
-
             fix_ifs_genes("augustus.ab_initio".$genesetId, 
                           "$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", 
                           $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
@@ -8341,6 +8340,12 @@ sub run_augustus_with_joingenes_parallel {
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5$genesetId.gff" );
     clean_aug_jobs("Ppri5$genesetId");
     make_gtf("$otherfilesDir/augustus.Ppri5$genesetId.gff");
+    get_anno_fasta("$otherfilesDir/augustus.Ppri5$genesetId.gtf", "tmp");
+    fix_ifs_genes("augustus.Ppri5$genesetId", 
+                  "$otherfilesDir/augustus.Ppri5$genesetId.gtf", 
+                  $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                  $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                  $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
     $adjustedHintsFile = "$hintsfile.E";
     get_rnaseq_hints($hintsfile, $adjustedHintsFile);
     if ( $ETPmode == 1 && ( -e "$otherfilesDir/evidence.gff" ) ) {
@@ -8366,8 +8371,14 @@ sub run_augustus_with_joingenes_parallel {
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E$genesetId.gff" );
     clean_aug_jobs("E$genesetId");
     make_gtf("$otherfilesDir/augustus.E$genesetId.gff");
-    joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gff",
-        "$otherfilesDir/augustus.E$genesetId.gff", $genesetId);
+    get_anno_fasta("$otherfilesDir/augustus.E$genesetId.gtf", "tmp");
+    fix_ifs_genes("augustus.E$genesetId", 
+                  "$otherfilesDir/augustus.E$genesetId.gtf", 
+                  $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                  $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                  $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
+    joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gtf",
+        "$otherfilesDir/augustus.E$genesetId.gtf", $genesetId);
 }
 
 ####################### run_augustus_with_joingenes_single_core ################
@@ -8772,6 +8783,7 @@ sub joingenes {
     print LOG "$perlCmdString\n" if ($v > 3);
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
+    get_anno_fasta("$otherfilesDir/augustus.hints$genesetId.gtf", "");
     print LOG "\# " . (localtime) . "rm $otherfilesDir/join$genesetId.gtf\n";
     unlink "$otherfilesDir/join$genesetId.gtf" or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to execute: rm $otherfilesDir/join$genesetId.gtf!\n");
