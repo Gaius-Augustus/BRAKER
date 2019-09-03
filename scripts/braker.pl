@@ -218,7 +218,7 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     --AUGUSTUS_SCRIPTS_PATH.
 --AUGUSTUS_SCRIPTS_PATH=/path/      Set path to AUGUSTUS directory that
                                     contains scripts, i.e. splitMfasta.pl.
-                                    This variable most only be set if
+                                    This variable must only be set if
                                     AUGUSTUS_CONFIG_PATH or AUGUSTUS_BIN_PATH
                                     do not contains the ../scripts directory
                                     of AUGUSTUS relative to their location,
@@ -5397,7 +5397,7 @@ sub create_evidence_gff {
     my %manual;
     my $manualExists = 0;
     my $mixed_hints;
-    if($prg == "gth"){
+    if(defined($prg)){ # implies gth in most cases
         $mixed_hints = $otherfilesDir."/hintsfile.gff";
     }else{
         $mixed_hints = $genemark_hintsfile;
@@ -7250,7 +7250,7 @@ sub fix_ifs_genes{
     print LOG "\# " . (localtime) . ": Moving gene prediction file "
                     . "without in frame stop codons to location of "
                     . "original file (overwriting it)...\n" if ($v > 2);
-    $cmdStr = "mv $label"."_fix_ifs_".".gtf $gtf_in";
+    $cmdStr = "mv $otherfilesDir/$label"."_fix_ifs_".".gtf $gtf_in";
     print LOG $cmdStr."\n" if ($v > 3);
     system("$cmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
