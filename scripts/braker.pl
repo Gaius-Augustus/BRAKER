@@ -7247,6 +7247,14 @@ sub fix_ifs_genes{
     system("$cmdStr") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdStr\n");
+    print LOG "\# " . (localtime) . ": Moving gene prediction file "
+                    . "without in frame stop codons to location of "
+                    . "original file (overwriting it)...\n" if ($v > 2);
+    $cmdStr = "mv $label"."_fix_ifs_".".gtf $gtf_in";
+    print LOG $cmdStr."\n" if ($v > 3);
+    system("$cmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nFailed to execute: $cmdString\n");
 }
 
 
@@ -7603,15 +7611,6 @@ sub augustus {
                           $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
                           $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
                           $AUGUSTUS_SCRIPTS_PATH);
-            print LOG "\# " . (localtime) . ": Moving gene prediction file "
-                            . "without in frame stop codons to location of "
-                            . "original file (overwriting it)...\n" if ($v > 2);
-            my $cmdString = "mv $otherfilesDir/augustus.ab_initio".$genesetId
-                       . "_fix_ifs_.gtf $otherfilesDir/augustus.ab_initio".$genesetId.".gtf";
-            print LOG $cmdString."\n" if ($v > 3);
-            system("$cmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nFailed to execute: $cmdString\n");
             get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId);
 
         } else {
@@ -7681,15 +7680,6 @@ sub augustus {
                           $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
                           $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
                           $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
-                    print LOG "\# " . (localtime) . ": Moving gene prediction file "
-                            . "without in frame stop codons to location of "
-                            . "original file (overwriting it)...\n" if ($v > 2);
-                    my $cmdString = "mv $otherfilesDir/augustus.$hintId"
-                       . "_fix_ifs_.gtf $otherfilesDir/augustus.$hintId.gtf";
-                    print LOG $cmdString."\n" if ($v > 3);
-                    system("$cmdString") == 0
-                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-                        . "\nFailed to execute: $cmdString\n");
                     get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
                 }else{
                     run_augustus_with_joingenes_parallel($genome_dir, $localUTR, $genesetId);
@@ -7743,15 +7733,6 @@ sub augustus {
                           $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
                           $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
                           $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
-                    print LOG "\# " . (localtime) . ": Moving gene prediction file "
-                            . "without in frame stop codons to location of "
-                            . "original file (overwriting it)...\n" if ($v > 2);
-                    my $cmdString = "mv $otherfilesDir/augustus.$hintId"
-                       . "_fix_ifs_.gtf $otherfilesDir/augustus.$hintId.gtf";
-                    print LOG $cmdString."\n" if ($v > 3);
-                    system("$cmdString") == 0
-                        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-                        . "\nFailed to execute: $cmdString\n");
                     get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
                 }else{
                     run_augustus_with_joingenes_single_core($localUTR, $genesetId);
