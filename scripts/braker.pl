@@ -256,10 +256,6 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     executable is not in your $PATH).
 --MAKEHUB_PATH=/path/to             Set path to make_hub.py (if option --makehub
                                     is used).
---CDBFASTA_PATH=/path/to            cdbfasta/cdbyank are required for running
-                                    fix_in_frame_stop_codon_genes.py. Usage of
-                                    that script can be skipped with option 
-                                    '--skip_fixing_broken_genes'.
 
 
 EXPERT OPTIONS
@@ -424,6 +420,10 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 --skip_fixing_broken_genes          If you do not have python3, you can choose
                                     to skip the fixing of stop codon including
                                     genes (not recommendedn)
+--CDBTOOLS_PATH=/path/to            cdbfasta/cdbyank are required for running
+                                    fix_in_frame_stop_codon_genes.py. Usage of
+                                    that script can be skipped with option 
+                                    '--skip_fixing_broken_genes'.
 
 
 DESCRIPTION
@@ -473,6 +473,8 @@ my $AUGUSTUS_BIN_PATH;
 my $AUGUSTUS_SCRIPTS_PATH;
 my $PYTHON3_PATH;
 my $MAKEHUB_PATH;
+my $CDBTOOLS_PATH;
+my $cdbtools_path;
 my $makehub_path;
 my $email; # for make_hub.py
 my @bam;                      # bam file names
@@ -642,6 +644,7 @@ GetOptions(
     'DIAMOND_PATH=s'               => \$diamond_path,
     'BLAST_PATH=s'                 => \$blast_path,
     'PYTHON3_PATH=s'               => \$python3_path,
+    'CDBTOOLS_PATH=s'              => \$cdbtools_path,
     'MAKEHUB_PATH=s'               => \$makehub_path,
     'bam=s'                        => \@bam,
     'BAMTOOLS_PATH=s'              => \$bamtools_path,
@@ -798,6 +801,9 @@ if ( not ($skipGetAnnoFromFasta) || $makehub || not ($skip_fixing_broken_genes))
 }
 if ( $makehub ) {
     set_MAKEHUB_PATH();
+}
+if( not($skip_fixing_broken_genes)){
+    set_CDBTOOLS_PATH();
 }
 
 if($checkOnly){
@@ -2786,6 +2792,141 @@ sub set_PYTHON3_PATH {
         $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
             ." at line ". __LINE__ ."\n"
             . "$PYTHON3_PATH/python3 is not an executable file!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+}
+
+####################### set_CDBTOOLS_PATH #######################################
+# * set path to cdbfasta/cdbyank
+################################################################################
+
+sub set_CDBTOOLS_PATH {
+    # try to get path from ENV
+    if ( defined( $ENV{'CDBTOOLS_PATH'} ) && not (defined($cdbtools_path)) ) {
+        if ( -e $ENV{'CDBTOOLS_PATH'} ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Found environment variable \$CDBTOOLS_PATH. Setting "
+                . "\$CDBTOOLS_PATH to ".$ENV{'CDBTOOLS_PATH'}."\n";
+            $logString .= $prtStr if ($v > 1);
+            $CDBTOOLS_PATH = $ENV{'CDBTOOLS_PATH'};
+        }
+    }elsif(not(defined($cdbtools_path))) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Did not find environment variable \$CDBTOOLS_PATH\n";
+        $logString .= $prtStr if ($v > 1);
+    }
+
+    # try to get path from command line
+    if ( defined($cdbtools_path) ) {
+        my $last_char = substr( $cdbtools_path, -1 );
+        if ( $last_char eq "\/" ) {
+            chop($cdbtools_path);
+        }
+        if ( -d $cdbtools_path ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$CDBTOOLS_PATH to command line argument "
+                . "--CDBTOOLS_PATH value $cdbtools_path.\n";
+            $logString .= $prtStr if ($v > 1);
+            $CDBTOOLS_PATH = $cdbtools_path;
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Command line argument --CDBTOOLS_PATH was "
+                . "supplied but value $cdbtools_path is not a directory. Will not "
+                . "set \$CDBTOOLS_PATH to $cdbtools_path!\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    # try to guess
+    if ( not( defined($CDBTOOLS_PATH) )
+        || length($CDBTOOLS_PATH) == 0 )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Trying to guess \$CDBTOOLS_PATH from location of dbfasta"
+            . " executable that is available in your \$PATH.\n";
+        $logString .= $prtStr if ($v > 1);
+        my $epath = which 'cdbfasta';
+        if(defined($epath)){
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$CDBTOOLS_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $CDBTOOLS_PATH = dirname($epath);
+            }
+        }
+        else {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: Guessing the location of \$CDBTOOLS_PATH "
+                . "failed. " . $epath . " is not a directory / BRAKER failed "
+                . "to detect cdbfasta with \"which cdbfasta\"!\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    if ( not( defined($CDBTOOLS_PATH) ) ) {
+        my $cdbtools_err;
+        $cdbtools_err .= "cdbfasta and cdbyank are required for fixing AUGUSTUS "
+                    .  "genes with in frame stop codons using the script "
+                    .  "fix_in_frame_stop_codon_genes.py.\n"
+                    .  "You can skip execution of fix_in_frame_stop_codon_genes.py\n"
+                    .  "with the braker.pl by providing the command line flag\n"
+                    .  "--skip_fixing_broken_genes.\n"
+                    .  "If you don't want to skip it, you have 3 different "
+                    .  "options to provide a path to cdbfasta/cdbyank to braker.pl:\n"
+                    .  "   a) provide command-line argument\n"
+                    .  "      --CDBTOOLS_PATH=/your/path\n"
+                    .  "   b) use an existing environment variable\n"
+                    . "       \$CDBTOOLS_PATH\n"
+                    .  "      for setting the environment variable, run\n"
+                    .  "           export CDBTOOLS_PATH=/your/path\n"
+                    .  "      in your shell. You may append this to your "
+                    .  ".bashrc or .profile file in\n"
+                    .  "      order to make the variable available to all your\n"
+                    .  "      bash sessions.\n"
+                    .  "   c) braker.pl can try guessing the "
+                    .  "      \$CDBTOOLS_PATH from the location of a cdbfasta\n"
+                    .  "      executable that is available in your \$PATH\n"
+                    .  "      variable. If you try to rely on this option, you\n"
+                    . "       can check by typing\n"
+                    .  "           which cdbfasta\n"
+                    .  "      in your shell, whether there is a cdbfasta\n"
+                    .  "      executable in your \$PATH\n";
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            . " at line ". __LINE__ . "\n" . "\$CDBTOOLS_PATH not set!\n";
+        $logString .= $prtStr;
+        $logString .= $cdbtools_err if ($v > 1);
+        print STDERR $logString;
+        exit(1);
+    }
+    if ( not ( -x "$CDBTOOLS_PATH/cdbfasta" ) ) {
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "$CDBTOOLS_PATH/cdbfasta is not an executable file!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }elsif ( not ( -x "$CDBTOOLS_PATH/cdbyank" ) ) {
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "$CDBTOOLS_PATH/cdbyank is not an executable file!\n";
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
