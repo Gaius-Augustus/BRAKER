@@ -184,6 +184,10 @@ At the time of release, this BRAKER version was tested with:
 
 -   NCBI BLAST+ 2.2.31+ <sup name="a12">[R12, ](#f12)</sup><sup name="a13">[R13](#f13)</sup>
 
+-   cdbfasta 0.99
+
+-   cdbyank 0.981
+
 BRAKER
 -------
 
@@ -435,10 +439,10 @@ Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the e
 
 #### Python3 and Biopython
 
-If Python3 and Biopython are installed, BRAKER can generate FASTA-files with coding sequences and protein sequences predicted by AUGUSTUS and generate track data hubs for visualization of a BRAKER run with MakeHub <sup name="a16">[R16](#f16)</sup>.
-Both are an optional steps. The first can be disabled with the command-line flag `--skipGetAnnoFromFasta`, the latter can be activated by using the command-line options `--makehub --email=your@mail.de`; Python3 and Biopython are not required if neither of this steps shall be performed.
+If Python3 and Biopython are installed, BRAKER can generate FASTA-files with coding sequences and protein sequences predicted by AUGUSTUS and generate track data hubs for visualization of a BRAKER run with MakeHub <sup name="a16">[R16](#f16)</sup>. If Python3 (and cdbfasta/cdbyank) is available, BRAKER is able to correct AUGUSTUS genes with in frame stop codons (spliced stop codons).
+All are an optional steps. The first can be disabled with the command-line flag `--skipGetAnnoFromFasta`, the second can be activated by using the command-line options `--makehub --email=your@mail.de`, the last can be deactivated with `--skip_fixing_broken_genes`; Python3 and Biopython are not required if neither of these optional steps shall be performed.
 
-On Ubuntu, Python3 is installed by default. Install the Python3 package manager with:
+On Ubuntu, Python3 is usually installed by default. Install the Python3 package manager with:
 
     `sudo apt-get install python3-pip`
 
@@ -455,6 +459,33 @@ On Ubuntu, python3 will be in your `$PATH` variable, by default, and BRAKER will
 ```
 
 2.  Specify the command line option `--PYTHON3_PATH=/path/to/python3/` to `braker.pl`.
+
+#### cdbfasta and cdbyank
+
+cdbfasta and cdbyank are required by BRAKER for correcting AUGUSTUS genes with in frame stop codons (spliced stop codons) using the AUGUSTUS script fix_in_frame_stop_codon_genes.py. This can be skipped with `--skip_fixing_broken_genes`.
+
+On Ubuntu, install cdbfasta with:
+
+    `sudo apt-get install cdbfasta`
+
+For other systems, you can for example obtain cdbfasta from <https://github.com/gpertea/cdbfasta>, e.g.:
+
+```
+        git clone https://github.com/gpertea/cdbfasta.git`
+        cd cdbfasta
+        make all
+```
+
+On Ubuntu, cdbfasta and cdbyank will be in your `$PATH` variable after installation, and BRAKER will automatically locate them. However, you have the option to specify the `cdbfasta` and `cdbyank` binary location in two other ways:
+
+1.  Export an environment variable `$CDBTOOLS_PATH`, e.g. in your `~/.bashrc` file:
+
+```
+        export CDBTOOLS_PATH=/path/to/cdbtools/
+```
+
+2.  Specify the command line option `--CDBTOOLS_PATH=/path/to/cdbtools/` to `braker.pl`.
+
 
 #### GenomeThreader
 
