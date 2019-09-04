@@ -8800,7 +8800,7 @@ sub joingenes {
         chomp;
         push(@hn_tx_1, $_);
     }
-    my $n_tx_1 = @hn_tx_1[0];
+    my $n_tx_1 = $hn_tx_1[0];
     close(NTX1) or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/file1_ntx!\n");
     $perlCmdString = "";
