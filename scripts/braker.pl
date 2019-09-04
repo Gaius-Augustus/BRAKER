@@ -256,6 +256,11 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     executable is not in your $PATH).
 --MAKEHUB_PATH=/path/to             Set path to make_hub.py (if option --makehub
                                     is used).
+--CDBFASTA_PATH=/path/to            cdbfasta/cdbyank are required for running
+                                    fix_in_frame_stop_codon_genes.py. Usage of
+                                    that script can be skipped with option 
+                                    '--skip_fixing_broken_genes'.
+
 
 EXPERT OPTIONS
 
@@ -7609,13 +7614,15 @@ sub augustus {
                 run_augustus_single_core_ab_initio( $localUTR , $genesetId);
             }
             make_gtf("$otherfilesDir/augustus.ab_initio$genesetId.gff");
-            get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId."tmp");
-            if(-e "$otherfilesDir/bad_genes.lst"){
-                fix_ifs_genes("augustus.ab_initio".$genesetId, 
-                              "$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", 
-                              $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
-                              $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
-                              $AUGUSTUS_SCRIPTS_PATH);
+            if(not($skip_fixing_broken_genes)){
+                get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId."tmp");
+                if(-e "$otherfilesDir/bad_genes.lst"){
+                    fix_ifs_genes("augustus.ab_initio".$genesetId, 
+                                  "$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", 
+                                  $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                                  $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                                  $AUGUSTUS_SCRIPTS_PATH);
+                }
             }
             get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId);
 
@@ -7680,13 +7687,15 @@ sub augustus {
                     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
                     clean_aug_jobs($hintId);
                     make_gtf("$otherfilesDir/augustus.$hintId.gff");
-                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", "tmp");
-                    if(-e "$otherfilesDir/bad_genes.lst"){
-                        fix_ifs_genes("augustus.$hintId", 
-                              "$otherfilesDir/augustus.$hintId.gtf", 
-                              $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
-                              $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
-                              $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
+                    if(not($skip_fixing_broken_genes)){
+                        get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", "tmp");
+                        if(-e "$otherfilesDir/bad_genes.lst"){
+                            fix_ifs_genes("augustus.$hintId", 
+                                  "$otherfilesDir/augustus.$hintId.gtf", 
+                                  $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                                  $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                                  $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
+                        }
                     }
                     get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
                 }else{
@@ -7735,13 +7744,15 @@ sub augustus {
                     run_augustus_single_core_hints( $hintsfile, $extrinsicCfgFile,
                         $localUTR, $hintId);
                     make_gtf("$otherfilesDir/augustus.$hintId.gff");
-                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", "tmp");
-                    if(-e "$otherfilesDir/bad_genes.lst"){
-                        fix_ifs_genes("augustus.$hintId", 
-                              "$otherfilesDir/augustus.$hintId.gtf", 
-                              $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
-                              $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
-                              $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
+                    if(not($skip_fixing_broken_genes)){
+                        get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", "tmp");
+                        if(-e "$otherfilesDir/bad_genes.lst"){
+                            fix_ifs_genes("augustus.$hintId", 
+                                  "$otherfilesDir/augustus.$hintId.gtf", 
+                                  $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                                  $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                                  $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
+                        }
                     }
                     get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
                 }else{
@@ -8351,13 +8362,15 @@ sub run_augustus_with_joingenes_parallel {
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5$genesetId.gff" );
     clean_aug_jobs("Ppri5$genesetId");
     make_gtf("$otherfilesDir/augustus.Ppri5$genesetId.gff");
-    get_anno_fasta("$otherfilesDir/augustus.Ppri5$genesetId.gtf", "tmp");
-    if(-e "$otherfilesDir/bad_genes.lst"){
-        fix_ifs_genes("augustus.Ppri5$genesetId", 
-                      "$otherfilesDir/augustus.Ppri5$genesetId.gtf", 
-                      $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
-                      $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
-                      $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
+    if(not($skip_fixing_broken_genes)){
+        get_anno_fasta("$otherfilesDir/augustus.Ppri5$genesetId.gtf", "tmp");
+        if(-e "$otherfilesDir/bad_genes.lst"){
+            fix_ifs_genes("augustus.Ppri5$genesetId", 
+                          "$otherfilesDir/augustus.Ppri5$genesetId.gtf", 
+                          $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                          $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                          $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
+        }
     }
     $adjustedHintsFile = "$hintsfile.E";
     get_rnaseq_hints($hintsfile, $adjustedHintsFile);
@@ -8384,13 +8397,15 @@ sub run_augustus_with_joingenes_parallel {
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E$genesetId.gff" );
     clean_aug_jobs("E$genesetId");
     make_gtf("$otherfilesDir/augustus.E$genesetId.gff");
-    get_anno_fasta("$otherfilesDir/augustus.E$genesetId.gtf", "tmp");
-    if(-e "$otherfilesDir/bad_genes.lst"){
-        fix_ifs_genes("augustus.E$genesetId", 
-                      "$otherfilesDir/augustus.E$genesetId.gtf", 
-                      $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
-                      $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
-                      $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
+    if(not($skip_fixing_broken_genes)){
+        get_anno_fasta("$otherfilesDir/augustus.E$genesetId.gtf", "tmp");
+        if(-e "$otherfilesDir/bad_genes.lst"){
+            fix_ifs_genes("augustus.E$genesetId", 
+                          "$otherfilesDir/augustus.E$genesetId.gtf", 
+                          $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                          $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                          $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
+        }
     }
     joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gtf",
         "$otherfilesDir/augustus.E$genesetId.gtf", $genesetId);
@@ -8449,13 +8464,15 @@ sub run_augustus_with_joingenes_single_core {
         run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
             $localUTR, "Ppri5$genesetId");
         make_gtf("$otherfilesDir/augustus.Ppri5$genesetId.gff");
-        get_anno_fasta("$otherfilesDir/augustus.Ppri5$genesetId.gtf", "tmp");
-        if(-e "$otherfilesDir/bad_genes.lst"){
-            fix_ifs_genes("augustus.Ppri5$genesetId", 
-                          "$otherfilesDir/augustus.Ppri5$genesetId.gtf", 
-                          $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
-                          $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
-                          $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
+        if(not($skip_fixing_broken_genes)){
+            get_anno_fasta("$otherfilesDir/augustus.Ppri5$genesetId.gtf", "tmp");
+            if(-e "$otherfilesDir/bad_genes.lst"){
+                fix_ifs_genes("augustus.Ppri5$genesetId", 
+                              "$otherfilesDir/augustus.Ppri5$genesetId.gtf", 
+                              $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                              $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                              $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
+            }
         }
     }else{
         print LOG "\# " . (localtime) . ": Skip making file "
@@ -8492,13 +8509,15 @@ sub run_augustus_with_joingenes_single_core {
         run_augustus_single_core_hints($adjustedHintsFile, $extrinsicCfgFile,
             $localUTR, "E$genesetId");
         make_gtf("$otherfilesDir/augustus.E$genesetId.gff");
-        get_anno_fasta("$otherfilesDir/augustus.E$genesetId.gtf", "tmp");
-        if(-e "$otherfilesDir/bad_genes.lst"){
-            fix_ifs_genes("augustus.E$genesetId", 
-                          "$otherfilesDir/augustus.E$genesetId.gtf", 
-                          $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
-                          $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
-                          $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
+        if(not($skip_fixing_broken_genes)){
+            get_anno_fasta("$otherfilesDir/augustus.E$genesetId.gtf", "tmp");
+            if(-e "$otherfilesDir/bad_genes.lst"){
+                fix_ifs_genes("augustus.E$genesetId", 
+                              "$otherfilesDir/augustus.E$genesetId.gtf", 
+                              $otherfilesDir."/bad_genes.lst", $localUTR, $species, 
+                              $AUGUSTUS_CONFIG_PATH, $AUGUSTUS_BIN_PATH, 
+                              $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
+            }
         }
     } else {
         print LOG "\# " . (localtime) . ": Skip making file "
