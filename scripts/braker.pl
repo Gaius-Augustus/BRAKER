@@ -8795,8 +8795,12 @@ sub joingenes {
         . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
     open(NTX1, "<", "$otherfilesDir/file1_ntx") or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/file1_ntx for reading!\n");
-    my $n_tx_1 = <NTX1>;
-    $n_tx_1 = chomp($n_tx_1);
+    my @hn_tx_1;
+    while(<NTX1>){
+        chomp;
+        push(@hn_tx_1, $_);
+    }
+    my $n_tx_1 = @hn_tx_1[0];
     close(NTX1) or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/file1_ntx!\n");
     $perlCmdString = "";
@@ -8812,13 +8816,16 @@ sub joingenes {
         . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
     open(NTX2, "<", "$otherfilesDir/file2_ntx") or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/file2_ntx for reading!\n");
-    my $n_tx_2 = <NTX2>;
-    $n_tx_2 = chomp($n_tx_2);
+    my @hn_tx_2;
+    while(<NTX2>){
+        chomp;
+        push(@hn_tx_2, $_);
+    }
+    my $n_tx_2 = $hn_tx_2[0];
     close(NTX2) or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/file2_ntx!\n");
-
-    print LOG "rm $otherfilesDir/file1_ntx $otherfilesDir/file2_ntx\n";
     if( $cleanup ) {
+        print LOG "rm $otherfilesDir/file1_ntx $otherfilesDir/file2_ntx\n";
         unlink("$otherfilesDir/file1_ntx");
         unlink("$otherfilesDir/file2_ntx");
     }
