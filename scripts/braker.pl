@@ -7372,7 +7372,7 @@ sub fix_ifs_genes{
         $print_utr_here = "on";
     }
     print LOG "\# " . (localtime) . ": fixing AUGUSTUS genes with in frame "
-            . "stop codons..." if ($v > 2);
+            . "stop codons...\n" if ($v > 2);
     $string = find( "fix_in_frame_stop_codon_genes.py", $aug_b_p, 
         $aug_s_p, $aug_c_p );
     my $cmdStr = $PYTHON3_PATH . "/python3 " . $string ." -g " . $genome 
@@ -8853,7 +8853,7 @@ sub joingenes {
             $perlCmdString .= "nice ";
         }
         $perlCmdString .= "perl $string --in=$file2 --src=E --out=$join_on_top";
-        print LOG "# Filtering those genes that have evidence by src=P from $file2...\n";
+        print LOG "# Filtering those genes that have evidence by src=E from $file2...\n";
         print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
                                             . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
