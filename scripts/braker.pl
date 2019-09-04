@@ -7826,7 +7826,6 @@ sub augustus {
                         $extrinsicCfgFile, $localUTR, $hintId );
                     run_augustus_jobs( "$otherfilesDir/$hintId.job.lst" );
                     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.$hintId.gff" );
-                    clean_aug_jobs($hintId);
                     make_gtf("$otherfilesDir/augustus.$hintId.gff");
                     if(not($skip_fixing_broken_genes)){
                         get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", "tmp");
@@ -7839,6 +7838,7 @@ sub augustus {
                         }
                     }
                     get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
+                    clean_aug_jobs($hintId);
                 }else{
                     run_augustus_with_joingenes_parallel($genome_dir, $localUTR, $genesetId);
                 }
@@ -8038,7 +8038,7 @@ sub make_hints_jobs{
         }  
         if ( not( -d $augustus_dir ) && $CPU > 1) {
             print LOG "\# " . (localtime)
-                . ": Creating directory for storing AUGUSTUS files (ab initio, "
+                . ": Creating directory for storing AUGUSTUS files (hints, "
                 . "temporarily) $augustus_dir.\n" if ($v > 3);
             mkdir $augustus_dir or die ("ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nFailed to create directory $augustus_dir!\n");
@@ -8501,7 +8501,6 @@ sub run_augustus_with_joingenes_parallel {
         $extrinsicCfgFile, $localUTR, "Ppri5", $genesetId);
     run_augustus_jobs( "$otherfilesDir/Ppri5$genesetId.job.lst" );
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.Ppri5$genesetId.gff" );
-    clean_aug_jobs("Ppri5$genesetId");
     make_gtf("$otherfilesDir/augustus.Ppri5$genesetId.gff");
     if(not($skip_fixing_broken_genes)){
         get_anno_fasta("$otherfilesDir/augustus.Ppri5$genesetId.gtf", "tmp");
@@ -8513,6 +8512,7 @@ sub run_augustus_with_joingenes_parallel {
                           $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
         }
     }
+    clean_aug_jobs("Ppri5$genesetId");
     $adjustedHintsFile = "$hintsfile.E";
     get_rnaseq_hints($hintsfile, $adjustedHintsFile);
     if ( $ETPmode == 1 && ( -e "$otherfilesDir/evidence.gff" ) ) {
@@ -8536,7 +8536,6 @@ sub run_augustus_with_joingenes_parallel {
         $extrinsicCfgFile, $localUTR, "E", $genesetId);
     run_augustus_jobs( "$otherfilesDir/E$genesetId.job.lst" );
     join_aug_pred( $augustus_dir, "$otherfilesDir/augustus.E$genesetId.gff" );
-    clean_aug_jobs("E$genesetId");
     make_gtf("$otherfilesDir/augustus.E$genesetId.gff");
     if(not($skip_fixing_broken_genes)){
         get_anno_fasta("$otherfilesDir/augustus.E$genesetId.gtf", "tmp");
@@ -8548,6 +8547,7 @@ sub run_augustus_with_joingenes_parallel {
                           $AUGUSTUS_SCRIPTS_PATH, $adjustedHintsFile, $extrinsicCfgFile);
         }
     }
+    clean_aug_jobs("E$genesetId");
     joingenes("$otherfilesDir/augustus.Ppri5$genesetId.gtf",
         "$otherfilesDir/augustus.E$genesetId.gtf", $genesetId);
 }
