@@ -7383,7 +7383,7 @@ sub fix_ifs_genes{
         $cmdStr .= "-m off ";
     }
     $cmdStr .= "--UTR $utr_here --print_utr $print_utr_here -a $aug_c_p "
-             . "-A $aug_b_p -S $aug_s_p ";
+             . "-C $CDBTOOLS_PATH -A $aug_b_p -S $aug_s_p ";
     if ( defined($h_file) and defined($cfg_file) ) {
         $cmdStr .= "-H $h_file -e $cfg_file ";
     }
