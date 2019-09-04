@@ -460,7 +460,7 @@ On Ubuntu, python3 will be in your `$PATH` variable, by default, and BRAKER will
 
 2.  Specify the command line option `--PYTHON3_PATH=/path/to/python3/` to `braker.pl`.
 
-#### cdbfasta and cdbyank
+#### cdbfasta
 
 cdbfasta and cdbyank are required by BRAKER for correcting AUGUSTUS genes with in frame stop codons (spliced stop codons) using the AUGUSTUS script fix_in_frame_stop_codon_genes.py. This can be skipped with `--skip_fixing_broken_genes`.
 
