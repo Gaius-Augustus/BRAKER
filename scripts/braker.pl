@@ -7252,9 +7252,9 @@ sub fix_ifs_genes{
                     . "original file (overwriting it)...\n" if ($v > 2);
     $cmdStr = "mv $otherfilesDir/$label"."_fix_ifs_".".gtf $gtf_in";
     print LOG $cmdStr."\n" if ($v > 3);
-    system("$cmdString") == 0
+    system("$cmdStr") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nFailed to execute: $cmdString\n");
+        . "\nFailed to execute: $cmdStr\n");
 }
 
 
