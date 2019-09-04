@@ -8786,7 +8786,9 @@ sub joingenes {
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    $perlCmdString .= "perl $string --in=$file1 --src=P > $otherfilesDir/file1_ntx";
+    my $gff_file1 = $file1;
+    $gff_file1 =~ s/\.gtf/\.gff/;
+    $perlCmdString .= "perl $string --in=$gff_file1 --src=P > $otherfilesDir/file1_ntx";
     print LOG "# Counting the number of transcripts with support from src=P in file $file1...\n";
     print LOG "$perlCmdString\n" if ($v > 3);
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
@@ -8794,13 +8796,16 @@ sub joingenes {
     open(NTX1, "<", "$otherfilesDir/file1_ntx") or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/file1_ntx for reading!\n");
     my $n_tx_1 = <NTX1>;
+    $n_tx_1 = chomp($n_tx_1);
     close(NTX1) or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/file1_ntx!\n");
     $perlCmdString = "";
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    $perlCmdString .= "perl $string --in=$file2 --src=E > $otherfilesDir/file2_ntx";
+    my $gff_file2 = $file1;
+    $gff_file2 =~ s/\.gtf/\.gff/;
+    $perlCmdString .= "perl $string --in=$gff_file2 --src=E > $otherfilesDir/file2_ntx";
     print LOG "# Counting the number of transcripts with support from src=E in file $file2...\n";
     print LOG "$perlCmdString\n" if ($v > 3);
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
@@ -8808,8 +8813,10 @@ sub joingenes {
     open(NTX2, "<", "$otherfilesDir/file2_ntx") or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/file2_ntx for reading!\n");
     my $n_tx_2 = <NTX2>;
+    $n_tx_2 = chomp($n_tx_2);
     close(NTX2) or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/file2_ntx!\n");
+
     print LOG "rm $otherfilesDir/file1_ntx $otherfilesDir/file2_ntx\n";
     if( $cleanup ) {
         unlink("$otherfilesDir/file1_ntx");
