@@ -778,10 +778,10 @@ if ( not($trainFromGth) ) {
 } else {
     if ( not ( defined ($gth2traingenes) ) ) {
             $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: --gth2traingenes was not enabled, will enable this "
-            . "flag, now, because no GeneMark training will be performed!\n";
+            = "#*********\n"
+            . "# WARNING: --gth2traingenes was not enabled, will enable this "
+            . "flag, now, because no GeneMark training will be performed!\n"
+            . "#*********\n";
         $logString .= $prtStr if ( $v > 0 );
         $gth2traingenes = 1;    # enable if no genemark training is performed
     }
@@ -837,12 +837,12 @@ else {
 }
 if ( -d "$rootDir/$species" && !$overwrite && $wdGiven == 0 ) {
     $prtStr
-        = "\# "
-        . (localtime)
+        = "#*********\n"
         . ": WARNING: $rootDir/$species already exists. Braker will use"
         . " existing files, if they are newer than the input files. You can "
         . "choose another working directory with --workingdir=dir or overwrite "
-        . "it with --overwrite.\n";
+        . "it with --overwrite.\n"
+        . "#*********\n";
     $logString .= $prtStr if ( $v > 0 );
 }
 
@@ -1197,20 +1197,19 @@ foreach( values %scaffSizes) {
 # on the stack size. Use 30000 just to be sure. This will result in ~90000 files in the
 # augustus_tmp folder.
 if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
-    $prtStr = "\# "
-            . (localtime)
-            . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+    $prtStr = "#*********\n"
+            . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "file $genome contains a highly fragmented assembly ("
             . scalar(@nScaffs)." scaffolds). This may lead "
             . "to problems when running AUGUSTUS via braker in parallelized "
             . "mode. You set --cores=$CPU. You should run braker.pl in linear "
-            . "mode on such genomes, though (--cores=1).\n";
+            . "mode on such genomes, though (--cores=1).\n"
+            . "#*********\n";
     print STDOUT $prtStr;
     print LOG $prtStr;
 }elsif( (($totalScaffSize / $chunksize) > 30000) && ($CPU > 1) ){
-    $prtStr = "\# "
-            . (localtime)
-            . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+    $prtStr = "#*********\n"
+            . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "file $genome contains contains $totalScaffSize bases. "
             . "This may lead "
             . "to problems when running AUGUSTUS via braker in parallelized "
@@ -1218,7 +1217,8 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
             . "braker.pl. Default value is currently $chunksize. You can adapt "
             . "this to a higher number. The total base content / chunksize * 3 "
             . "should not exceed the number of possible arguments for commands "
-            . "like ls *, cp *, etc. on your system.\n";
+            . "like ls *, cp *, etc. on your system.\n"
+            . "#*********\n";
     print STDOUT $prtStr;
     print LOG $prtStr;
 }
@@ -1464,12 +1464,12 @@ sub set_AUGUSTUS_CONFIG_PATH {
         }
         else {
             $prtStr
-                = "\# "
-                . (localtime)
+                = "#*********\n"
                 . ": WARNING: Command line flag --AUGUSTUS_CONFIG_PATH "
                 . "was provided. The given path $augustus_cfg_path is not a "
                 . "directory. Cannot use this as variable "
-                . "\$AUGUSTUS_CONFIG_PATH in braker.pl!\n";
+                . "\$AUGUSTUS_CONFIG_PATH in braker.pl!\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -1603,12 +1603,11 @@ sub set_AUGUSTUS_BIN_PATH {
         }
         else {
             $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Command line argument --AUGUSTUS_BIN_PATH was ";
-            $prtStr
-                .= "supplied but value $augustus_bin_path is not a directory. "
-                . "Will not set \$AUGUSTUS_BIN_PATH to $augustus_bin_path!\n";
+                = "#*********\n"
+                . "# WARNING: Command line argument --AUGUSTUS_BIN_PATH was "
+                . "supplied but value $augustus_bin_path is not a directory. "
+                . "Will not set \$AUGUSTUS_BIN_PATH to $augustus_bin_path!\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 1);
         }
     }
@@ -1632,9 +1631,11 @@ sub set_AUGUSTUS_BIN_PATH {
         }
         else {
             $prtStr
-                = "\# " . (localtime) . " WARNING: Guessing the location of "
+                = "#*********\n"
+                . "# WARNING: Guessing the location of "
                 . "\$AUGUSTUS_BIN_PATH failed. $AUGUSTUS_CONFIG_PATH/../bin is "
-                . "not a directory!\n";
+                . "not a directory!\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -1713,12 +1714,12 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
         }
         else {
             $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Command line argument --AUGUSTUS_SCRIPTS_PATH "
+                = "#*********\n"
+                . "# WARNING: Command line argument --AUGUSTUS_SCRIPTS_PATH "
                 . "was supplied but value $augustus_scripts_path is not a "
                 . "directory. Will not set \$AUGUSTUS_SCRIPTS_PATH to "
-                . "$augustus_scripts_path!\n";
+                . "$augustus_scripts_path!\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -1744,12 +1745,12 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
         }
         else {
             $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Guessing the location of "
+                = "#*********\n"
+                . "# WARNING: Guessing the location of "
                 . "\$AUGUSTUS_SCRIPTS_PATH failed. "
                 . "$AUGUSTUS_CONFIG_PATH/../scripts is not a "
-                . "directory!\n";
+                . "directory!\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -1829,11 +1830,11 @@ sub set_BAMTOOLS_PATH {
         }
         else {
             $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Command line argument --BAMTOOLS_PATH was "
+                = "#*********\n"
+                . "# WARNING: Command line argument --BAMTOOLS_PATH was "
                 . "supplied but value $bamtools_path is not a directory. Will "
-                . "not set \$BAMTOOLS_BIN_PATH to $bamtools_path!\n";
+                . "not set \$BAMTOOLS_BIN_PATH to $bamtools_path!\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -1862,10 +1863,10 @@ sub set_BAMTOOLS_PATH {
         }
         else {
             $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Guessing the location of \$BAMTOOLS_BIN_PATH "
-                . "failed. " . $epath . " is not a directory!\n";
+                = "#*********\n"
+                . "WARNING: Guessing the location of \$BAMTOOLS_BIN_PATH "
+                . "failed. " . $epath . " is not a directory!\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -1949,11 +1950,11 @@ sub set_GENEMARK_PATH {
         }
         else {
             $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Command line argument --GENEMARK_PATH was "
+                = "#*********\n"
+                . "# WARNING: Command line argument --GENEMARK_PATH was "
                 . "supplied but value $GMET_path is not a directory. Will not "
-                . "set \$GENEMARK_PATH to $GMET_path!\n";
+                . "set \$GENEMARK_PATH to $GMET_path!\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -1978,11 +1979,10 @@ sub set_GENEMARK_PATH {
                 $GENEMARK_PATH = dirname($epath);
             }
         } else {
-            $prtStr
-                 = "\# "
-                   . (localtime)
-                   . ": WARNING: Guessing the location of \$GENEMARK_PATH "
-                   . "failed. " . $epath . " is not a directory!\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: Guessing the location of \$GENEMARK_PATH "
+                    . "failed. " . $epath . " is not a directory!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -2063,12 +2063,11 @@ sub set_SAMTOOLS_PATH {
             $SAMTOOLS_PATH = $SAMTOOLS_PATH_OP;
         }
         else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . " WARNING: Command line argument --SAMTOOLS_PATH was supplied "
-                . "but value $SAMTOOLS_PATH_OP is not a directory. Will not "
-                . "set \$SAMTOOLS_PATH to $SAMTOOLS_PATH_OP!\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: Command line argument --SAMTOOLS_PATH was supplied "
+                    . "but value $SAMTOOLS_PATH_OP is not a directory. Will not "
+                    . "set \$SAMTOOLS_PATH to $SAMTOOLS_PATH_OP!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -2095,11 +2094,11 @@ sub set_SAMTOOLS_PATH {
         }
         else {
             $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Guessing the location of \$SAMTOOLS_PATH "
+                = "#*********\n"
+                . "# WARNING: Guessing the location of \$SAMTOOLS_PATH "
                 . "failed. " . $epath . " is not a directory / BRAKER failed "
-                . "to guess the location of samtools with \"which samtools\"!\n";
+                . "to guess the location of samtools with \"which samtools\"!\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -2128,8 +2127,9 @@ sub set_SAMTOOLS_PATH {
             . "           which samtools\n"
             . "      in your shell, whether there is a samtools executable in\n"
             . "      your \$PATH\n";
-        $prtStr
-            = "\# " . (localtime) . ": WARNING: \$SAMTOOLS_PATH not set!\n";
+        $prtStr = "#*********\n"
+                . "#WARNING: \$SAMTOOLS_PATH not set!\n"
+                . "#*********\n";
         $logString .= $prtStr;
         $logString .= $samtools_err if ($v > 1);
         print STDERR $logString;
@@ -2207,16 +2207,15 @@ sub set_ALIGNMENT_TOOL_PATH {
                         }
                     }
                     else {
-                        $prtStr
-                            = "\# "
-                            . (localtime)
-                            . ": WARNING: Guessing the location of "
-                            . "\$ALIGNMENT_TOOL_PATH failed. "
-                            . $epath
-                            . " is not a "
-                            . "directory / BRAKER failed to guess the "
-                            . "location of alignment tool with "
-                            . "\"which gth\"!\n";
+                        $prtStr = "#*********\n"
+                                . "# WARNING: Guessing the location of "
+                                . "\$ALIGNMENT_TOOL_PATH failed. "
+                                . $epath
+                                . " is not a "
+                                . "directory / BRAKER failed to guess the "
+                                . "location of alignment tool with "
+                                . "\"which gth\"!\n"
+                                . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
                 }
@@ -2240,16 +2239,15 @@ sub set_ALIGNMENT_TOOL_PATH {
                         }
                     }
                     else {
-                        $prtStr
-                            = "\# "
-                            . (localtime)
-                            . ": WARNING: Guessing the location of "
-                            . "\$ALIGNMENT_TOOL_PATH failed. "
-                            . $epath
-                            . " is not a "
-                            . "directory / BRAKER failed to guess the "
-                            . "location of alignment tool with "
-                            . "\"which exonerate\"!\n";
+                        $prtStr = "#*********\n"
+                                . "# WARNING: Guessing the location of "
+                                . "\$ALIGNMENT_TOOL_PATH failed. "
+                                . $epath
+                                . " is not a "
+                                . "directory / BRAKER failed to guess the "
+                                . "location of alignment tool with "
+                                . "\"which exonerate\"!\n"
+                                . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
                 }
@@ -2273,15 +2271,14 @@ sub set_ALIGNMENT_TOOL_PATH {
                         }
                     }
                     else {
-                        $prtStr
-                            = "\# "
-                            . (localtime)
-                            . " WARNING: Guessing the location of "
-                            . "\$ALIGNMENT_TOOL_PATH failed. "
-                            . $epath . " "
-                            . "is not a directory / BRAKER failed to "
-                            . "guess the location of alignment tool with "
-                            . "\"which spaln\"!\n";
+                        $prtStr = "#*********\n"
+                                . "# WARNING: Guessing the location of "
+                                . "\$ALIGNMENT_TOOL_PATH failed. "
+                                . $epath . " "
+                                . "is not a directory / BRAKER failed to "
+                                . "guess the location of alignment tool with "
+                                . "\"which spaln\"!\n"
+                                . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
                 }
@@ -2378,12 +2375,11 @@ sub set_BLAST_or_DIAMOND_PATH {
                 $DIAMOND_PATH = $diamond_path;
             }
             else {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": WARNING: Command line argument --DIAMOND_PATH was "
-                    . "supplied but value $diamond_path is not a directory. Will not "
-                    . "set \$DIAMOND_PATH to $diamond_path!\n";
+                $prtStr = "#*********\n"
+                        . "# WARNING: Command line argument --DIAMOND_PATH was "
+                        . "supplied but value $diamond_path is not a directory. Will not "
+                        . "set \$DIAMOND_PATH to $diamond_path!\n"
+                        . "#*********\n";
                 $logString .= $prtStr if ($v > 0);
             }
         }
@@ -2411,12 +2407,11 @@ sub set_BLAST_or_DIAMOND_PATH {
                 }
             }
             else {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": WARNING: Guessing the location of \$DIAMOND_PATH "
-                    . "failed. " . $epath . " is not a directory / BRAKER failed "
-                    . " to detect a diamond binary with \"which diamond\"!\n";
+                $prtStr = "#*********\n"
+                        . "# WARNING: Guessing the location of \$DIAMOND_PATH "
+                        . "failed. " . $epath . " is not a directory / BRAKER failed "
+                        . " to detect a diamond binary with \"which diamond\"!\n"
+                        . "#*********\n";
                 $logString .= $prtStr if ($v > 0);
             }
         }
@@ -2460,12 +2455,11 @@ sub set_BLAST_or_DIAMOND_PATH {
             $BLAST_PATH = $blast_path;
         }
         else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Command line argument --BLAST_PATH was "
-                . "supplied but value $blast_path is not a directory. Will not "
-                . "set \$BLAST_PATH to $blast_path!\n";
+            $prtStr = "#*********\n"
+                    . ": WARNING: Command line argument --BLAST_PATH was "
+                    . "supplied but value $blast_path is not a directory. Will not "
+                    . "set \$BLAST_PATH to $blast_path!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -2494,12 +2488,11 @@ sub set_BLAST_or_DIAMOND_PATH {
                 }
             }
             else {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": WARNING: Guessing the location of \$BLAST_PATH "
-                    . "failed. " . $epath . " is not a directory / BRAKER failed to "
-                    . " detect BLAST with \"which blastp\"!\n";
+                $prtStr = "#*********\n"
+                        . "# WARNING: Guessing the location of \$BLAST_PATH "
+                        . "failed. " . $epath . " is not a directory / BRAKER failed to "
+                        . " detect BLAST with \"which blastp\"!\n"
+                        . "#*********\n";
                 $logString .= $prtStr if ($v > 0);
             }
         }
@@ -2601,9 +2594,8 @@ sub check_biopython{
     $cmdString = "$PYTHON3_PATH/python3 -c \'import re\' 1> /dev/null 2> "
                . "$errorfile";
     if (system($cmdString) != 0) {
-        $prtStr = "\# "
-                . (localtime)
-                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        $prtStr = "#*********\n"
+                . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "Could not find python3 module re:\n";
         open(PYERR, "<", $errorfile) or die ("\# " . (localtime) 
             . " ERROR: in file " . __FILE__
@@ -2616,6 +2608,7 @@ sub check_biopython{
             . __FILE__
             ." at line ". __LINE__ ."\n"
             . "Could not close file $errorfile!\n");
+        $prtStr .= "#*********\n";
         $logString .= $prtStr;
         $missingPython3Module = 1;
     }
@@ -2623,9 +2616,8 @@ sub check_biopython{
     $cmdString = "$PYTHON3_PATH/python3 -c \'from Bio.Seq import Seq\' 1> /dev/null "
                . "2> $errorfile";
     if (system($cmdString) != 0) {
-        $prtStr = "\# "
-                . (localtime)
-                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+        $prtStr = "#*********\n"
+                . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "Could not find python3 module biopython:\n";
         open(PYERR, "<", $errorfile) or die ("\# " . (localtime) 
             . " ERROR: in file " . __FILE__
@@ -2638,6 +2630,7 @@ sub check_biopython{
             . __FILE__
             ." at line ". __LINE__ ."\n"
             . "Could not close file $errorfile!\n");
+        $prtStr .= "#*********\n";
         $logString .= $prtStr;
         $missingPython3Module = 1;
     }
@@ -2702,12 +2695,11 @@ sub set_PYTHON3_PATH {
             $PYTHON3_PATH = $python3_path;
         }
         else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Command line argument --PYTHON3_PATH was "
-                . "supplied but value $python3_path is not a directory. Will not "
-                . "set \$PYTHON3_PATH to $python3_path!\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: Command line argument --PYTHON3_PATH was "
+                    . "supplied but value $python3_path is not a directory. Will not "
+                    . "set \$PYTHON3_PATH to $python3_path!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -2735,12 +2727,11 @@ sub set_PYTHON3_PATH {
             }
         }
         else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Guessing the location of \$PYTHON3_PATH "
-                . "failed. " . $epath . " is not a directory / BRAKER failed "
-                . "to detect python3 with \"which python3\"!\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: Guessing the location of \$PYTHON3_PATH "
+                    . "failed. " . $epath . " is not a directory / BRAKER failed "
+                    . "to detect python3 with \"which python3\"!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -2838,12 +2829,11 @@ sub set_CDBTOOLS_PATH {
             $CDBTOOLS_PATH = $cdbtools_path;
         }
         else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Command line argument --CDBTOOLS_PATH was "
-                . "supplied but value $cdbtools_path is not a directory. Will not "
-                . "set \$CDBTOOLS_PATH to $cdbtools_path!\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: Command line argument --CDBTOOLS_PATH was "
+                    . "supplied but value $cdbtools_path is not a directory. Will not "
+                    . "set \$CDBTOOLS_PATH to $cdbtools_path!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -2871,12 +2861,11 @@ sub set_CDBTOOLS_PATH {
             }
         }
         else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Guessing the location of \$CDBTOOLS_PATH "
-                . "failed. " . $epath . " is not a directory / BRAKER failed "
-                . "to detect cdbfasta with \"which cdbfasta\"!\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: Guessing the location of \$CDBTOOLS_PATH "
+                    . "failed. " . $epath . " is not a directory / BRAKER failed "
+                    . "to detect cdbfasta with \"which cdbfasta\"!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -2974,12 +2963,11 @@ sub set_MAKEHUB_PATH {
             $MAKEHUB_PATH = $makehub_path;
         }
         else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Command line argument --MAKEHUB_PATH was "
-                . "supplied but value $makehub_path is not a directory. Will not "
-                . "set \$MAKEHUB_PATH to $makehub_path!\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: Command line argument --MAKEHUB_PATH was "
+                    . "supplied but value $makehub_path is not a directory. Will not "
+                    . "set \$MAKEHUB_PATH to $makehub_path!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -3007,12 +2995,11 @@ sub set_MAKEHUB_PATH {
             }
         }
         else {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Guessing the location of \$MAKEHUB_PATH "
-                . "failed. " . $epath . " is not a directory / BRAKER failed "
-                . "to detect make_hub.py with \"which make_hub.py\"!\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: Guessing the location of \$MAKEHUB_PATH "
+                    . "failed. " . $epath . " is not a directory / BRAKER failed "
+                    . "to detect make_hub.py with \"which make_hub.py\"!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -3546,14 +3533,13 @@ sub check_gff {
             }
             if ( $isAllowed != 1 ) {
                 if ( not( defined( $foundFeatures{ $gff_line[2] } ) ) ) {
-                    $prtStr
-                        = "\# "
-                        . (localtime)
-                        . " WARNING: File $gfffile contains hints of a feature "
-                        . "type $gff_line[2] that is currently not supported "
-                        . "by BRAKER. Features of this type will be treated "
-                        . "with neutral bonus/malus in the extrinsic.cfg file "
-                        . "that will be used for running AUGUSTUS.\n";
+                    $prtStr = "#*********\n"
+                            . "# WARNING: File $gfffile contains hints of a feature "
+                            . "type $gff_line[2] that is currently not supported "
+                            . "by BRAKER. Features of this type will be treated "
+                            . "with neutral bonus/malus in the extrinsic.cfg file "
+                            . "that will be used for running AUGUSTUS.\n"
+                            . "#*********\n";
                     $logString .= $prtStr if ( $v > 0 );
                     $foundFeatures{ $gff_line[2] } = 1;
                 }
@@ -3573,14 +3559,13 @@ sub check_gff {
         . __LINE__ ."\nCould not close gff file $gfffile!\n");
     if ( !@bam ) {
         if ( $nIntrons < 1000 ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . " WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "Since no bam file was supplied, GeneMark-ET must take "
-                . "intron information from hints file $gfffile. This file "
-                . "contains only $nIntrons intron hints. GeneMark-ET training "
-                . "will thus likely fail.!\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "Since no bam file was supplied, GeneMark-ET must take "
+                    . "intron information from hints file $gfffile. This file "
+                    . "contains only $nIntrons intron hints. GeneMark-ET training "
+                    . "will thus likely fail.!\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
             print STDOUT $logString if ($v > 0);
         }
@@ -3650,7 +3635,8 @@ sub check_options {
     }
     if( $CPU > 48 ) {
         $CPU = 48;
-        $prtStr = "\# " . (localtime). ": WARNING: The number of cores was set "
+        $prtStr = "#*********\n"
+                . "# WARNING: The number of cores was set "
                 . "to $CPU, which is greater than 48. GeneMark is likely to "
                 . "die if you set such a high number of cores. Decreasing "
                 . "number of cores to 48. You might want to restart the "
@@ -3661,7 +3647,8 @@ sub check_options {
                 . "number of cores that will effectively be used for "
                 . "optimizing AUGUSTUS parameter in such a way that each "
                 . "each bucket will contain at least 200 training genes. We "
-                . "usually use 8 cores for 8-fold cross validation.\n";
+                . "usually use 8 cores for 8-fold cross validation.\n"
+                . "#*********\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
     }
@@ -3718,11 +3705,12 @@ sub check_options {
                 }
             }
             if($gtag_ever_seen == 0){
-                $prtStr = "\# " . (localtime)
-                            . ": WARNING: in file " . __FILE__ ." at line "
-                            . __LINE__ . "\n" . " Splice site pattern ATAG was "
-                            . "not in the list of splice site patterns. This "
-                            . "is probably a mistake?\n";
+                $prtStr = "#*********\n"
+                        . "# WARNING: in file " . __FILE__ ." at line "
+                        . __LINE__ . "\n" . " Splice site pattern ATAG was "
+                        . "not in the list of splice site patterns. This "
+                        . "is probably a mistake?\n"
+                        . "#*********\n";
                 $logString .= $prtStr;
                 print STDOUT $prtStr;
             }
@@ -3818,12 +3806,11 @@ sub check_options {
     }
 
     if ( $cpus_available < $CPU ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: Your system does not have $CPU cores available, "
-            . "only $cpus_available. Braker will use the $cpus_available "
-            . " available instead of the chosen $CPU.\n";
+        $prtStr = "#*********\n" 
+                . "# WARNING: Your system does not have $CPU cores available, "
+                . "only $cpus_available. Braker will use the $cpus_available "
+                . " available instead of the chosen $CPU.\n"
+                . "#*********\n";
         $logString .= $prtStr if ($v > 0);
     }
 
@@ -3901,21 +3888,19 @@ sub check_options {
     # check whether species is specified
     if ( defined($species) ) {
         if ( $species =~ /[\s]/ ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: Species name contains invalid white space "
+            $prtStr = "#*********\n"
+                ."# WARNING: Species name contains invalid white space "
                 . "characters. Will replace white spaces with underline "
-                . "character '_'.\n";
+                . "character '_'.\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
             $species =~ s/\s/\_/g;
         }
         foreach my $word (@forbidden_words) {
             if ( $species eq $word ) {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": WARNING: $species is not allowed as a species name.\n";
+                $prtStr = "#*********\n"
+                        . "# WARNING: $species is not allowed as a species name.\n"
+                        . "#*********\n";
                 $logString .= $prtStr if ($v > 0);
                 $bool_species = "false";
             }
@@ -3977,12 +3962,11 @@ sub check_options {
     }
 
     if ( !-d "$AUGUSTUS_CONFIG_PATH/species/$species" && $useexisting ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not "
-            . "exist. Braker will create the necessary files for species "
-            . "$species.\n";
+        $prtStr = "#*********\n"
+                . "# WARNING: $AUGUSTUS_CONFIG_PATH/species/$species does not "
+                . "exist. Braker will create the necessary files for species "
+                . "$species.\n"
+                . "#*********\n";
         $logString .= $prtStr if($v > 0);
         $useexisting = 0;
     }
@@ -4097,25 +4081,23 @@ sub check_options {
         if ( !defined($prg) && $EPmode == 0 ) {
 
             # if no alignment tools was specified, set Genome Threader as default
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "No alignment tool was specified for aligning protein"
-                . " sequences against genome. Setting GenomeThreader as "
-                . "default alignment tool.\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                    . "No alignment tool was specified for aligning protein"
+                    . " sequences against genome. Setting GenomeThreader as "
+                    . "default alignment tool.\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0);
             $prg = "gth";
         }
         elsif ( !defined($prg) && $EPmode == 1 ) {
             $prg = "prosplign";
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": WARNING: No alignment tool was specified for aligning "
-                . "protein sequences against genome. Setting ProSplign as "
-                . "default alignment tool for running BRAKER in GeneMark-EP "
-                . "mode.\n";
+            $prtStr = "#*********\n"
+                    . "# WARNING: No alignment tool was specified for aligning "
+                    . "protein sequences against genome. Setting ProSplign as "
+                    . "default alignment tool for running BRAKER in GeneMark-EP "
+                    . "mode.\n"
+                    . "#*********\n";
             $logString .= $prtStr if ($v > 0 );
             $prtStr
                 = "\# "
@@ -4270,11 +4252,10 @@ sub check_options {
         print STDERR $logString;
         exit(1);
     } elsif (not($makehub) && $email) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "If --email option will only take effect in combination with --makehub option.\n";
+        $prtStr = "#*********\n"
+                . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "If --email option will only take effect in combination with --makehub option.\n"
+                . "#*********\n";
         $logString .= $prtStr;
         print STDOUT $logString;
     }
@@ -4323,13 +4304,13 @@ sub check_fasta_headers {
             # check newline character
             if ( not( $_ =~ m/\n$/ ) ) {
                 if ( $wrongNL < 1 ) {
-                    print LOG "\# "
-                        . (localtime)
-                        . " WARNING: something seems to be wrong with the "
+                    print LOG "#*********\n"
+                        . "# WARNING: something seems to be wrong with the "
                         . "newline character! This is likely to cause problems "
                         . "with the braker.pl pipeline! Please adapt your file "
                         . "to UTF8! This warning will be supressed from now "
-                        . "on!\n" if ($v > 0);
+                        . "on!\n"
+                        . "#*********\n" if ($v > 0);
                     $wrongNL++;
                 }
             }
@@ -4338,10 +4319,10 @@ sub check_fasta_headers {
             # look for whitespaces in fasta file
             if ( $_ =~ m/\s/ ) {
                 if ( $spaces == 0 ) {
-                    $prtStr = "\# "
-                        . (localtime)
-                        . " WARNING: Detected whitespace in fasta header of "
-                        . "file $fastaFile. " . $stdStr;
+                    $prtStr = "#*********\n"
+                            . "# WARNING: Detected whitespace in fasta header of "
+                            . "file $fastaFile. " . $stdStr
+                            . "#*********\n";
                     print LOG $prtStr if ($v > 2);
                     print STDERR $prtStr;
                     $spaces++;
@@ -4351,10 +4332,10 @@ sub check_fasta_headers {
             # look for | in fasta file
             if ( $_ =~ m/\|/ ) {
                 if ( $orSign == 0 ) {
-                    $prtStr =  "\# "
-                        . (localtime)
-                        . " WARNING: Detected | in fasta header of file "
-                        . "$fastaFile. " . $stdStr;
+                    $prtStr = "#*********\n"
+                            . "# WARNING: Detected | in fasta header of file "
+                            . "$fastaFile. " . $stdStr
+                            . "#*********\n";
                     print LOG $prtStr if ($v > 2);
                     print STDERR $prtStr;
                     $orSign++;
@@ -4364,13 +4345,13 @@ sub check_fasta_headers {
             # look for special characters in headers
             if ( ( $_ !~ m/[>a-zA-Z0-9]/ ) && ( $_ =~ m/^>/ ) ) {
                 if ( $someThingWrongWithHeader == 0 ) {
-                    $prtStr = "\# "
-                        . (localtime)
-                        . " WARNING: Fasta headers in file $fastaFile seem to "
-                        . "contain non-letter and non-number characters. That "
-                        . "means they may contain some kind of special "
-                        . "characters. "
-                        . $stdStr;
+                    $prtStr = "#*********\n"
+                            . " WARNING: Fasta headers in file $fastaFile seem to "
+                            . "contain non-letter and non-number characters. That "
+                            . "means they may contain some kind of special "
+                            . "characters. "
+                            . $stdStr
+                            . "#*********\n";
                     print LOG $prtStr if ($v > 2);
                     print STDERR $prtStr;
                     $someThingWrongWithHeader++;
@@ -4423,10 +4404,10 @@ sub check_fasta_headers {
                 }
                 else {
                     if ( $emptyC < 1 ) {
-                        print LOG "\# "
-                            . (localtime)
+                        print LOG "#*********\n"
                             . " WARNING: empty line was removed! This warning "
-                            . "will be supressed from now on!\n"  if ($v > 3);
+                            . "will be supressed from now on!\n"
+                            . "#*********\n" if ($v > 3);
                     }
                     $emptyC++;
                 }
@@ -4509,10 +4490,10 @@ sub check_bam_headers {
                 @seq_line = split( /\s/, $seq_line[1] );
                 if ( scalar(@seq_line) > 1 ) {
                     if ( $spaces == 0 ) {
-                        print LOG "\# "
-                            . (localtime)
-                            . " WARNING: Detected whitespace in BAM header of "
-                            . "file $bamFile. " . $stdStr if ($v > 0);
+                        print LOG "#*********\n"
+                                . "# WARNING: Detected whitespace in BAM header of "
+                                . "file $bamFile. " . $stdStr 
+                                . "#*********\n" if ($v > 0);
                         $spaces++;
                     }
                 }
@@ -4520,12 +4501,11 @@ sub check_bam_headers {
                 @seq_line = split( /\|/, $old_name );
                 if ( scalar(@seq_line) > 1 ) {
                     if ( $orSign == 0 ) {
-                        print LOG "\# "
-                            . (localtime)
-                            . " WARNING: Detected | in header of file "
-                            . "$bamFile. " . $stdStr if ($v > 0);
-                        print LOG "Replacing | by underscores in Bam headers.\n"
-                            if ($v > 3);
+                        print LOG "#*********\n"
+                                . "# WARNING: Detected | in header of file "
+                                . "$bamFile. " . $stdStr 
+                                . "#*********\n"if ($v > 0);
+                        print LOG "# Replacing | by underscores in Bam headers.\n" if ($v > 3);
                         $orSign++;
                     }
                 }
@@ -4535,12 +4515,12 @@ sub check_bam_headers {
                 $seq_line[0] = "\@SQ\tSN:$new_name\t$seq_end";
                 if ( $seq_line[0] !~ m/[>a-zA-Z0-9]/ ) {
                     if ( $someThingWrongWithHeader == 0 ) {
-                        print LOG "\# "
-                            . (localtime)
-                            . " WARNING: BAM headers in file $bamFile seem to "
-                            . "contain non-letter and non-number characters. "
-                            . "That means they may contain some kind of "
-                            . "special character. " . $stdStr if ($v > 0);
+                        print LOG "#*********\n"
+                                . "# WARNING: BAM headers in file $bamFile seem to "
+                                . "contain non-letter and non-number characters. "
+                                . "That means they may contain some kind of "
+                                . "special character. " . $stdStr 
+                                . "#*********\n" if ($v > 0);
                         $someThingWrongWithHeader++;
                     }
                 }
@@ -4587,15 +4567,15 @@ sub check_bam_headers {
             }
             else {
                 if ( not ( defined ($SAMTOOLS_PATH) ) ) {
-                    $prtStr = "\# "
-                        . (localtime)
-                        . " WARNING: The environment variable SAMTOOLS_PATH is "
-                        . "not defined. Please export an environment variable "
-                        . "for samtools or use "
-                        . "--SAMTOOLS_PATH=path/to/samtools.\n"
-                        . "The program will try to use '/usr/bin/samtools' to "
-                        . "start samtools, which may not work on your "
-                        . "system.\n";
+                    $prtStr = "#*********\n"
+                            . "# WARNING: The environment variable SAMTOOLS_PATH is "
+                            . "not defined. Please export an environment variable "
+                            . "for samtools or use "
+                            . "--SAMTOOLS_PATH=path/to/samtools.\n"
+                            . "The program will try to use '/usr/bin/samtools' to "
+                            . "start samtools, which may not work on your "
+                            . "system.\n"
+                            . "#*********\n";
                     $SAMTOOLS_PATH = "/usr/bin";
                 }
                 my $samFile     = "$otherfilesDir/" . $_[0] . ".sam";
@@ -5103,9 +5083,9 @@ sub aln2hints {
             . "\nFailed to execute: $cmdString\n");
     }
     else {
-        print LOG "\# "
-            . (localtime)
-            . ": WARNING: Alignment file $aln_file was empty!\n" if ($v > 0);
+        print LOG "#*********\n"
+                . "# WARNING: Alignment file $aln_file was empty!\n"
+                . "#*********\n" if ($v > 0);
     }
 }
 
@@ -5509,9 +5489,11 @@ sub format_ep_hints {
             }
             print OUT $t[8];
         }elsif( not ( $t[8] =~ m/so?u?rce?=/) ) {
-            $prtStr = "WARNING: Format of hintsfile $genemark_hintsfile is "
+            $prtStr = "#*********\n"
+                    . "# WARNING: Format of hintsfile $genemark_hintsfile is "
                     . "incorrect in the last column, possibly src="
-                    . "tag is missing!\n$t[8]";
+                    . "tag is missing!\n$t[8]"
+                    . "#*********\n";
             print STDOUT $prtStr;
             print LOG $prtStr;
         }
@@ -5531,7 +5513,8 @@ sub format_ep_hints {
 # * introns supported by protein alignment and RNA-Seq alignment are true
 #   positives
 # * AUGUSTUS can also use these introns as manual hints
-# * also "src=M" hints from protein mapping pipeline go into this file
+# * also "src=M" hints from protein mapping pipeline go into this file,
+#   therefore this function is also called in --epmode
 ################################################################################
 
 sub create_evidence_gff {
@@ -5656,21 +5639,20 @@ sub check_genemark_hints {
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $genemark_hintsfile!\n");
     if ( $nIntronsAboveThreshold < 150 ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": WARNING: \n"
-            . "The file $genemark_hintsfile contains less than 150 "
-            . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
-            . "total, $nIntrons unique introns are contained. "
-            .  "$nIntronsAboveThreshold have a multiplicity >= 10.) Possibly, you "
-            . "are trying to run braker.pl on data that does not supply "
-            . "multiplicity information. This will e.g. happen if you try to "
-            . "use introns generated from assembled RNA-Seq transcripts; or if "
-            . "you try to run braker.pl in epmode with mappings from proteins "
-            . "without sufficient hits per locus.\n"
-            . "A low number of intron hints with sufficient multiplicity may "
-            . "result in a crash of GeneMark-EX.\n";
+        $prtStr = "#*********\n"
+                . "# WARNING: \n"
+                . "# The file $genemark_hintsfile contains less than 150 "
+                . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
+                . "total, $nIntrons unique introns are contained. "
+                .  "$nIntronsAboveThreshold have a multiplicity >= 10.) Possibly, you "
+                . "are trying to run braker.pl on data that does not supply "
+                . "multiplicity information. This will e.g. happen if you try to "
+                . "use introns generated from assembled RNA-Seq transcripts; or if "
+                . "you try to run braker.pl in epmode with mappings from proteins "
+                . "without sufficient hits per locus.\n"
+                . "# A low number of intron hints with sufficient multiplicity may "
+                . "result in a crash of GeneMark-EX.\n"
+                . "#*********\n";
         print LOG $prtStr if ($v > 0);
         print STDOUT $prtStr;
     }
@@ -5976,7 +5958,7 @@ sub GeneMark_ETP {
 ################################################################################
 
 sub filter_genemark {
-    print LOG "\# " . (localtime) . " Filtering output of GeneMark for "
+    print LOG "\# " . (localtime) . ": Filtering output of GeneMark for "
         . "generating training genes for AUGUSTUS\n" if ($v > 2);
 
     if( not( $ESmode == 1 ) ) {
@@ -6564,7 +6546,7 @@ sub training_augustus {
             .= "perl $string $otherfilesDir/etrain.bad.lst $trainGb2 1> $trainGb3 2>$errorfile";
         print LOG "\# "
             . (localtime)
-            . ": Filtering $trainGb2 file to remove inconsistent gene structures:\n" if ($v > 3);
+            . ": Filtering $trainGb2 file to remove inconsistent gene structures...\n" if ($v > 3);
         print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -6806,10 +6788,10 @@ sub training_augustus {
             );
             $errorfile = "$errorfilesDir/randomSplit.stderr";
             if ( $gb_good_size < 600 ) {
-                $prtStr = "\# "
-                    . (localtime)
-                    . " WARNING: Number of reliable training genes is low ($gb_good_size). "
-                    . "Recommended are at least 600 genes\n";
+                $prtStr = "#*********\n"
+                        . " WARNING: Number of reliable training genes is low ($gb_good_size). "
+                        . "Recommended are at least 600 genes\n"
+                        . "#*********\n";
                 print LOG $prtStr if ($v > 0);
                 print STDOUT $prtStr if ($v > 0);
                 $testsize1 = floor($gb_good_size/3);
@@ -7656,11 +7638,11 @@ sub compute_flanking_region {
     $avLen = $totalLen / $nGenes;
     $size = min( ( floor( $avLen / 2 ), 10000 ) );
     if ( $size < 0 ) {
-        print LOG "\# "
-            . (localtime)
-            . " WARNING: \$flanking_DNA has the value $size , which is "
-            . "smaller than 0. Something must have gone wrong, there. "
-            . "Replacing by value 10000.\n" if ($v > 0);
+        print LOG "#*********\n"
+                . "# WARNING: \$flanking_DNA has the value $size , which is "
+                . "smaller than 0. Something must have gone wrong, there. "
+                . "Replacing by value 10000.\n"
+                . "#*********\n" if ($v > 0);
         $size = 10000;
     }
     return $size;
@@ -7925,11 +7907,10 @@ sub assign_ex_cfg {
         $extrinsicCfgFile = $string;
     }
     else {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . " WARNING: tried to assign extrinsicCfgFile $thisCfg as ";
-        $prtStr .= "$string but this file does not seem to exist.\n";
+        $prtStr = "#*********\n"
+                . "# WARNING: tried to assign extrinsicCfgFile $thisCfg as "
+                . "$string but this file does not seem to exist.\n"
+                . "#*********\n";
         $logString .= $prtStr if ($v > 0);
         $extrinsicCfgFile = undef;
     }
@@ -8476,8 +8457,9 @@ sub run_augustus_with_joingenes_parallel {
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__
                 . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         } else {
-            print LOG "\# " . (localtime) . " WARNING: ETPmode enabled but "
-                . "$otherfilesDir/evidence.gff does not exist!\n" if ($v > 0);
+            print LOG "#*********\n" . "# WARNING: ETPmode enabled but "
+                . "$otherfilesDir/evidence.gff does not exist!\n"
+                . "#*********\n" if ($v > 0);
         }
     } else {
         print LOG "\# " . (localtime) . " Skip creating adjusted hints file "
@@ -9973,8 +9955,10 @@ sub train_utr {
                 . "training is $target_5\n" if ($v > 3);
 
             if($target_4 > $target_5){
-                print LOG "\# ". (localtime) . ": WARNING: UTR training "
-                    . "decreased AUGUSTUS ab initio accuracy!\n" if ($v > 3);
+                print LOG "#*********\n"
+                     . "# WARNING: UTR training "
+                     . "decreased AUGUSTUS ab initio accuracy!\n"
+                     . "#*********\n" if ($v > 3);
             }
         }
     }
