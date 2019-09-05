@@ -256,6 +256,10 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     executable is not in your $PATH).
 --MAKEHUB_PATH=/path/to             Set path to make_hub.py (if option --makehub
                                     is used).
+--CDBTOOLS_PATH=/path/to            cdbfasta/cdbyank are required for running
+                                    fix_in_frame_stop_codon_genes.py. Usage of
+                                    that script can be skipped with option 
+                                    '--skip_fixing_broken_genes'.
 
 
 EXPERT OPTIONS
@@ -323,6 +327,9 @@ EXPERT OPTIONS
                                     will not be produced and python3 and 
                                     the required modules will not be necessary
                                     for running braker.pl.
+--skip_fixing_broken_genes          If you do not have python3, you can choose
+                                    to skip the fixing of stop codon including
+                                    genes (not recommended).
 --fungus                            GeneMark-ET option: run algorithm with
                                     branch point model (most useful for fungal
                                     genomes)
@@ -417,13 +424,6 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     to something else. 
                                     DOES NOT WORK YET BECAUSE BRAKER DOESNT
                                     SWITCH TRANSLATION TABLE FOR GENEMARK-EX, YET!
---skip_fixing_broken_genes          If you do not have python3, you can choose
-                                    to skip the fixing of stop codon including
-                                    genes (not recommendedn)
---CDBTOOLS_PATH=/path/to            cdbfasta/cdbyank are required for running
-                                    fix_in_frame_stop_codon_genes.py. Usage of
-                                    that script can be skipped with option 
-                                    '--skip_fixing_broken_genes'.
 
 
 DESCRIPTION
