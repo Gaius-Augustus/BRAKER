@@ -1847,7 +1847,7 @@ sub set_BAMTOOLS_PATH {
             = "\# "
             . (localtime)
             . ": Trying to guess \$BAMTOOLS_BIN_PATH from location of bamtools"
-            . " executable that is available in your \$PATH.\n";
+            . " executable that is available in your \$PATH\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'bamtools';
         if(defined($epath)){
@@ -1965,7 +1965,7 @@ sub set_GENEMARK_PATH {
             = "\# "
             . (localtime)
             . ": Trying to guess \$GENEMARK_PATH from location of "
-            . "gmes_petap.pl executable that is available in your \$PATH.\n";
+            . "gmes_petap.pl executable that is available in your \$PATH\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'gmes_petap.pl';
         if(defined($epath)){
@@ -2078,7 +2078,7 @@ sub set_SAMTOOLS_PATH {
             = "\# "
             . (localtime)
             . ": Trying to guess \$SAMTOOLS_PATH from location of samtools "
-            . "executable in your \$PATH.\n";
+            . "executable in your \$PATH\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'samtools';
         if(defined($epath)){
@@ -2192,7 +2192,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                         . (localtime)
                         . ": Trying to guess \$ALIGNMENT_TOOL_PATH from "
                         . "location of GenomeThreader executable in your "
-                        . "\$PATH.\n";
+                        . "\$PATH\n";
                     $logString .= $prtStr if ($v > 1);
                     my $epath = which 'gth';
                     if( defined($epath) ) {
@@ -2224,7 +2224,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                         = "\# "
                         . (localtime)
                         . ": Trying to guess \$ALIGNMENT_TOOL_PATH from "
-                        . "location of Exonerate executable in your \$PATH.\n";
+                        . "location of Exonerate executable in your \$PATH\n";
                     $logString .= $prtStr if ($v > 1);
                     my $epath = which 'exonerate';
                     if(defined($epath)){
@@ -2256,7 +2256,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                         = "\# "
                         . (localtime)
                         . ": Trying to guess \$ALIGNMENT_TOOL_PATH "
-                        . "from location of Spaln executable in your \$PATH.\n";
+                        . "from location of Spaln executable in your \$PATH\n";
                     $logString .= $prtStr if ($v > 1);
                     my $epath = which 'spaln';
                     if(defined($epath)){
@@ -2392,7 +2392,7 @@ sub set_BLAST_or_DIAMOND_PATH {
                 = "\# "
                 . (localtime)
                 . ": Trying to guess \$DIAMOND_PATH from location of diamond"
-                . " executable that is available in your \$PATH.\n";
+                . " executable that is available in your \$PATH\n";
             $logString .= $prtStr if ($v > 1);
             my $epath = which 'diamond';
             if(defined($epath)){
@@ -2473,7 +2473,7 @@ sub set_BLAST_or_DIAMOND_PATH {
                 = "\# "
                 . (localtime)
                 . ": Trying to guess \$BLAST_PATH from location of blastp"
-                . " executable that is available in your \$PATH.\n";
+                . " executable that is available in your \$PATH\n";
             $logString .= $prtStr if ($v > 1);
             my $epath = which 'blastp';
             if(defined($epath)){
@@ -2712,7 +2712,7 @@ sub set_PYTHON3_PATH {
             = "\# "
             . (localtime)
             . ": Trying to guess \$PYTHON3_PATH from location of python3"
-            . " executable that is available in your \$PATH.\n";
+            . " executable that is available in your \$PATH\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'python3';
         if(defined($epath)){
@@ -2845,8 +2845,8 @@ sub set_CDBTOOLS_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": Trying to guess \$CDBTOOLS_PATH from location of dbfasta"
-            . " executable that is available in your \$PATH.\n";
+            . ": Trying to guess \$CDBTOOLS_PATH from location of cdbfasta"
+            . " executable that is available in your \$PATH\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'cdbfasta';
         if(defined($epath)){
@@ -2980,7 +2980,7 @@ sub set_MAKEHUB_PATH {
             = "\# "
             . (localtime)
             . ": Trying to guess \$MAKEHUB_PATH from location of make_hub.py"
-            . " executable that is available in your \$PATH.\n";
+            . " executable that is available in your \$PATH\n";
         $logString .= $prtStr if ($v > 1);
         my $epath = which 'make_hub.py';
         if(defined($epath)){
@@ -3939,9 +3939,15 @@ sub check_options {
         }
         else {
             $prtStr
-                = "\# "
-                . (localtime)
-                . ": No species was set. Program will use $species.\n";
+                = "#*********\n"
+                . "# IMPORTANT INFORMATION: no species for identifying the AUGUSTUS "
+                . " parameter set that will arise from this BRAKER run was set. BRAKER "
+                . "will create an AUGUSTUS parameter set with name $species. "
+                . "This parameter set can be used for future BRAKER/AUGUSTUS prediction "
+                . "runs for the same species. It is usually not necessary to retrain "
+                . "AUGUSTUS with novel extrinsic data if a high quality parameter "
+                . "set already exists.\n"
+                . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
     }
@@ -6114,7 +6120,7 @@ sub filter_genemark {
 
         } else {
             print LOG "\# " . (localtime)
-                . ": skip filtering genemark genes because file "
+                . ": Skip filtering genemark genes because file "
                 . "$genemarkDir/genemark.f.good.gtf is up to date.\n" 
                 if ($v > 3);
         }
@@ -6789,7 +6795,7 @@ sub training_augustus {
             $errorfile = "$errorfilesDir/randomSplit.stderr";
             if ( $gb_good_size < 600 ) {
                 $prtStr = "#*********\n"
-                        . " WARNING: Number of reliable training genes is low ($gb_good_size). "
+                        . "# WARNING: Number of reliable training genes is low ($gb_good_size). "
                         . "Recommended are at least 600 genes\n"
                         . "#*********\n";
                 print LOG $prtStr if ($v > 0);
@@ -6832,7 +6838,7 @@ sub training_augustus {
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n");
             print LOG "\# "
                         . (localtime)
-                        . " $otherfilesDir/train.gb.test will be used for "
+                        . ": $otherfilesDir/train.gb.test will be used for "
                         . "measuring AUGUSTUS accuracy after training\n" if ($v > 3);
             if($v > 3) {
                 count_genes_in_gb_file("$otherfilesDir/train.gb.test");
@@ -6856,7 +6862,7 @@ sub training_augustus {
 
             print LOG "\# "
                 . (localtime)
-                . " \n$otherfilesDir/train.gb.train.test will be used for "
+                . ": $otherfilesDir/train.gb.train.test will be used or "
                 . "measuring AUGUSTUS accuracy during training with "
                 . "optimize_augustus.pl\n"
                 . " $otherfilesDir/train.gb.train.train will be used for "
@@ -6939,7 +6945,7 @@ sub training_augustus {
                 );
                 print LOG "\# "
                     . (localtime)
-                    . ": Trying etraining again\n" if ($v > 3);
+                    . ": Running etraining again\n" if ($v > 3);
                 print LOG "$cmdString\n" if ($v > 3);
                 system("$cmdString") == 0
                     or die("ERROR in file " . __FILE__ ." at line "
@@ -6950,7 +6956,7 @@ sub training_augustus {
             # according to train.out
             print LOG "\# "
                 . (localtime)
-                . ": adjusting stop-codon frequencies in "
+                . ": Adjusting stop-codon frequencies in "
                 . "species_parameters.cfg according to $stdoutfile\n"
                 if ($v > 3);
             my $freqOfTag;
@@ -9233,7 +9239,7 @@ sub eval_gene_pred {
         . ": secondStepFile is $secondStepFile\n" if ($v > 3);
     print LOG "\# "
         . (localtime)
-        . ": filtering $gtfFile for CDS, exon, start_codon and UTR features, \n"
+        . ": Filtering $gtfFile for CDS, exon, start_codon and UTR features, \n"
         . "writing to $firstStepFile.\n" if ($v > 3);
     open( FIRST, ">", $firstStepFile )
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould \n"
@@ -9362,7 +9368,7 @@ sub train_utr {
 
     if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/rnaseq.utr.hints"] ) ) {
         print LOG "\# " . (localtime)
-            . ": filtering RNA-Seq hints for valid splice site AT-AG, storing "
+            . ": Filtering RNA-Seq hints for valid splice site AT-AG, storing "
             . "in $otherfilesDir/rnsaeq.utr.hints\n" if ( $v > 3 );
         #TODO: do not load entire genome in memory, process chromsome-wise!
         my %genome_hash;
@@ -10333,7 +10339,7 @@ sub stranded_wig2ep_hints {
 sub filter_augustus {
     my $augustus_file = shift;
     print LOG "\# " . (localtime) 
-        . ": filtering $augustus_file for genes with strong intron support.\n"
+        . ": Filtering $augustus_file for genes with strong intron support.\n"
         if ($v > 3);
     my %introns;
     open( HINTS, "<", $hintsfile ) or die( "ERROR in file "
