@@ -168,7 +168,7 @@ Supported software versions
 
 At the time of release, this BRAKER version was tested with:
 
--   AUGUSTUS 3.3.1<sup name="g2">[F2](#g2)</sup>
+-   AUGUSTUS latest code version from Github (commit 2c6223c or newer should be compatible) <sup name="g2">[F2](#g2)</sup>
 
 -   GeneMark-ET 4.33
 
@@ -1017,6 +1017,10 @@ Common problems
 -   *Does BRAKER depend on Python3?*
 
     Partially. The options `-{}-{}make_hub` and `-{}-{}UTR` will require Python3. The general required for Python3 for generating e.g. the protein sequence output file can be disabled with `--skipGetAnnoFromFasta`. So, if you use BRAKER with `--skipGetAnnoFromFasta` and not with `-{}-{}make_hub` and `-{}-{}UTR`, BRAKER does not require Python3. The python scripts employed by BRAKER are not compatible with Python2.
+
+-   *Why does BRAKER predict more genes than I expected?*
+
+    If transposable elements (or similar) have not been masked appropriately, AUGUSTUS tends to predict those elements as protein coding genes. This can lead to a huge number genes. You can check whether this is the case for your project by BLASTing (or DIAMONDing) the predicted protein sequences against themselves (all vs. all) and counting how many of the proteins have a high number of high quality matches. You can use the output of this analysis to divide your gene set into two groups: the protein coding genes that you want to find and the repetitive elements that were additionally predicted. 
 
 Citing BRAKER and software called by BRAKER
 =============================================
