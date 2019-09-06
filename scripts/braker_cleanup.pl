@@ -107,7 +107,8 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"utr_genes_in_gb.nr.fa", "utr.nonred.loci.lst", "utrs.gff", "downsample_traingenes.log", "firstetraining.stdout", 
 	"secondetraining.stdout", "startAlign_gth.log", "protein_alignment_gth.gff3", "ex1.cfg", "getAnnoFastaFromJoingenes.augustus.hints.stdout", 
 	"genome.fa.cidx", "getAnnoFastaFromJoingenes.augustus.hints_tmp.stdout", "getAnnoFastaFromJoingenes.augustus.ab_initio_tmp.stdout",
-	"augustus.ab_initio.tmp.gtf", "augustus.ab_initio.gff", "augustus.hints.gff", "augustus.hints.tmp.gtf");
+	"augustus.ab_initio.tmp.gtf", "augustus.ab_initio.gff", "augustus.hints.gff", "augustus.hints.tmp.gtf",
+	"getAnnoFastaFromJoingenes.augustus.hints_hints.stdout", "evidence.gff");
 
 my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneMark-ES/run",
 	"GeneMark-ET/data", "GeneMark-ET/info", "GeneMark-ET/output", "GeneMark-ET/run",
