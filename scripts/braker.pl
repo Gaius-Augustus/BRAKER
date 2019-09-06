@@ -1869,7 +1869,7 @@ sub set_BAMTOOLS_PATH {
             $prtStr
                 = "#*********\n"
                 . "WARNING: Guessing the location of \$BAMTOOLS_BIN_PATH "
-                . "failed. " . $epath . " is not a directory!\n"
+                . "failed.\n"
                 . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
@@ -1985,7 +1985,7 @@ sub set_GENEMARK_PATH {
         } else {
             $prtStr = "#*********\n"
                     . "# WARNING: Guessing the location of \$GENEMARK_PATH "
-                    . "failed. " . $epath . " is not a directory!\n"
+                    . "failed.\n"
                     . "#*********\n";
             $logString .= $prtStr if ($v > 0);
         }
@@ -2100,7 +2100,7 @@ sub set_SAMTOOLS_PATH {
             $prtStr
                 = "#*********\n"
                 . "# WARNING: Guessing the location of \$SAMTOOLS_PATH "
-                . "failed. " . $epath . " is not a directory / BRAKER failed "
+                . "failed / BRAKER failed "
                 . "to guess the location of samtools with \"which samtools\"!\n"
                 . "#*********\n";
             $logString .= $prtStr if ($v > 0);
@@ -2213,10 +2213,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                     else {
                         $prtStr = "#*********\n"
                                 . "# WARNING: Guessing the location of "
-                                . "\$ALIGNMENT_TOOL_PATH failed. "
-                                . $epath
-                                . " is not a "
-                                . "directory / BRAKER failed to guess the "
+                                . "\$ALIGNMENT_TOOL_PATH failed / BRAKER failed to guess the "
                                 . "location of alignment tool with "
                                 . "\"which gth\"!\n"
                                 . "#*********\n";
@@ -2245,10 +2242,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                     else {
                         $prtStr = "#*********\n"
                                 . "# WARNING: Guessing the location of "
-                                . "\$ALIGNMENT_TOOL_PATH failed. "
-                                . $epath
-                                . " is not a "
-                                . "directory / BRAKER failed to guess the "
+                                . "\$ALIGNMENT_TOOL_PATH failed / BRAKER failed to guess the "
                                 . "location of alignment tool with "
                                 . "\"which exonerate\"!\n"
                                 . "#*********\n";
@@ -2277,9 +2271,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                     else {
                         $prtStr = "#*********\n"
                                 . "# WARNING: Guessing the location of "
-                                . "\$ALIGNMENT_TOOL_PATH failed. "
-                                . $epath . " "
-                                . "is not a directory / BRAKER failed to "
+                                . "\$ALIGNMENT_TOOL_PATH failed / BRAKER failed to "
                                 . "guess the location of alignment tool with "
                                 . "\"which spaln\"!\n"
                                 . "#*********\n";
@@ -2413,7 +2405,7 @@ sub set_BLAST_or_DIAMOND_PATH {
             else {
                 $prtStr = "#*********\n"
                         . "# WARNING: Guessing the location of \$DIAMOND_PATH "
-                        . "failed. " . $epath . " is not a directory / BRAKER failed "
+                        . "failed / BRAKER failed "
                         . " to detect a diamond binary with \"which diamond\"!\n"
                         . "#*********\n";
                 $logString .= $prtStr if ($v > 0);
@@ -2494,7 +2486,7 @@ sub set_BLAST_or_DIAMOND_PATH {
             else {
                 $prtStr = "#*********\n"
                         . "# WARNING: Guessing the location of \$BLAST_PATH "
-                        . "failed. " . $epath . " is not a directory / BRAKER failed to "
+                        . "failed / BRAKER failed to "
                         . " detect BLAST with \"which blastp\"!\n"
                         . "#*********\n";
                 $logString .= $prtStr if ($v > 0);
@@ -2733,7 +2725,7 @@ sub set_PYTHON3_PATH {
         else {
             $prtStr = "#*********\n"
                     . "# WARNING: Guessing the location of \$PYTHON3_PATH "
-                    . "failed. " . $epath . " is not a directory / BRAKER failed "
+                    . "failed / BRAKER failed "
                     . "to detect python3 with \"which python3\"!\n"
                     . "#*********\n";
             $logString .= $prtStr if ($v > 0);
@@ -2867,7 +2859,7 @@ sub set_CDBTOOLS_PATH {
         else {
             $prtStr = "#*********\n"
                     . "# WARNING: Guessing the location of \$CDBTOOLS_PATH "
-                    . "failed. " . $epath . " is not a directory / BRAKER failed "
+                    . "failed / BRAKER failed "
                     . "to detect cdbfasta with \"which cdbfasta\"!\n"
                     . "#*********\n";
             $logString .= $prtStr if ($v > 0);
@@ -3001,7 +2993,7 @@ sub set_MAKEHUB_PATH {
         else {
             $prtStr = "#*********\n"
                     . "# WARNING: Guessing the location of \$MAKEHUB_PATH "
-                    . "failed. " . $epath . " is not a directory / BRAKER failed "
+                    . "failed / BRAKER failed "
                     . "to detect make_hub.py with \"which make_hub.py\"!\n"
                     . "#*********\n";
             $logString .= $prtStr if ($v > 0);
