@@ -750,9 +750,9 @@ Run BRAKER in ETP-mode, i.e. with protein hints from unknown evolutionary distan
 
 Compute AUGUSTUS *ab initio* predictions in addition to AUGUSTUS predictions with hints (additional output files: `augustus.ab_initio.*`. This may be useful for estimating the quality of training gene parameters when inspecting predictions in a Browser.
 
-### --augustus\_args=--some\_arg=bla
+### --augustus\_args="--some\_arg=bla"
 
-One or several command line arguments to be passed to AUGUSTUS, if several arguments are given, separated by whitespace, i.e. `--first_arg=sth --second_arg=sth`. This may be be useful if you know that gene prediction in your particular species benefits from a particular AUGUSTUS argument during the prediction step.
+One or several command line arguments to be passed to AUGUSTUS, if several arguments are given, separate them by whitespace, i.e. `"--first_arg=sth --second_arg=sth"`. This may be be useful if you know that gene prediction in your particular species benefits from a particular AUGUSTUS argument during the prediction step.
 
 ### --cores=INT
 

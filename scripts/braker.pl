@@ -266,7 +266,7 @@ EXPERT OPTIONS
 
 --augustus_args="--some_arg=bla"    One or several command line arguments to
                                     be passed to AUGUSTUS, if several
-                                    arguments are given, separated by
+                                    arguments are given, separate them by
                                     whitespace, i.e.
                                     "--first_arg=sth --second_arg=sth".
 --overwrite                         Overwrite existing files (except for
