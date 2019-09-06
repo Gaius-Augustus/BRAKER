@@ -184,6 +184,8 @@ At the time of release, this BRAKER version was tested with:
 
 -   NCBI BLAST+ 2.2.31+ <sup name="a12">[R12, ](#f12)</sup><sup name="a13">[R13](#f13)</sup>
 
+-   DIAMOND 0.9.24   
+
 -   cdbfasta 0.99
 
 -   cdbyank 0.981
@@ -405,14 +407,31 @@ by using an environment variable `$BAMTOOLS_PATH`, or by taking a command line a
 
 Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the environment variable for all bash sessions.
 
-#### NCBI BLAST+
+#### NCBI BLAST+ or DIAMOND
 
-On Ubuntu, install with `sudo apt-get install ncbi-blast+`.
+You can use either NCBI BLAST+ or DIAMOND for removal of redundant training genes. You do not need both tools.
+
+On Ubuntu, install NCBI BLAST+ with `sudo apt-get install ncbi-blast+`.
 
 If already in your `$PATH` variable, BRAKER will find blastp, automatically. Otherwise, BRAKER can locate the blastp binary either by using an environment variable `$BLAST_PATH`, or by taking a command line argument (`--BLAST_PATH=/your_path_to_blast/`). In order to set the environment variable e.g. for your current bash session, type:
 
 ```
     export BLAST_PATH=/your_path_to_blast/
+```
+
+Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the environment variable for all bash sessions.
+
+If you decide for DIAMOND, obtain and unpack as follows:
+
+```    
+    wget http://github.com/bbuchfink/diamond/releases/download/v0.9.24/diamond-linux64.tar.gz
+    tar xzf diamond-linux64.tar.gz
+```
+
+If already in your `$PATH` variable, BRAKER will find diamond, automatically. Otherwise, BRAKER can locate the diamond binary either by using an environment variable `$DIAMOND_PATH`, or by taking a command line argument (`--DIAMOND_PATH=/your_path_to_diamond`). In order to set the environment variable e.g. for your current bash session, type:
+
+```
+    export DIAMOND_PATH=/your_path_to_diamond/
 ```
 
 Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the environment variable for all bash sessions.
