@@ -168,7 +168,7 @@ Supported software versions
 
 At the time of release, this BRAKER version was tested with:
 
--   AUGUSTUS 3.3.1<sup name="g2">[F2](#g2)</sup>
+-   AUGUSTUS latest code version from Github (commit 2c6223c or newer should be compatible) <sup name="g2">[F2](#g2)</sup>
 
 -   GeneMark-ET 4.33
 
@@ -183,6 +183,10 @@ At the time of release, this BRAKER version was tested with:
 -   (Exonerate 2.2.0 <sup name="a11">[R11](#f11)</sup>)<sup name="g3">[F3]</sup>
 
 -   NCBI BLAST+ 2.2.31+ <sup name="a12">[R12, ](#f12)</sup><sup name="a13">[R13](#f13)</sup>
+
+-   cdbfasta 0.99
+
+-   cdbyank 0.981
 
 BRAKER
 -------
@@ -435,10 +439,10 @@ Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the e
 
 #### Python3 and Biopython
 
-If Python3 and Biopython are installed, BRAKER can generate FASTA-files with coding sequences and protein sequences predicted by AUGUSTUS and generate track data hubs for visualization of a BRAKER run with MakeHub <sup name="a16">[R16](#f16)</sup>.
-Both are an optional steps. The first can be disabled with the command-line flag `--skipGetAnnoFromFasta`, the latter can be activated by using the command-line options `--makehub --email=your@mail.de`; Python3 and Biopython are not required if neither of this steps shall be performed.
+If Python3 and Biopython are installed, BRAKER can generate FASTA-files with coding sequences and protein sequences predicted by AUGUSTUS and generate track data hubs for visualization of a BRAKER run with MakeHub <sup name="a16">[R16](#f16)</sup>. If Python3 (and cdbfasta/cdbyank) is available, BRAKER is able to correct AUGUSTUS genes with in frame stop codons (spliced stop codons).
+All are an optional steps. The first can be disabled with the command-line flag `--skipGetAnnoFromFasta`, the second can be activated by using the command-line options `--makehub --email=your@mail.de`, the last can be deactivated with `--skip_fixing_broken_genes`; Python3 and Biopython are not required if neither of these optional steps shall be performed.
 
-On Ubuntu, Python3 is installed by default. Install the Python3 package manager with:
+On Ubuntu, Python3 is usually installed by default. Install the Python3 package manager with:
 
     `sudo apt-get install python3-pip`
 
@@ -455,6 +459,33 @@ On Ubuntu, python3 will be in your `$PATH` variable, by default, and BRAKER will
 ```
 
 2.  Specify the command line option `--PYTHON3_PATH=/path/to/python3/` to `braker.pl`.
+
+#### cdbfasta
+
+cdbfasta and cdbyank are required by BRAKER for correcting AUGUSTUS genes with in frame stop codons (spliced stop codons) using the AUGUSTUS script fix_in_frame_stop_codon_genes.py. This can be skipped with `--skip_fixing_broken_genes`.
+
+On Ubuntu, install cdbfasta with:
+
+    `sudo apt-get install cdbfasta`
+
+For other systems, you can for example obtain cdbfasta from <https://github.com/gpertea/cdbfasta>, e.g.:
+
+```
+        git clone https://github.com/gpertea/cdbfasta.git`
+        cd cdbfasta
+        make all
+```
+
+On Ubuntu, cdbfasta and cdbyank will be in your `$PATH` variable after installation, and BRAKER will automatically locate them. However, you have the option to specify the `cdbfasta` and `cdbyank` binary location in two other ways:
+
+1.  Export an environment variable `$CDBTOOLS_PATH`, e.g. in your `~/.bashrc` file:
+
+```
+        export CDBTOOLS_PATH=/path/to/cdbtools/
+```
+
+2.  Specify the command line option `--CDBTOOLS_PATH=/path/to/cdbtools/` to `braker.pl`.
+
 
 #### GenomeThreader
 
@@ -987,12 +1018,18 @@ Common problems
 
     Partially. The options `-{}-{}make_hub` and `-{}-{}UTR` will require Python3. The general required for Python3 for generating e.g. the protein sequence output file can be disabled with `--skipGetAnnoFromFasta`. So, if you use BRAKER with `--skipGetAnnoFromFasta` and not with `-{}-{}make_hub` and `-{}-{}UTR`, BRAKER does not require Python3. The python scripts employed by BRAKER are not compatible with Python2.
 
+-   *Why does BRAKER predict more genes than I expected?*
+
+    If transposable elements (or similar) have not been masked appropriately, AUGUSTUS tends to predict those elements as protein coding genes. This can lead to a huge number genes. You can check whether this is the case for your project by BLASTing (or DIAMONDing) the predicted protein sequences against themselves (all vs. all) and counting how many of the proteins have a high number of high quality matches. You can use the output of this analysis to divide your gene set into two groups: the protein coding genes that you want to find and the repetitive elements that were additionally predicted. 
+
 Citing BRAKER and software called by BRAKER
 =============================================
 
 Since BRAKER is a pipeline that calls several Bioinformatics tools, publication of results obtained by BRAKER requires that not only BRAKER is cited, but also the tools that are called by BRAKER:
 
 -   Always cite:
+
+    -   Hoff, K.J., Lomsadze, A., Borodovsky, M. and Stanke, M. (2019). Whole-Genome Annotation with BRAKER. Methods Mol Biol. 1962:65-95, doi: 10.1007/978-1-4939-9173-0_5.
 
     -   Hoff, K.J., Lange, S., Lomsadze, A., Borodovsky, M. and Stanke, M. (2015). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5):767-769.
 
