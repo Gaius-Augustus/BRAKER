@@ -367,12 +367,12 @@ EXPERT OPTIONS
                                     to specify 0. 
 --checkSoftware                     Only check whether all required software
                                     is installed, no execution of BRAKER
---cleanup                           Delete all files that are typically not 
+--nocleanup                         Skip deletion of all files that are typically not 
                                     used in an annotation project after 
                                     running braker.pl. (For tracking any 
                                     problems with a braker.pl run, you 
                                     might want to keep these files, therefore
-                                    cleanup is not switched on by default.)
+                                    nocleanup can be activated.)
 
 
 DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
@@ -614,8 +614,9 @@ my $lambda = 2; # labmda of poisson distribution for downsampling of training ge
 my @splice_cmd_line;
 my @splice;
 my $AUGUSTUS_hints_preds; # for UTR training only (updating existing runs)
-my $cleanup; # enable file and directory cleanup after successful run
+my $cleanup = 1; # enable file and directory cleanup after successful run
 # list of forbidden words for species name
+my $nocleanup;
 my $transmasked_fasta; # transmaked genome file for GeneMark
 my $min_contig; # min contig length for GeneMark, e.g. to be used in combination 
                 # with transmasked_fasta
@@ -696,7 +697,7 @@ GetOptions(
     'flanking_DNA=i'               => \$flanking_DNA,
     'stranded=s'                   => \@stranded,
     'checkSoftware!'               => \$checkOnly,
-    'cleanup!'                     => \$cleanup,
+    'nocleanup!'                   => \$nocleanup,
     'grass!'                       => \$grass,
     'transmasked_fasta=s'          => \$transmasked_fasta,
     'min_contig=s'                 => \$min_contig,
@@ -717,6 +718,9 @@ if ($printVersion) {
     exit(0);
 }
 
+if($nocleanup){
+    $cleanup = 0;
+}
 
 # Make paths to input files absolute ###########################################
 
@@ -1027,7 +1031,7 @@ open( LOG, ">" . $logfile ) or die("ERROR in file " . __FILE__ ." at line "
     . __LINE__ ."\nCannot open file $logfile!\n");
 print LOG $logString;
 
-if ( !-d $genemarkDir ) {
+if ( (!-d $genemarkDir) && ! $trainFromGth) {
     make_path($genemarkDir) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to create direcotry $genemarkDir!\n");
     print LOG "\# "
