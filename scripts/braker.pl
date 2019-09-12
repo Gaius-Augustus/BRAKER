@@ -5715,7 +5715,9 @@ sub GeneMark_ES {
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+                    . __LINE__ ."\nFailed to execute: $perlCmdString\n"
+                    . "The most common problem is an expired or not "
+                    . "present file ~/.gm_key!\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
@@ -5788,7 +5790,10 @@ sub GeneMark_ET {
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+                    . __LINE__ ."\nFailed to execute: $perlCmdString\n"
+                    . "Failed to execute: $perlCmdString\n"
+                    . "The most common problem is an expired or not "
+                    . "present file ~/.gm_key!\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
@@ -5858,7 +5863,10 @@ sub GeneMark_EP {
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+                    . __LINE__ ."\nFailed to execute: $perlCmdString\n"
+                    . "Failed to execute: $perlCmdString\n"
+                    . "The most common problem is an expired or not "
+                    . "present file ~/.gm_key!\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
@@ -5935,7 +5943,10 @@ sub GeneMark_ETP {
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ . "\nFailed to execute: $perlCmdString\n");
+                    . __LINE__ . "\nFailed to execute: $perlCmdString\n"
+                    . "Failed to execute: $perlCmdString\n"
+                    . "The most common problem is an expired or not "
+                    . "present file ~/.gm_key!\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
