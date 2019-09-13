@@ -168,7 +168,7 @@ Supported software versions
 
 At the time of release, this BRAKER version was tested with:
 
--   AUGUSTUS latest code version from Github (commit 2c6223c or newer should be compatible) <sup name="g2">[F2](#g2)</sup>
+-   AUGUSTUS 3.3.3 <sup name="g2">[F2](#g2)</sup>
 
 -   GeneMark-ET 4.33
 
