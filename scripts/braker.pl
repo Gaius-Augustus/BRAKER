@@ -424,6 +424,9 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     to something else. 
                                     DOES NOT WORK YET BECAUSE BRAKER DOESNT
                                     SWITCH TRANSLATION TABLE FOR GENEMARK-EX, YET!
+--gc_probability=DECIMAL            Probablity for donor splice site pattern GC 
+                                    for gene prediction with GeneMark-ES/ET,
+                                    default value is 0.001
 
 
 DESCRIPTION
@@ -622,6 +625,7 @@ my $min_contig; # min contig length for GeneMark, e.g. to be used in combination
                 # with transmasked_fasta
 my $grass; # switch on GC treatment for GeneMark-ES/ET
 my $ttable = 1; # translation table to be used
+my $gc_prob = 0.001;
 my $skip_fixing_broken_genes; # skip execution of fix_in_frame_stop_codon_genes.py
 @forbidden_words = (
     "system",    "exec",  "passthru", "run",    "fork",   "qx",
@@ -705,7 +709,8 @@ GetOptions(
     'email=s'                      => \$email,
     'version!'                     => \$printVersion,
     'translation_table=s'          => \$ttable,
-    'skip_fixing_broken_genes!'    => \$skip_fixing_broken_genes
+    'skip_fixing_broken_genes!'    => \$skip_fixing_broken_genes,
+    'gc_probability=s'             => \$gc_prob
 );
 
 if ($help) {
@@ -5691,7 +5696,7 @@ sub GeneMark_ES {
 
             # consider removing --verbose, later
             $perlCmdString
-                .= "perl $string --verbose --cores=$CPU --ES ";
+                .= "perl $string --verbose --cores=$CPU --ES --gc_donor $gc_prob";
             if(defined($transmasked_fasta)){
                   $perlCmdString .= "--sequence=$transmasked_fasta ";
             }else{
@@ -5774,7 +5779,7 @@ sub GeneMark_ET {
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
             $perlCmdString .= "--ET=$genemark_hintsfile --et_score 10 "
-                           .  "--max_intergenic 50000 --cores=$CPU";
+                           .  "--max_intergenic 50000 --cores=$CPU --gc_donor $gc_prob";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }
@@ -5846,7 +5851,7 @@ sub GeneMark_EP {
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
             $perlCmdString .= "--max_intergenic 50000 --ep_score 4 --EP "
-                           .  "$genemark_hintsfile --cores=$CPU";
+                           .  "$genemark_hintsfile --cores=$CPU --gc_donor $gc_prob";
             if(-e "$otherfilesDir/evidence.gff"){
                 $perlCmdString .= " --evidence $otherfilesDir/evidence.gff ";
             }
@@ -5929,7 +5934,7 @@ sub GeneMark_ETP {
                 $perlCmdString .= "--evidence $otherfilesDir/evidence.gff ";
             }
             $perlCmdString .=  "--et_score 10 --ET $genemark_hintsfile "
-                           .  "--cores=$CPU";
+                           .  "--cores=$CPU --gc_donor $gc_prob";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
             }

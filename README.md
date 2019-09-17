@@ -791,6 +791,10 @@ If `--UTR=on` is enabled, strand-separated bam-files can be provided with `--bam
 
 If `--makehub` and `--email=your@mail.de` (with your valid e-mail adress) are provided, a track data hub for visualizing results with the UCSC Genome Browser will be generated using MakeHub (<https://github.com/Gaius-Augustus/MakeHub>).
 
+### --gc_probability=DECIMAL
+
+By default, GeneMark-ES/ET uses a probability of 0.001 for predicting the donor splice site pattern GC (instead of GT). It may make sense to increase this value for species where this donor splice site is more common. For example, in the species *Emiliania huxleyi*, about 50% of donor splice sites have the pattern GC (https://media.nature.com/original/nature-assets/nature/journal/v499/n7457/extref/nature12221-s2.pdf, page 5).
+
 Output of BRAKER
 =================
 
