@@ -1167,11 +1167,14 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
 }
 
  # check fasta headers
-check_fasta_headers($genome);
+check_fasta_headers($genome, 1);
 if (@prot_seq_files) {
+    my @tmp_prot_seq;
     foreach (@prot_seq_files) {
-        check_fasta_headers($_);
+        push(@tmp_prot_seq, $_);
+        check_fasta_headers($_, 0);
     }
+    @prot_seq_files = @tmp_prot_seq;
 }
 
 # count scaffold sizes and check whether the assembly is not too fragmented for
@@ -4270,10 +4273,13 @@ sub check_options {
 
 ####################### check_fasta_headers ####################################
 # * check fasta headers (long and complex headers may cause problems)
+# * tries to fix genome fasta files
+# * only warns about portein fasta files
 ################################################################################
 
 sub check_fasta_headers {
     my $fastaFile                = shift;
+    my $genome_true              = shift;
     my $someThingWrongWithHeader = 0;
     my $spaces                   = 0;
     my $orSign                   = 0;
@@ -4288,15 +4294,14 @@ sub check_fasta_headers {
                . "genome_header.map file to look up the old and new headers. This "
                . "message will be suppressed from now on!\n";
 
-    if ( !uptodate( [$genome], ["$otherfilesDir/genome.fa"] ) || $overwrite )
-    {
-        print LOG "\# " . (localtime) . ": check_fasta_headers(): Checking "
-                        . "fasta headers of file "
-                        . "$fastaFile\n" if ($v > 2);
-        open( FASTA, "<", $fastaFile )
-            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-                $useexisting, "ERROR in file " . __FILE__ ." at line "
-                . __LINE__ ."\nCould not open fasta file $fastaFile!\n");
+    print LOG "\# " . (localtime) . ": check_fasta_headers(): Checking "
+                    . "fasta headers of file "
+                    . "$fastaFile\n" if ($v > 2);
+    open( FASTA, "<", $fastaFile )
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nCould not open fasta file $fastaFile!\n");
+    if( $genome_true == 1 ){
         open( OUTPUT, ">", "$otherfilesDir/genome.fa" )
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -4306,123 +4311,126 @@ sub check_fasta_headers {
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nCould not open map file $mapFile.\n");
-        while (<FASTA>) {
+    }
+    while (<FASTA>) {
 
-            # check newline character
-            if ( not( $_ =~ m/\n$/ ) ) {
-                if ( $wrongNL < 1 ) {
-                    print LOG "#*********\n"
-                        . "# WARNING: something seems to be wrong with the "
-                        . "newline character! This is likely to cause problems "
-                        . "with the braker.pl pipeline! Please adapt your file "
-                        . "to UTF8! This warning will be supressed from now "
-                        . "on!\n"
-                        . "#*********\n" if ($v > 0);
-                    $wrongNL++;
-                }
-            }
-            chomp;
-
-            # look for whitespaces in fasta file
-            if ( $_ =~ m/\s/ ) {
-                if ( $spaces == 0 ) {
-                    $prtStr = "#*********\n"
-                            . "# WARNING: Detected whitespace in fasta header of "
-                            . "file $fastaFile. " . $stdStr
-                            . "#*********\n";
-                    print LOG $prtStr if ($v > 2);
-                    print STDERR $prtStr;
-                    $spaces++;
-                }
-            }
-
-            # look for | in fasta file
-            if ( $_ =~ m/\|/ ) {
-                if ( $orSign == 0 ) {
-                    $prtStr = "#*********\n"
-                            . "# WARNING: Detected | in fasta header of file "
-                            . "$fastaFile. " . $stdStr
-                            . "#*********\n";
-                    print LOG $prtStr if ($v > 2);
-                    print STDERR $prtStr;
-                    $orSign++;
-                }
-            }
-
-            # look for special characters in headers
-            if ( ( $_ !~ m/[>a-zA-Z0-9]/ ) && ( $_ =~ m/^>/ ) ) {
-                if ( $someThingWrongWithHeader == 0 ) {
-                    $prtStr = "#*********\n"
-                            . " WARNING: Fasta headers in file $fastaFile seem to "
-                            . "contain non-letter and non-number characters. That "
-                            . "means they may contain some kind of special "
-                            . "characters. "
-                            . $stdStr
-                            . "#*********\n";
-                    print LOG $prtStr if ($v > 2);
-                    print STDERR $prtStr;
-                    $someThingWrongWithHeader++;
-                }
-            }
-            if ( $_ =~ m/^>/ ) {
-                $scaffName = $_;
-                $scaffName =~ s/^>//;
-
-                # replace | and whitespaces by _
-                my $oldHeader = $scaffName;
-                $scaffName =~ s/\s/_/g;
-                $scaffName =~ s/\|/_/g;
-                print OUTPUT ">$scaffName\n";
-                print MAP "$scaffName\t$oldHeader\n";
-            }
-            else {
-                if ( length($_) > 0 ) {
-                    print OUTPUT "$_\n";
-                    if ( $_ !~ m/[ATGCNatgcn]/ ) {
-                        if ( $dna == 0 ) {
-                            print LOG "\# "
-                                . (localtime)
-                                . ": Assuming that this is not a DNA fasta "
-                                . "file because other characters than A, T, G, "
-                                . "C, N, a, t, g, c, n were contained. If this "
-                                . "is supposed to be a DNA fasta file, check "
-                                . "the content of your file! If this is "
-                                . "supposed to be a protein fasta file, please "
-                                . "ignore this message!\n" if ($v > 3);
-                            $dna++;
-                        }
-                    }
-                    if ( $_
-                        !~ m/[AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx]/
-                        )
-                    {
-                        if ( $prot == 0 ) {
-                            print LOG "\# "
-                                . (localtime)
-                                . ": Assuming that this is not a protein fasta "
-                                . "file because other characters than "
-                                . "AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx "
-                                . "were contained. If this is supposed to be "
-                                . "DNA fasta file, please ignore this "
-                                . "message.\n" if ($v > 3);
-                            $prot++;
-                        }
-                    }
-                }
-                else {
-                    if ( $emptyC < 1 ) {
-                        print LOG "#*********\n"
-                            . " WARNING: empty line was removed! This warning "
-                            . "will be supressed from now on!\n"
-                            . "#*********\n" if ($v > 3);
-                    }
-                    $emptyC++;
-                }
+        # check newline character
+        if ( not( $_ =~ m/\n$/ ) ) {
+            if ( $wrongNL < 1 ) {
+                print LOG "#*********\n"
+                    . "# WARNING: something seems to be wrong with the "
+                    . "newline character! This is likely to cause problems "
+                    . "with the braker.pl pipeline! Please adapt your file "
+                    . "to UTF8! This warning will be supressed from now "
+                    . "on!\n"
+                    . "#*********\n" if ($v > 0);
+                $wrongNL++;
             }
         }
-        close(FASTA) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line " . __LINE__
-            ."\nCould not close fasta file $fastaFile!\n");
+        chomp;
+
+        # look for whitespaces in fasta file
+        if ( $_ =~ m/\s/ ) {
+            if ( $spaces == 0 ) {
+                $prtStr = "#*********\n"
+                        . "# WARNING: Detected whitespace in fasta header of "
+                        . "file $fastaFile. " . $stdStr
+                        . "#*********\n";
+                print LOG $prtStr if ($v > 2);
+                print STDERR $prtStr;
+                $spaces++;
+            }
+        }
+
+        # look for | in fasta file
+        if ( $_ =~ m/\|/ ) {
+            if ( $orSign == 0 ) {
+                $prtStr = "#*********\n"
+                        . "# WARNING: Detected | in fasta header of file "
+                        . "$fastaFile. " . $stdStr
+                        . "#*********\n";
+                print LOG $prtStr if ($v > 2);
+                print STDERR $prtStr;
+                $orSign++;
+            }
+        }
+
+        # look for special characters in headers
+        if ( ( $_ !~ m/[>a-zA-Z0-9]/ ) && ( $_ =~ m/^>/ ) ) {
+            if ( $someThingWrongWithHeader == 0 ) {
+                $prtStr = "#*********\n"
+                        . " WARNING: Fasta headers in file $fastaFile seem to "
+                        . "contain non-letter and non-number characters. That "
+                        . "means they may contain some kind of special "
+                        . "characters. "
+                        . $stdStr
+                        . "#*********\n";
+                print LOG $prtStr if ($v > 2);
+                print STDERR $prtStr;
+                $someThingWrongWithHeader++;
+            }
+        }
+        if ( ($_ =~ m/^>/) && ($genome_true == 1) ) {
+            $scaffName = $_;
+            $scaffName =~ s/^>//;
+            # replace | and whitespaces by _
+            my $oldHeader = $scaffName;
+            $scaffName =~ s/\s/_/g;
+            $scaffName =~ s/\|/_/g;
+            print OUTPUT ">$scaffName\n";
+            print MAP "$scaffName\t$oldHeader\n";
+        }
+        else {
+            if ( length($_) > 0 ) {
+                if($genome_true == 1){
+                    print OUTPUT "$_\n";
+                }
+                if ( $_ !~ m/[ATGCNatgcn]/ ) {
+                    if ( $dna == 0 ) {
+                        print LOG "\# "
+                            . (localtime)
+                            . ": Assuming that this is not a DNA fasta "
+                            . "file because other characters than A, T, G, "
+                            . "C, N, a, t, g, c, n were contained. If this "
+                            . "is supposed to be a DNA fasta file, check "
+                            . "the content of your file! If this is "
+                            . "supposed to be a protein fasta file, please "
+                            . "ignore this message!\n" if ($v > 3);
+                        $dna++;
+                    }
+                }
+                if ( $_
+                    !~ m/[AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx]/
+                    )
+                {
+                    if ( $prot == 0 ) {
+                        print LOG "\# "
+                            . (localtime)
+                            . ": Assuming that this is not a protein fasta "
+                            . "file because other characters than "
+                            . "AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx "
+                            . "were contained. If this is supposed to be "
+                            . "DNA fasta file, please ignore this "
+                            . "message.\n" if ($v > 3);
+                        $prot++;
+                    }
+                }
+            }
+            else {
+                if ( $emptyC < 1 ) {
+                    print LOG "#*********\n"
+                        . " WARNING: empty line was removed! This warning "
+                        . "will be supressed from now on!\n"
+                        . "#*********\n" if ($v > 3);
+                }
+                $emptyC++;
+            }
+        }
+    }
+    close(FASTA) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line " . __LINE__
+        ."\nCould not close fasta file $fastaFile!\n");
+    if ($genome_true == 1){
         close(OUTPUT)
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -4431,8 +4439,8 @@ sub check_fasta_headers {
         close(MAP) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
             $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nCould not close map file $mapFile!\n");
+        $genome = "$otherfilesDir/genome.fa";
     }
-    $genome = "$otherfilesDir/genome.fa";
 }
 
 ####################### check_bam_headers ######################################
