@@ -9690,14 +9690,22 @@ sub train_utr {
         if ($nice) {
             $perlCmdString .= "nice ";
         }
-        $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
-                       .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
-                       .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU "
-                       .  "1> $otherfilesDir/utr.aa2nonred.stdout "
-                       .  "2> $errorfilesDir/utr.aa2nonred.stderr";
+        if(defined($DIAMOND_PATH) and not(defined($blast_path))){
+            $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
+                           .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
+                           .  "--DIAMOND_PATH=$DIAMOND_PATH --cores=$CPU "
+                           .  "--diamond 1> $otherfilesDir/utr.aa2nonred.stdout "
+                           .  "2> $errorfilesDir/utr.aa2nonred.stderr";
+        }else{
+            $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
+                           .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
+                           .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU 1> "
+                           .  "$otherfilesDir/utr.aa2nonred.stdout "
+                           .  "2> $errorfilesDir/utr.aa2nonred.stderr";
+        }
         print LOG "\# "
             . (localtime)
-            . ": BLAST training gene structures (with UTRs) against "
+            . ": DIAMOND/BLAST training gene structures (with UTRs) against "
             . "themselves:\n" if ($v > 3);
         print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
