@@ -105,15 +105,15 @@ INPUT FILE OPTIONS
                                     Currently, hints from protein alignment
                                     files are only used in the prediction step
                                     with AUGUSTUS.
---AUGUSTUS_ab_initio                output ab initio predictions by AUGUSTUS
-                                    in addition to predictions with hints by
-                                    AUGUSTUS
 
 FREQUENTLY USED OPTIONS
 
 --species=sname                     Species name. Existing species will not be
                                     overwritten. Uses Sp_1 etc., if no species
                                     is assigned
+--AUGUSTUS_ab_initio                output ab initio predictions by AUGUSTUS
+                                    in addition to predictions with hints by
+                                    AUGUSTUS
 --softmasking                       Softmasking option for soft masked genome
                                     files. (Disabled by default.)
 --esmode                            Run GeneMark-ES (genome sequence only) and 
