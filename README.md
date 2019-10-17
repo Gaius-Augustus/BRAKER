@@ -216,6 +216,13 @@ installed:
 
 -   `YAML`
 
+[For ProtHint,  optionally used by BRAKER,  also install:
+
+-   `MCE::Mutex`
+
+-   `threads`
+]
+
 On Ubuntu, for example, install the modules with CPANminus<sup name="g4">[F4](#g4)</sup>: `sudo cpanm Module::Name`, e.g. `sudo cpanm Hash::Merge`.
 
 BRAKER also uses a Perl module `helpMod.pm` that is not available on CPAN. This module is part of the BRAKER release and does not require
@@ -438,6 +445,25 @@ Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the e
 
 ### Optional tools
 
+#### ProtHint
+
+ProtHint is a pipeline for generating hints for GeneMark-EX and AUGUSTUS from proteins of unknown evolutionary distance developed by Tomas Bruna and Alexandre Lomsadze at Mark Borodovsky's lab. BRAKER can run ProtHint, or ProtHint can be executed as a separate step during data preparation. ProtHint is available from <https://github.com/gatech-genemark/ProtHint>. Download as follows:
+
+```
+    git clone https://github.com/gatech-genemark/ProtHint.git
+```
+
+ProtHint has software requirements of its own. In addition to the Perl modules required by BRAKER, it needs
+
+```
+MCE::Mutex
+threads
+```
+
+ProtHint also requires Python 2.7 or higher (in contrast to other BRAKER components that require Python 3).
+
+ProtHint requires Spaln, and optionally ProSplign. The requirement of GeneMark-ES will already be fulfilled if you installed BRAKER dependencies above. For further installation instructions, please check <https://github.com/gatech-genemark/ProtHint>.
+
 #### Samtools
 
 Samtools is not required for running BRAKER if all your files are formatted, correctly (i.e. all sequences should have short and unique
@@ -612,13 +638,11 @@ You may additionally include bam files from unstranded libraries. Those files wi
 
 ### BRAKER with proteins of unknown evolutionary distance
 
-This approach is suitable for genomes of species for which no RNA-Seq libraries are available and if computational time for hints preparation is not an issue. A database of proteins (with possibly longer evolutionary distance to the target species) may be used in this case. The protein mapping pipeline is illustrated in figure [8](#fig8).
+This approach is suitable for genomes of species for which no RNA-Seq libraries are available and if computational time for hints preparation is not an issue. A database of proteins (with possibly longer evolutionary distance to the target species) may be used in this case. An early version of the protein mapping pipeline is illustrated in figure [8](#fig8).
 
 ![braker2-main-a](docs/figs/gatech-prot-pipeline.png)
 
 Figure 8: Protein mapping pipeline for proteins of unkown evolutionary distance (pipeline is maintained at Georgia Tech and may change at any point in time). Current version will not only produce intron hints, but also hints for CDS regions. Pipeline automatically determines which alignments are from close relatives, and which are from rather distant relatives.
-
-Running BRAKER with proteins of longer evolutionary distance requires the preparation of “protein hints” before running BRAKER, itself. Preparing protein hints is in this case not part of BRAKER because in contrast to BRAKER, which can run on a work station with one or multiple cores, the GeneMark-EP specific protein mapping pipeline requires a cluster for execution.
 
 For running BRAKER in this mode, type:
 
