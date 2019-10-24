@@ -9674,7 +9674,7 @@ sub train_utr {
 
         # convert those training genes to protein fasta file
         gtf2fasta ($genome, "$otherfilesDir/genes_in_gb.gtf",
-            "$otherfilesDir/utr_genes_in_gb.fa");
+            "$otherfilesDir/utr_genes_in_gb.fa", $ttable);
 
         # blast good training genes to exclude redundant sequences
         $string = find(
