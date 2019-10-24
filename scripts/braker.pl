@@ -4913,8 +4913,8 @@ sub make_prot_hints {
             }
         }
     }
-    elsif ( @prot_seq_files && ( $EPmode == 1 or $ETPmode == 1) {
-        prothint();
+    elsif ( @prot_seq_files && ( $EPmode == 1 or $ETPmode == 1)) {
+        #prothint();
     }
 
     # convert pipeline created protein alignments to protein hints
@@ -5070,7 +5070,8 @@ sub make_prot_hints {
 
 # REMEMBER TO CHECK WHETHER PROTEIN ALIGNMENT FUNCTION EXISTS OK LIKE THIS
 sub prothint{
-    if()
+    print "Dummy function";
+    #if()
 }
 
 
