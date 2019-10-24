@@ -122,19 +122,16 @@ FREQUENTLY USED OPTIONS
 --epmode                            Run GeneMark-EP with intron hints provided
                                     from protein data. This mode is not 
                                     comptabile with using the aligners
-                                    GenomeThreader, Exonerate and Spaln within
-                                    braker.pl because etpmode and epmode require
-                                    a large database of proteins and such
-                                    mapping should be done outside of braker.pl 
-                                    e.g. on a cluster.
+                                    GenomeThreader, Exonerate and Spaln (stand alone) 
+                                    within braker.pl. ProtHint (with Spaln) as 
+                                    alignment producing software is compatible.
 --etpmode                           Run GeneMark-ETP with hints provided from
                                     proteins and RNA-Seq data. This mode is not
                                     compatible with using the aligners
-                                    GenomeThreader, Exonerate and Spaln within
-                                    braker.pl because etpmode and epmode require
-                                    a large database of proteins and such
-                                    mapping should be done outside of braker.pl 
-                                    e.g. on a cluster.
+                                    GenomeThreader, Exonerate and Spaln (stand alone) 
+                                    within braker.pl. ProtHint (with Spaln)
+                                    as alignment poducing pipeline is 
+                                    compatible.
 --gff3                              Output in GFF3 format (default is gtf
                                     format)
 --cores                             Specifies the maximum number of cores that
@@ -164,17 +161,19 @@ FREQUENTLY USED OPTIONS
                                     Alternatively, if UTR parameters already
                                     exist, training step will be skipped and
                                     those pre-existing parameters are used.
---prg=gth|exonerate|spaln           Alignment tool gth (GenomeThreader),
+--prg=ph|gth|exonerate|spaln        Alignment tool for generating hints from
+                                    similarity of protein sequence data to
+                                    genome data. Method ph (ProtHint with Spaln)
+                                    is generally suitable; gth (GenomeThreader),
                                     exonerate (Exonerate) or Spaln2
-                                    (spaln) that will be used to generate
-                                    protein alignments that will be the
-                                    basis for hints generation for gene
-                                    prediction with AUGUSTUS (if specified
-                                    in combination with --prot_seq) or that
-                                    was used to externally generate an
-                                    alignment file with the commands listed in
-                                    description of --prot_aln (if used in
-                                    combination with --prot_aln).
+                                    (spaln) are suitable for proteins of closely
+                                    related species, only.
+                                    This option should be specified correctly in 
+                                    case --prot_seq or --prot_aln options are used
+                                    (--prot_aln option is not required of hints
+                                    for AUGUSTUS were generated with ProtHint, in
+                                    that case, hints are provided with --hints=file
+                                    and --prg=ph is not required).
 --gth2traingenes                    Generate training gene structures for
                                     AUGUSTUS from GenomeThreader alignments.
                                     (These genes can either be used for
@@ -238,8 +237,8 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     if necessary. Has higher priority than
                                     environment variable.
 --ALIGNMENT_TOOL_PATH=/path/to/tool Set path to alignment tool
-                                    (GenomeThreader, Spaln, or Exonerate) if
-                                    not specified as environment
+                                    (prothint.py, GenomeThreader, Spaln, or Exonerate)
+                                    if not specified as environment
                                     ALIGNMENT_TOOL_PATH variable. Has higher
                                     priority than environment variable.
 --DIAMOND_PATH=/path/to/diamond     Set path to diamond, this is an alternative
@@ -799,11 +798,11 @@ if( @bam ) {
     set_BAMTOOLS_PATH();
     set_SAMTOOLS_PATH();
 }
-if ( @prot_seq_files && !$ESmode ){
-    set_ALIGNMENT_TOOL_PATH();
-}
 if (not ($skipAllTraining)){
     set_BLAST_or_DIAMOND_PATH();
+}
+if ( @prot_seq_files && !$ESmode ){
+    set_ALIGNMENT_TOOL_PATH();
 }
 if ( not ($skipGetAnnoFromFasta) || $makehub || not ($skip_fixing_broken_genes)){
     set_PYTHON3_PATH();
@@ -2227,8 +2226,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                                 . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
-                }
-                elsif ( $prg eq "exonerate" ) {
+                } elsif ( $prg eq "exonerate" ) {
                     $prtStr
                         = "\# "
                         . (localtime)
@@ -2256,8 +2254,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                                 . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
-                }
-                elsif ( $prg eq "spaln" ) {
+                } elsif ( $prg eq "spaln" ) {
                     $prtStr
                         = "\# "
                         . (localtime)
@@ -2285,7 +2282,37 @@ sub set_ALIGNMENT_TOOL_PATH {
                                 . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
+                } elsif ( $prg eq "ph") {
+                    $prtStr
+                        = "\# "
+                        . (localtime)
+                        . ": Trying to guess \$ALIGNMENT_TOOL_PATH "
+                        . "from location of ProtHint executable in your \$PATH\n";
+                    $logString .= $prtStr if ($v > 1);
+                    my $epath = which 'prothint.py';
+                    if(defined($epath)){
+                        if ( -d dirname($epath) ) {
+                            $prtStr
+                                = "\# "
+                                . (localtime)
+                                . ": Setting \$ALIGNMENT_TOOL_PATH to "
+                                . dirname($epath) . "\n";
+                            $logString .= $prtStr if ($v > 1);
+                            $ALIGNMENT_TOOL_PATH = dirname($epath);
+                        }
+                    }
+                    else {
+                        $prtStr = "#*********\n"
+                                . "# WARNING: Guessing the location of "
+                                . "\$ALIGNMENT_TOOL_PATH failed / BRAKER failed to "
+                                . "guess the location of alignment tool with "
+                                . "\"which prothint.py\"!\n"
+                                . "#*********\n";
+                        $logString .= $prtStr if ($v > 0);
+                    }
+
                 }
+                # ProtHint also requires DIAMOND and Spaln, but apparently it brings binaries along
             }
         }
 
@@ -4772,7 +4799,8 @@ sub make_rnaseq_hints {
 }
 
 ####################### make_prot_hints ########################################
-# * run protein to genome alignment
+# * run protein to genome alignment (gth, spaln or exonerate if EPmode/ETPmode
+#   == 0, or ProtHint if EPmode/ETPmode ==1 && prg == ph
 # * convert alignments to hints (calls aln2hints)
 # * converts GenomeThreader alignments to hints (calls gth2gtf)
 ################################################################################
@@ -4794,11 +4822,10 @@ sub make_prot_hints {
         ."\nFailed to execute $cmdString!\n");
 
     # from fasta files
-    if ( @prot_seq_files && $EPmode == 0 ) {
+    if ( @prot_seq_files && $EPmode == 0 && $ETPmode == 0) {
         $string = find(
             "startAlign.pl",        $AUGUSTUS_BIN_PATH,
-            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-        );
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         $errorfile = "$errorfilesDir/startAlign.stderr";
         $logfile   = "$errorfilesDir/startAlign.stdout";
         for ( my $i = 0; $i < scalar(@prot_seq_files); $i++ ) {
@@ -4886,17 +4913,8 @@ sub make_prot_hints {
             }
         }
     }
-    elsif ( @prot_seq_files && $EPmode == 1 ) {
-        $prtStr
-            = "\# " . (localtime) . ": ERROR: in file " . __FILE__
-            . " at line ". __LINE__ ."\n"
-            . "Running ProSplign from within "
-            . "braker.pl is currently not supported. For running braker.pl "
-            . "with GeneMark-EP, please provide --hints=intronhints.gff file!"
-            . " Aborting braker.pl!\n";
-        print LOG $prtStr;
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            $prtStr);
+    elsif ( @prot_seq_files && ( $EPmode == 1 or $ETPmode == 1) {
+        prothint();
     }
 
     # convert pipeline created protein alignments to protein hints
@@ -4931,7 +4949,7 @@ sub make_prot_hints {
     }
 
     # convert command line specified protein alignments to protein hints
-    if ( @prot_aln_files && $EPmode == 0 ) {
+    if ( @prot_aln_files && $EPmode == 0 && $ETPmode == 0) {
         for ( my $i = 0; $i < scalar(@prot_aln_files); $i++ ) {
             if ( !uptodate( [ $prot_aln_files[$i] ], [$prot_hintsfile] )
                 || $overwrite )
@@ -4947,13 +4965,13 @@ sub make_prot_hints {
             }
         }
     }
-    elsif ( @prot_aln_files && $EPmode == 1 ) {
+    elsif ( @prot_aln_files && ($EPmode == 1 || $ETPmode == 1)) {
         $prtStr
             = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "Conversion of ProSplign alignments within "
-            . "braker.pl is currently not supported. To run braker.pl with GeneMark-EP, "
+            . "braker.pl is currently not supported. To run braker.pl with GeneMark-EP/GeneMark-ETP, "
             . "please provide --hints=intronhints.gff! Aborting braker.pl!\n";
         print LOG $prtStr;
         clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
@@ -5045,6 +5063,16 @@ sub make_prot_hints {
         gth2gtf( $alignment_outfile, $gthTrainGeneFile );
     }
 }
+
+####################### prothint ###############################################
+# * converts protein evidence to hints with ProtHint
+################################################################################
+
+# REMEMBER TO CHECK WHETHER PROTEIN ALIGNMENT FUNCTION EXISTS OK LIKE THIS
+sub prothint{
+    if()
+}
+
 
 ####################### aln2hints ##############################################
 # * converts protein alignments to hints
@@ -9705,6 +9733,8 @@ sub train_utr {
                            .  "--diamond 1> $otherfilesDir/utr.aa2nonred.stdout "
                            .  "2> $errorfilesDir/utr.aa2nonred.stderr";
         }else{
+            print "DIAMOND PATH:".$DIAMOND_PATH."\n";
+            print "blast_Path:".$blast_path."\n";
             $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
                            .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
                            .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU 1> "
