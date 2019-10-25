@@ -71,7 +71,20 @@ INPUT FILE OPTIONS
                                     to use the flag --extrinsicCfgFiles to
                                     specify parameters for all sources in the
                                     hints file (including the source "E" for
-                                    intron hints from RNA-Seq).
+                                    intron hints from RNA-Seq). If you ran
+                                    ProtHint before calling BRAKER, specify
+                                    the files prothint_augustus.gff and
+                                    evidence_augustus.gff, here.
+--prothints=hints.gff               If BRAKER is called with hints produced
+                                    by ProtHint, specify the file
+                                    prothint.gff, here. Will possibly concatenated
+                                    with hints RNA-Seq hints if called with
+                                    --etpmode.
+--evidence=evidence.gff             If BRAKER is called with hints produced
+                                    by ProtHint, specify the file 
+                                    evidence.gff, here. Will possibly be 
+                                    concatenated with evidence from RNA-Seq
+                                    if called with --etpmode.
 --prot_seq=prot.fa                  A protein sequence file in multiple fasta
                                     format. This file will be used to generate
                                     protein hints for AUGUSTUS by running one
@@ -558,6 +571,8 @@ my $workDir;        # in the working directory results and temporary files are
 my $filterOutShort; # filterOutShort option (see help)
 my $augustusHintsPreds; # already existing AUGUSTUS hints prediction without UTR
 my $makehub; # flag for creating track data hub
+my $evidence_hints; # input file from ProtHints for GeneMark-EP/ETP
+my $prothint_file; # input file from ProtHints for GeneMark-EP/ETP
 
 # Hint type from input hintsfile will be checked
 # a) GeneMark-ET (requires intron hints) and
@@ -709,7 +724,9 @@ GetOptions(
     'version!'                     => \$printVersion,
     'translation_table=s'          => \$ttable,
     'skip_fixing_broken_genes!'    => \$skip_fixing_broken_genes,
-    'gc_probability=s'             => \$gc_prob
+    'gc_probability=s'             => \$gc_prob,
+    'evidence=s'                   => \$evidence_hints,
+    'prothints=s'                  => \$prothint_file
 );
 
 if ($help) {
@@ -3945,6 +3962,22 @@ sub check_options {
         $logString .= $prtStr if ($v > 1);
     }
 
+    if ( ((($EPmode == 1 || $ETPmode == 1) && not($prg == "ph") ) && (not(defined($evidence_hints) ) 
+        || not(defined($prothint_file)))) || (($EPmode == 1 || $ETPmode == 1) && not(defined($hintsfile) 
+        && scalar(@prot_seq_files)>0 && $prg == "ph")) ) {
+        $prtStr = "\# "
+                 . (localtime)
+                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                 . "If option --epmode is used, either the options \"--prg=ph "
+                 . "--prot_seq=proteins.fasta\" or the options "
+                 . "\"--evidence=evidence.gff --prothints=prothint.gff "
+                 . "--hints=prothint_augustus.gff,evidence_augustus.gff\" "
+                 . "must be specified!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
     # check whether species is specified
     if ( defined($species) ) {
         if ( $species =~ /[\s]/ ) {
@@ -5147,7 +5180,6 @@ sub prothint{
     print LOG "$cmdString\n" if ($v > 2);
     system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
-
 }
 
 
