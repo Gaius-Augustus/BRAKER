@@ -3463,6 +3463,35 @@ sub check_upfront {
                 exit(1);
         }
     }
+    # check for bamToWig.py required UCSC tools
+    if( $UTR=="on" ){
+        if ( system("which twoBitInfo > /dev/null") != 0 ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "twoBitInfo not installed. "
+                . "It is available at http://hgdownload.soe.ucsc.edu/admin/exe "
+                . "and should be added to your \$PATH. bamToWig.py will "
+                . "automatically download this tool to the working directory but "
+                . "permanent global installation is recommended.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+        }
+        if ( system("which faToTwoBit > /dev/null") != 0 ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "faToTwoBit not installed. "
+                . "It is available at http://hgdownload.soe.ucsc.edu/admin/exe "
+                . "and should be added to your \$PATH. bamToWig.py will "
+                . "automatically download this tool to the working directory but "
+                . "permanent global installation is recommended.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+        }
+    }
 }
 
 ####################### find_ex_cfg ############################################
@@ -4914,7 +4943,7 @@ sub make_prot_hints {
         }
     }
     elsif ( @prot_seq_files && ( $EPmode == 1 or $ETPmode == 1)) {
-        #prothint();
+        prothint();
     }
 
     # convert pipeline created protein alignments to protein hints
@@ -4978,7 +5007,7 @@ sub make_prot_hints {
     }
 
     # appending protein hints to $hintsfile (combined with RNA_Seq if available)
-    if ( -f $prot_hints_file_temp || $overwrite ) {
+    if ( ( -f $prot_hints_file_temp || $overwrite ) && $EPmode == 0 && $ETPmode == 0) {
         if ( !uptodate( [$prot_hints_file_temp], [$prot_hintsfile] )
             || $overwrite )
         {
@@ -5034,7 +5063,7 @@ sub make_prot_hints {
             unlink($toBeSortedHintsFile);
         }
     }
-    if ( -z $prot_hintsfile ) {
+    if ( -z $prot_hintsfile && $EPmode == 0 && $ETPmode == 0 ) {
         $prtStr
             = "\# "
             . (localtime)
@@ -5068,10 +5097,57 @@ sub make_prot_hints {
 # * converts protein evidence to hints with ProtHint
 ################################################################################
 
-# REMEMBER TO CHECK WHETHER PROTEIN ALIGNMENT FUNCTION EXISTS OK LIKE THIS
 sub prothint{
-    print "Dummy function";
-    #if()
+    my @prot_seqs;
+    my $prot_file = "$otherfilesDir/input_proteins.fasta";
+    if(scalar(@prot_seqs) > 1){
+        print LOG "\# " . (localtime)
+            . ": Concatenating protein FASTA files into $prot_file...\n" if ($v > 2);
+        open( PROTT, ">", $prot_file ) or clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $prot_file!\n");
+        for(my $i=0; $i<scalar(@prot_seqs); $i++){
+            open( PROTF, "<", $prot_seqs[$i] ) or clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $prot_seqs[$i]!\n");
+            while(<PROTF>){
+                print PROTT $_;
+            }
+            close( PROTF) or clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not close file $prot_seqs[$i]!\n");
+        }
+        close( PROTT) or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $prot_file!\n");
+    }else{
+        print LOG "\# " . (localtime)
+            . ": Creating softlink or protein FASTA file $prot_seqs[0] to "
+            . "$prot_file...\n" if ($v > 2); 
+        my $symlink_exists = eval{ symlink("$prot_seqs[0]", "$prot_file"); 1};
+        if(not($symlink_exists)){
+            clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nFailed to create symbolic link from $prot_seqs[0] "
+                . "to $prot_file!\n");
+        }
+    }
+    print LOG "\# " . (localtime)
+        . ": Running ProtHint...\n" if ($v > 2);
+    chdir $otherfilesDir; # make sure that I am in $otherfilesDir because prothint
+                          # produces output files there
+    $cmdString = "$ALIGNMENT_TOOL_PATH"."/prothint.py "
+               . "$otherfilesDir/genome.fa $prot_file "
+               . "> $otherfilesDir/prothint.log 2> $errorfilesDir/prothint.err";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+
 }
 
 
