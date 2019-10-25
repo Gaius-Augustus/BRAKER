@@ -590,9 +590,13 @@ If RNA-Seq (and only RNA-Seq) data is provided to BRAKER as a bam-file, and if t
     braker.pl --species=yourSpecies --genome=genome.fasta \
        --bam=file.bam --softmasking --UTR=on
 
-**Warning:** This feature is experimental!
+**Warnings:** 
+   
+   1) This feature is experimental!
 
-**Warning:** --UTR=on is currently not compatible with bamToWig.py as released in AUGUSTUS 3.3.3; it requires the current development code version from the github repository (git clone https://github.com/Gaius-Augustus/Augustus.git).
+   2) --UTR=on is currently not compatible with bamToWig.py as released in AUGUSTUS 3.3.3; it requires the current development code version from the github repository (git clone https://github.com/Gaius-Augustus/Augustus.git).
+
+   3) --UTR=on increases memory consumption of AUGUSTUS. Carefully monitor jobs if your machine was close to maxing RAM without --UTR=on! Reducing the number of cores will also reduce RAM consumption.
 
 #### Stranded RNA-Seq alignments
 
