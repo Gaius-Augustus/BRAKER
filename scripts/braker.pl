@@ -48,7 +48,7 @@ use warnings;
 
 my $usage = <<'ENDUSAGE';
 
-braker.pl     Pipeline for predicting genes with GeneMark-ET and AUGUSTUS with
+braker.pl     Pipeline for predicting genes with GeneMark-EX and AUGUSTUS with
             RNA-Seq
 
 SYNOPSIS
@@ -316,7 +316,7 @@ EXPERT OPTIONS
 --filterOutShort                    It may happen that a "good" training gene,
                                     i.e. one that has intron support from
                                     RNA-Seq in all introns predicted by
-                                    GeneMark, is in fact too short. This flag
+                                    GeneMark-EX, is in fact too short. This flag
                                     will discard such genes that have
                                     supported introns and a neighboring
                                     RNA-Seq supported intron upstream of the
@@ -342,7 +342,7 @@ EXPERT OPTIONS
 --skip_fixing_broken_genes          If you do not have python3, you can choose
                                     to skip the fixing of stop codon including
                                     genes (not recommended).
---fungus                            GeneMark-ET option: run algorithm with
+--fungus                            GeneMark-EX option: run algorithm with
                                     branch point model (most useful for fungal
                                     genomes)
 --rnaseq2utr_args=params            Expert option: pass alternative parameters
@@ -421,14 +421,14 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     implemented)
 --grass                             Switch this flag on if you are using braker.pl 
                                     for predicting genes in grasses with 
-                                    GeneMark-ES/ET. The flag will enable
-                                    GeneMark-ES/ET to handle GC-heterogenicity
+                                    GeneMark-EX. The flag will enable
+                                    GeneMark-EX to handle GC-heterogenicity
                                     within genes more properly.
                                     NOTHING IMPLEMENTED FOR GRASS YET!
---transmasked_fasta=file.fa         Transmasked genome FASTA file for GeneMark
+--transmasked_fasta=file.fa         Transmasked genome FASTA file for GeneMark-EX
                                     (to be used instead of the regular genome
                                     FASTA file).  
---min_contig=INT                    Minimal contig length for GeneMark, could
+--min_contig=INT                    Minimal contig length for GeneMark-EX, could
                                     for example be set to 10000 if transmasked_fasta
                                     option is used because transmasking might
                                     introduce many very short contigs.
@@ -437,7 +437,7 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     DOES NOT WORK YET BECAUSE BRAKER DOESNT
                                     SWITCH TRANSLATION TABLE FOR GENEMARK-EX, YET!
 --gc_probability=DECIMAL            Probablity for donor splice site pattern GC 
-                                    for gene prediction with GeneMark-ES/ET,
+                                    for gene prediction with GeneMark-EX,
                                     default value is 0.001
 
 
@@ -1078,6 +1078,30 @@ if ( defined($geneMarkGtf) ) {
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
 }
 
+# softlink evidence.gff file
+if ( defined($evidence_hints) ){
+    print LOG "\#  "
+        . (localtime)
+        . ": creating softlink of $evidence_hints to "
+        . "$otherfilesDir/evidence.gff...\n" if ($v > 2);
+    $cmdString =  "ln -s $evidence_hints $otherfilesDir/evidence.gff";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
+# softlink prothint.gff
+if ( defined($prot_hintsfile) ){
+        print LOG "\#  "
+        . (localtime)
+        . ": creating softlink of $prothint_file to "
+        . "$otherfilesDir/prothint.gff...\n" if ($v > 2);
+    $cmdString =  "ln -s $prothint_file $otherfilesDir/prothint.gff";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
 # create parameter directory
 if ( !-d $parameterDir ) {
     make_path($parameterDir) or die("ERROR in file " . __FILE__ ." at line "
@@ -1271,7 +1295,7 @@ if ( @bam ) {
 
 # make hints from protein sequence data
 if ( @prot_seq_files or @prot_aln_files 
-    && not ( defined($AUGUSTUS_hints_preds) ) ) {
+    && not ( defined($AUGUSTUS_hints_preds) ) ) { # might want to change $AUGUSTUS_hints_preds as a condition here
     make_prot_hints();
 }
 
@@ -1283,7 +1307,9 @@ if (@hints && not ( defined($AUGUSTUS_hints_preds) )) {
 # extract intron hints from hintsfile.gff for GeneMark (in ETP mode also used for AUGUSTUS)
 
 if ( (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) ) && ($ESmode == 0)) {
-    if (not ( defined($AUGUSTUS_hints_preds)) ){
+    if (not ( defined($AUGUSTUS_hints_preds)) ){ # this might be questionable, only ok if users provide 
+                                                 # the hintsfile from previous run, which they probably 
+                                                 # will
        get_genemark_hints();
     }
 }
@@ -5135,7 +5161,8 @@ sub prothint{
     my $prot_file = "$otherfilesDir/input_proteins.fasta";
     if(scalar(@prot_seqs) > 1){
         print LOG "\# " . (localtime)
-            . ": Concatenating protein FASTA files into $prot_file...\n" if ($v > 2);
+            . ": Concatenating protein FASTA files into $prot_file...\n" 
+            if ($v > 2);
         open( PROTT, ">", $prot_file ) or clean_abort(
                 "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                 "ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -5172,11 +5199,27 @@ sub prothint{
     }
     print LOG "\# " . (localtime)
         . ": Running ProtHint...\n" if ($v > 2);
-    chdir $otherfilesDir; # make sure that I am in $otherfilesDir because prothint
-                          # produces output files there
+    chdir $otherfilesDir; # make sure that I am in $otherfilesDir because 
+                          # prothint produces output files there
     $cmdString = "$ALIGNMENT_TOOL_PATH"."/prothint.py "
                . "$otherfilesDir/genome.fa $prot_file "
                . "> $otherfilesDir/prothint.log 2> $errorfilesDir/prothint.err";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    # assign global variables
+    $evidence_hints = $otherfilesDir."/evidence.gff";
+    $prothint_file = $otherfilesDir."/prothint.gff";
+    #concatenate AUGUSTUS hints
+    print LOG "\# " . (localtime)
+        . ": Concatenating ProtHint hints to AUGUSTUS hints file "
+        . "$otherfilesDir/hintsfile.gff...\n" 
+        if ($v > 2);
+    $cmdString = "cat $otherfilesDir/prothint_augustus.gff >> $otherfilesDir/hintsfile.gff";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    $cmdString = "cat $otherfilesDir/evidence_augustus.gff >> $otherfilesDir/hintsfile.gff";
     print LOG "$cmdString\n" if ($v > 2);
     system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
@@ -5461,6 +5504,11 @@ sub check_hints {
 ####################### get_genemark_hints #####################################
 # * GeneMark only uses intron hints, AUGUSTUS also uses other hints types
 # * this function creates $genemark_hintsfile with intron hints
+# * Scenarios: 
+#      - EPmode - do nothing, instead use prothint.gff and evidence.gff
+#      - ETmode - do nothing, should be intron hints only?
+#      - ETPmode - append prothint.gff and intron hints to genemark_hints.gff
+#                  append evidence to evidence.gff
 ################################################################################
 
 
@@ -5713,7 +5761,9 @@ sub create_evidence_gff {
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $genemark_hintsfile!\n");
 
-    open ( EV, ">", $evidenceFile ) or clean_abort(
+    # append, in case --evidence=evidence.gff has been provided as command line argument
+    # or produced by ProtHint
+    open ( EV, ">>", $evidenceFile ) or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not open file $evidenceFile!\n");
