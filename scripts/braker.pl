@@ -5059,8 +5059,7 @@ sub make_prot_hints {
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "Conversion of ProSplign alignments within "
-            . "braker.pl is currently not supported. To run braker.pl with GeneMark-EP/GeneMark-ETP, "
-            . "please provide --hints=intronhints.gff! Aborting braker.pl!\n";
+            . "braker.pl is currently not supported. Aborting braker.pl!\n";
         print LOG $prtStr;
         clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
     }
@@ -5517,6 +5516,9 @@ sub get_genemark_hints {
     if ($v > 2);
     my $gm_hints_rnaseq = "$genemark_hintsfile.rnaseq";
     my $gm_hints_prot = "$genemark_hintsfile.prot";
+
+    # filter intron hints from original hintsfile and separate into
+    # protein and rnaseq hints file
     print LOG "\# "
         . (localtime)
         . ": Filtering intron hints for GeneMark from $hintsfile...\n"
@@ -5534,9 +5536,10 @@ sub get_genemark_hints {
         "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not open file $gm_hints_prot!\n");
     while (<HINTS>) {
-        if ( $_ =~ m/\tintron\t.*src=E/ ) {
+        if ( $_ =~ m/\tintron\t/i && ($_ =~ m/src=E/) ) {
+            $_ =~ s/intron/Intron/;
             print OUTRNASEQ $_;
-        }elsif ( $_ =~ m/\tintron\t/i && ( ( $_ =~ m/src=P/) or $_ =~ m/src=M/ ) ) {
+        }elsif ( $_ =~ m/\tintron\t/i && ($_ =~ m/src=P/) ) {
             $_ =~ s/intron/Intron/;
             print OUTPROT $_;
         }
@@ -5544,12 +5547,31 @@ sub get_genemark_hints {
     close (OUTRNASEQ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $gm_hints_rnaseq!\n");
-    close (OUTPROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $gm_hints_prot!\n");
     close (HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $hintsfile!\n");
+
+    # add the prothint contents to protein file
+    if( -e $otherfilesDir."/prothint.gff" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": Appending hints from file $otherfilesDir/prothint.gff to $hintsfile...\n"
+            if ($v > 3);
+        open(PROTHINT, "<", $otherfilesDir."/prothint.gff")  or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir/prothint.gff!\n");
+        while(<PROTHINT>){
+            print OUTPROT $_;
+        }
+        close(PROTHINT)or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $otherfilesDir/prothint.gff!\n");
+    }
+    close (OUTPROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not close file $gm_hints_prot!\n");
     if ( -s $gm_hints_rnaseq ) {
         $cmdString = "";
         if ($nice) {
