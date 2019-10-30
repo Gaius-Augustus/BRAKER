@@ -3638,7 +3638,6 @@ sub check_options {
         }
     }
     if( $CPU > 48 ) {
-        $CPU = 48;
         $prtStr = "#*********\n"
                 . "# WARNING: The number of cores was set "
                 . "to $CPU, which is greater than 48. GeneMark is likely to "
@@ -3655,6 +3654,7 @@ sub check_options {
                 . "#*********\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
+        $CPU = 48;
     }
 
     # UTR training only
