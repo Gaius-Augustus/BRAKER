@@ -9347,6 +9347,18 @@ sub train_utr {
         $augustus_file = "$otherfilesDir/augustus.hints.gtf";
     }
 
+    # compute flanking region size if undefined
+    if( not( defined($flanking_DNA) ) ) {
+        print LOG "\# " . (localtime)
+            . ": WARNING: \$flanking_DNA is undefined, computing value for this variable from "
+            . " file $augustus_file. Originally, it was intended that the same value for "
+            . "\$flanking_DNA is used in general AUGUSTUS training and UTR training. You can "
+            . "define --flanking_DNA=INT as command line parameter when calling BRAKER. You "
+            . "find the orignal size of \$flanking_DNA in the braker.log file of the original "
+            . "BRAKER run for this species.\n" if ( $v > 2 );
+        $flanking_DNA = compute_flanking_region($augustus_file);
+    }
+
     if ( !uptodate( [$augustus_file],
         ["$otherfilesDir/stops.and.starts.gff"] ) ) {
 
