@@ -269,8 +269,6 @@ EXPERT OPTIONS
                                     arguments are given, separate them by
                                     whitespace, i.e.
                                     "--first_arg=sth --second_arg=sth".
---overwrite                         Overwrite existing files (except for
-                                    species parameter files)
 --skipGeneMark-ES                   Skip GeneMark-ES and use provided
                                     GeneMark-ES output (e.g. provided with 
                                     --geneMarkGtf=genemark.gtf)
@@ -300,7 +298,9 @@ EXPERT OPTIONS
                                     This option automatically sets
                                     --useexisting to true.
 --useexisting                       Use the present config and parameter files
-                                    if they exist for 'species'
+                                    if they exist for 'species'; will overwrite
+                                    original parameters if BRAKER performs
+                                    an AUGUSTUS training.
 --filterOutShort                    It may happen that a "good" training gene,
                                     i.e. one that has intron support from
                                     RNA-Seq in all introns predicted by
@@ -383,6 +383,9 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     this option only affects UTR training
                                     example generation, not gene prediction
                                     by AUGUSTUS
+--overwrite                         Overwrite existing files (except for
+                                    species parameter files) Beware, currently
+                                    not implemented properly!
 --extrinsicCfgFiles=file1,file2,... Depending on the mode in which braker.pl
                                     is executed, it may require one ore several
                                     extrinsicCfgFiles. Don't use this option

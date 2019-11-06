@@ -774,7 +774,7 @@ Softmasking option for soft masked genome files. (Disabled by default.)
 
 ### --useexisting
 
-Use the present config and parameter files if they exist for ’species’. This step will skip training AUGUSTUS and instead use pre-trained parameters.
+Use the present config and parameter files if they exist for 'species'; will overwrite original parameters if BRAKER performs an AUGUSTUS training.
 
 ### --crf
 
@@ -787,6 +787,14 @@ Change the parameter $\lambda$ of the Poisson distribution that is used for down
 ### --UTR=on
 
 Generate UTR training examples for AUGUSTUS from RNA-Seq coverage information, train AUGUSTUS UTR parameters and predict genes with AUGUSTUS and UTRs, including coverage information for RNA-Seq as evidence. This flag only works if --softmasking is also enabled, and if the only extrinsic evidence provided are bam files.  *This is an experimental feature!*
+
+If you performed a BRAKER run without --UTR=on, you can add UTR parameter training and gene prediction with UTR parameters (and only RNA-Seq hints) with the following command:
+
+```
+braker.pl --UTR=on --softmasking --genome=genome.fa --bam=rnaseq.bam --workingdir=some_new_working_directory --AUGUSTUS_hints_preds=augustus.hints.gtf --flanking_DNA=2000 --species=somespecies --useexisting
+```
+
+Modify `augustus.hints.gtf` to point to the AUGUSTUS predictions with hints from previous BRAKER run; modify flaning_DNA value to the flanking region from the log file of your previous BRAKER run; modify some_new_working_directory to the location where BRAKER should store results of the additional BRAKER run; modify somespecies to the species name used in your previous BRAKER run.
 
 ### --stranded=+,-,.,...
 
