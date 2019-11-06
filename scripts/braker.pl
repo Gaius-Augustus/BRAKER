@@ -9829,7 +9829,7 @@ sub train_utr {
             . "\nCould not close file $otherfilesDir/utr.gb!\n" );
         if($loci < 50){
             die("ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "Number of UTR training loci is smaller than 50, aborting "
+            . "\nNumber of UTR training loci is smaller than 50, aborting "
             . "UTR training! If this is the only error message, the "
             . "AUGUSTUS parameters for your species were optimized ok, "
             . "but you are lacking UTR parameters. Do not attempt to "
