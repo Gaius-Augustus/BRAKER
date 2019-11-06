@@ -7718,6 +7718,12 @@ sub gtf2gb {
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                 . "\nFailed to execute: $perlCmdString\n");
+        print LOG "#*********\n"
+                . "# INFORMATION: the size of flanking region used in this "
+                . "BRAKER run is $flanking_DNA".". You might need this "
+                . "value if you later add a UTR training on top of an "
+                . "already existing BRAKER run.\n"
+                . "#*********\n" if ($v > 0);
     }
 }
 
