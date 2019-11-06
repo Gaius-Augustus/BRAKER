@@ -9950,7 +9950,9 @@ sub train_utr {
                            . "--metapars=$AUGUSTUS_CONFIG_PATH"
                            . "/species/$species/$metaUtrName --cpus=$CPU "
                            . "$otherfilesDir/utr.gb.train "
-                           . "--UTR=on > $otherfilesDir/optimize.utr.out";
+                           . "--UTR=on "
+                           . "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                           . "> $otherfilesDir/optimize.utr.out";
         }else{
             $perlCmdString = "perl $string --rounds=$rounds --species=$species "
                            . "--trainOnlyUtr=1  "
@@ -9958,7 +9960,9 @@ sub train_utr {
                            . "--metapars=$AUGUSTUS_CONFIG_PATH"
                            . "/species/$species/$metaUtrName --cpus=$CPU "
                            . "$otherfilesDir/utr.gb.train.test "
-                           . "--UTR=on > $otherfilesDir/optimize.utr.stdout "
+                           . "--UTR=on "
+                           . "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                           . "> $otherfilesDir/optimize.utr.stdout "
                            . "2> $errorfilesDir/optimize.utr.err"
         }
         print LOG "Now optimizing meta parameters of AUGUSTUS for the UTR "
