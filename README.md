@@ -170,7 +170,7 @@ At the time of release, this BRAKER version was tested with:
 
 -   AUGUSTUS 3.3.3 <sup name="g2">[F2](#g2)</sup>
 
--   GeneMark-ET 4.33
+-   GeneMark-ET 4.46
 
 -   BAMTOOLS 2.5.1<sup name="a5">[R5](#f5)</sup>
 
