@@ -1327,13 +1327,13 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
             filter_genemark();
         } elsif ( $EPmode == 1 ) {
             # remove reformatting of hintsfile, later!
-            format_ep_hints();
-            create_evidence_gff();
-            check_genemark_hints();
+            # format_ep_hints(); # not required anymore since provided as $prothint_file
+            # create_evidence_gff(); # not required anymore since provided as $evidence
+            # check_genemark_hints(); # note required anymore since direct output of prothint
             GeneMark_EP();
             filter_genemark();
         } elsif ( $ETPmode == 1 ) {
-            format_ep_hints();
+            # format_ep_hints(); # not required anymore since provided as $prothint_file
             create_evidence_gff();
             check_genemark_hints();
             GeneMark_ETP();
@@ -1351,8 +1351,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
     training_augustus();
 }
 
-if ( $skipAllTraining == 1 && ($ETPmode or $EPmode) ){
-    format_ep_hints();
+if ( $skipAllTraining == 1 && ( ($ETPmode == 1) ) ){
     create_evidence_gff(); # otherwise no manual etp hints...
     check_genemark_hints();
 }
@@ -5506,23 +5505,21 @@ sub check_hints {
 # * Scenarios: 
 #      - EPmode - do nothing, instead use prothint.gff and evidence.gff
 #      - ETmode - do nothing, should be intron hints only?
-#      - ETPmode - append prothint.gff and intron hints to genemark_hints.gff
-#                  append evidence to evidence.gff
+#      - ETPmode - append prothint.gff and RNA-Seq intron hints to genemark_hints.gff
+#                  append prot & RNA-Seq evidence to evidence.gff
 ################################################################################
 
 
 sub get_genemark_hints {
-    print LOG "\# ". (localtime) . ": Preparing hints for running GeneMark\n"
-    if ($v > 2);
+    print LOG "\# ". (localtime) . ": Preparing hints for running GeneMark\n" if ($v > 2);
+    # temporary files
     my $gm_hints_rnaseq = "$genemark_hintsfile.rnaseq";
     my $gm_hints_prot = "$genemark_hintsfile.prot";
 
     # filter intron hints from original hintsfile and separate into
     # protein and rnaseq hints file
-    print LOG "\# "
-        . (localtime)
-        . ": Filtering intron hints for GeneMark from $hintsfile...\n"
-        if ($v > 3);
+    print LOG "\# " . (localtime)
+        . ": Filtering intron hints for GeneMark from $hintsfile...\n" if ($v > 3);
     open (HINTS, "<", $hintsfile) or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -5535,6 +5532,7 @@ sub get_genemark_hints {
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not open file $gm_hints_prot!\n");
+    my $warnProt = 0;
     while (<HINTS>) {
         if ( $_ =~ m/\tintron\t/i && ($_ =~ m/src=E/) ) {
             $_ =~ s/intron/Intron/;
@@ -5542,6 +5540,15 @@ sub get_genemark_hints {
         }elsif ( $_ =~ m/\tintron\t/i && ($_ =~ m/src=P/) ) {
             $_ =~ s/intron/Intron/;
             print OUTPROT $_;
+            if( ($EPmode == 1 || $ETPmode == 1) && defined($prothint_file) && $warnProt == 0) {
+                $prtStr = "WARNING: additional protein hints were found in "
+                        . "file $hintsfile, even though all protein hints "
+                        . "should be in the provided ProtHint file $prothint_file"
+                        . " if BRAKER is run in EP or ETP mode!\n";
+                print STDOUT $prtStr;
+                print LOG $prtStr;
+                $warnProt = 1;
+            }
         }
     }
     close (OUTRNASEQ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -5572,6 +5579,7 @@ sub get_genemark_hints {
     close (OUTPROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $gm_hints_prot!\n");
+
     if ( -s $gm_hints_rnaseq ) {
         $cmdString = "";
         if ($nice) {
@@ -5588,6 +5596,7 @@ sub get_genemark_hints {
             "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
     }
+
     if( -s $gm_hints_prot ) {
         $cmdString = "";
         if ($nice) {
@@ -5604,7 +5613,6 @@ sub get_genemark_hints {
             "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
     }
-
 
     if( $EPmode == 0 && $ETPmode == 0 ) {
         $cmdString = "mv $gm_hints_rnaseq.tmp $genemark_hintsfile";
@@ -5731,32 +5739,27 @@ sub format_ep_hints {
 }
 
 ####################### create_evidence_gff ####################################
-# * GeneMark can use true positive introns as evidence for predictions
-# * introns supported by protein alignment and RNA-Seq alignment are true
-#   positives
-# * AUGUSTUS can also use these introns as manual hints
-# * also "src=M" hints from protein mapping pipeline go into this file,
-#   therefore this function is also called in --epmode
+# * evidence.gff file is now produced by ProtHint
+# * additional high quality hints can be added to that file by combining
+#   RNA-Seq and prothint_augustus.gff hints
+# * such hints are also appended with src=M to hintsfile for AUGUSTUS
 ################################################################################
 
 sub create_evidence_gff {
-    print LOG "\# " . (localtime) . ": Creating evidence.gff with hints from both "
+    print LOG "\# " . (localtime) . ": Extending evidence.gff by hints from both "
         . "RNA-Seq and proteins...\n" if ($v > 2);
-    my $evidenceFile = "$otherfilesDir/evidence.gff";
+    # $evidence exists
     my %rnaseq;
     my %prot;
     my %manual;
     my $manualExists = 0;
-    my $mixed_hints;
-    if(defined($prg)){ # implies gth in most cases
-        $mixed_hints = $otherfilesDir."/hintsfile.gff";
-    }else{
-        $mixed_hints = $genemark_hintsfile;
-    }
-    open ( HINTS, "<", $mixed_hints ) or clean_abort(
+    # $hintsfile exists
+
+    # 1) extend append hints that should have src=M to hintsfile for AUGUSTUS
+    open ( HINTS, "<", $otherfilesDir."/hintsfile.gff" ) or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not open file $genemark_hintsfile!\n");
+        . "\nCould not open file $otherfilesDir"."/hintsfile.gff!\n");
     while (<HINTS>) {
         if($_ =~ m/(\S+)\t(\S+)\t(\S+)\t(\d+)\t(\d+)\t(\S+)\t(\S+)\t(\S+)\t(.*)/){
             my %hint;
@@ -5781,47 +5784,55 @@ sub create_evidence_gff {
     }
     close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $genemark_hintsfile!\n");
+        . "\nCould not close file $otherfilesDir"."/hintsfile.gff!\n");
 
-    # append, in case --evidence=evidence.gff has been provided as command line argument
-    # or produced by ProtHint
-    open ( EV, ">>", $evidenceFile ) or clean_abort(
+    open( EVAUG, ">>", $otherfilesDir."/hintsfile.gff") or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not open file $evidenceFile!\n");
-    if( $ETPmode == 1 ) {
-        foreach my $locus (keys %rnaseq) {
-            if( defined ($prot{$locus}) ) {
-                foreach my $hint (@{$rnaseq{$locus}}) {
-                    foreach my $otherHint (@{$prot{$locus}}) {
-                        if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
-                            print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
+        . "\nCould not open file $otherfilesDir"."/hintsfile.gff!\n");
+    foreach my $locus (keys %rnaseq) {
+        if( defined ($prot{$locus}) ) {
+            foreach my $hint (@{$rnaseq{$locus}}) {
+                foreach my $otherHint (@{$prot{$locus}}) {
+                    if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
+                        print EVAUG $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
                             ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
-                        }
                     }
                 }
             }
         }
     }
-    if( $manualExists == 1 ) {
-        foreach my $locus (keys %manual) {
-            foreach my $hint (@{$manual{$locus}}){
-                print EV $locus."\t".$hint->{'source'}."\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
+    close(EVAUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not close file $otherfilesDir/hintsfile.gff!\n");
+   
+    # 2) extend evidence.gff file for GeneMark
+    if(-e $otherfilesDir."/evidence.gff"){
+        open( EV, ">>", $otherfilesDir."/evidence.gff") or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir"."/evidence.gff!\n");
+    }else{
+        open( EV, ">", $otherfilesDir."/evidence.gff") or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir"."/evidence.gff!\n");
+    }
+    foreach my $locus (keys %rnaseq) {
+        if( defined ($prot{$locus}) ) {
+            foreach my $hint (@{$rnaseq{$locus}}) {
+                foreach my $otherHint (@{$prot{$locus}}) {
+                    if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
+                        print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
                             ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
+                    }
+                }
             }
         }
     }
     close(EV) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $evidenceFile!\n");
-    # check whether there actually is any evidence, if not, delete file
-    if(-z $evidenceFile){
-        print LOG "\# "
-        . (localtime)
-        . ": File $evidenceFile is empty, deleting file\n" if ($v > 2);
-        unlink $evidenceFile;
-    }
-
+        . "\nCould not close file $otherfilesDir/evidence.gff!\n");
 }
 
 ####################### check_genemark_hints ###################################
