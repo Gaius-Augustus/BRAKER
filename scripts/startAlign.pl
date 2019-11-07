@@ -113,48 +113,45 @@ my $reg       = 0;    # use regions
 my %seq;              # hash for genome sequences
 my $stdoutfile;       # standard output file name
 my $tmpDir;    # temporary directory for storing protein and genome part files
-my $nice
-    ; # flag that determines whether system calls should be executed with bash nice
-      #(default nice value)
+my $nice; # flag that determines whether system calls should be executed with bash nice
+          #(default nice value)
 
-      my $spalnErrAdj = 80
-    ; # version spaln2.2.0 misses a line while "counting coordinates" (+80 because of how the fasta files are printed here, see line 529-534); error still persists with version 2.3.1
+my $spalnErrAdj = 80; # version spaln2.2.0 misses a line while "counting coordinates" (+80 because of how the fasta files are printed here, see line 529-534); error still persists with version 2.3.1
 
 # gth options           # and other values that have proven to work well for Drosophila on chromosome 2L
 my $gcmincoverage = 80;    # 70 - 95
 my $prhdist       = 2;     # 2 - 6
-my $prseedlength
-    = 20;   # 19, 20, 21 (gth: error: -prminmatchlen must be >= -prseedlength)
-    my $prminmatchlen = 20;
-    my $ALIGNMENT_TOOL_PATH;
+my $prseedlength = 20;   # 19, 20, 21 (gth: error: -prminmatchlen must be >= -prseedlength)
+my $prminmatchlen = 20;
+my $ALIGNMENT_TOOL_PATH;
 
-    if ( @ARGV == 0 ) {
-        print "$usage\n";
-        exit(0);
-    }
+if ( @ARGV == 0 ) {
+    print "$usage\n";
+    exit(0);
+}
 
-    GetOptions(
-        'CPU=i'                 => \$CPU,
-        'dir=s'                 => \$dir,
-        'genome=s'              => \$genome_file,
-        'list=s'                => \$list_file,
-        'log=s'                 => \$log,
-        'maxintron=i'           => \$maxintronlen,
-        'reg!'                  => \$reg,
-        'offset=i'              => \$offset,
-        'pos=s'                 => \$pos_file,
-        'prg=s'                 => \$prgsrc,
-        'prot=s'                => \$prot_file,
-        'help!'                 => \$help,
-        'nice!'                 => \$nice,
-        'ALIGNMENT_TOOL_PATH=s' => \$ALIGNMENT_TOOL_PATH,
-        'args=s'                => \$alnArgs
-        );
+GetOptions(
+    'CPU=i'                 => \$CPU,
+    'dir=s'                 => \$dir,
+    'genome=s'              => \$genome_file,
+    'list=s'                => \$list_file,
+    'log=s'                 => \$log,
+    'maxintron=i'           => \$maxintronlen,
+    'reg!'                  => \$reg,
+    'offset=i'              => \$offset,
+    'pos=s'                 => \$pos_file,
+    'prg=s'                 => \$prgsrc,
+    'prot=s'                => \$prot_file,
+    'help!'                 => \$help,
+    'nice!'                 => \$nice,
+    'ALIGNMENT_TOOL_PATH=s' => \$ALIGNMENT_TOOL_PATH,
+    'args=s'                => \$alnArgs
+    );
 
-    if ($help) {
-        print $usage;
-        exit(0);
-    }
+if ($help) {
+    print $usage;
+    exit(0);
+}
 
 # if no working directory is set, use current directory
 if ( !defined($dir) ) {
@@ -171,14 +168,12 @@ if ( defined($ALIGNMENT_TOOL_PATH) ) {
 
 # check whether position and list files are specified
 if ( defined($pos_file) && defined($list_file) ) {
-
     # check whether position file exists
     if ( !-e $pos_file ) {
         print STDERR
         "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nPosition file $pos_file does not exist. Please check.\n";
         exit(1);
-    }
-    else {
+    } else {
         $pos_file = rel2abs($pos_file);
     }
 
@@ -187,12 +182,10 @@ if ( defined($pos_file) && defined($list_file) ) {
         print STDERR
         "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nList file $list_file does not exist. Please check.\n";
         exit(1);
-    }
-    else {
+    } else {
         $list_file = rel2abs($list_file);
     }
-}
-else {
+} else {
     $protWhole = 1;
 }
 
@@ -220,8 +213,7 @@ if ( ! (-d $tmpDir) ) {
     make_path($tmpDir) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot create directory $tmpDir!\n");
     print LOG "\# " . (localtime) . ": create working directory $tmpDir\n";
     print LOG "mkdir $tmpDir\n\n";
-}
-else {
+} else {
     $cmdString = "rm -r $tmpDir";
     print LOG "\# " . (localtime) . ": delete existing files from $tmpDir\n";
     print LOG "$cmdString\n\n";
@@ -236,35 +228,31 @@ if ( defined($genome_file) ) {
     if ( !-e $genome_file ) {
         print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nGenome file $genome_file does not exist!\n";
         exit(1);
-    }
-    else {
+    } else {
         $genome_file = rel2abs($genome_file);
         my $nDots = ( $genome_file =~ tr/\.// );
         my $linkName = $genome_file;
-        if ( $nDots > 1 )
-        {    # more than one dot in file name, need to avoid that for spaln
+        if ( $nDots > 1 ) {    # more than one dot in file name, need to avoid that for spaln
             for ( my $i = 0; $i < ( $nDots - 1 ); $i++ ) {
                 $linkName =~ s/\./_/;
             }
         }
 
-# create link to genome file in tmpDir (Spaln is looking for related database files, there)
-my @pathParts = split( /\//, $linkName );
-$linkName = $tmpDir . "/" . $pathParts[ scalar(@pathParts) - 1 ];
-if ( !-e $linkName ) {
-    $cmdString = "ln -s $genome_file $linkName";
-    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
-    print LOG "\# " . (localtime) . ": $cmdString\n";
-}
-else {
-    print LOG "\# "
-    . (localtime)
-    . " WARNING: $linkName does already exist. Will assume that $linkName is a link to $genome_file!\n";
-}
-$genome_file = $linkName;
-}
-}
-else {
+        # create link to genome file in tmpDir (Spaln is looking for related database files, there)
+        my @pathParts = split( /\//, $linkName );
+        $linkName = $tmpDir . "/" . $pathParts[ scalar(@pathParts) - 1 ];
+        if ( !-e $linkName ) {
+            $cmdString = "ln -s $genome_file $linkName";
+            system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
+            print LOG "\# " . (localtime) . ": $cmdString\n";
+        } else {
+            print LOG "\# "
+                . (localtime)
+                . " WARNING: $linkName does already exist. Will assume that $linkName is a link to $genome_file!\n";
+        }
+        $genome_file = $linkName;
+    }
+} else {
     print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nNo genome file specified!\n";
     exit(1);
 }
@@ -276,13 +264,11 @@ if ( defined($prot_file) ) {
     if ( !-e $prot_file ) {
         print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nProtein file $prot_file does not exist!\n";
         exit(1);
-    }
-    else {
+    } else {
         $prot_file = rel2abs($prot_file);
         my $linkName = $prot_file;
         my $nDots = ( $prot_file =~ tr/\.// );
-        if ( $nDots > 1 )
-        {    # more than one dot in file name, need to avoid that for spaln
+        if ( $nDots > 1 ) {    # more than one dot in file name, need to avoid that for spaln
             for ( my $i = 0; $i < ( $nDots - 1 ); $i++ ) {
                 $linkName =~ s/\./_/;
             }
@@ -293,11 +279,10 @@ if ( defined($prot_file) ) {
             $cmdString = "ln -s $prot_file $linkName";
             system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString!\n");
             print LOG "\# " . (localtime) . ": $cmdString\n";
-        }
-        else {
+        } else {
             print LOG "\# "
-            . (localtime)
-            . " WARNING: $linkName does already exist. Will assume that $linkName is a link to $prot_file!\n";
+                . (localtime)
+                . " WARNING: $linkName does already exist. Will assume that $linkName is a link to $prot_file!\n";
         }
         $prot_file = $linkName;
         my @a = split( /\//, $prot_file );
@@ -308,13 +293,11 @@ if ( defined($prot_file) ) {
         @pathParts = split( /\./, $prot_file_base );
         if ( scalar(@pathParts) == 2 ) {
             $prot_addstop_file = $pathParts[0] . "_addstop." . $pathParts[1];
-        }
-        else {
+        } else {
             die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nUnexpected error in prot_addstop_file name definition\n");
         }
     }
-}
-else {
+} else {
     print STDERR "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nNo protein file specified!\n";
     exit(1);
 }
@@ -325,14 +308,12 @@ if ( $last_char eq "\/" ) {
 }
 
 if ( $prgsrc eq "spaln" ) {
-
     # check for spaln2 environment variables
     if ( !$ENV{'ALN_DBS'} ) {
         print STDERR
         "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nThe environment variable ALN_DBS for spaln2 is not defined. Please export an environment variable with:' export ALN_DBS=/path/to/spaln2/seqdb'\n";
         exit(1);
     }
-
     if ( !$ENV{'ALN_TAB'} ) {
         print STDERR
         "ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\nThe environment variable ALN_TAB for spaln2 is not defined. Please export an environment variable with:' export ALN_TAB=/path/to/spaln2/table'\n";
@@ -374,51 +355,43 @@ sub read_files {
         if ( scalar(@line) == 6 ) {
             $contigIDs{ $line[0] }{"start"} = $line[2] - 1;
             $contigIDs{ $line[0] }{"end"}   = $line[3] - 1;
-            my @seqname = split( /[\s, ]/, $line[5] )
-                ;    # seqname only up to first white space
-                $contigIDs{ $line[0] }{"seq"} = $seqname[0];
-            }
+            my @seqname = split( /[\s, ]/, $line[5] );    # seqname only up to first white space
+            $contigIDs{ $line[0] }{"seq"} = $seqname[0];
         }
-        close(POS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $pos_file!\n");
-
-        open( LIST, $list_file ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $list_file\n";
-        print LOG "\# " . (localtime) . ": read in positions from $list_file\n";
-        while (<LIST>) {
-            chomp;
-            my @line = split( /[\s+, ]/, $_ );
-            if ( scalar(@line) == 2 ) {
-                if ($reg) {
-                    push( @{ $protIDs{ $line[1] } }, $line[0] );
-                }
-                else {
-                    if ( defined( $contigIDs{ $line[0] }{"seq"} ) ) {
-                        push(
-                            @{ $protIDs{ $line[1] } },
-                            $contigIDs{ $line[0] }{"seq"}
-                            )
-                        unless grep { $_ eq $contigIDs{ $line[0] }{"seq"} }
-                        @{ $protIDs{ $line[1] } };
-                    }
-                }
-            }
-        }
-        close(LIST) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $list_file!\n");
     }
+    close(POS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $pos_file!\n");
 
-    sub get_seqs {
-        open( FASTA, $genome_file ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $genome_file\n");
-        print LOG "\# "
+    open( LIST, $list_file ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $list_file\n";
+    print LOG "\# " . (localtime) . ": read in positions from $list_file\n";
+    while (<LIST>) {
+        chomp;
+        my @line = split( /[\s+, ]/, $_ );
+        if ( scalar(@line) == 2 ) {
+            if ($reg) {
+                push( @{ $protIDs{ $line[1] } }, $line[0] );
+            } else {
+                if ( defined( $contigIDs{ $line[0] }{"seq"} ) ) {
+                    push(@{ $protIDs{ $line[1] } }, $contigIDs{ $line[0] }{"seq"}) unless grep { $_ eq $contigIDs{ $line[0] }{"seq"} } @{ $protIDs{ $line[1] } };
+                }
+            }
+        }
+    }
+    close(LIST) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $list_file!\n");
+}
+
+sub get_seqs {
+    open( FASTA, $genome_file ) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $genome_file\n");
+    print LOG "\# "
         . (localtime)
         . ": read in DNA sequence from $genome_file\n";
-        $/ = ">";
-        while (<FASTA>) {
+    $/ = ">";
+    while (<FASTA>) {
         s/>$//;    # see getAnnoFasta.pl
         next unless m/\S+/;    # see getAnnoFasta.pl
         /(.*)\n/;              # see getAnnoFasta.pl
         my $seqname      = $1; # see getAnnoFasta.pl
         my $sequencepart = $'; # see getAnnoFasta.pl
-        $seqname =~ s/\s.*//
-            ;    # seqname only up to first white space (see getAnnoFasta.pl)
+        $seqname =~ s/\s.*//;    # seqname only up to first white space (see getAnnoFasta.pl)
         $sequencepart =~ s/\s//g;    # see getAnnoFasta.pl
         $seq{$seqname} = $sequencepart;
     }
@@ -429,8 +402,8 @@ sub read_files {
 sub prots {
     open( PROT, $prot_file ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $prot_file\n";
     print LOG "\# "
-    . (localtime)
-    . ": read in fasta sequences from $prot_file\n";
+        . (localtime)
+        . ": read in fasta sequences from $prot_file\n";
     my $seqname;
     my $sequencepart = "";
     while (<PROT>) {
@@ -441,35 +414,17 @@ sub prots {
                     $counterW++;
                     print_prot( "$tmpDir/$prot_addstop_file", $seqname,
                         $sequencepart );
-                }
-                else {
+                } else {
                     if ( defined( $protIDs{$seqname} ) ) {
-                        for (
-                            my $i = 0;
-                            $i < scalar( @{ $protIDs{$seqname} } );
-                            $i++
-                            )
-                        {
+                        for ( my $i = 0; $i < scalar( @{ $protIDs{$seqname} } ); $i++ ) {
                             if ($reg) {
-                                if (defined(
-                                    $contigIDs{ @{ $protIDs{$seqname} }
-                                    [$i] }
-                                    )
-                                )
-                                {
+                                if ( defined( $contigIDs{ @{ $protIDs{$seqname} } [$i] } ) ) {
                                     $counterW++;
-                                    print_prot(
-                                        "$tmpDir/@{$protIDs{$seqname}}[$i].fa",
-                                        $seqname, $sequencepart
-                                        );
+                                    print_prot("$tmpDir/@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
                                 }
-                            }
-                            else {
+                            } else {
                                 $counterW++;
-                                print_prot(
-                                    "$tmpDir/prot@{$protIDs{$seqname}}[$i].fa",
-                                    $seqname, $sequencepart
-                                    );
+                                print_prot("$tmpDir/prot@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
                             }
                         }
                     }
@@ -477,8 +432,7 @@ sub prots {
             }
             $seqname = substr( $_, 1 );
             $sequencepart = "";
-        }
-        else {
+        } else {
             $sequencepart .= $_;
         }
     }
@@ -486,20 +440,15 @@ sub prots {
     if ($protWhole) {
         $counterW++;
         print_prot( "$tmpDir/$prot_addstop_file", $seqname, $sequencepart );
-    }
-    else {
+    } else {
         if ( defined( $protIDs{$seqname} ) ) {
             for ( my $i = 0; $i < scalar( @{ $protIDs{$seqname} } ); $i++ ) {
                 if ($reg) {
-                    if (defined( $contigIDs{ @{ $protIDs{$seqname} }[$i] } ) )
-                    {
-                        print_prot( "$tmpDir/@{$protIDs{$seqname}}[$i].fa",
-                            $seqname, $sequencepart );
+                    if (defined( $contigIDs{ @{ $protIDs{$seqname} }[$i] } ) ) {
+                        print_prot( "$tmpDir/@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart );
                     }
-                }
-                else {
-                    print_prot( "$tmpDir/prot@{$protIDs{$seqname}}[$i].fa",
-                        $seqname, $sequencepart );
+                } else {
+                    print_prot( "$tmpDir/prot@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart );
                 }
             }
         }
@@ -511,14 +460,13 @@ sub start_align {
     if ( !-d $alignDir ) {
         make_path($alignDir);
         print LOG "\# "
-        . (localtime)
-        . ": create working directory $alignDir\n";
+            . (localtime)
+            . ": create working directory $alignDir\n";
         print LOG "mkdir $alignDir\n\n";
-    }
-    else {
+    } else {
         print LOG "\# "
-        . (localtime)
-        . ": working directory $alignDir already exists. Deleting files in that directory.\n";
+            . (localtime)
+            . ": working directory $alignDir already exists. Deleting files in that directory.\n";
         $cmdString = "rm -r $alignDir";
         system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to execute $cmdString\n");
         make_path($alignDir);
@@ -531,11 +479,9 @@ sub start_align {
     if ($reg) {
         foreach my $ID ( keys %contigIDs ) {
             my $pid = $pm->start and next;
-            my $target
-                = "$tmpDir/$contigIDs{$ID}{\"seq\"}$ID.fa";  # genome sequence
+            my $target = "$tmpDir/$contigIDs{$ID}{\"seq\"}$ID.fa";  # genome sequence
             my $query = "$ID.fa";                            # protein file
-            $errorfile
-            = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.stderr";
+            $errorfile = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.stderr";
             $stdoutfile
             = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.aln";
             my $stdAdjusted;
@@ -579,8 +525,7 @@ sub start_align {
             unlink ( $stdAdjusted ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $stdAdjusted!\n");
             $pm->finish;
         }
-    }
-    else {
+    } else {
         if ( $CPU > 1 || ( $CPU == 1 && !$protWhole ) ) {
             foreach my $ID ( keys %seq ) {
                 my $pid = $pm->start and next;
@@ -608,8 +553,7 @@ sub start_align {
                     if ( scalar( keys %seq ) > 1 ) {
                         call_spaln( $target, $query, $stdoutfile, $errorfile,
                             1 );
-                    }
-                    else {
+                    } else {
                         call_spaln( $target, $query, $stdoutfile, $errorfile,
                             $CPU );
                     }
@@ -624,33 +568,23 @@ sub start_align {
                 }
                 $cmdString .= "cat $stdoutfile >>$whole_prediction_file";
                 print LOG "\# "
-                . (localtime)
-                . ": add prediction from file $stdoutfile to file $whole_prediction_file\n";
+                    . (localtime)
+                    . ": add prediction from file $stdoutfile to file $whole_prediction_file\n";
                 print LOG "$cmdString\n\n";
                 system("$cmdString") == 0
                 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
                 unlink( $stdoutfile ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete file $stdoutfile!\n");
                 $pm->finish;
             }
-        }
-        else {
+        } else {
             $errorfile  = "$alignDir/$prgsrc.stderr";
             $stdoutfile = "$alignDir/$prgsrc.aln";
             if ( $CPU == 1 && $prgsrc eq "gth" && $protWhole ) {
-                call_gth(
-                    $genome_file, "$prot_addstop_file",
-                    $stdoutfile,  $errorfile
-                    );
-            }
-            elsif ( $CPU == 1 && $prgsrc eq "exonerate" && $protWhole ) {
-                call_exonerate(
-                    $genome_file, "$prot_addstop_file",
-                    $stdoutfile,  $errorfile
-                    );
-            }
-            elsif ( $CPU == 1 && $prgsrc eq "spaln" && $protWhole ) {
-                call_spaln( $genome_file, "$tmpDir/$prot_addstop_file",
-                    $stdoutfile, $errorfile, 1 );
+                call_gth( $genome_file, "$prot_addstop_file", $stdoutfile,  $errorfile );
+            } elsif ( $CPU == 1 && $prgsrc eq "exonerate" && $protWhole ) {
+                call_exonerate( $genome_file, "$prot_addstop_file", $stdoutfile,  $errorfile);
+            } elsif ( $CPU == 1 && $prgsrc eq "spaln" && $protWhole ) {
+                call_spaln( $genome_file, "$tmpDir/$prot_addstop_file", $stdoutfile, $errorfile, 1 );
             }
             $cmdString = "";
             if ($nice) {
@@ -658,11 +592,11 @@ sub start_align {
             }
             $cmdString .= "cat $stdoutfile >>$whole_prediction_file";
             print LOG "\# "
-            . (localtime)
-            . ": add prediction from file $stdoutfile to file $whole_prediction_file\n";
+                . (localtime)
+                . ": add prediction from file $stdoutfile to file $whole_prediction_file\n";
             print LOG "$cmdString\n\n";
             system("$cmdString") == 0
-            or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+                or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
             unlink( $stdoutfile ) or die ("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nFailed to delete $stdoutfile!\n");
         }
     }
@@ -688,15 +622,14 @@ sub call_exonerate {
     if ( defined($ALIGNMENT_TOOL_PATH) ) {
         $cmdString .= $ALIGNMENT_TOOL_PATH . "/";
     }
-    $cmdString
-    .= "exonerate --model protein2genome --maxintron $maxintronlen --showtargetgff --showalignment no --query $qFile -t   $tFile ";
+    $cmdString .= "exonerate --model protein2genome --maxintron $maxintronlen --showtargetgff --showalignment no --query $qFile -t   $tFile ";
     if (defined($alnArgs)){
         $cmdString .= "$alnArgs ";
     }
     $cmdString .= "> $stdoutfile 2> $errorfile";
     print LOG "\# "
-    . (localtime)
-    . ": run exonerate for target '$tFile' and query '$qFile'\n";
+        . (localtime)
+        . ": run exonerate for target '$tFile' and query '$qFile'\n";
     print LOG "$cmdString\n\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 }
@@ -705,53 +638,48 @@ sub call_gth {
     my $genomic = shift;
     my $protein = shift;
 
-# gth manipulates the protein file; if run in parallel, this leads to problems because multiple processes try to manipulate the same protein file
-# therefore we create a folder with a link to "protein", so that the linked file can be used by gth as template for file manipulations
-my @proteinPath = split( /\//, $protein );
-my $proteinStemPath;
-if ( scalar(@proteinPath) > 1 ) {
-    for ( my $i = 0; $i < scalar(@proteinPath); $i++ ) {
-        $proteinStemPath .= "/$proteinPath[$i]";
+    # gth manipulates the protein file; if run in parallel, this leads to problems because multiple processes try to manipulate the same protein file
+    # therefore we create a folder with a link to "protein", so that the linked file can be used by gth as template for file manipulations
+    my @proteinPath = split( /\//, $protein );
+    my $proteinStemPath;
+    if ( scalar(@proteinPath) > 1 ) {
+        for ( my $i = 0; $i < scalar(@proteinPath); $i++ ) {
+            $proteinStemPath .= "/$proteinPath[$i]";
+        }
     }
-}
-my @genomePath = split( /\//, $genomic );
-$proteinStemPath
-.= "protFileFor_" . $genomePath[ ( scalar(@genomePath) - 1 ) ];
-mkdir $proteinStemPath;
-die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot create directory $proteinStemPath : $!\n"
-unless -d $proteinStemPath;
-$cmdString = "ln -s ../$protein $proteinStemPath/"
-. $proteinPath[ ( scalar(@proteinPath) - 1 ) ];
-print LOG "\# " . (localtime) . ": $cmdString\n";
-system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
-$protein = $proteinStemPath . "/"
-. $proteinPath[ ( scalar(@proteinPath) - 1 ) ];
-my $stdoutfile = shift;
-my $errorfile  = shift;
-$cmdString = "";
+    my @genomePath = split( /\//, $genomic );
+    $proteinStemPath .= "protFileFor_" . $genomePath[ ( scalar(@genomePath) - 1 ) ];
+    mkdir $proteinStemPath;
+    die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot create directory $proteinStemPath : $!\n" unless -d $proteinStemPath;
+    $cmdString = "ln -s ../$protein $proteinStemPath/"
+        . $proteinPath[ ( scalar(@proteinPath) - 1 ) ];
+    print LOG "\# " . (localtime) . ": $cmdString\n";
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+    $protein = $proteinStemPath . "/" . $proteinPath[ ( scalar(@proteinPath) - 1 ) ];
+    my $stdoutfile = shift;
+    my $errorfile  = shift;
+    $cmdString = "";
 
-if ($nice) {
-    $cmdString .= "nice ";
-}
-if ( defined($ALIGNMENT_TOOL_PATH) ) {
-    $cmdString .= $ALIGNMENT_TOOL_PATH . "/";
-}
-if(not(defined($alnArgs))){
-    $alnArgs = "-prseedlength $prseedlength -prminmatchlen $prminmatchlen -prhdist $prhdist";
-}
-$cmdString
-.= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -gcmincoverage $gcmincoverage ";
-$cmdString .= $alnArgs;
-$cmdString .= " -o  $stdoutfile 2>$errorfile";
-print "CmdString: $cmdString\n";
-print LOG "\# "
-. (localtime)
-. ": run GenomeThreader for genome '$genomic' and protein '$protein'\n";
-print LOG "$cmdString\n\n";
-system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
-$cmdString = "rm -r $proteinStemPath";
-print LOG "\# " . (localtime) . ": $cmdString\n";
-system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    if ( defined($ALIGNMENT_TOOL_PATH) ) {
+        $cmdString .= $ALIGNMENT_TOOL_PATH . "/";
+    }
+    if(not(defined($alnArgs))){
+        $alnArgs = "-prseedlength $prseedlength -prminmatchlen $prminmatchlen -prhdist $prhdist";
+    }
+    $cmdString .= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -gcmincoverage $gcmincoverage ";
+               . $alnArgs;
+               . " -o  $stdoutfile 2>$errorfile";
+    print "CmdString: $cmdString\n";
+    print LOG "\# " . (localtime)
+        . ": run GenomeThreader for genome '$genomic' and protein '$protein'\n";
+    print LOG "$cmdString\n\n";
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
+    $cmdString = "rm -r $proteinStemPath";
+    print LOG "\# " . (localtime) . ": $cmdString\n";
+    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 }
 
 sub call_spaln {
@@ -759,9 +687,8 @@ sub call_spaln {
     my $qFile      = shift;
     my $stdoutfile = shift;
     my $errorfile  = shift;
-    my $cpus       = shift
-        ; # separate variable because multithreading shall only be used if data parallelization is not taking place, already
-        my @split = split( /\./, $tFile );
+    my $cpus       = shift; # separate variable because multithreading shall only be used if data parallelization is not taking place, already
+    my @split = split( /\./, $tFile );
 
     # some fo the spaln perl scripts expect spaln in $PATH
     $ENV{PATH} = "$ALIGNMENT_TOOL_PATH:$ENV{PATH}";
@@ -775,8 +702,8 @@ sub call_spaln {
         }
         $cmdString .= "makdbs -KP $tFile ";
         print LOG "\# "
-        . (localtime)
-        . ": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for target '$tFile' \n";
+            . (localtime)
+            . ": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for target '$tFile' \n";
         print LOG "$cmdString\n\n";
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
@@ -785,11 +712,10 @@ sub call_spaln {
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString
-        .= "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bkp -KP $tFile";
+        $cmdString .= "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bkp -KP $tFile";
         print LOG "\# "
-        . (localtime)
-        . ": create *.bkp file for target '$tFile'\n";
+            . (localtime)
+            . ": create *.bkp file for target '$tFile'\n";
         print LOG "$cmdString\n\n";
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
@@ -804,9 +730,8 @@ sub call_spaln {
             $cmdString .= $ALIGNMENT_TOOL_PATH . "/";
         }
         $cmdString .= "makdbs -KA $qFile";
-        print LOG "\# "
-        . (localtime)
-        . ": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for query '$qFile' \n";
+        print LOG "\# " . (localtime)
+            . ": create *.ent, *.grp, *.idx, (*.odr), and *.seq files for query '$qFile' \n";
         print LOG "$cmdString\n\n";
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     }
@@ -815,11 +740,9 @@ sub call_spaln {
         if ($nice) {
             $cmdString .= "nice ";
         }
-        $cmdString
-        .= "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bka -KA $qFile";
-        print LOG "\# "
-        . (localtime)
-        . ": create *.bka file for query '$qFile'\n";
+        $cmdString .= "perl $ENV{'ALN_DBS'}/makblk.pl -W$split[0].bka -KA $qFile";
+        print LOG "\# " . (localtime)
+            . ": create *.bka file for query '$qFile'\n";
         print LOG "$cmdString\n\n";
         print LOG "\# OUTPUT OF makblk.pl STARTING #\n";
         system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
@@ -840,9 +763,8 @@ sub call_spaln {
         $cmdString .=  "$alnArgs ";
     }
     $cmdString .= "$tFile $qFile > $stdoutfile 2>$errorfile";
-    print LOG "\# "
-    . (localtime)
-    . ": run spaln for target '$tFile' and query '$qFile'\n";
+    print LOG "\# " . (localtime)
+        . ": run spaln for target '$tFile' and query '$qFile'\n";
     print LOG "$cmdString\n\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
 }
@@ -854,20 +776,18 @@ sub print_prot {
     open( OUT, ">>$outfile" ) or die "ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCannot open file: $outfile\n";
     print OUT ">$Sname\n";
 
-# add '*' for GenomeThreader (gth) [instead of 'gt seqtransform -addstopaminos ...' since this is not part
-# of gth, but of GenomeTools (gt)]
-if ( $prgsrc eq "gth" ) {
-    print OUT "$seqpart*\n";
-    if ( $counterW == 1 ) {
-        print LOG "\# "
-        . (localtime)
-        . ": add stop amino acid ('*') to protein sequences'\n";
+    # add '*' for GenomeThreader (gth) [instead of 'gt seqtransform -addstopaminos ...' since this is not part
+    # of gth, but of GenomeTools (gt)]
+    if ( $prgsrc eq "gth" ) {
+        print OUT "$seqpart*\n";
+        if ( $counterW == 1 ) {
+            print LOG "\# " . (localtime)
+                . ": add stop amino acid ('*') to protein sequences'\n";
+        }
+    } else {
+        print OUT "$seqpart\n";
     }
-}
-else {
-    print OUT "$seqpart\n";
-}
-close(OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $outfile!\n");
+    close(OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould not close file $outfile!\n");
 }
 
 # print genome sequence part or whole sequence
@@ -904,14 +824,12 @@ sub adjust {
             $f[-1] += $contigIDs{$conID}{"start"} - $offset + $spalnErrAdj;
             $f[-2] += $contigIDs{$conID}{"start"} - $offset + $spalnErrAdj;
             print OUT "##sequence-region\t$f[-3] $f[-2] $f[-1]\n";
-        }
-        elsif ( scalar(@f) >= 9 ) {
+        } elsif ( scalar(@f) >= 9 ) {
             $f[3] += $contigIDs{$conID}{"start"} - $offset + $spalnErrAdj;
             $f[4] += $contigIDs{$conID}{"start"} - $offset + $spalnErrAdj;
             print OUT
             "$f[0]\t$f[1]\t$f[2]\t$f[3]\t$f[4]\t$f[5]\t$f[6]\t$f[7]\t$f[8]\n";
-        }
-        else {
+        } else {
             print OUT "$_\n";
         }
     }
@@ -938,26 +856,22 @@ sub adjust_exonerate {
             my $diff  = length($end) - length($2);
             $add_space = " " x $diff;
             print OUT "  Target range: $start -> $end\n";
-        }
-        elsif ( $_ =~ m/^(\s+)(\d+) : ([^a-z\.\-]+) : (\d+)/ ) {
+        } elsif ( $_ =~ m/^(\s+)(\d+) : ([^a-z\.\-]+) : (\d+)/ ) {
             my $start = $2 + $contigIDs{$conID}{"start"} - $offset;
             my $end   = $4 + $contigIDs{$conID}{"start"} - $offset;
             print OUT "$1" . "$start : $3 : " . "$end\n";
-        }
-        elsif ( $_ =~ m/vulgar:/ ) {
+        } elsif ( $_ =~ m/vulgar:/ ) {
             my @line = split( /[\s, ]/, $_ );
             $line[6] += $contigIDs{$conID}{"start"} - $offset;
             $line[7] += $contigIDs{$conID}{"start"} - $offset;
             my $vulgar = join( ' ', @line );
             print OUT "$vulgar\n";
-        }
-        elsif ($_ =~ m/^(\s+)(\d+) : ([a-zA-Z\.\-]+)/
+        } elsif ($_ =~ m/^(\s+)(\d+) : ([a-zA-Z\.\-]+)/
             || $_ =~ m/^(\s+)([a-zA-Z\.\-]+)/
             || $_ =~ m/^(\s+)[\|\.\!\:]+/ )
         {
             print OUT $add_space . $_ . "\n";
-        }
-        else {
+        } else {
             my @f = split( /\t/, $_ );
             if ( scalar(@f) == 9 || scalar(@f) == 8 ) {
                 if ( $f[6] eq "+" ) {
@@ -984,8 +898,7 @@ sub adjust_exonerate {
                     print OUT "\t$f[8]";
                 }
                 print OUT "\n";
-            }
-            else {
+            } else {
                 print OUT "$_\n";
             }
         }
@@ -1008,14 +921,12 @@ sub adjust_spaln_noreg {
             $f[-1] += $spalnErrAdj;
             $f[-2] += $spalnErrAdj;
             print OUT "##sequence-region\t$f[-3] $f[-2] $f[-1]\n";
-        }
-        elsif ( scalar(@f) >= 9 ) {
+        } elsif ( scalar(@f) >= 9 ) {
             $f[3] += $spalnErrAdj;
             $f[4] += $spalnErrAdj;
             print OUT
             "$f[0]\t$f[1]\t$f[2]\t$f[3]\t$f[4]\t$f[5]\t$f[6]\t$f[7]\t$f[8]\n";
-        }
-        else {
+        } else {
             print OUT "$_\n";
         }
     }
