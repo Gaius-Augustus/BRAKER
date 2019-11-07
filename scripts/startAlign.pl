@@ -367,7 +367,7 @@ sub read_files {
         chomp;
         my @line = split( /[\s+, ]/, $_ );
         if ( scalar(@line) == 2 ) {
-            if ($reg) {
+            if ($reg == 1) {
                 push( @{ $protIDs{ $line[1] } }, $line[0] );
             } else {
                 if ( defined( $contigIDs{ $line[0] }{"seq"} ) ) {
@@ -417,7 +417,7 @@ sub prots {
                 } else {
                     if ( defined( $protIDs{$seqname} ) ) {
                         for ( my $i = 0; $i < scalar( @{ $protIDs{$seqname} } ); $i++ ) {
-                            if ($reg) {
+                            if ($reg == 1) {
                                 if ( defined( $contigIDs{ @{ $protIDs{$seqname} } [$i] } ) ) {
                                     $counterW++;
                                     print_prot("$tmpDir/@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart);
@@ -443,7 +443,7 @@ sub prots {
     } else {
         if ( defined( $protIDs{$seqname} ) ) {
             for ( my $i = 0; $i < scalar( @{ $protIDs{$seqname} } ); $i++ ) {
-                if ($reg) {
+                if ($reg == 1) {
                     if (defined( $contigIDs{ @{ $protIDs{$seqname} }[$i] } ) ) {
                         print_prot( "$tmpDir/@{$protIDs{$seqname}}[$i].fa", $seqname, $sequencepart );
                     }
@@ -476,25 +476,20 @@ sub start_align {
 
     my $pm                    = new Parallel::ForkManager($CPU);
     my $whole_prediction_file = "$alignDir/$prgsrc.concat.aln";
-    if ($reg) {
+    if ($reg == 1) {
         foreach my $ID ( keys %contigIDs ) {
             my $pid = $pm->start and next;
             my $target = "$tmpDir/$contigIDs{$ID}{\"seq\"}$ID.fa";  # genome sequence
             my $query = "$ID.fa";                            # protein file
             $errorfile = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.stderr";
-            $stdoutfile
-            = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.aln";
+            $stdoutfile = "$alignDir/$contigIDs{$ID}{\"seq\"}.$ID.$prgsrc.aln";
             my $stdAdjusted;
 
             # create target file (contigIDs)
             if ( !-e $target ) {
-                my $length
-                = $contigIDs{$ID}{"end"}
-                - $contigIDs{$ID}{"start"} + 1
-                + ( 2 * $offset );
+                my $length = $contigIDs{$ID}{"end"} - $contigIDs{$ID}{"start"} + 1 + ( 2 * $offset );
                 my $substart = $contigIDs{$ID}{"start"} - $offset;
-                my $subseq   = substr( $seq{ $contigIDs{$ID}{"seq"} },
-                    $substart, $length );
+                my $subseq   = substr( $seq{ $contigIDs{$ID}{"seq"} }, $substart, $length );
                 print_seq( $target, $subseq, $contigIDs{$ID}{"seq"} );
             }
             if ( $prgsrc eq "exonerate" ) {
@@ -669,12 +664,11 @@ sub call_gth {
     if(not(defined($alnArgs))){
         $alnArgs = "-prseedlength $prseedlength -prminmatchlen $prminmatchlen -prhdist $prhdist";
     }
-    $cmdString .= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -gcmincoverage $gcmincoverage ";
-               . $alnArgs;
+    $cmdString .= "gth -genomic $genomic -protein $tmpDir/$protein -gff3out -skipalignmentout -paralogs -gcmincoverage $gcmincoverage "
+               . $alnArgs
                . " -o  $stdoutfile 2>$errorfile";
     print "CmdString: $cmdString\n";
-    print LOG "\# " . (localtime)
-        . ": run GenomeThreader for genome '$genomic' and protein '$protein'\n";
+    print LOG "\# " . (localtime) . ": run GenomeThreader for genome '$genomic' and protein '$protein'\n";
     print LOG "$cmdString\n\n";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nfailed to execute: $cmdString!\n");
     $cmdString = "rm -r $proteinStemPath";
