@@ -6117,6 +6117,7 @@ sub GeneMark_ET {
 
 ####################### GeneMark_EP ############################################
 # * execute GeneMark-EP with protein intron hints for training
+# * use output files of ProtHint ()
 ################################################################################
 
 sub GeneMark_EP {
@@ -6151,7 +6152,7 @@ sub GeneMark_EP {
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
             $perlCmdString .= "--max_intergenic 50000 --ep_score 4 --EP "
-                           .  "$genemark_hintsfile --cores=$CPU --gc_donor $gc_prob";
+                           .  "$otherfilesDir/prothint.gff --cores=$CPU --gc_donor $gc_prob";
             if(-e "$otherfilesDir/evidence.gff"){
                 $perlCmdString .= " --evidence $otherfilesDir/evidence.gff ";
             }
