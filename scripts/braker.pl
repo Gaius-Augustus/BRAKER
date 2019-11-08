@@ -5141,9 +5141,8 @@ sub make_prot_hints {
 ################################################################################
 
 sub prothint{
-    my @prot_seqs;
     my $prot_file = "$otherfilesDir/input_proteins.fasta";
-    if(scalar(@prot_seqs) > 1){
+    if(scalar(@prot_seq_files) > 1){
         print LOG "\# " . (localtime)
             . ": Concatenating protein FASTA files into $prot_file...\n" 
             if ($v > 2);
@@ -5151,18 +5150,18 @@ sub prothint{
                 "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                 "ERROR in file " . __FILE__ ." at line ". __LINE__
                 . "\nCould not open file $prot_file!\n");
-        for(my $i=0; $i<scalar(@prot_seqs); $i++){
-            open( PROTF, "<", $prot_seqs[$i] ) or clean_abort(
+        for(my $i=0; $i<scalar(@prot_seq_files); $i++){
+            open( PROTF, "<", $prot_seq_files[$i] ) or clean_abort(
                 "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                 "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nCould not open file $prot_seqs[$i]!\n");
+                . "\nCould not open file $prot_seq_files[$i]!\n");
             while(<PROTF>){
                 print PROTT $_;
             }
             close( PROTF) or clean_abort(
                 "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                 "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nCould not close file $prot_seqs[$i]!\n");
+                . "\nCould not close file $prot_seq_files[$i]!\n");
         }
         close( PROTT) or clean_abort(
             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
@@ -5170,14 +5169,14 @@ sub prothint{
             . "\nCould not close file $prot_file!\n");
     }else{
         print LOG "\# " . (localtime)
-            . ": Creating softlink or protein FASTA file $prot_seqs[0] to "
+            . ": Creating softlink or protein FASTA file $prot_seq_files[0] to "
             . "$prot_file...\n" if ($v > 2); 
-        my $symlink_exists = eval{ symlink("$prot_seqs[0]", "$prot_file"); 1};
+        my $symlink_exists = eval{ symlink("$prot_seq_files[0]", "$prot_file"); 1};
         if(not($symlink_exists)){
             clean_abort(
                 "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                 "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nFailed to create symbolic link from $prot_seqs[0] "
+                . "\nFailed to create symbolic link from $prot_seq_files[0] "
                 . "to $prot_file!\n");
         }
     }
@@ -5601,37 +5600,13 @@ sub get_genemark_hints {
             . "\nFailed to execute: $cmdString\n");
     }
 
-    if( $EPmode == 0 && $ETPmode == 0 ) {
+    if( $EPmode == 0 ) {
         $cmdString = "mv $gm_hints_rnaseq.tmp $genemark_hintsfile";
         print LOG "$cmdString\n" if ($v > 3);
         system($cmdString) == 0 or clean_abort(
             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
             "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
-    }elsif ( $EPmode == 1 ) {
-        $cmdString = "mv $gm_hints_prot.tmp $genemark_hintsfile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system($cmdString) == 0 or clean_abort(
-            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nFailed to execute: $cmdString\n");
-    }elsif ( $ETPmode == 1 ) {
-        $cmdString = "mv $gm_hints_rnaseq.tmp $genemark_hintsfile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system($cmdString) == 0 or clean_abort(
-            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nFailed to execute: $cmdString\n");
-        $cmdString = "cat $gm_hints_prot.tmp >> $genemark_hintsfile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system($cmdString) == 0 or clean_abort(
-            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nFailed to execute: $cmdString\n");
-    } else {
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\n");
     }
 
     if( -e $gm_hints_rnaseq ) {
