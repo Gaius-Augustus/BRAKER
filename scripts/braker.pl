@@ -5881,32 +5881,74 @@ sub check_genemark_hints {
     else {
         $GeneMarkIntronThreshold = 10;
     }
-    print LOG "\# "
-        . (localtime)
-        . ": Checking whether file $genemark_hintsfile contains "
-        . "sufficient multiplicity information...\n" if ($v > 2);
-    open( GH, "<", $genemark_hintsfile )
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nCould not open file $genemark_hintsfile!\n");
-    while (<GH>) {
-        my @line = split(/\t/);
-        if ( scalar(@line) == 9 ) {
-            $nIntrons++;
-            if ( $line[5] =~ m/(\d+)/ ) {
-                if ( $1 >= $GeneMarkIntronThreshold ) {
-                    $nIntronsAboveThreshold++;
+    if( ($EPmode == 0 && $ETPmode==0 && $ESmode == 0) || $ETPmode == 1 ) { 
+        print LOG "\# "
+            . (localtime)
+            . ": Checking whether file $genemark_hintsfile contains "
+            . "sufficient multiplicity information...\n" if ($v > 2);
+        open( GH, "<", $genemark_hintsfile )
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $genemark_hintsfile!\n");
+        while (<GH>) {
+            my @line = split(/\t/);
+            if ( scalar(@line) == 9 ) {
+                $nIntrons++;
+                if ( $line[5] =~ m/(\d+)/ ) {
+                    if ( $1 >= $GeneMarkIntronThreshold ) {
+                        $nIntronsAboveThreshold++;
+                    }
                 }
             }
         }
+        close(GH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $genemark_hintsfile!\n");
+    }elsif( $EPmode == 1 ) {
+        print LOG "\# " . (localtime)
+            . ": Checking whether file $prothint_file and $evidence_hints contains "
+            . "sufficient multiplicity information...\n" if ($v > 2);
+        open( PH, "<", $prothint_file )
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $prothint_file!\n");
+        while (<PH>) {
+            my @line = split(/\t/);
+            if ( scalar(@line) == 9 ) {
+                $nIntrons++;
+                if ( $line[5] =~ m/(\d+)/ ) {
+                    if ( $1 >= $GeneMarkIntronThreshold ) {
+                        $nIntronsAboveThreshold++;
+                    }
+                }
+            }
+        }
+        close(PH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $prothint_file!\n");
+        open( EV, "<", $evidence_hints )
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $evidence_hints!\n");
+        while (<EV>) {
+            my @line = split(/\t/);
+            if ( scalar(@line) == 9 ) {
+                $nIntrons++;
+                if ( $line[5] =~ m/(\d+)/ ) {
+                    if ( $1 >= $GeneMarkIntronThreshold ) {
+                        $nIntronsAboveThreshold++;
+                    }
+                }
+            }
+        }
+        close(EV) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $evidence_hints!\n");
     }
-    close(GH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $genemark_hintsfile!\n");
     if ( $nIntronsAboveThreshold < 150 ) {
         $prtStr = "#*********\n"
                 . "# WARNING: \n"
-                . "# The file $genemark_hintsfile contains less than 150 "
+                . "# The hints file(s) for GeneMark-EX contain less than 150 "
                 . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
                 . "total, $nIntrons unique introns are contained. "
                 .  "$nIntronsAboveThreshold have a multiplicity >= 10.) Possibly, you "
