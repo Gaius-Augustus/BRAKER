@@ -1354,7 +1354,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
 
 if ( $skipAllTraining == 1 && ( ($ETPmode == 1) ) ){
     create_evidence_gff(); # otherwise no manual etp hints...
-    check_genemark_hints();
+    #check_genemark_hints();
 }
 
 if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
