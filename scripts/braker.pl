@@ -1329,13 +1329,14 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
             # remove reformatting of hintsfile, later!
             # format_ep_hints(); # not required anymore since provided as $prothint_file
             # create_evidence_gff(); # not required anymore since provided as $evidence
-            # check_genemark_hints(); # note required anymore since direct output of prothint
+            check_genemark_hints();
             GeneMark_EP();
             filter_genemark();
         } elsif ( $ETPmode == 1 ) {
             # format_ep_hints(); # not required anymore since provided as $prothint_file
-            create_evidence_gff();
-            check_genemark_hints();
+            create_evidence_gff(); # evidence from both RNA-Seq and proteins
+            append_prothint_to_genemark_hints();
+            check_genemark_hints(); 
             GeneMark_ETP();
             filter_genemark();
         } elsif  ( $ESmode == 1 ) {
@@ -5833,6 +5834,35 @@ sub create_evidence_gff {
     close(EV) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $otherfilesDir/evidence.gff!\n");
+}
+
+####################### append_prothint_to_genemark_hints ######################
+# * append prothint file to genemark_hintsfile (with RNA-Seq hints for 
+#   GeneMark-ETP)
+################################################################################
+sub append_prothint_to_genemark_hints{
+    print LOG "\# " . (localtime) . ": Appending contents for ProtHint output to "
+        . "$otherfilesDir/genemark_hintsfile.gff (that already contains RNA-Seq "
+        . "hints)...\n" if ($v > 2);
+    open(GH, ">>", $otherfilesDir."/genemark_hintsfile.gff") or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir"."/genemark_hintsfile.gff!\n");
+    open(PH, "<", $prothint_file) or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $prothint_file!\n");
+    while(<PH>){
+        print GH $_;
+    }
+    close(PH) or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $prothint_file!\n");
+    close(GH) or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $otherfilesDir"."/genemark_hintsfile.gff!\n");
 }
 
 ####################### check_genemark_hints ###################################
