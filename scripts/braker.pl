@@ -8060,18 +8060,19 @@ sub augustus {
                                     }else{
                                         assign_ex_cfg ("gth_utr.cfg")
                                     }
+                                }elsif($EPmode==1){
+                                    if( $localUTR eq "off" ) {
+                                        assign_ex_cfg ("ep.cfg");
+                                    }else{
+                                        assign_ex_cfg ("ep_utr.cfg");
+                                    }
+
                                 }else{
                                     $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
                                         ." at line " . __LINE__
                                         . "\nunsupported alignment program $prg given!\n";
                                     print STDERR $prtStr;
                                     print LOG $prtStr;
-                                }
-                            }else{
-                                if( $localUTR eq "off" ) {
-                                    assign_ex_cfg ("ep.cfg");
-                                }else{
-                                    assign_ex_cfg ("ep_utr.cfg");
                                 }
                             }
                         }elsif( $foundProt==0 && $foundRNASeq > 0){
