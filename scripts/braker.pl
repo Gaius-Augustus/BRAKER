@@ -6115,7 +6115,7 @@ sub GeneMark_EP {
             if(defined($min_contig)){
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
-            $perlCmdString .= "--max_intergenic 50000 --ep_score 4 --EP "
+            $perlCmdString .= "--max_intergenic 50000 --ep_score 4,0.25 --EP "
                            .  "$otherfilesDir/prothint.gff --cores=$CPU --gc_donor $gc_prob";
             if(-e "$otherfilesDir/evidence.gff"){
                 $perlCmdString .= " --evidence $otherfilesDir/evidence.gff ";
