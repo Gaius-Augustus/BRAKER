@@ -9940,8 +9940,6 @@ sub train_utr {
                            .  "--diamond 1> $otherfilesDir/utr.aa2nonred.stdout "
                            .  "2> $errorfilesDir/utr.aa2nonred.stderr";
         }else{
-            print "DIAMOND PATH:".$DIAMOND_PATH."\n";
-            print "blast_Path:".$blast_path."\n";
             $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
                            .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
                            .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU 1> "
