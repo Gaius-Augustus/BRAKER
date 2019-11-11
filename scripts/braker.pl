@@ -8113,12 +8113,18 @@ sub augustus {
                         $extrinsicCfgFile = $extrinsicCfgFile2;
                     }else{
                         if ( ($foundProt>0 && $foundRNASeq==0) ){
-                            if (defined ($prg) ) {
+                            if (defined ($prg) || $EPmode == 1) {
                                 if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
                                     if ( $localUTR eq "off" ) {
                                         assign_ex_cfg ("gth.cfg");
                                     }else{
                                         assign_ex_cfg ("gth_utr.cfg");
+                                    }
+                                }elsif($EPmode == 1){
+                                    if( $localUTR eq "off" ) {
+                                        assign_ex_cfg ("ep.cfg");
+                                    }else{
+                                        assign_ex_cfg ("ep_utr.cfg");
                                     }
                                 }else{
                                     $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
@@ -8126,12 +8132,6 @@ sub augustus {
                                         . "\nunsupported alignment program $prg given!\n";
                                     print STDERR $prtStr;
                                     print LOG $prtStr;
-                                }
-                            }else{
-                                if( $localUTR eq "off" ) {
-                                    assign_ex_cfg ("ep.cfg");
-                                }else{
-                                    assign_ex_cfg ("ep_utr.cfg");
                                 }
                             }
                         }elsif( $foundProt==0 && $foundRNASeq > 0) {
@@ -8729,17 +8729,8 @@ sub run_augustus_with_joingenes_parallel {
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__
                 . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         }else{
+            # evidence.gff hints are included in $hintsfile
             adjust_pri( $hintsfile, $adjustedHintsFile, "P", 5);
-        }
-        if ( $ETPmode == 1 && -e "$otherfilesDir/evidence.gff") {
-            $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
-            print LOG "$cmdString\n" if ($v > 3);
-            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-                . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-        } else {
-            print LOG "#*********\n" . "# WARNING: ETPmode enabled but "
-                . "$otherfilesDir/evidence.gff does not exist!\n"
-                . "#*********\n" if ($v > 0);
         }
     } else {
         print LOG "\# " . (localtime) . " Skip creating adjusted hints file "
