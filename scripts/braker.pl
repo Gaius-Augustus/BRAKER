@@ -8684,12 +8684,12 @@ sub adjust_pri {
 }
 
 ####################### get_rnaseq_hints #######################################
-# * get RNA-Seq only hints for running AUGUSTUS with RNA-Seq only
+# * get RNA-Seq only hints for running AUGUSTUS with RNA-Seq & manual only
 ################################################################################
 
 sub get_rnaseq_hints {
     print LOG "\# " . (localtime) . ": Retrieving RNA-Seq hints for running "
-        . "AUGUSTUS with RNA-Seq hints only\n" if ($v > 2);
+        . "AUGUSTUS with RNA-Seq hints only (also using manual hints)\n" if ($v > 2);
     my $hints = shift;
     my $adjusted = shift;
     open ( HINTS, "<", $hints ) or die("ERROR in file " . __FILE__ ." at line "
@@ -8697,7 +8697,7 @@ sub get_rnaseq_hints {
     open (OUT, ">", $adjusted) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nCould not open file $adjusted!\n");
     while(<HINTS>){
-        if ( $_ =~ m/src=E/ ) {
+        if ( ($_ =~ m/src=E/) || ($_ =~ m/src=M/) ) {
             print OUT $_;
         }
     }
@@ -8768,13 +8768,8 @@ sub run_augustus_with_joingenes_parallel {
     }
     clean_aug_jobs("Ppri5$genesetId");
     $adjustedHintsFile = "$hintsfile.E";
+    # the following includes evidence hints
     get_rnaseq_hints($hintsfile, $adjustedHintsFile);
-    if ( $ETPmode == 1 && ( -e "$otherfilesDir/evidence.gff" ) ) {
-        $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            ." at line ". __LINE__ . "\nFailed to execute: $cmdString!\n");
-    }
     if (defined ($extrinsicCfgFile2) && $localUTR eq "off") {
         $extrinsicCfgFile = $extrinsicCfgFile2;
     }elsif(defined ($extrinsicCfgFile4) && $localUTR eq "on"){
@@ -8878,12 +8873,6 @@ sub run_augustus_with_joingenes_single_core {
     $adjustedHintsFile = "$hintsfile.E";
     if ( !uptodate( [$hintsfile], [$adjustedHintsFile] ) || $overwrite ) {
         get_rnaseq_hints($hintsfile, $adjustedHintsFile);
-        if ( $ETPmode == 1 ) {
-            $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
-            print LOG "$cmdString\n" if ($v > 3);
-            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-                . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-        }
     }else{
         print LOG "\# " . (localtime) . ": Skip making adjusted hints file "
             . "$adjustedHintsFile from hintsfile $hintsfile because file is up "
