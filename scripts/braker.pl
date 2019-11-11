@@ -48,7 +48,7 @@ use warnings;
 
 my $usage = <<'ENDUSAGE';
 
-braker.pl     Pipeline for predicting genes with GeneMark-ET and AUGUSTUS with
+braker.pl     Pipeline for predicting genes with GeneMark-EX and AUGUSTUS with
             RNA-Seq
 
 SYNOPSIS
@@ -71,7 +71,20 @@ INPUT FILE OPTIONS
                                     to use the flag --extrinsicCfgFiles to
                                     specify parameters for all sources in the
                                     hints file (including the source "E" for
-                                    intron hints from RNA-Seq).
+                                    intron hints from RNA-Seq). If you ran
+                                    ProtHint before calling BRAKER, specify
+                                    the files prothint_augustus.gff and
+                                    evidence_augustus.gff, here.
+--prothints=hints.gff               If BRAKER is called with hints produced
+                                    by ProtHint, specify the file
+                                    prothint.gff, here. Will possibly concatenated
+                                    with hints RNA-Seq hints if called with
+                                    --etpmode.
+--evidence=evidence.gff             If BRAKER is called with hints produced
+                                    by ProtHint, specify the file 
+                                    evidence.gff, here. Will possibly be 
+                                    concatenated with evidence from RNA-Seq
+                                    if called with --etpmode.
 --prot_seq=prot.fa                  A protein sequence file in multiple fasta
                                     format. This file will be used to generate
                                     protein hints for AUGUSTUS by running one
@@ -122,19 +135,16 @@ FREQUENTLY USED OPTIONS
 --epmode                            Run GeneMark-EP with intron hints provided
                                     from protein data. This mode is not 
                                     comptabile with using the aligners
-                                    GenomeThreader, Exonerate and Spaln within
-                                    braker.pl because etpmode and epmode require
-                                    a large database of proteins and such
-                                    mapping should be done outside of braker.pl 
-                                    e.g. on a cluster.
+                                    GenomeThreader, Exonerate and Spaln (stand alone) 
+                                    within braker.pl. ProtHint (with Spaln) as 
+                                    alignment producing software is compatible.
 --etpmode                           Run GeneMark-ETP with hints provided from
                                     proteins and RNA-Seq data. This mode is not
                                     compatible with using the aligners
-                                    GenomeThreader, Exonerate and Spaln within
-                                    braker.pl because etpmode and epmode require
-                                    a large database of proteins and such
-                                    mapping should be done outside of braker.pl 
-                                    e.g. on a cluster.
+                                    GenomeThreader, Exonerate and Spaln (stand alone) 
+                                    within braker.pl. ProtHint (with Spaln)
+                                    as alignment poducing pipeline is 
+                                    compatible.
 --gff3                              Output in GFF3 format (default is gtf
                                     format)
 --cores                             Specifies the maximum number of cores that
@@ -164,17 +174,19 @@ FREQUENTLY USED OPTIONS
                                     Alternatively, if UTR parameters already
                                     exist, training step will be skipped and
                                     those pre-existing parameters are used.
---prg=gth|exonerate|spaln           Alignment tool gth (GenomeThreader),
+--prg=ph|gth|exonerate|spaln        Alignment tool for generating hints from
+                                    similarity of protein sequence data to
+                                    genome data. Method ph (ProtHint with Spaln)
+                                    is generally suitable; gth (GenomeThreader),
                                     exonerate (Exonerate) or Spaln2
-                                    (spaln) that will be used to generate
-                                    protein alignments that will be the
-                                    basis for hints generation for gene
-                                    prediction with AUGUSTUS (if specified
-                                    in combination with --prot_seq) or that
-                                    was used to externally generate an
-                                    alignment file with the commands listed in
-                                    description of --prot_aln (if used in
-                                    combination with --prot_aln).
+                                    (spaln) are suitable for proteins of closely
+                                    related species, only.
+                                    This option should be specified correctly in 
+                                    case --prot_seq or --prot_aln options are used
+                                    (--prot_aln option is not required of hints
+                                    for AUGUSTUS were generated with ProtHint, in
+                                    that case, hints are provided with --hints=file
+                                    and --prg=ph is not required).
 --gth2traingenes                    Generate training gene structures for
                                     AUGUSTUS from GenomeThreader alignments.
                                     (These genes can either be used for
@@ -238,8 +250,8 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     if necessary. Has higher priority than
                                     environment variable.
 --ALIGNMENT_TOOL_PATH=/path/to/tool Set path to alignment tool
-                                    (GenomeThreader, Spaln, or Exonerate) if
-                                    not specified as environment
+                                    (prothint.py, GenomeThreader, Spaln, or Exonerate)
+                                    if not specified as environment
                                     ALIGNMENT_TOOL_PATH variable. Has higher
                                     priority than environment variable.
 --DIAMOND_PATH=/path/to/diamond     Set path to diamond, this is an alternative
@@ -304,7 +316,7 @@ EXPERT OPTIONS
 --filterOutShort                    It may happen that a "good" training gene,
                                     i.e. one that has intron support from
                                     RNA-Seq in all introns predicted by
-                                    GeneMark, is in fact too short. This flag
+                                    GeneMark-EX, is in fact too short. This flag
                                     will discard such genes that have
                                     supported introns and a neighboring
                                     RNA-Seq supported intron upstream of the
@@ -330,7 +342,7 @@ EXPERT OPTIONS
 --skip_fixing_broken_genes          If you do not have python3, you can choose
                                     to skip the fixing of stop codon including
                                     genes (not recommended).
---fungus                            GeneMark-ET option: run algorithm with
+--fungus                            GeneMark-EX option: run algorithm with
                                     branch point model (most useful for fungal
                                     genomes)
 --rnaseq2utr_args=params            Expert option: pass alternative parameters
@@ -412,14 +424,14 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     implemented)
 --grass                             Switch this flag on if you are using braker.pl 
                                     for predicting genes in grasses with 
-                                    GeneMark-ES/ET. The flag will enable
-                                    GeneMark-ES/ET to handle GC-heterogenicity
+                                    GeneMark-EX. The flag will enable
+                                    GeneMark-EX to handle GC-heterogenicity
                                     within genes more properly.
                                     NOTHING IMPLEMENTED FOR GRASS YET!
---transmasked_fasta=file.fa         Transmasked genome FASTA file for GeneMark
+--transmasked_fasta=file.fa         Transmasked genome FASTA file for GeneMark-EX
                                     (to be used instead of the regular genome
                                     FASTA file).  
---min_contig=INT                    Minimal contig length for GeneMark, could
+--min_contig=INT                    Minimal contig length for GeneMark-EX, could
                                     for example be set to 10000 if transmasked_fasta
                                     option is used because transmasking might
                                     introduce many very short contigs.
@@ -428,7 +440,7 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     DOES NOT WORK YET BECAUSE BRAKER DOESNT
                                     SWITCH TRANSLATION TABLE FOR GENEMARK-EX, YET!
 --gc_probability=DECIMAL            Probablity for donor splice site pattern GC 
-                                    for gene prediction with GeneMark-ES/ET,
+                                    for gene prediction with GeneMark-EX,
                                     default value is 0.001
 
 
@@ -562,6 +574,8 @@ my $workDir;        # in the working directory results and temporary files are
 my $filterOutShort; # filterOutShort option (see help)
 my $augustusHintsPreds; # already existing AUGUSTUS hints prediction without UTR
 my $makehub; # flag for creating track data hub
+my $evidence_hints; # input file from ProtHints for GeneMark-EP/ETP
+my $prothint_file; # input file from ProtHints for GeneMark-EP/ETP
 
 # Hint type from input hintsfile will be checked
 # a) GeneMark-ET (requires intron hints) and
@@ -580,7 +594,7 @@ my $nice;    # flag that determines whether system calls should be executed
 my ( $target_1, $target_2, $target_3, $target_4, $target_5) = 0;
                       # variables that store AUGUSTUS accuracy after different
                       # training steps
-my $prg;              # variable to store protein alignment tool
+my $prg = "";              # variable to store protein alignment tool
 my @prot_seq_files;   # variable to store protein sequence file name
 my @prot_aln_files;   # variable to store protein alignment file name
 my $ALIGNMENT_TOOL_PATH;
@@ -713,7 +727,9 @@ GetOptions(
     'version!'                     => \$printVersion,
     'translation_table=s'          => \$ttable,
     'skip_fixing_broken_genes!'    => \$skip_fixing_broken_genes,
-    'gc_probability=s'             => \$gc_prob
+    'gc_probability=s'             => \$gc_prob,
+    'evidence=s'                   => \$evidence_hints,
+    'prothints=s'                  => \$prothint_file
 );
 
 if ($help) {
@@ -802,11 +818,11 @@ if( @bam ) {
     set_BAMTOOLS_PATH();
     set_SAMTOOLS_PATH();
 }
-if ( @prot_seq_files && !$ESmode ){
-    set_ALIGNMENT_TOOL_PATH();
-}
 if (not ($skipAllTraining)){
     set_BLAST_or_DIAMOND_PATH();
+}
+if ( @prot_seq_files && !$ESmode ){
+    set_ALIGNMENT_TOOL_PATH();
 }
 if ( not ($skipGetAnnoFromFasta) || $makehub || not ($skip_fixing_broken_genes)){
     set_PYTHON3_PATH();
@@ -1065,6 +1081,30 @@ if ( defined($geneMarkGtf) ) {
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
 }
 
+# copy evidence.gff file, do not softlink because file might be modified in ETPmode
+if ( defined($evidence_hints) ){
+    print LOG "\#  "
+        . (localtime)
+        . ": copying $evidence_hints to "
+        . "$otherfilesDir/evidence.gff...\n" if ($v > 2);
+    $cmdString =  "cp $evidence_hints $otherfilesDir/evidence.gff";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
+# softlink prothint.gff
+if ( defined($prothint_file) ){
+        print LOG "\#  "
+        . (localtime)
+        . ": creating softlink of ".rel2abs($prothint_file)." to "
+        . "$otherfilesDir/prothint.gff...\n" if ($v > 2);
+    $cmdString =  "ln -s ". rel2abs($prothint_file)." $otherfilesDir/prothint.gff";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
 # create parameter directory
 if ( !-d $parameterDir ) {
     make_path($parameterDir) or die("ERROR in file " . __FILE__ ." at line "
@@ -1258,7 +1298,7 @@ if ( @bam ) {
 
 # make hints from protein sequence data
 if ( @prot_seq_files or @prot_aln_files 
-    && not ( defined($AUGUSTUS_hints_preds) ) ) {
+    && not ( defined($AUGUSTUS_hints_preds) ) ) { # might want to change $AUGUSTUS_hints_preds as a condition here
     make_prot_hints();
 }
 
@@ -1270,7 +1310,9 @@ if (@hints && not ( defined($AUGUSTUS_hints_preds) )) {
 # extract intron hints from hintsfile.gff for GeneMark (in ETP mode also used for AUGUSTUS)
 
 if ( (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) ) && ($ESmode == 0)) {
-    if (not ( defined($AUGUSTUS_hints_preds)) ){
+    if (not ( defined($AUGUSTUS_hints_preds)) ){ # this might be questionable, only ok if users provide 
+                                                 # the hintsfile from previous run, which they probably 
+                                                 # will
        get_genemark_hints();
     }
 }
@@ -1288,15 +1330,16 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
             filter_genemark();
         } elsif ( $EPmode == 1 ) {
             # remove reformatting of hintsfile, later!
-            format_ep_hints();
-            create_evidence_gff();
+            # format_ep_hints(); # not required anymore since provided as $prothint_file
+            # create_evidence_gff(); # not required anymore since provided as $evidence
             check_genemark_hints();
             GeneMark_EP();
             filter_genemark();
         } elsif ( $ETPmode == 1 ) {
-            format_ep_hints();
-            create_evidence_gff();
-            check_genemark_hints();
+            # format_ep_hints(); # not required anymore since provided as $prothint_file
+            create_evidence_gff(); # evidence from both RNA-Seq and proteins
+            append_prothint_to_genemark_hints();
+            check_genemark_hints(); 
             GeneMark_ETP();
             filter_genemark();
         } elsif  ( $ESmode == 1 ) {
@@ -1312,10 +1355,9 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
     training_augustus();
 }
 
-if ( $skipAllTraining == 1 && ($ETPmode or $EPmode) ){
-    format_ep_hints();
+if ( $skipAllTraining == 1 && ( ($ETPmode == 1) ) ){
     create_evidence_gff(); # otherwise no manual etp hints...
-    check_genemark_hints();
+    #check_genemark_hints();
 }
 
 if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
@@ -2230,8 +2272,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                                 . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
-                }
-                elsif ( $prg eq "exonerate" ) {
+                } elsif ( $prg eq "exonerate" ) {
                     $prtStr
                         = "\# "
                         . (localtime)
@@ -2259,8 +2300,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                                 . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
-                }
-                elsif ( $prg eq "spaln" ) {
+                } elsif ( $prg eq "spaln" ) {
                     $prtStr
                         = "\# "
                         . (localtime)
@@ -2288,7 +2328,37 @@ sub set_ALIGNMENT_TOOL_PATH {
                                 . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
+                } elsif ( $prg eq "ph") {
+                    $prtStr
+                        = "\# "
+                        . (localtime)
+                        . ": Trying to guess \$ALIGNMENT_TOOL_PATH "
+                        . "from location of ProtHint executable in your \$PATH\n";
+                    $logString .= $prtStr if ($v > 1);
+                    my $epath = which 'prothint.py';
+                    if(defined($epath)){
+                        if ( -d dirname($epath) ) {
+                            $prtStr
+                                = "\# "
+                                . (localtime)
+                                . ": Setting \$ALIGNMENT_TOOL_PATH to "
+                                . dirname($epath) . "\n";
+                            $logString .= $prtStr if ($v > 1);
+                            $ALIGNMENT_TOOL_PATH = dirname($epath);
+                        }
+                    }
+                    else {
+                        $prtStr = "#*********\n"
+                                . "# WARNING: Guessing the location of "
+                                . "\$ALIGNMENT_TOOL_PATH failed / BRAKER failed to "
+                                . "guess the location of alignment tool with "
+                                . "\"which prothint.py\"!\n"
+                                . "#*********\n";
+                        $logString .= $prtStr if ($v > 0);
+                    }
+
                 }
+                # ProtHint also requires DIAMOND and Spaln, but apparently it brings binaries along
             }
         }
 
@@ -3439,6 +3509,35 @@ sub check_upfront {
                 exit(1);
         }
     }
+    # check for bamToWig.py required UCSC tools
+    if( $UTR eq "on" ){
+        if ( system("which twoBitInfo > /dev/null") != 0 ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "twoBitInfo not installed. "
+                . "It is available at http://hgdownload.soe.ucsc.edu/admin/exe "
+                . "and should be added to your \$PATH. bamToWig.py will "
+                . "automatically download this tool to the working directory but "
+                . "permanent global installation is recommended.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+        }
+        if ( system("which faToTwoBit > /dev/null") != 0 ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "faToTwoBit not installed. "
+                . "It is available at http://hgdownload.soe.ucsc.edu/admin/exe "
+                . "and should be added to your \$PATH. bamToWig.py will "
+                . "automatically download this tool to the working directory but "
+                . "permanent global installation is recommended.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+        }
+    }
 }
 
 ####################### find_ex_cfg ############################################
@@ -3892,6 +3991,21 @@ sub check_options {
         $logString .= $prtStr if ($v > 1);
     }
 
+    if( ((($EPmode == 1 || $ETPmode == 1) && not(defined($evidence_hints) )  && not(defined($prothint_file))) == 1) 
+        && ((($EPmode == 1 || $ETPmode == 1) && not(defined($hintsfile)) &&  scalar(@prot_seq_files)<0 && not($prg eq "ph")) == 1) ){
+        $prtStr = "\# "
+                 . (localtime)
+                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                 . "If option --epmode is used, either the options \"--prg=ph "
+                 . "--prot_seq=proteins.fasta\" or the options "
+                 . "\"--evidence=evidence.gff --prothints=prothint.gff "
+                 . "--hints=prothint_augustus.gff,evidence_augustus.gff\" "
+                 . "must be specified!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
     # check whether species is specified
     if ( defined($species) ) {
         if ( $species =~ /[\s]/ ) {
@@ -4104,7 +4218,7 @@ sub check_options {
             $prg = "gth";
         }
         elsif ( !defined($prg) && $EPmode == 1 ) {
-            $prg = "prosplign";
+            $prg = "ph";
             $prtStr = "#*********\n"
                     . "# WARNING: No alignment tool was specified for aligning "
                     . "protein sequences against genome. Setting ProSplign as "
@@ -4170,42 +4284,28 @@ sub check_options {
     }
 
     # check whether alignment program is given
-    if ( defined($prg) ) {
+    if ( length($prg) > 0 ) {
         if (    not( $prg =~ m/gth/ )
             and not( $prg =~ m/exonerate/ )
             and not( $prg =~ m/spaln/ )
+            and not( $prg =~ m/ph/)
             and $EPmode == 0 )
         {
             $prtStr
                 = "\# "
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "An alignment tool other than gth, exonerate and spaln"
-                . " has been specified with option --prg=$prg. BRAKER "
+                . "An alignment tool other than prothint (ph), gth, exonerate and spaln"
+                . " has been specified with option --prg=$prg . BRAKER "
                 . "currently only supports the options gth, exonerate and "
-                . "spaln for running BRAKER in GeneMark-ET mode, and prosplign "
+                . "spaln for running BRAKER in GeneMark-ET mode, and ProtHint "
                 . "for running BRAKER in GeneMark-EP mode. BRAKER was now "
                 . "started in GeneMark-ET mode.\n";
             $logString .= $prtStr;
             print STDERR $logString;
             exit(1);
         }
-        elsif ( not( $prg =~ m/prosplign/ ) and $EPmode == 1 ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "An alignment tool other than gth, exonerate and "
-                . "spaln has been specified with option --prg=$prg. BRAKER "
-                . "currently only supports the options gth, exonerate and "
-                . "spaln for running BRAKER in GeneMark-ET mode, and prosplign "
-                . "for running BRAKER in GeneMark-EP mode. BRAKER was now "
-                . "started in GeneMark-EP mode.\n";
-            $logString .= $prtStr;
-            print STDERR $logString;
-            exit(1);
-        }
-        if ( !@prot_seq_files and !@prot_aln_files ) {
+        if ( (!@prot_seq_files and !@prot_aln_files)) {
             $prtStr
                 = "\# "
                 . (localtime)
@@ -4775,7 +4875,8 @@ sub make_rnaseq_hints {
 }
 
 ####################### make_prot_hints ########################################
-# * run protein to genome alignment
+# * run protein to genome alignment (gth, spaln or exonerate if EPmode/ETPmode
+#   == 0, or ProtHint if EPmode/ETPmode ==1 && prg == ph
 # * convert alignments to hints (calls aln2hints)
 # * converts GenomeThreader alignments to hints (calls gth2gtf)
 ################################################################################
@@ -4797,11 +4898,10 @@ sub make_prot_hints {
         ."\nFailed to execute $cmdString!\n");
 
     # from fasta files
-    if ( @prot_seq_files && $EPmode == 0 ) {
+    if ( @prot_seq_files && $EPmode == 0 && $ETPmode == 0) {
         $string = find(
             "startAlign.pl",        $AUGUSTUS_BIN_PATH,
-            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-        );
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         $errorfile = "$errorfilesDir/startAlign.stderr";
         $logfile   = "$errorfilesDir/startAlign.stdout";
         for ( my $i = 0; $i < scalar(@prot_seq_files); $i++ ) {
@@ -4889,17 +4989,8 @@ sub make_prot_hints {
             }
         }
     }
-    elsif ( @prot_seq_files && $EPmode == 1 ) {
-        $prtStr
-            = "\# " . (localtime) . ": ERROR: in file " . __FILE__
-            . " at line ". __LINE__ ."\n"
-            . "Running ProSplign from within "
-            . "braker.pl is currently not supported. For running braker.pl "
-            . "with GeneMark-EP, please provide --hints=intronhints.gff file!"
-            . " Aborting braker.pl!\n";
-        print LOG $prtStr;
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            $prtStr);
+    elsif ( @prot_seq_files && ( $EPmode == 1 or $ETPmode == 1)) {
+        prothint();
     }
 
     # convert pipeline created protein alignments to protein hints
@@ -4934,7 +5025,7 @@ sub make_prot_hints {
     }
 
     # convert command line specified protein alignments to protein hints
-    if ( @prot_aln_files && $EPmode == 0 ) {
+    if ( @prot_aln_files && $EPmode == 0 && $ETPmode == 0) {
         for ( my $i = 0; $i < scalar(@prot_aln_files); $i++ ) {
             if ( !uptodate( [ $prot_aln_files[$i] ], [$prot_hintsfile] )
                 || $overwrite )
@@ -4950,20 +5041,19 @@ sub make_prot_hints {
             }
         }
     }
-    elsif ( @prot_aln_files && $EPmode == 1 ) {
+    elsif ( @prot_aln_files && ($EPmode == 1 || $ETPmode == 1)) {
         $prtStr
             = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "Conversion of ProSplign alignments within "
-            . "braker.pl is currently not supported. To run braker.pl with GeneMark-EP, "
-            . "please provide --hints=intronhints.gff! Aborting braker.pl!\n";
+            . "braker.pl is currently not supported. Aborting braker.pl!\n";
         print LOG $prtStr;
         clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
     }
 
     # appending protein hints to $hintsfile (combined with RNA_Seq if available)
-    if ( -f $prot_hints_file_temp || $overwrite ) {
+    if ( ( -f $prot_hints_file_temp || $overwrite ) && $EPmode == 0 && $ETPmode == 0) {
         if ( !uptodate( [$prot_hints_file_temp], [$prot_hintsfile] )
             || $overwrite )
         {
@@ -5019,7 +5109,7 @@ sub make_prot_hints {
             unlink($toBeSortedHintsFile);
         }
     }
-    if ( -z $prot_hintsfile ) {
+    if ( -z $prot_hintsfile && $EPmode == 0 && $ETPmode == 0 ) {
         $prtStr
             = "\# "
             . (localtime)
@@ -5048,6 +5138,79 @@ sub make_prot_hints {
         gth2gtf( $alignment_outfile, $gthTrainGeneFile );
     }
 }
+
+####################### prothint ###############################################
+# * converts protein evidence to hints with ProtHint
+################################################################################
+
+sub prothint{
+    my $prot_file = "$otherfilesDir/input_proteins.fasta";
+    if(scalar(@prot_seq_files) > 1){
+        print LOG "\# " . (localtime)
+            . ": Concatenating protein FASTA files into $prot_file...\n" 
+            if ($v > 2);
+        open( PROTT, ">", $prot_file ) or clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $prot_file!\n");
+        for(my $i=0; $i<scalar(@prot_seq_files); $i++){
+            open( PROTF, "<", $prot_seq_files[$i] ) or clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $prot_seq_files[$i]!\n");
+            while(<PROTF>){
+                print PROTT $_;
+            }
+            close( PROTF) or clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not close file $prot_seq_files[$i]!\n");
+        }
+        close( PROTT) or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $prot_file!\n");
+    }else{
+        print LOG "\# " . (localtime)
+            . ": Creating softlink or protein FASTA file $prot_seq_files[0] to "
+            . "$prot_file...\n" if ($v > 2); 
+        my $symlink_exists = eval{ symlink("$prot_seq_files[0]", "$prot_file"); 1};
+        if(not($symlink_exists)){
+            clean_abort(
+                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nFailed to create symbolic link from $prot_seq_files[0] "
+                . "to $prot_file!\n");
+        }
+    }
+    print LOG "\# " . (localtime)
+        . ": Running ProtHint...\n" if ($v > 2);
+    chdir $otherfilesDir; # make sure that I am in $otherfilesDir because 
+                          # prothint produces output files there
+    $cmdString = "$ALIGNMENT_TOOL_PATH"."/prothint.py "
+               . "$otherfilesDir/genome.fa $prot_file "
+               . "> $otherfilesDir/prothint.log 2> $errorfilesDir/prothint.err";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    # assign global variables
+    $evidence_hints = $otherfilesDir."/evidence.gff";
+    $prothint_file = $otherfilesDir."/prothint.gff";
+    #concatenate AUGUSTUS hints
+    print LOG "\# " . (localtime)
+        . ": Concatenating ProtHint hints to AUGUSTUS hints file "
+        . "$otherfilesDir/hintsfile.gff...\n" 
+        if ($v > 2);
+    $cmdString = "cat $otherfilesDir/prothint_augustus.gff >> $otherfilesDir/hintsfile.gff";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    $cmdString = "cat $otherfilesDir/evidence_augustus.gff >> $otherfilesDir/hintsfile.gff";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
 
 ####################### aln2hints ##############################################
 # * converts protein alignments to hints
@@ -5327,18 +5490,24 @@ sub check_hints {
 ####################### get_genemark_hints #####################################
 # * GeneMark only uses intron hints, AUGUSTUS also uses other hints types
 # * this function creates $genemark_hintsfile with intron hints
+# * Scenarios: 
+#      - EPmode - do nothing, instead use prothint.gff and evidence.gff
+#      - ETmode - do nothing, should be intron hints only?
+#      - ETPmode - append prothint.gff and RNA-Seq intron hints to genemark_hints.gff
+#                  append prot & RNA-Seq evidence to evidence.gff
 ################################################################################
 
 
 sub get_genemark_hints {
-    print LOG "\# ". (localtime) . ": Preparing hints for running GeneMark\n"
-    if ($v > 2);
+    print LOG "\# ". (localtime) . ": Preparing hints for running GeneMark\n" if ($v > 2);
+    # temporary files
     my $gm_hints_rnaseq = "$genemark_hintsfile.rnaseq";
     my $gm_hints_prot = "$genemark_hintsfile.prot";
-    print LOG "\# "
-        . (localtime)
-        . ": Filtering intron hints for GeneMark from $hintsfile...\n"
-        if ($v > 3);
+
+    # filter intron hints from original hintsfile and separate into
+    # protein and rnaseq hints file
+    print LOG "\# " . (localtime)
+        . ": Filtering intron hints for GeneMark from $hintsfile...\n" if ($v > 3);
     open (HINTS, "<", $hintsfile) or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -5351,23 +5520,55 @@ sub get_genemark_hints {
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not open file $gm_hints_prot!\n");
+    my $warnProt = 0;
     while (<HINTS>) {
-        if ( $_ =~ m/\tintron\t.*src=E/ ) {
-            print OUTRNASEQ $_;
-        }elsif ( $_ =~ m/\tintron\t/i && ( ( $_ =~ m/src=P/) or $_ =~ m/src=M/ ) ) {
+        if ( $_ =~ m/\tintron\t/i && ($_ =~ m/src=E/) ) {
             $_ =~ s/intron/Intron/;
-            print OUTPROT $_;
+            print OUTRNASEQ $_;
+        }elsif ( $_ =~ m/\tintron\t/i && ($_ =~ m/src=P/) ) {
+            $_ =~ s/intron/Intron/;
+            if(not(defined($prothint_file))){
+                print OUTPROT $_;
+            }elsif( ($EPmode == 1 || $ETPmode == 1) && defined($prothint_file) && $warnProt == 0) {
+                $prtStr = "WARNING: protein hints from "
+                        . "file $hintsfile, are ignored because "
+                        . "they are assumed to be duplicates of "
+                        . "hints provided in ProtHint file $prothint_file"
+                        . " if BRAKER is run in EP or ETP mode!\n";
+                print LOG $prtStr;
+                $warnProt = 1;
+            }
         }
     }
     close (OUTRNASEQ) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $gm_hints_rnaseq!\n");
-    close (OUTPROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $gm_hints_prot!\n");
     close (HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $hintsfile!\n");
+
+    # add the prothint contents to protein file
+    if( -e $otherfilesDir."/prothint.gff" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": Appending hints from file $otherfilesDir/prothint.gff to $hintsfile...\n"
+            if ($v > 3);
+        open(PROTHINT, "<", $otherfilesDir."/prothint.gff")  or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir/prothint.gff!\n");
+        while(<PROTHINT>){
+            print OUTPROT $_;
+        }
+        close(PROTHINT)or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $otherfilesDir/prothint.gff!\n");
+    }
+    close (OUTPROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not close file $gm_hints_prot!\n");
+
     if ( -s $gm_hints_rnaseq ) {
         $cmdString = "";
         if ($nice) {
@@ -5384,6 +5585,7 @@ sub get_genemark_hints {
             "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
     }
+
     if( -s $gm_hints_prot ) {
         $cmdString = "";
         if ($nice) {
@@ -5401,38 +5603,13 @@ sub get_genemark_hints {
             . "\nFailed to execute: $cmdString\n");
     }
 
-
-    if( $EPmode == 0 && $ETPmode == 0 ) {
+    if( $EPmode == 0 ) {
         $cmdString = "mv $gm_hints_rnaseq.tmp $genemark_hintsfile";
         print LOG "$cmdString\n" if ($v > 3);
         system($cmdString) == 0 or clean_abort(
             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
             "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
-    }elsif ( $EPmode == 1 ) {
-        $cmdString = "mv $gm_hints_prot.tmp $genemark_hintsfile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system($cmdString) == 0 or clean_abort(
-            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nFailed to execute: $cmdString\n");
-    }elsif ( $ETPmode == 1 ) {
-        $cmdString = "mv $gm_hints_rnaseq.tmp $genemark_hintsfile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system($cmdString) == 0 or clean_abort(
-            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nFailed to execute: $cmdString\n");
-        $cmdString = "cat $gm_hints_prot.tmp >> $genemark_hintsfile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system($cmdString) == 0 or clean_abort(
-            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nFailed to execute: $cmdString\n");
-    } else {
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\n");
     }
 
     if( -e $gm_hints_rnaseq ) {
@@ -5527,32 +5704,27 @@ sub format_ep_hints {
 }
 
 ####################### create_evidence_gff ####################################
-# * GeneMark can use true positive introns as evidence for predictions
-# * introns supported by protein alignment and RNA-Seq alignment are true
-#   positives
-# * AUGUSTUS can also use these introns as manual hints
-# * also "src=M" hints from protein mapping pipeline go into this file,
-#   therefore this function is also called in --epmode
+# * evidence.gff file is now produced by ProtHint
+# * additional high quality hints can be added to that file by combining
+#   RNA-Seq and prothint_augustus.gff hints
+# * such hints are also appended with src=M to hintsfile for AUGUSTUS
 ################################################################################
 
 sub create_evidence_gff {
-    print LOG "\# " . (localtime) . ": Creating evidence.gff with hints from both "
+    print LOG "\# " . (localtime) . ": Extending evidence.gff by hints from both "
         . "RNA-Seq and proteins...\n" if ($v > 2);
-    my $evidenceFile = "$otherfilesDir/evidence.gff";
+    # $evidence exists
     my %rnaseq;
     my %prot;
     my %manual;
     my $manualExists = 0;
-    my $mixed_hints;
-    if(defined($prg)){ # implies gth in most cases
-        $mixed_hints = $otherfilesDir."/hintsfile.gff";
-    }else{
-        $mixed_hints = $genemark_hintsfile;
-    }
-    open ( HINTS, "<", $mixed_hints ) or clean_abort(
+    # $hintsfile exists
+
+    # 1) extend append hints that should have src=M to hintsfile for AUGUSTUS
+    open ( HINTS, "<", $otherfilesDir."/hintsfile.gff" ) or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not open file $genemark_hintsfile!\n");
+        . "\nCould not open file $otherfilesDir"."/hintsfile.gff!\n");
     while (<HINTS>) {
         if($_ =~ m/(\S+)\t(\S+)\t(\S+)\t(\d+)\t(\d+)\t(\S+)\t(\S+)\t(\S+)\t(.*)/){
             my %hint;
@@ -5577,45 +5749,84 @@ sub create_evidence_gff {
     }
     close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $genemark_hintsfile!\n");
+        . "\nCould not close file $otherfilesDir"."/hintsfile.gff!\n");
 
-    open ( EV, ">", $evidenceFile ) or clean_abort(
+    open( EVAUG, ">>", $otherfilesDir."/hintsfile.gff") or clean_abort(
         "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
         "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not open file $evidenceFile!\n");
-    if( $ETPmode == 1 ) {
-        foreach my $locus (keys %rnaseq) {
-            if( defined ($prot{$locus}) ) {
-                foreach my $hint (@{$rnaseq{$locus}}) {
-                    foreach my $otherHint (@{$prot{$locus}}) {
-                        if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
-                            print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
+        . "\nCould not open file $otherfilesDir"."/hintsfile.gff!\n");
+    foreach my $locus (keys %rnaseq) {
+        if( defined ($prot{$locus}) ) {
+            foreach my $hint (@{$rnaseq{$locus}}) {
+                foreach my $otherHint (@{$prot{$locus}}) {
+                    if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
+                        print EVAUG $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
                             ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
-                        }
                     }
                 }
             }
         }
     }
-    if( $manualExists == 1 ) {
-        foreach my $locus (keys %manual) {
-            foreach my $hint (@{$manual{$locus}}){
-                print EV $locus."\t".$hint->{'source'}."\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
+    close(EVAUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not close file $otherfilesDir/hintsfile.gff!\n");
+   
+    # 2) extend evidence.gff file for GeneMark
+    if(-e $otherfilesDir."/evidence.gff"){
+        open( EV, ">>", $otherfilesDir."/evidence.gff") or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir"."/evidence.gff!\n");
+    }else{
+        open( EV, ">", $otherfilesDir."/evidence.gff") or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir"."/evidence.gff!\n");
+    }
+    foreach my $locus (keys %rnaseq) {
+        if( defined ($prot{$locus}) ) {
+            foreach my $hint (@{$rnaseq{$locus}}) {
+                foreach my $otherHint (@{$prot{$locus}}) {
+                    if( $hint->{'start'} == $otherHint->{'start'} && $hint->{'stop'} == $otherHint->{'stop'} && $hint->{'strand'} eq $otherHint->{'strand'} ) {
+                        print EV $locus."\tboth\t".$hint->{'feature'}."\t".$hint->{'start'}."\t".$hint->{'stop'}
                             ."\t1000\t".$hint->{'strand'}."\t".$hint->{'frame'}."\tsrc=M;pri=6;\n";
+                    }
+                }
             }
         }
     }
     close(EV) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $evidenceFile!\n");
-    # check whether there actually is any evidence, if not, delete file
-    if(-z $evidenceFile){
-        print LOG "\# "
-        . (localtime)
-        . ": File $evidenceFile is empty, deleting file\n" if ($v > 2);
-        unlink $evidenceFile;
-    }
+        . "\nCould not close file $otherfilesDir/evidence.gff!\n");
+}
 
+####################### append_prothint_to_genemark_hints ######################
+# * append prothint file to genemark_hintsfile (with RNA-Seq hints for 
+#   GeneMark-ETP)
+################################################################################
+sub append_prothint_to_genemark_hints{
+    print LOG "\# " . (localtime) . ": Appending contents for ProtHint output to "
+        . "$otherfilesDir/genemark_hintsfile.gff (that already contains RNA-Seq "
+        . "hints)...\n" if ($v > 2);
+    open(GH, ">>", $otherfilesDir."/genemark_hintsfile.gff") or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir"."/genemark_hintsfile.gff!\n");
+    open(PH, "<", $otherfilesDir."/prothint.gff") or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $otherfilesDir/prothint.gff!\n");
+    while(<PH>){
+        print GH $_;
+    }
+    close(PH) or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $otherfilesDir/prothint.gff!\n");
+    close(GH) or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $otherfilesDir"."/genemark_hintsfile.gff!\n");
 }
 
 ####################### check_genemark_hints ###################################
@@ -5634,32 +5845,74 @@ sub check_genemark_hints {
     else {
         $GeneMarkIntronThreshold = 10;
     }
-    print LOG "\# "
-        . (localtime)
-        . ": Checking whether file $genemark_hintsfile contains "
-        . "sufficient multiplicity information...\n" if ($v > 2);
-    open( GH, "<", $genemark_hintsfile )
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-            "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nCould not open file $genemark_hintsfile!\n");
-    while (<GH>) {
-        my @line = split(/\t/);
-        if ( scalar(@line) == 9 ) {
-            $nIntrons++;
-            if ( $line[5] =~ m/(\d+)/ ) {
-                if ( $1 >= $GeneMarkIntronThreshold ) {
-                    $nIntronsAboveThreshold++;
+    if( ($EPmode == 0 && $ETPmode==0 && $ESmode == 0) || $ETPmode == 1 ) { 
+        print LOG "\# "
+            . (localtime)
+            . ": Checking whether file $genemark_hintsfile contains "
+            . "sufficient multiplicity information...\n" if ($v > 2);
+        open( GH, "<", $genemark_hintsfile )
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $genemark_hintsfile!\n");
+        while (<GH>) {
+            my @line = split(/\t/);
+            if ( scalar(@line) == 9 ) {
+                $nIntrons++;
+                if ( $line[5] =~ m/(\d+)/ ) {
+                    if ( $1 >= $GeneMarkIntronThreshold ) {
+                        $nIntronsAboveThreshold++;
+                    }
                 }
             }
         }
+        close(GH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $genemark_hintsfile!\n");
+    }elsif( $EPmode == 1 ) {
+        print LOG "\# " . (localtime)
+            . ": Checking whether file $otherfilesDir/prothint.gff and $evidence_hints contains "
+            . "sufficient multiplicity information...\n" if ($v > 2);
+        open( PH, "<", $otherfilesDir."/prothint.gff" )
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $otherfilesDir/prothint.gff!\n");
+        while (<PH>) {
+            my @line = split(/\t/);
+            if ( scalar(@line) == 9 ) {
+                $nIntrons++;
+                if ( $line[5] =~ m/(\d+)/ ) {
+                    if ( $1 >= $GeneMarkIntronThreshold ) {
+                        $nIntronsAboveThreshold++;
+                    }
+                }
+            }
+        }
+        close(PH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $prothint_file!\n");
+        open( EV, "<", $otherfilesDir."/evidence.gff" )
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nCould not open file $otherfilesDir/evidence.gff!\n");
+        while (<EV>) {
+            my @line = split(/\t/);
+            if ( scalar(@line) == 9 ) {
+                $nIntrons++;
+                if ( $line[5] =~ m/(\d+)/ ) {
+                    if ( $1 >= $GeneMarkIntronThreshold ) {
+                        $nIntronsAboveThreshold++;
+                    }
+                }
+            }
+        }
+        close(EV) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not close file $otherfilesDir/evidence.gff!\n");
     }
-    close(GH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $genemark_hintsfile!\n");
     if ( $nIntronsAboveThreshold < 150 ) {
         $prtStr = "#*********\n"
                 . "# WARNING: \n"
-                . "# The file $genemark_hintsfile contains less than 150 "
+                . "# The hints file(s) for GeneMark-EX contain less than 150 "
                 . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
                 . "total, $nIntrons unique introns are contained. "
                 .  "$nIntronsAboveThreshold have a multiplicity >= 10.) Possibly, you "
@@ -5828,6 +6081,7 @@ sub GeneMark_ET {
 
 ####################### GeneMark_EP ############################################
 # * execute GeneMark-EP with protein intron hints for training
+# * use output files of ProtHint ()
 ################################################################################
 
 sub GeneMark_EP {
@@ -5862,7 +6116,7 @@ sub GeneMark_EP {
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
             $perlCmdString .= "--max_intergenic 50000 --ep_score 4 --EP "
-                           .  "$genemark_hintsfile --cores=$CPU --gc_donor $gc_prob";
+                           .  "$otherfilesDir/prothint.gff --cores=$CPU --gc_donor $gc_prob";
             if(-e "$otherfilesDir/evidence.gff"){
                 $perlCmdString .= " --evidence $otherfilesDir/evidence.gff ";
             }
@@ -7815,18 +8069,19 @@ sub augustus {
                                     }else{
                                         assign_ex_cfg ("gth_utr.cfg")
                                     }
+                                }elsif($EPmode==1){
+                                    if( $localUTR eq "off" ) {
+                                        assign_ex_cfg ("ep.cfg");
+                                    }else{
+                                        assign_ex_cfg ("ep_utr.cfg");
+                                    }
+
                                 }else{
                                     $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
                                         ." at line " . __LINE__
                                         . "\nunsupported alignment program $prg given!\n";
                                     print STDERR $prtStr;
                                     print LOG $prtStr;
-                                }
-                            }else{
-                                if( $localUTR eq "off" ) {
-                                    assign_ex_cfg ("ep.cfg");
-                                }else{
-                                    assign_ex_cfg ("ep_utr.cfg");
                                 }
                             }
                         }elsif( $foundProt==0 && $foundRNASeq > 0){
@@ -7868,12 +8123,18 @@ sub augustus {
                         $extrinsicCfgFile = $extrinsicCfgFile2;
                     }else{
                         if ( ($foundProt>0 && $foundRNASeq==0) ){
-                            if (defined ($prg) ) {
+                            if (defined ($prg) || $EPmode == 1) {
                                 if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
                                     if ( $localUTR eq "off" ) {
                                         assign_ex_cfg ("gth.cfg");
                                     }else{
                                         assign_ex_cfg ("gth_utr.cfg");
+                                    }
+                                }elsif($EPmode == 1){
+                                    if( $localUTR eq "off" ) {
+                                        assign_ex_cfg ("ep.cfg");
+                                    }else{
+                                        assign_ex_cfg ("ep_utr.cfg");
                                     }
                                 }else{
                                     $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
@@ -7881,12 +8142,6 @@ sub augustus {
                                         . "\nunsupported alignment program $prg given!\n";
                                     print STDERR $prtStr;
                                     print LOG $prtStr;
-                                }
-                            }else{
-                                if( $localUTR eq "off" ) {
-                                    assign_ex_cfg ("ep.cfg");
-                                }else{
-                                    assign_ex_cfg ("ep_utr.cfg");
                                 }
                             }
                         }elsif( $foundProt==0 && $foundRNASeq > 0) {
@@ -8438,12 +8693,12 @@ sub adjust_pri {
 }
 
 ####################### get_rnaseq_hints #######################################
-# * get RNA-Seq only hints for running AUGUSTUS with RNA-Seq only
+# * get RNA-Seq only hints for running AUGUSTUS with RNA-Seq & manual only
 ################################################################################
 
 sub get_rnaseq_hints {
     print LOG "\# " . (localtime) . ": Retrieving RNA-Seq hints for running "
-        . "AUGUSTUS with RNA-Seq hints only\n" if ($v > 2);
+        . "AUGUSTUS with RNA-Seq hints only (also using manual hints)\n" if ($v > 2);
     my $hints = shift;
     my $adjusted = shift;
     open ( HINTS, "<", $hints ) or die("ERROR in file " . __FILE__ ." at line "
@@ -8451,7 +8706,7 @@ sub get_rnaseq_hints {
     open (OUT, ">", $adjusted) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nCould not open file $adjusted!\n");
     while(<HINTS>){
-        if ( $_ =~ m/src=E/ ) {
+        if ( ($_ =~ m/src=E/) || ($_ =~ m/src=M/) ) {
             print OUT $_;
         }
     }
@@ -8484,17 +8739,8 @@ sub run_augustus_with_joingenes_parallel {
             system("$cmdString") == 0 or die("ERROR in file " . __FILE__
                 . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
         }else{
+            # evidence.gff hints are included in $hintsfile
             adjust_pri( $hintsfile, $adjustedHintsFile, "P", 5);
-        }
-        if ( $ETPmode == 1 && -e "$otherfilesDir/evidence.gff") {
-            $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
-            print LOG "$cmdString\n" if ($v > 3);
-            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-                . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-        } else {
-            print LOG "#*********\n" . "# WARNING: ETPmode enabled but "
-                . "$otherfilesDir/evidence.gff does not exist!\n"
-                . "#*********\n" if ($v > 0);
         }
     } else {
         print LOG "\# " . (localtime) . " Skip creating adjusted hints file "
@@ -8531,13 +8777,8 @@ sub run_augustus_with_joingenes_parallel {
     }
     clean_aug_jobs("Ppri5$genesetId");
     $adjustedHintsFile = "$hintsfile.E";
+    # the following includes evidence hints
     get_rnaseq_hints($hintsfile, $adjustedHintsFile);
-    if ( $ETPmode == 1 && ( -e "$otherfilesDir/evidence.gff" ) ) {
-        $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
-        print LOG "$cmdString\n" if ($v > 3);
-        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-            ." at line ". __LINE__ . "\nFailed to execute: $cmdString!\n");
-    }
     if (defined ($extrinsicCfgFile2) && $localUTR eq "off") {
         $extrinsicCfgFile = $extrinsicCfgFile2;
     }elsif(defined ($extrinsicCfgFile4) && $localUTR eq "on"){
@@ -8641,12 +8882,6 @@ sub run_augustus_with_joingenes_single_core {
     $adjustedHintsFile = "$hintsfile.E";
     if ( !uptodate( [$hintsfile], [$adjustedHintsFile] ) || $overwrite ) {
         get_rnaseq_hints($hintsfile, $adjustedHintsFile);
-        if ( $ETPmode == 1 ) {
-            $cmdString = "cat $otherfilesDir/evidence.gff >> $adjustedHintsFile";
-            print LOG "$cmdString\n" if ($v > 3);
-            system("$cmdString") == 0 or die("ERROR in file " . __FILE__
-                . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
-        }
     }else{
         print LOG "\# " . (localtime) . ": Skip making adjusted hints file "
             . "$adjustedHintsFile from hintsfile $hintsfile because file is up "
@@ -9726,6 +9961,8 @@ sub train_utr {
                            .  "--diamond 1> $otherfilesDir/utr.aa2nonred.stdout "
                            .  "2> $errorfilesDir/utr.aa2nonred.stderr";
         }else{
+            print "DIAMOND PATH:".$DIAMOND_PATH."\n";
+            print "blast_Path:".$blast_path."\n";
             $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
                            .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
                            .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU 1> "
