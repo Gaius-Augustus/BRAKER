@@ -5962,9 +5962,9 @@ sub GeneMark_ES {
             $perlCmdString
                 .= "perl $string --verbose --cores=$CPU --ES --gc_donor $gc_prob";
             if(defined($transmasked_fasta)){
-                  $perlCmdString .= "--sequence=$transmasked_fasta ";
+                  $perlCmdString .= " --sequence=$transmasked_fasta ";
             }else{
-                  $perlCmdString .= "--sequence=$genome ";
+                  $perlCmdString .= " --sequence=$genome ";
             }
             if ($fungus) {
                 $perlCmdString .= " --fungus";
