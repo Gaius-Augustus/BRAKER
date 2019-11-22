@@ -281,8 +281,6 @@ EXPERT OPTIONS
                                     arguments are given, separate them by
                                     whitespace, i.e.
                                     "--first_arg=sth --second_arg=sth".
---overwrite                         Overwrite existing files (except for
-                                    species parameter files)
 --skipGeneMark-ES                   Skip GeneMark-ES and use provided
                                     GeneMark-ES output (e.g. provided with 
                                     --geneMarkGtf=genemark.gtf)
@@ -312,7 +310,9 @@ EXPERT OPTIONS
                                     This option automatically sets
                                     --useexisting to true.
 --useexisting                       Use the present config and parameter files
-                                    if they exist for 'species'
+                                    if they exist for 'species'; will overwrite
+                                    original parameters if BRAKER performs
+                                    an AUGUSTUS training.
 --filterOutShort                    It may happen that a "good" training gene,
                                     i.e. one that has intron support from
                                     RNA-Seq in all introns predicted by
@@ -395,6 +395,9 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     this option only affects UTR training
                                     example generation, not gene prediction
                                     by AUGUSTUS
+--overwrite                         Overwrite existing files (except for
+                                    species parameter files) Beware, currently
+                                    not implemented properly!
 --extrinsicCfgFiles=file1,file2,... Depending on the mode in which braker.pl
                                     is executed, it may require one ore several
                                     extrinsicCfgFiles. Don't use this option
@@ -3737,7 +3740,6 @@ sub check_options {
         }
     }
     if( $CPU > 48 ) {
-        $CPU = 48;
         $prtStr = "#*********\n"
                 . "# WARNING: The number of cores was set "
                 . "to $CPU, which is greater than 48. GeneMark is likely to "
@@ -3754,6 +3756,7 @@ sub check_options {
                 . "#*********\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
+        $CPU = 48;
     }
 
     # UTR training only
@@ -5959,9 +5962,9 @@ sub GeneMark_ES {
             $perlCmdString
                 .= "perl $string --verbose --cores=$CPU --ES --gc_donor $gc_prob";
             if(defined($transmasked_fasta)){
-                  $perlCmdString .= "--sequence=$transmasked_fasta ";
+                  $perlCmdString .= " --sequence=$transmasked_fasta ";
             }else{
-                  $perlCmdString .= "--sequence=$genome ";
+                  $perlCmdString .= " --sequence=$genome ";
             }
             if ($fungus) {
                 $perlCmdString .= " --fungus";
@@ -6358,12 +6361,13 @@ sub filter_genemark {
             while( <ESPRED> ) {
                 chomp;
                 my @l = split(/\t/);
-                push( @{$espred{$l[8]}{'line'}}, $_ );
+                $l[8] =~ m/transcript_id \"([^"]+)\"/;
+                push( @{$espred{$1}{'line'}}, $_ );
                 if( $_ =~ m/\tCDS\t/ ) {
-                    if( !defined( $espred{$l[8]}{'len'}) ) {
-                        $espred{$l[8]}{'len'} = $l[4] - $l[3] + 1;
+                    if( !defined( $espred{$1}{'len'}) ) {
+                        $espred{$1}{'len'} = $l[4] - $l[3] + 1;
                     } else {
-                        $espred{$l[8]}{'len'} += $l[4] - $l[3] + 1;
+                        $espred{$1}{'len'} += $l[4] - $l[3] + 1;
                     }
                 }
             }
@@ -7972,6 +7976,12 @@ sub gtf2gb {
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                 . "\nFailed to execute: $perlCmdString\n");
+        print LOG "#*********\n"
+                . "# INFORMATION: the size of flanking region used in this "
+                . "BRAKER run is $flanking_DNA".". You might need this "
+                . "value if you later add a UTR training on top of an "
+                . "already existing BRAKER run.\n"
+                . "#*********\n" if ($v > 0);
     }
 }
 
@@ -9582,6 +9592,18 @@ sub train_utr {
         $augustus_file = "$otherfilesDir/augustus.hints.gtf";
     }
 
+    # compute flanking region size if undefined
+    if( not( defined($flanking_DNA) ) ) {
+        print LOG "\# " . (localtime)
+            . ": WARNING: \$flanking_DNA is undefined, computing value for this variable from "
+            . " file $augustus_file. Originally, it was intended that the same value for "
+            . "\$flanking_DNA is used in general AUGUSTUS training and UTR training. You can "
+            . "define --flanking_DNA=INT as command line parameter when calling BRAKER. You "
+            . "find the orignal size of \$flanking_DNA in the braker.log file of the original "
+            . "BRAKER run for this species.\n" if ( $v > 2 );
+        $flanking_DNA = compute_flanking_region($augustus_file);
+    }
+
     if ( !uptodate( [$augustus_file],
         ["$otherfilesDir/stops.and.starts.gff"] ) ) {
 
@@ -9922,7 +9944,7 @@ sub train_utr {
 
         # convert those training genes to protein fasta file
         gtf2fasta ($genome, "$otherfilesDir/genes_in_gb.gtf",
-            "$otherfilesDir/utr_genes_in_gb.fa");
+            "$otherfilesDir/utr_genes_in_gb.fa", $ttable);
 
         # blast good training genes to exclude redundant sequences
         $string = find(
@@ -10046,7 +10068,7 @@ sub train_utr {
             . "\nCould not close file $otherfilesDir/utr.gb!\n" );
         if($loci < 50){
             die("ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "Number of UTR training loci is smaller than 50, aborting "
+            . "\nNumber of UTR training loci is smaller than 50, aborting "
             . "UTR training! If this is the only error message, the "
             . "AUGUSTUS parameters for your species were optimized ok, "
             . "but you are lacking UTR parameters. Do not attempt to "
@@ -10164,7 +10186,9 @@ sub train_utr {
                            . "--metapars=$AUGUSTUS_CONFIG_PATH"
                            . "/species/$species/$metaUtrName --cpus=$CPU "
                            . "$otherfilesDir/utr.gb.train "
-                           . "--UTR=on > $otherfilesDir/optimize.utr.out";
+                           . "--UTR=on "
+                           . "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                           . "> $otherfilesDir/optimize.utr.out";
         }else{
             $perlCmdString = "perl $string --rounds=$rounds --species=$species "
                            . "--trainOnlyUtr=1  "
@@ -10172,7 +10196,9 @@ sub train_utr {
                            . "--metapars=$AUGUSTUS_CONFIG_PATH"
                            . "/species/$species/$metaUtrName --cpus=$CPU "
                            . "$otherfilesDir/utr.gb.train.test "
-                           . "--UTR=on > $otherfilesDir/optimize.utr.stdout "
+                           . "--UTR=on "
+                           . "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
+                           . "> $otherfilesDir/optimize.utr.stdout "
                            . "2> $errorfilesDir/optimize.utr.err"
         }
         print LOG "Now optimizing meta parameters of AUGUSTUS for the UTR "
