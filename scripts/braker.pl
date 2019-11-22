@@ -3742,21 +3742,19 @@ sub check_options {
     if( $CPU > 48 ) {
         $prtStr = "#*********\n"
                 . "# WARNING: The number of cores was set "
-                . "to $CPU, which is greater than 48. GeneMark is likely to "
-                . "die if you set such a high number of cores. Decreasing "
-                . "number of cores to 48. You might want to restart the "
-                . "process in order to use your resources, efficiently. Please "
+                . "to $CPU, which is greater than 48. GeneMark has in the past "
+                . " been reported to "
+                . "die if you set such a high number of cores. Please "
                 . "be aware that a very large number of cores also may not "
-                . "be used, efficiently by optimize_augustus.pl during "
+                . "be used efficiently by optimize_augustus.pl during "
                 . "cross validation. braker.pl will automatically compute the "
                 . "number of cores that will effectively be used for "
-                . "optimizing AUGUSTUS parameter in such a way that each "
+                . "optimizing AUGUSTUS parameter in such a way that "
                 . "each bucket will contain at least 200 training genes. We "
                 . "usually use 8 cores for 8-fold cross validation.\n"
                 . "#*********\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
-        $CPU = 48;
     }
 
     # UTR training only
