@@ -6361,12 +6361,13 @@ sub filter_genemark {
             while( <ESPRED> ) {
                 chomp;
                 my @l = split(/\t/);
-                push( @{$espred{$l[8]}{'line'}}, $_ );
+                $l[8] =~ m/transcript_id \"([^"]+)\"/;
+                push( @{$espred{$1}{'line'}}, $_ );
                 if( $_ =~ m/\tCDS\t/ ) {
-                    if( !defined( $espred{$l[8]}{'len'}) ) {
-                        $espred{$l[8]}{'len'} = $l[4] - $l[3] + 1;
+                    if( !defined( $espred{$1}{'len'}) ) {
+                        $espred{$1}{'len'} = $l[4] - $l[3] + 1;
                     } else {
-                        $espred{$l[8]}{'len'} += $l[4] - $l[3] + 1;
+                        $espred{$1}{'len'} += $l[4] - $l[3] + 1;
                     }
                 }
             }
