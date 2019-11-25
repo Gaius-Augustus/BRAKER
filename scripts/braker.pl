@@ -9158,16 +9158,31 @@ sub joingenes {
         my %tx_structures;
         open(MISSED1, "<", "$otherfilesDir/missed.genes$genesetId"."_1.gtf") or die("ERROR in file " . __FILE__
              . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/missed.genes$genesetId"."_1.gtf for reading!\n");
-        while(<MISSED1>){
+        #Some modifications here to avoid regex hitting the first field:
+        while(my $missed_line = <MISSED1>){
+            my @gff_parts = split /\t/, $missed_line;
             # need to rename transcripts because names could be the same for different txs in both files
-            $_ =~ m/(g\d+\.t\d+)/;
-            my $tx_id = "m1-".$1;
-            $_ =~ m/(g\d+)/;
-            my $g_id = "m1-".$1;
-            $_ =~ s/g\d+/$g_id/g;
-            push(@{$tx_lines{$tx_id}}, $_);
-            if( ($_ =~ m/CDS/) or ($_ =~ m/UTR/) ) {
-                my @t = split(/\t/);
+            my ($tx_id, $g_id);
+            for (my $i = 8; $i < scalar(@gff_parts); $i++) {
+               $gff_parts[$i] =~ m/(g\d+\.t\d+)/;
+               $tx_id = "m1-".$1;
+               $gff_parts[$i] =~ m/(g\d+)/;
+               $g_id = "m1-".$1;
+            }
+            #Fix suggested by visoca in issue #118, some of my contigs end in g#
+            # and get mangled by this line:
+            #$_ =~ s/g\d+/$g_id/g;
+            #Somewhat modified visoca's fix, since we're working with GTFs,
+            # so the gene_id may not be the last tag.
+            #Instead, we apply the regex to all fields after 8:
+            for (my $i = 8; $i < scalar(@gff_parts); $i++) {
+               $gff_parts[$i] =~ s/g\d+/$g_id/g;
+            }
+            $missed_line = join("\t", @gff_parts);
+            #Continue with the rest of the flow:
+            push(@{$tx_lines{$tx_id}}, $missed_line);
+            if( ($missed_line =~ m/CDS/) or ($missed_line =~ m/UTR/) ) {
+                my @t = split /\t/, $missed_line;
                 if(not(defined($tx_structures{$tx_id}))){
                     $tx_structures{$tx_id} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
                 }else{
@@ -9179,12 +9194,17 @@ sub joingenes {
               . " at line ". __LINE__ ."\nFailed to close file $otherfilesDir/missed.genes$genesetId"."_1.gtf!\n");
         open(MISSED2, "<", "$otherfilesDir/missed.genes$genesetId"."_2.gtf") or die("ERROR in file " . __FILE__
              . " at line ". __LINE__ ."\nFailed to open file $otherfilesDir/missed.genes$genesetId"."_2.gtf for reading!\n");
-        while(<MISSED2>){
-            $_ =~ m/(g\d+\.t\d+)/;
-            my $tx_id = $1;
-            push(@{$tx_lines{$tx_id}}, $_);
-            if( ($_ =~ m/CDS/) or ($_ =~m/UTR/) ) {
-                my @t = split(/\t/);
+        #Some modifications here to avoid regex hitting the first field:
+        while(my $missed_line = <MISSED2>){
+            my @gff_parts = split /\t/, $missed_line;
+            my $tx_id;
+            for (my $i = 8; $i < scalar(@gff_parts); $i++) {
+               $gff_parts[$i] =~ m/(g\d+\.t\d+)/;
+               $tx_id = $1;
+            }
+            push(@{$tx_lines{$tx_id}}, $missed_line);
+            if( ($missed_line =~ m/CDS/) or ($missed_line =~ m/UTR/) ) {
+                my @t = split /\t/, $missed_line;
                 if(not(defined($tx_structures{$tx_id}))){
                     $tx_structures{$tx_id} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
                 }else{
