@@ -5499,7 +5499,7 @@ sub join_mult_hints {
         unlink($hintsfile_temp_sort);
     }
     if( -z $not_to_be_merged ) {
-        $cmdString = 'mv $to_be_merged $hints_file_temp';
+        $cmdString = 'mv '.$to_be_merged.' '.$hints_file_temp;
         print LOG "$cmdString\n" if ($v > 3);
         system($cmdString) == 0 or clean_abort(
             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
