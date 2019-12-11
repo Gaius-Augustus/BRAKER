@@ -137,7 +137,7 @@ while(<INTRONS>){
     chomp;
     my @line = split(/\t/, $_);
     if(scalar(@line) == 9){
-        if(not($line[6] =~ m/\./)){
+        if($line[6] =~ m/\./){
             my $strand = findStrand($line[0], $line[3], $line[4]);
             if( $strand eq "+" || $strand eq "-" || $strand eq "b" ) {
                 my $score;
