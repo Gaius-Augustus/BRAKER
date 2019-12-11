@@ -5420,46 +5420,99 @@ sub add_other_hints {
 
 ####################### join_mult_hints ########################################
 # * joins hints that are identical (from the same source)
+# * hints with src=C and grp= tags are not joined
 ################################################################################
 
 sub join_mult_hints {
     my $hints_file_temp = shift;
-    print LOG "\# " . (localtime) . ": Joining hints that are identical "
-        . "(& from the same source) into multiplicity hints (input file "
-        . "$hints_file_temp)\n" if ($v > 2);
     my $type            = shift;    # rnaseq or prot or whatever will follow
-    my $hintsfile_temp_sort = "$otherfilesDir/hints.$type.temp.sort.gff";
-    $cmdString = "";
-    if ($nice) {
-        $cmdString .= "nice ";
+    print LOG "\# " . (localtime) . ": Checking for hints of src=C and with grp "
+        . "tags that should not be joined according to multiplicity\n" if ($v > 2);
+    my $to_be_merged = $otherfilesDir."/tmp_merge_hints.gff";
+    my $not_to_be_merged = $otherfilesDir."/tmp_no_merge_hints.gff";
+    open(HINTS, "<", $hints_file_temp) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nFailed to open file $hints_file_temp for reading!\n");
+    open(MERG, ">", $to_be_merged) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nFailed to open file $to_be_merged for writing!\n");
+    open(NOME, ">", $not_to_be_merged) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nFailed to open file $not_to_be_merged for writing!\n");
+    while(<HINTS>){
+        if($_ =~ m/src=C/ && (($_ =~ m/grp=/) || $_ =~ m/group=/)){
+            print NOME $_;
+        }else{
+            print MERG $_;
+        }
     }
-    $cmdString
-        .= "cat $hints_file_temp | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
-    print LOG "\# " . (localtime) . ": sort hints of type $type\n" if ($v > 3);
-    print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0 or clean_abort(
-        "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-        "ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nFailed to execute: $cmdString!\n");
-    $string = find(
-        "join_mult_hints.pl",   $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    $errorfile     = "$errorfilesDir/join_mult_hints.$type.stderr";
-    $perlCmdString = "";
+    close(MERG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nFailed to close file $to_be_merged!\n");
+    close(NOME) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nFailed to close file $not_to_be_merged!\n");
+    close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nFailed to open file $hints_file_temp for reading!\n");
 
-    if ($nice) {
-        $perlCmdString .= "nice ";
+    if(-z $to_be_merged){
+        unlink($to_be_merged);
+        $cmdString = 'mv $not_to_be_merged $hints_file_temp';
+        print LOG "$cmdString\n" if ($v > 3);
+        system($cmdString) == 0 or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdString\n");
+    }else{
+        print LOG "\# " . (localtime) . ": Joining hints that are identical "
+            . "(& from the same source) into multiplicity hints (input file "
+            . "$to_be_merged)\n" if ($v > 2);        
+        my $hintsfile_temp_sort = "$otherfilesDir/hints.$type.temp.sort.gff";
+        $cmdString = "";
+        if ($nice) {
+            $cmdString .= "nice ";
+        }
+        $cmdString .= "cat $to_be_merged | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >$hintsfile_temp_sort";
+        print LOG "\# " . (localtime) . ": sort hints of type $type\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0 or clean_abort(
+           "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdString!\n");
+        $string = find(
+            "join_mult_hints.pl",   $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        $errorfile     = "$errorfilesDir/join_mult_hints.$type.stderr";
+        $perlCmdString = "";
+        if ($nice) {
+            $perlCmdString .= "nice ";
+        }
+        $perlCmdString .= "perl $string <$hintsfile_temp_sort >$to_be_merged 2>$errorfile";
+        print LOG "\# " . (localtime) . ": join multiple hints\n" if ($v > 3);
+        print LOG "$perlCmdString\n" if ($v > 3);
+        system("$perlCmdString") == 0
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+                . "\nFailed to execute: $perlCmdString\n");
+        unlink($hintsfile_temp_sort);
     }
-    $perlCmdString
-        .= "perl $string <$hintsfile_temp_sort >$hints_file_temp 2>$errorfile";
-    print LOG "\# " . (localtime) . ": join multiple hints\n" if ($v > 3);
-    print LOG "$perlCmdString\n" if ($v > 3);
-    system("$perlCmdString") == 0
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nFailed to execute: $perlCmdString\n");
-    unlink($hintsfile_temp_sort);
+    if( -z $not_to_be_merged ) {
+        $cmdString = 'mv $to_be_merged $hints_file_temp';
+        print LOG "$cmdString\n" if ($v > 3);
+        system($cmdString) == 0 or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdString\n");
+    }else{
+        $cmdString = 'cat $to_be_merged $not_to_be_merged > $hints_file_temp';
+        print LOG "$cmdString\n" if ($v > 3);
+        system($cmdString) == 0 or clean_abort(
+            "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdString\n");
+    }
 }
 
 ####################### check_hints ############################################
