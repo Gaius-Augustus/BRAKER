@@ -5506,7 +5506,7 @@ sub join_mult_hints {
             "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
     }else{
-        $cmdString = 'cat $to_be_merged $not_to_be_merged > $hints_file_temp';
+        $cmdString = 'cat '.$to_be_merged.' '.$not_to_be_merged.' > '.$hints_file_temp;
         print LOG "$cmdString\n" if ($v > 3);
         system($cmdString) == 0 or clean_abort(
             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
