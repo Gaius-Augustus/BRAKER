@@ -139,6 +139,7 @@ while(<INTRONS>){
     if(scalar(@line) == 9){
         if($line[6] =~ m/\./){
             my $strand = findStrand($line[0], $line[3], $line[4]);
+            print("Found strand: ".$strand."\n");
             if( $strand eq "+" || $strand eq "-" || $strand eq "b" ) {
                 my $score;
                 if($mult_score){
@@ -153,6 +154,8 @@ while(<INTRONS>){
                     print "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$score\t-\t$line[7]\t$line[8]\n";
                 }
             }
+        }else{
+            print $_."\n";
         }
     }
 }
