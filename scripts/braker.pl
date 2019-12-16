@@ -5455,7 +5455,6 @@ sub join_mult_hints {
     close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nFailed to open file $hints_file_temp for reading!\n");
-
     if(-z $to_be_merged){
         unlink($to_be_merged);
         $cmdString = "mv $not_to_be_merged $hints_file_temp";
