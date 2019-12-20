@@ -30,6 +30,7 @@ use Parallel::ForkManager;
 use FindBin;
 use lib "$FindBin::RealBin/.";
 use File::Which;                    # exports which()
+use List::MoreUtils qw( pairwise );
 use File::Which qw(which where);    # exports which() and where()
 
 use Cwd;
@@ -1365,6 +1366,7 @@ if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
             . "\#                               PREDICTING GENES WITH AUGUSTUS (NO UTRS)           \n"
             . "\#**********************************************************************************\n";
     augustus("off");    # run augustus without UTR
+    merge_transcript_sets("off");
 }
 
 if ( @bam && ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds) ) && not($skipAllTraining) ) ) { # if you give this input, train parameters!
@@ -1390,7 +1392,10 @@ if ( $UTR eq "on") {
             . "\#                               PREDICTING GENES WITH AUGUSTUS (UTRS)              \n"
             . "\#**********************************************************************************\n";
     augustus("on"); # run augustus with UTR
+    merge_transcript_sets("on");
 }
+
+
 
 if ( $gff3 != 0) {
     all_preds_gtf2gff3();
@@ -3141,7 +3146,7 @@ sub check_upfront {
         "Scalar::Util::Numeric", "POSIX", "List::Util",
         "FindBin", "File::Which", "Cwd", "File::Spec::Functions",
         "File::Basename", "File::Copy", "Term::ANSIColor",
-        "strict", "warnings", "File::HomeDir"
+        "strict", "warnings", "File::HomeDir", "List::MoreUtils"
     );
 
     foreach my $module (@module_list) {
@@ -3476,6 +3481,10 @@ sub check_upfront {
     );
     find(
         "fix_joingenes_gtf.pl",       $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    find(
+        "merge_transcript_sets.pl", $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     if(not($skip_fixing_broken_genes)){
@@ -6302,63 +6311,65 @@ sub filter_genemark {
                     "$genemarkDir/genemark.average_gene_length.out"
                 ] ) || $overwrite )
         {
-            print LOG "\# "
-                . ( localtime )
-                . ": Checking whether hintsfile contains single exon CDSpart "
-                . "hints\n" if ($v > 3);
-            my %singleCDS;
-            open ( HINTS, "<", $hintsfile ) or clean_abort(
-                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "Could not open file $hintsfile!\n" );
-            while ( <HINTS> ) {
-                if( $_ =~ m/\tCDSpart\t.+grp=(\S+);/ ) {
-                    if (not ( defined ($singleCDS{$1}) ) ) {
-                        $singleCDS{$1} = $_;
-                    }else{
-                        $singleCDS{$1} = "0";
-                    }
-                }
-            }
-            close ( HINTS ) or clean_abort(
-                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                ."Could not close file $hintsfile!\n" );
-            # delete non single CDS genes from hash
-            # collapse multiplicity of singleCDS hints
-            my %multSingleCDS;
-            while (my ($k, $v) = each %singleCDS ) {
-                if ($v eq "0") {
-                    delete $singleCDS{$k};
-                }else{
-                    my @t = split(/\t/, $v);
-                    if ( !defined( $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} ) ) {
-                        $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} = 1;
-                    }else{
-                        $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]}++;
-                    }
-                }
-            }
             my $countSingleCDS = 0;
-            open ( SINGLECDS, ">", "$otherfilesDir/singlecds.hints" ) or
-                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            if( not (-e "$genemarkDir/genemark.f.single_anchored.gtf") ){
+                print LOG "\# "
+                    . ( localtime )
+                    . ": Checking whether hintsfile contains single exon CDSpart "
+                    . "hints\n" if ($v > 3);
+                my %singleCDS;
+                open ( HINTS, "<", $hintsfile ) or clean_abort(
+                    "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                     "ERROR in file " . __FILE__ ." at line ". __LINE__
-                    ."Could not open file $otherfilesDir/singlecds.hints!\n" );
-            while (my ($locus, $v1) = each %multSingleCDS ) {
-                while ( my ($strand, $v2) = each %{$v1} ) {
-                    while ( my ($start, $v3 ) = each %{$v2} ) {
-                        while ( my ($end, $v4) = each %{$v3} ) {
-                            print SINGLECDS "$locus\n.\nCDSpart\n$start\t$end\t.\t"
-                                . "$strand\t0\tsrc=P;mult=$v4;\n";
-                            $countSingleCDS++;
+                    . "Could not open file $hintsfile!\n" );
+                while ( <HINTS> ) {
+                    if( $_ =~ m/\tCDSpart\t.+grp=(\S+);/ ) {
+                        if (not ( defined ($singleCDS{$1}) ) ) {
+                            $singleCDS{$1} = $_;
+                        }else{
+                            $singleCDS{$1} = "0";
                         }
                     }
                 }
+                close ( HINTS ) or clean_abort(
+                    "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "ERROR in file " . __FILE__ ." at line ". __LINE__
+                    ."Could not close file $hintsfile!\n" );
+                # delete non single CDS genes from hash
+                # collapse multiplicity of singleCDS hints
+                my %multSingleCDS;
+                while (my ($k, $v) = each %singleCDS ) {
+                    if ($v eq "0") {
+                        delete $singleCDS{$k};
+                    }else{
+                        my @t = split(/\t/, $v);
+                        if ( !defined( $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} ) ) {
+                            $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} = 1;
+                        }else{
+                            $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]}++;
+                        }
+                    }
+                }
+                open ( SINGLECDS, ">", "$otherfilesDir/singlecds.hints" ) or
+                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "ERROR in file " . __FILE__ ." at line ". __LINE__
+                        ."Could not open file $otherfilesDir/singlecds.hints!\n" );
+                while (my ($locus, $v1) = each %multSingleCDS ) {
+                    while ( my ($strand, $v2) = each %{$v1} ) {
+                        while ( my ($start, $v3 ) = each %{$v2} ) {
+                            while ( my ($end, $v4) = each %{$v3} ) {
+                                print SINGLECDS "$locus\n.\nCDSpart\n$start\t$end\t.\t"
+                                    . "$strand\t0\tsrc=P;mult=$v4;\n";
+                                $countSingleCDS++;
+                            }
+                        }
+                    }
+                }
+                close ( SINGLECDS ) or clean_abort(
+                    "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                    "ERROR in file " . __FILE__ ." at line ". __LINE__
+                    ."Could not close file $otherfilesDir/singlecds.hints!\n" );
             }
-            close ( SINGLECDS ) or clean_abort(
-                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                ."Could not close file $otherfilesDir/singlecds.hints!\n" );
 
             print LOG "\# "
                 . (localtime)
@@ -6375,12 +6386,12 @@ sub filter_genemark {
             }
             $perlCmdString .= "perl $string "
                            .  "--genemark=$genemarkDir/genemark.gtf "
-                           .  "--introns=$hintsfile ";
+                           .  "--hints=$hintsfile ";
             if ($filterOutShort) {
                 $perlCmdString .= "--filterOutShort "
             }
             if ($countSingleCDS > 0 ) {
-                $perlCmdString .= "--singeCDSfile=$otherfilesDir/singlecds.hints ";
+                $perlCmdString .= "--singleCDSfile=$otherfilesDir/singlecds.hints ";
             }
             $perlCmdString .= "1>$stdoutfile 2>$errorfile";
             print LOG "$perlCmdString\n" if ($v > 3);
@@ -9483,6 +9494,28 @@ sub evaluate {
             . ": did not find $genemarkDir/genemark.gtf!\n" if ($v > 3);
     }
 
+    if ( -e "$otherfilesDir/braker.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $otherfilesDir/braker.gtf!\n" if ($v > 3);
+        eval_gene_pred("$otherfilesDir/braker.gtf");
+    }else{
+        print LOG "\# "
+            . (localtime)
+            . ": did not find $otherfilesDir/braker.gtf!\n" if ($v > 3);
+    }
+
+    if ( -e "$otherfilesDir/braker_utr.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $otherfilesDir/braker_utr.gtf!\n" if ($v > 3);
+        eval_gene_pred("$otherfilesDir/braker_utr.gtf");
+    }else{
+        print LOG "\# "
+            . (localtime)
+            . ": did not find $otherfilesDir/braker_utr.gtf!\n" if ($v > 3);
+    }
+
     if ( -e "$otherfilesDir/gthTrainGenes.gtf" ) {
         print LOG "\# "
             . (localtime)
@@ -9509,6 +9542,14 @@ sub evaluate {
             print ACC "\t$_";
         }
         print ACC "\n";
+        my @gene_sens;
+        my @gene_spec;
+        my @trans_sens;
+        my @trans_spec;
+        my @exon_sens;
+        my @exon_spec;
+        my @nuc_sens;
+        my @nuc_spec;
         for( my $i = 0; $i < 8; $i ++){
             if( $i == 0 ){ print ACC "Gene_Sensitivity" }
             elsif( $i == 1 ){ print ACC "Gene_Specificity" }
@@ -9521,16 +9562,65 @@ sub evaluate {
             foreach(@accKeys){
                 chomp(${$accuracy{$_}}[$i]);
                 print ACC "\t".${$accuracy{$_}}[$i];
+                if($i == 1){
+                    push(@gene_sens, ${$accuracy{$_}}[$i]);
+                }elsif($i == 2){
+                    push(@gene_spec, ${$accuracy{$_}}[$i]);
+                }elsif($i == 3){
+                    push(@trans_sens, ${$accuracy{$_}}[$i]);
+                }elsif($i == 4){
+                    push(@trans_spec, ${$accuracy{$_}}[$i]);
+                }elsif($i == 5){
+                    push(@exon_sens, ${$accuracy{$_}}[$i]);
+                }elsif($i == 6){
+                    push(@exon_spec, ${$accuracy{$_}}[$i]);
+                }elsif($i == 7){
+                    push(@nuc_sens, ${$accuracy{$_}}[$i]);
+                }elsif($i == 8){
+                    push(@nuc_spec, ${$accuracy{$_}}[$i]);
+                }
             }
             print ACC "\n";
+            if( $i == 2 ){
+                print ACC "Gene_F1"; 
+                my @f1_gene = pairwise { (2*$a*$b)/($a+$b)} @gene_sens, @gene_spec;
+                foreach(@f1_gene){
+                    print ACC "\t";
+                    printf ACC "%.2f", $_;
+                }
+                print ACC "\n";
+            }elsif( $i == 4 ){
+                print ACC "Transcript_F1"; 
+                my @f1_trans = pairwise { (2*$a*$b)/($a+$b)} @trans_sens, @trans_spec;
+                foreach(@f1_trans){
+                    print ACC "\t";
+                    printf ACC "%.2f", $_;
+                }
+                print ACC "\n";
+            }elsif( $i == 6 ){
+                print ACC "Exon_F1"; 
+                my @f1_exon = pairwise { (2*$a*$b)/($a+$b)} @exon_sens, @exon_spec;
+                foreach(@f1_exon){
+                    print ACC "\t";
+                    printf ACC "%.2f", $_;
+                }
+                print ACC "\n";
+            }elsif( $i == 8 ){
+                print ACC "Nucleotide_F1"; 
+                my @f1_nuc = pairwise { (2*$a*$b)/($a+$b)} @nuc_sens, @nuc_spec;
+                foreach(@f1_nuc){
+                    print ACC "\t";
+                    printf ACC "%.2f", $_;
+                }
+                print ACC "\n";
+            }
         }
         close(ACC) or die ("ERROR in file " . __FILE__ . " at line "
             . __LINE__ ."\nCould not close file $otherfilesDir/eval.summary");
     }
     print LOG "\# "
         . (localtime)
-        . ": Done with evaluating braker.pl gene prediction files!\n"
-        if ($v > 3);
+        . ": Done with evaluating braker.pl gene prediction files!\n" if ($v > 3);
 }
 
 ####################### eval_gene_pred #########################################
@@ -10756,6 +10846,118 @@ sub filter_augustus {
         . "\nCould not close file $otherfilesDir/augustus.hints.f.gtf!\n" );
 }
 
+####################### merge_transcript_sets ##################################
+# * merge evidence anchored genemark predicted genes that are not contained 
+#   in the augustus with hints gene set to produce braker.gtf
+# * in case of esmode, merge the complete ab initio gene sets to produce 
+#   braker.gtf
+# * in case of utr predictions, produce braker.utr.gtf (but only CDS features 
+#   are checked for identity during merging)
+################################################################################
+
+sub merge_transcript_sets {
+    print LOG "\# " . (localtime) . ": Trying to create merged gene set from GeneMark-EX "
+        . "and AUGUSTUS predictions (braker.gtf/braker.utr.gtf)...\n" if ($v > 3);
+    my $localUtr = shift;
+    $string = find(
+        "merge_transcript_sets.pl",       $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+
+    if($ESmode == 1){ # exists only without utr
+        if( (-e "$genemarkDir/genemark.gtf") and (-e "$otherfilesDir/augustus.ab_initio.gtf") ) {
+            print LOG "# WARNING: in --esmode, braker will merge the complete ab inito gene sets of GeneMark-EX and AUGUSTUS."
+                . "Genes contained in braker.gtf will be of much lower quality than if RNA-Seq data or ProtHint evidence had been provided.\n";
+            $errorfile = "$errorfilesDir/merge_all_ab_initio_transcripts.stderr";
+                    $perlCmdString = "";
+                    if ($nice) {
+                        $perlCmdString .= "nice ";
+                    }
+                    $perlCmdString .= "perl $string $otherfilesDir/augustus.ab_initio.gtf $genemarkDir/genemark.gtf 1> $otherfilesDir/braker.gtf 2>$errorfile";
+                    print LOG "$perlCmdString\n" if ($v > 3);
+                    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                        . "\nFailed to execute: $perlCmdString\n");
+        } 
+    }else{
+        if($localUtr eq "off"){
+            if( ( (-e "$genemarkDir/genemark.f.multi_anchored.gtf") or (-e "$genemarkDir/genemark.f.single_anchored.gtf") ) && (-e "$otherfilesDir/augustus.hints.gtf") ){
+                if( -e "$genemarkDir/genemark.f.multi_anchored.gtf") {
+                    $errorfile = "$errorfilesDir/merge_transcripts_multi_anchored.stderr";
+                    $perlCmdString = "";
+                    if ($nice) {
+                        $perlCmdString .= "nice ";
+                    }
+                    $perlCmdString .= "perl $string $otherfilesDir/augustus.hints.gtf $genemarkDir/genemark.f.multi_anchored.gtf 1> $otherfilesDir/braker.gtf 2>$errorfile";
+                    print LOG "$perlCmdString\n" if ($v > 3);
+                    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                        . "\nFailed to execute: $perlCmdString\n");
+                }
+                if( -e "$genemarkDir/genemark.f.single_anchored.gtf" ) {
+                    if( not( -e "$otherfilesDir/braker.gtf") ) {
+                        $cmdString = "cp $otherfilesDir/augustus.hints.gtf $otherfilesDir/step2.gtf";
+                        print LOG "$cmdString\n" if ($v > 3);
+                        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                            . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                    } else {
+                        $cmdString = "mv $otherfilesDir/braker.gtf $otherfilesDir/step2.gtf";
+                        print LOG "$cmdString\n" if ($v > 3);
+                        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                            . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                    }
+                    $errorfile = "$errorfilesDir/merge_transcripts_single_anchored.stderr";
+                    $perlCmdString = "";
+                    if ($nice) {
+                        $perlCmdString .= "nice ";
+                    }
+                    $perlCmdString .= "perl $string $otherfilesDir/step2.gtf $genemarkDir/genemark.f.single_anchored.gtf 1> $otherfilesDir/braker.gtf 2>$errorfile";
+                    print LOG "$perlCmdString\n" if ($v > 3);
+                    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                        . "\nFailed to execute: $perlCmdString\n");
+                    unlink("$otherfilesDir/step2.gtf") or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                        . "\nFailed to remove file $otherfilesDir/step2.gtf\n");
+                }
+            }
+        } else {
+            if( ( (-e "$genemarkDir/genemark.f.multi_anchored.gtf") or (-e "$genemarkDir/genemark.f.single_anchored.gtf") ) && -e "$otherfilesDir/augustus.hints_utr.gtf") {
+                if( -e "$genemarkDir/genemark.f.multi_anchored.gtf") {
+                    $errorfile = "$errorfilesDir/merge_transcripts_multi_anchored_utr.stderr";
+                    $perlCmdString = "";
+                    if ($nice) {
+                        $perlCmdString .= "nice ";
+                    }
+                    $perlCmdString .= "perl $string $otherfilesDir/augustus.hints_utr.gtf $genemarkDir/genemark.f.multi_anchored.gtf 1> $otherfilesDir/braker_utr.gtf 2>$errorfile";
+                    print LOG "$perlCmdString\n" if ($v > 3);
+                    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                        . "\nFailed to execute: $perlCmdString\n");
+                }
+                if( -e "$genemarkDir/genemark.f.single_anchored.gtf" ) {
+                    if( not( -e "$otherfilesDir/braker_utr.gtf") ) {
+                        $cmdString = "cp $otherfilesDir/augustus.hints_utr.gtf $otherfilesDir/step2.gtf";
+                        print LOG "$cmdString\n" if ($v > 3);
+                        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                            . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                    } else {
+                        $cmdString = "mv $otherfilesDir/braker_utr.gtf $otherfilesDir/step2.gtf";
+                        print LOG "$cmdString\n" if ($v > 3);
+                        system("$cmdString") == 0 or die("ERROR in file " . __FILE__
+                            . " at line ". __LINE__ ."\nFailed to execute: $cmdString!\n");
+                    }
+                    $errorfile = "$errorfilesDir/merge_transcripts_single_anchored_utr.stderr";
+                    $perlCmdString = "";
+                    if ($nice) {
+                        $perlCmdString .= "nice ";
+                    }
+                    $perlCmdString .= "perl $string $otherfilesDir/step2.gtf $genemarkDir/genemark.f.single_anchored.gtf 1> $otherfilesDir/braker_utr.gtf 2>$errorfile";
+                    print LOG "$perlCmdString\n" if ($v > 3);
+                    system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                        . "\nFailed to execute: $perlCmdString\n");
+                    unlink("$otherfilesDir/step2.gtf") or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+                        . "\nFailed to remove file $otherfilesDir/step2.gtf\n");
+                }
+            }
+        }
+    }
+}
+
 ####################### wig2hints ##############################################
 # convert wiggle file (from RNA-Seq) to ep hints (only required for AUGUSTUS
 # prediction with UTRs)
@@ -10857,7 +11059,9 @@ sub all_preds_gtf2gff3 {
     my @files = ("$otherfilesDir/augustus.ab_initio.gtf", 
         "$otherfilesDir/augustus.hints.gtf",
         "$otherfilesDir/augustus.ab_initio_utr.gtf",
-        "$otherfilesDir/augustus.hints_utr.gtf");
+        "$otherfilesDir/augustus.hints_utr.gtf",
+        "$otherfilesDir/braker.gtf",
+        "$otherfilesDir/braker_utr.gtf");
     foreach(@files){
         if(-e $_){
             my $gtf = $_;
