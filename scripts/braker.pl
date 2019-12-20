@@ -9562,26 +9562,26 @@ sub evaluate {
             foreach(@accKeys){
                 chomp(${$accuracy{$_}}[$i]);
                 print ACC "\t".${$accuracy{$_}}[$i];
-                if($i == 1){
+                if($i == 0){
                     push(@gene_sens, ${$accuracy{$_}}[$i]);
-                }elsif($i == 2){
+                }elsif($i == 1){
                     push(@gene_spec, ${$accuracy{$_}}[$i]);
-                }elsif($i == 3){
+                }elsif($i == 2){
                     push(@trans_sens, ${$accuracy{$_}}[$i]);
-                }elsif($i == 4){
+                }elsif($i == 3){
                     push(@trans_spec, ${$accuracy{$_}}[$i]);
-                }elsif($i == 5){
+                }elsif($i == 4){
                     push(@exon_sens, ${$accuracy{$_}}[$i]);
-                }elsif($i == 6){
+                }elsif($i == 5){
                     push(@exon_spec, ${$accuracy{$_}}[$i]);
-                }elsif($i == 7){
+                }elsif($i == 6){
                     push(@nuc_sens, ${$accuracy{$_}}[$i]);
-                }elsif($i == 8){
+                }elsif($i == 7){
                     push(@nuc_spec, ${$accuracy{$_}}[$i]);
                 }
             }
             print ACC "\n";
-            if( $i == 2 ){
+            if( $i == 1 ){
                 print ACC "Gene_F1"; 
                 my @f1_gene = pairwise { (2*$a*$b)/($a+$b)} @gene_sens, @gene_spec;
                 foreach(@f1_gene){
@@ -9589,7 +9589,7 @@ sub evaluate {
                     printf ACC "%.2f", $_;
                 }
                 print ACC "\n";
-            }elsif( $i == 4 ){
+            }elsif( $i == 3 ){
                 print ACC "Transcript_F1"; 
                 my @f1_trans = pairwise { (2*$a*$b)/($a+$b)} @trans_sens, @trans_spec;
                 foreach(@f1_trans){
@@ -9597,7 +9597,7 @@ sub evaluate {
                     printf ACC "%.2f", $_;
                 }
                 print ACC "\n";
-            }elsif( $i == 6 ){
+            }elsif( $i == 5 ){
                 print ACC "Exon_F1"; 
                 my @f1_exon = pairwise { (2*$a*$b)/($a+$b)} @exon_sens, @exon_spec;
                 foreach(@f1_exon){
@@ -9605,7 +9605,7 @@ sub evaluate {
                     printf ACC "%.2f", $_;
                 }
                 print ACC "\n";
-            }elsif( $i == 8 ){
+            }elsif( $i == 7 ){
                 print ACC "Nucleotide_F1"; 
                 my @f1_nuc = pairwise { (2*$a*$b)/($a+$b)} @nuc_sens, @nuc_spec;
                 foreach(@f1_nuc){
