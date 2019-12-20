@@ -11157,7 +11157,8 @@ sub clean_up {
                 $file =~ m/nonred\.loci\.lst/ || $file =~ m/traingenes\.good\.gtf/ ||
                 $file =~ m/etrain\.bad\.lst/ || $file =~ m/etrain\.bad\.lst/ ||
                 $file =~ m/train\.f*\.gb/ || $file =~ m/good_genes\.lst/ || 
-                $file =~ m/traingenes\.good\.nr\.fa/ || $file =~ m/fix_IFS_log_/){
+                $file =~ m/traingenes\.good\.nr\.fa/ || $file =~ m/fix_IFS_log_/ || 
+                $file =~ m/tmp_merge_hints\.gff/ || $file =~ m/tmp_no_merge_hints\.gff/ ){
                 print LOG "rm $otherfilesDir/$file\n" if ($v > 3);
                 unlink( "$otherfilesDir/$file" );
             }
