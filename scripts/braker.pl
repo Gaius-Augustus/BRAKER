@@ -6316,13 +6316,18 @@ sub filter_genemark {
                 print LOG "\# "
                     . ( localtime )
                     . ": Checking whether hintsfile contains single exon CDSpart "
-                    . "hints\n" if ($v > 3);
+                    . "hints or start/stop hints\n" if ($v > 3);
                 my %singleCDS;
                 open ( HINTS, "<", $hintsfile ) or clean_abort(
                     "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                     "ERROR in file " . __FILE__ ." at line ". __LINE__
                     . "Could not open file $hintsfile!\n" );
+                my $hasStartStop = 0;
                 while ( <HINTS> ) {
+                    if( ($_ =~ m/\tstart\t/) or ($_ =~ m/\tstop\t/)){
+                        $hasStartStop = 1;
+                        last;
+                    }
                     if( $_ =~ m/\tCDSpart\t.+grp=(\S+);/ ) {
                         if (not ( defined ($singleCDS{$1}) ) ) {
                             $singleCDS{$1} = $_;
@@ -6335,40 +6340,42 @@ sub filter_genemark {
                     "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                     "ERROR in file " . __FILE__ ." at line ". __LINE__
                     ."Could not close file $hintsfile!\n" );
-                # delete non single CDS genes from hash
-                # collapse multiplicity of singleCDS hints
-                my %multSingleCDS;
-                while (my ($k, $v) = each %singleCDS ) {
-                    if ($v eq "0") {
-                        delete $singleCDS{$k};
-                    }else{
-                        my @t = split(/\t/, $v);
-                        if ( !defined( $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} ) ) {
-                            $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} = 1;
+                if($hasStartStop == 0){
+                    # delete non single CDS genes from hash
+                    # collapse multiplicity of singleCDS hints
+                    my %multSingleCDS;
+                    while (my ($k, $v) = each %singleCDS ) {
+                        if ($v eq "0") {
+                            delete $singleCDS{$k};
                         }else{
-                            $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]}++;
-                        }
-                    }
-                }
-                open ( SINGLECDS, ">", "$otherfilesDir/singlecds.hints" ) or
-                    clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                        "ERROR in file " . __FILE__ ." at line ". __LINE__
-                        ."Could not open file $otherfilesDir/singlecds.hints!\n" );
-                while (my ($locus, $v1) = each %multSingleCDS ) {
-                    while ( my ($strand, $v2) = each %{$v1} ) {
-                        while ( my ($start, $v3 ) = each %{$v2} ) {
-                            while ( my ($end, $v4) = each %{$v3} ) {
-                                print SINGLECDS "$locus\n.\nCDSpart\n$start\t$end\t.\t"
-                                    . "$strand\t0\tsrc=P;mult=$v4;\n";
-                                $countSingleCDS++;
+                            my @t = split(/\t/, $v);
+                            if ( !defined( $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} ) ) {
+                                $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]} = 1;
+                            }else{
+                                $multSingleCDS{$t[0]}{$t[6]}{$t[3]}{$t[4]}++;
                             }
                         }
                     }
+                    open ( SINGLECDS, ">", "$otherfilesDir/singlecds.hints" ) or
+                        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "ERROR in file " . __FILE__ ." at line ". __LINE__
+                        ."Could not open file $otherfilesDir/singlecds.hints!\n" );
+                    while (my ($locus, $v1) = each %multSingleCDS ) {
+                        while ( my ($strand, $v2) = each %{$v1} ) {
+                            while ( my ($start, $v3 ) = each %{$v2} ) {
+                                while ( my ($end, $v4) = each %{$v3} ) {
+                                    print SINGLECDS "$locus\n.\nCDSpart\n$start\t$end\t.\t"
+                                        . "$strand\t0\tsrc=P;mult=$v4;\n";
+                                    $countSingleCDS++;
+                                }
+                            }
+                        }
+                    }
+                    close ( SINGLECDS ) or clean_abort(
+                        "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+                        "ERROR in file " . __FILE__ ." at line ". __LINE__
+                        ."Could not close file $otherfilesDir/singlecds.hints!\n" );
                 }
-                close ( SINGLECDS ) or clean_abort(
-                    "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                    "ERROR in file " . __FILE__ ." at line ". __LINE__
-                    ."Could not close file $otherfilesDir/singlecds.hints!\n" );
             }
 
             print LOG "\# "
