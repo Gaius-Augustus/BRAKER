@@ -8823,9 +8823,9 @@ sub run_augustus_with_joingenes_parallel {
         $extrinsicCfgFile = $extrinsicCfgFile3;
     }else{
         if( $localUTR eq "off" ) {
-            assign_ex_cfg("gth.cfg");
+            assign_ex_cfg("ep.cfg");
         }else{
-            assign_ex_cfg("gth_utr.cfg");
+            assign_ex_cfg("ep_utr.cfg");
         }
     }
     copy_ex_cfg($extrinsicCfgFile, "ex1$genesetId.cfg");
@@ -8924,9 +8924,9 @@ sub run_augustus_with_joingenes_single_core {
             $extrinsicCfgFile = $extrinsicCfgFile3;
         }else{
             if( $localUTR eq "off" ) {
-                assign_ex_cfg("gth.cfg");
+                assign_ex_cfg("ep.cfg");
             } else {
-                assign_ex_cfg("gth_utr.cfg");
+                assign_ex_cfg("ep_utr.cfg");
             }
         }
         copy($extrinsicCfgFile, "ex1$genesetId.cfg");
