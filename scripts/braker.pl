@@ -886,6 +886,7 @@ if ( !-d $rootDir ) {
     $logString .= $prtStr if ( $v > 2 );
 }
 
+my $genemarkesDir;
 # set other directories
 if ( $EPmode == 0 && $ETPmode == 0 && $ESmode == 0) {
     $genemarkDir = "$rootDir/GeneMark-ET";
@@ -895,6 +896,9 @@ if ( $EPmode == 0 && $ETPmode == 0 && $ESmode == 0) {
     $genemarkDir = "$rootDir/GeneMark-ES";
 } else {
     $genemarkDir = "$rootDir/GeneMark-EP";
+    if(@prot_seq_files){
+        $genemarkesDir = "$rootDir/GeneMark-ES";
+    }
 }
 $parameterDir  = "$rootDir/species";
 $otherfilesDir = "$rootDir";
@@ -1292,15 +1296,18 @@ if($ESmode==0){
             . "\#**********************************************************************************\n";
 }
 
+# make hints from protein data if EPmode, otherwise from GenomeThreader/Spaln/Exonerate
+
+if( @prot_seq_files && ($EPmode==1) ){
+    run_prothint();
+}elsif( @prot_seq_files or @prot_aln_files 
+    && not ( defined($AUGUSTUS_hints_preds) ) ){
+    make_prot_hints();
+}
+
 # make hints from RNA-Seq
 if ( @bam ) {
     make_rnaseq_hints();
-}
-
-# make hints from protein sequence data
-if ( @prot_seq_files or @prot_aln_files 
-    && not ( defined($AUGUSTUS_hints_preds) ) ) { # might want to change $AUGUSTUS_hints_preds as a condition here
-    make_prot_hints();
 }
 
 # add other user supplied hints
@@ -3437,6 +3444,9 @@ sub check_upfront {
         "optimize_augustus.pl", $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
+    find("log_reg_prothints.pl", $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
     find(
         "join_aug_pred.pl",     $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
@@ -4782,7 +4792,132 @@ sub check_bam_headers {
     return $bamFile;
 }
 
+####################### run_prothint ###########################################
+# * execute ProtHint to produce protein hints
+################################################################################
 
+sub run_prothint {
+    print LOG "\# " . (localtime)
+        . ": Running ProtHint to produce hints from protein sequence file "
+        . "(this may take a couple of hours)\n" if ($v > 2);
+
+    # step 1: remove dots from protein file and concatenate
+    my $protein_file = $otherfilesDir."/proteins.fa";
+    open(PROT_ALL, ">", $protein_file) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $protein_file!\n");
+    foreach(@prot_seq_files){
+        open(PROT, "<", $_) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to open file $_!\n");
+        while(<PROT>){
+            my $line = $_;
+            $line =~ s/\.//;
+            print PROT_ALL $line;
+        }
+        close(PROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to close file $_!\n");
+    }
+    close(PROT_ALL) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $protein_file!\n");
+
+    # step 2: run GeneMark-ES for ProtHint
+    GeneMark_ES();
+
+    # step 3: call prothint
+    $cmdString = "";
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneMarkGtf $genemarkesDir/genemark.gtf $otherfilesDir/genome.fa $otherfilesDir/proteins.fa";
+    print LOG "\# " . (localtime)
+         ": starting prothint.py\n" if ($v > 3);
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__
+        . " at line ". __LINE__
+        . "\nFailed to execute $cmdString!\n");
+
+    # step 4: modify evidence_augustus.gff
+    my $ev_aug_tmp = $otherfilesDir."/evidence_augustus_tmp.gff";
+    open(EV_AUG, "<", $otherfilesDir."/evidence_augustus.gff") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to open file $otherfilesDir/evidence_augustus.gff!\n");
+    open(EV_AUG_MOD, ">", $ev_aug_tmp) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to open file $ev_aug_tmp!\n");
+    while(<EV_AUG>){
+        my $line = $_;
+        $line =~ s/src=P;/src=M;/;
+        print EV_AUG_MOD $line;
+    }
+    close(EV_AUG_MOD) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to close file $ev_aug_tmp!\n");
+    close(EV_AUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to close file $otherfilesDir/evidence_augustus.gff!\n");
+    $cmdString = "mv $ev_aug_tmp $otherfilesDir/evidence_augustus.gff";
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+
+    # step 5: modify top_chains.gff
+    my $top_chain_tmp = $otherfilesDir."/top_chains_tmp.gff";
+    open(TOP_CH, "<", $otherfilesDir."/top_chains.gff") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to open file $otherfilesDir/top_chains.gff!\n");
+    open(TP_CH_MOD, ">", $top_chain_tmp) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to open file $top_chain_tmp!\n");
+    while(<TOP_CH>){
+        my $line = $_;
+        $line =~ s/src=P;/src=MC;/;
+        print TP_CH_MOD $line;
+    }
+    close(TP_CH_MOD) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to close file $top_chain_tmp!\n");
+    close(TOP_CH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to close file $otherfilesDir/top_chains.gff!\n");
+    $cmdString = "mv $top_chain_tmp $otherfilesDir/top_chains.gff";
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+        
+    # step 5: logistic regression on prothint augustus hints (non src=M)
+    $string = find(
+        "log_reg_prothints.pl",     $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+     $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "perl $string --prothint=$otherfilesDir/prothint.gff "
+        . "--out=$otherfilesDir/prothint_reg.gff 1> $otherfilesDir/prothint_reg.out "
+        . "2>$errorfilesDir/prothint_reg.err";
+    print LOG "$perlCmdString\n" if ($v > 3);
+    system("$perlCmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to execute: $perlCmdString!\n"); 
+    $cmdString = "mv $otherfilesDir/prothint_reg.gff $otherfilesDir/prothint.gff";
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+
+    # step 6: add hints onto hintsfile.gff that need to go there
+}
 
 ####################### make_rnaseq_hints ######################################
 # * make hints from BAM files
@@ -5994,20 +6129,26 @@ sub check_genemark_hints {
 
 sub GeneMark_ES {
     print LOG "\# " . (localtime) . ": Executing GeneMark-ES\n" if ($v > 2);
+    my $localGenemarkDir;
+    if( ($EPmode == 1) && (@prot_seq_files) ){
+        $localGenemarkDir = $genemarkesDir;
+    }else{
+        $localGenemarkDir = $genemarkDir;
+    }
     if ( !$skipGeneMarkET ) {
-        if (!uptodate( [ $genome], ["$genemarkDir/genemark.gtf"] ) || $overwrite
+        if (!uptodate( [ $genome], ["$localGenemarkDir/genemark.gtf"] ) || $overwrite
             ){
-            $cmdString = "cd $genemarkDir";
+            $cmdString = "cd $localGenemarkDir";
             print LOG "\# "
                 . (localtime)
-                . ": changing into GeneMark-ES directory $genemarkDir\n"
+                . ": changing into GeneMark-ES directory $localGenemarkDir\n"
                 if ($v > 3);
             print LOG "$cmdString\n" if ($v > 3);
-            chdir $genemarkDir
+            chdir $localGenemarkDir
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__
-                    ."\nCould not change into directory $genemarkDir.\n");
+                    ."\nCould not change into directory $localGenemarkDir.\n");
             $string        = "$GENEMARK_PATH/gmes_petap.pl";
             $errorfile     = "$errorfilesDir/GeneMark-ES.stderr";
             $stdoutfile    = "$otherfilesDir/GeneMark-ES.stdout";
@@ -6057,7 +6198,7 @@ sub GeneMark_ES {
                     . __LINE__ ."\nCould not change to directory $rootDir.\n");
         } else {
             print LOG "\# " . (localtime) . ": skipping GeneMark-ES because "
-                . "$genemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
+                . "$localGenemarkDir/genemark.gtf is up to date.\n" if ($v > 3);
         }
     }
 }
