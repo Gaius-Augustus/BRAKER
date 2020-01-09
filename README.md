@@ -170,7 +170,7 @@ At the time of release, this BRAKER version was tested with:
 
 -   AUGUSTUS 3.3.3 <sup name="g2">[F2](#g2)</sup>
 
--   GeneMark-ET 4.33
+-   GeneMark-ET 4.46
 
 -   BAMTOOLS 2.5.1<sup name="a5">[R5](#f5)</sup>
 
@@ -616,7 +616,13 @@ If RNA-Seq (and only RNA-Seq) data is provided to BRAKER as a bam-file, and if t
     braker.pl --species=yourSpecies --genome=genome.fasta \
        --bam=file.bam --softmasking --UTR=on
 
-**Warning:** This feature is experimental!
+**Warnings:** 
+   
+   1) This feature is experimental!
+
+   2) --UTR=on is currently not compatible with bamToWig.py as released in AUGUSTUS 3.3.3; it requires the current development code version from the github repository (git clone https://github.com/Gaius-Augustus/Augustus.git).
+
+   3) --UTR=on increases memory consumption of AUGUSTUS. Carefully monitor jobs if your machine was close to maxing RAM without --UTR=on! Reducing the number of cores will also reduce RAM consumption.
 
 #### Stranded RNA-Seq alignments
 
@@ -792,7 +798,7 @@ Softmasking option for soft masked genome files. (Disabled by default.)
 
 ### --useexisting
 
-Use the present config and parameter files if they exist for ’species’. This step will skip training AUGUSTUS and instead use pre-trained parameters.
+Use the present config and parameter files if they exist for 'species'; will overwrite original parameters if BRAKER performs an AUGUSTUS training.
 
 ### --crf
 
@@ -805,6 +811,17 @@ Change the parameter $\lambda$ of the Poisson distribution that is used for down
 ### --UTR=on
 
 Generate UTR training examples for AUGUSTUS from RNA-Seq coverage information, train AUGUSTUS UTR parameters and predict genes with AUGUSTUS and UTRs, including coverage information for RNA-Seq as evidence. This flag only works if --softmasking is also enabled, and if the only extrinsic evidence provided are bam files.  *This is an experimental feature!*
+
+If you performed a BRAKER run without --UTR=on, you can add UTR parameter training and gene prediction with UTR parameters (and only RNA-Seq hints) with the following command:
+
+```
+braker.pl --UTR=on --softmasking --genome=genome.fa --bam=rnaseq.bam \
+   --workingdir=some_new_working_directory \
+   --AUGUSTUS_hints_preds=augustus.hints.gtf --flanking_DNA=2000 \
+   --species=somespecies --useexisting
+```
+
+Modify `augustus.hints.gtf` to point to the AUGUSTUS predictions with hints from previous BRAKER run; modify flaning_DNA value to the flanking region from the log file of your previous BRAKER run; modify some_new_working_directory to the location where BRAKER should store results of the additional BRAKER run; modify somespecies to the species name used in your previous BRAKER run.
 
 ### --stranded=+,-,.,...
 
@@ -1091,11 +1108,17 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Stanke. M., Schöffmann, O., Morgenstern, B. and Waack, S. (2006). Gene prediction in eukaryotes with a generalized hidden Markov model that uses hints from external sources. BMC Bioinformatics 7, 62.
 
--   If any kind of AUGUSTUS training was performed by BRAKER, NCBI BLAST will have been used, therefore cite:
+-   If any kind of AUGUSTUS training was performed by BRAKER, check carefully whether you configured BRAKER to use NCBI BLAST or DIAMOND. One of them was used to filter out redundant training gene structures.
 
-    -   Altschul, A.F., Gish, W., Miller, W., Myers, E.W. and Lipman, D.J. (1990). A basic local alignment search tool. J Mol Biol 215:403--410.
+    - If you used NCBI BLAST, please cite:
 
-    -   Camacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoulos, J., Bealer, K., and Madden, T.L. (2009). Blast+: architecture and applications. BMC bioinformatics, 10(1):421.
+        -   Altschul, A.F., Gish, W., Miller, W., Myers, E.W. and Lipman, D.J. (1990). A basic local alignment search tool. J Mol Biol 215:403--410.
+
+	    -   Camacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoulos, J., Bealer, K., and Madden, T.L. (2009). Blast+: architecture and applications. BMC bioinformatics, 10(1):421.
+	    
+    - If you used DIAMOND, please cite:
+    
+        - Buchfink, B., Xie, C., Huson, D.H. (2015). Fast and sensitive protein alignment using DIAMOND. Nature Methods 12:59-60.
 
 -   If BRAKER was executed with a genome file and no extrinsic evidence, cite, then GeneMark-ES was used, cite:
 

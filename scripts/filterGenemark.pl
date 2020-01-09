@@ -2,17 +2,17 @@
 
 ####################################################################################################
 #                                                                                                  #
-# filterGenemark.pl - reformats and filters the GeneMark-ET output for usage with braker.pl:       #
+# filterGenemark.pl - reformats and filters the GeneMark-EX output for usage with braker.pl:       #
 #                     adds double quotes around ID to match gtf format if necessary                #
-#                     filters GeneMark-ET output into good and bad genes, i.e.                     #
-#                     genes included and not included in introns file respectively                 #
+#                     filters GeneMark-EX output into good and bad genes, i.e.                     #
+#                     genes included and not included in output  file respectively                 #
 #                                                                                                  #
-# Authors: Simone Lange and Katharina J. Hoff                                                      #
+# Authors: Simone Lange, Tomas Bruna and Katharina J. Hoff                                                      #
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
 # First release date: January 7th 2015                                                             #
-# Last update: February 17th 2018                                                                  #
+# Last update: December 18th 2019                                                                  #
 #                                                                                                  #
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
@@ -36,6 +36,8 @@
 # | by zero errors)                 |                |           |
 # | added filter for introns in     | Katharina Hoff |10.02.2016 |
 # | neighborhood (upstream)         |                |           |
+# | changed single exon gene filter | Katharina Hoff |19.12.2019 |
+# |                                 | Tomas Bruna    |           |
 # ----------------------------------------------------------------
 
 use strict;
@@ -45,28 +47,33 @@ use POSIX qw(ceil);
 
 my $usage = <<'ENDUSAGE';
 
-filterGenemark.pl     filter GeneMark-ET files and search for "good" genes
+filterGenemark.pl     filter GeneMark-EX files and search for "good" genes
 
 SYNOPSIS
 
-filterGenemark.pl [OPTIONS] genemark.gtf introns.gff
+filterGenemark.pl [OPTIONS] genemark.gtf hints.gff
 
 genemark.gtf         file in gtf format
-introns.gff          corresponding introns file in gff format
+hints.gff            corresponding introns file in gff format
 
 
 
 OPTIONS
 
 --help                          Print this help message
---introns=introns.gff           Corresponding intron file in gff format
+--hints=hints.gff               Corresponding hints file in gff format;
+                                it is vital that this file contains intron
+                                hints; start/stop hints are optional;
+                                do not mix start/stop hints with --singleCDSfile
+                                (this might double the number of evidence supported
+                                single exon genes)
 --genemark=genemark.gtf         File in gtf format
 --output=newfile.gtf            Specifies output file name. Default are
                                 'genemark-input_file_name.c.gtf'
                                 and 'genemark-input_file_name.f.good.gtf'
                                 and 'genemark-input_file_name.f.bad.gtf' for
-                                filtered genes included and not included
-                                in intron file respectively
+                                evidence anchored genes and genes not anchored by
+                                evidence (but included in the output file), respectively
 --suppress                      Suppress file output
 --filterOutShort                Filters intron containing genes as "bad" that
                                 have an RNA-Seq supported intron
@@ -75,7 +82,7 @@ OPTIONS
                                 multiplicity for that gene (screens also
                                 downstream of stop, which either indicates
                                 wrong reading frame, or a downstream UTR)
---singeCDSfile=cds.gtf          file with single exon genes CDSpart hints, they
+--singleCDSfile=cds.gtf         file with single exon genes CDSpart hints, they
                                 are used to filter single exon training genes as
                                 "good". If number is not sufficient, unsupported
                                 genes are still added to "good genes" in order
@@ -151,6 +158,11 @@ my %maxCdsSize;    # contains max CDS size of a gene (gene is key)
 my $boolShortBad;
 my $cutoff = 0;
 my $goodOneExonGenes = 0;
+# set of start hints coordinates
+my %startCoordinates;
+# set of stop hints coordinates
+my %stopCoordinates;
+my $observed_start_stop;
 
 if ( @ARGV == 0 ) {
     print "$usage\n";
@@ -159,11 +171,11 @@ if ( @ARGV == 0 ) {
 
 GetOptions(
     'genemark=s'      => \$genemark,
-    'introns=s'       => \$introns,
+    'hints=s'         => \$introns,
     'output=s'        => \$output_file,
     'suppress!'       => \$suppress,
     'filterOutShort!' => \$filterOutShort,
-    'singeCDSfile=s'  => \$cds_file,
+    'singleCDSfile=s' => \$cds_file,
     'cdspart_cutoff=s'=> \$cutoff,
     'help!'           => \$help
     );
@@ -240,12 +252,9 @@ if ( $nr_of_complete > 0 ) {
     print STDOUT "Good gene rate: $rate_genes_g\n";
 }
 else {
-    print STDERR
-    "Average gene length cannot be computed since all genes are incomplete.\n";
-    print STDERR
-    "Average number of introns cannot be computed since all genes are incomplete.\n";
-    print STDERR
-    "Rate of genes cannot be computed since all genes are incomplete.\n";
+    print STDERR "Average gene length cannot be computed since all genes are incomplete.\n";
+    print STDERR "Average number of introns cannot be computed since all genes are incomplete.\n";
+    print STDERR "Proportion of evidence supported genes cannot be computed since all genes are incomplete.\n";
 }
 print STDOUT "Number of genes: $nr_of_genes\n";
 print STDOUT "Number of complete genes: $nr_of_complete\n";
@@ -257,8 +266,7 @@ if ( $intron_mults > 0 ) {
     print STDOUT "Good intron rate: $rate_mult\n";
 }
 else {
-    print STDERR
-    "Rate of good introns cannot be computed since there are no 'mult' entries.\n";
+    print STDERR "Rate of evidence supported introns cannot be computed since there are no 'mult' entries.\n";
 }
 if ( $nr_of_good > 0 ) {
     my $onex_rate_g = $goodOneExonGenes / $nr_of_good;
@@ -273,16 +281,13 @@ if ( $nr_of_genes > 0 ) {
     print STDOUT "One exon gene rate (of all genes): $onex_rate_a\n";
 }
 else {
-    print STDERR
-    "Rate of one exon genes (of all genes) cannot be computed because there are no genes in the input file with the correct format.\n";
+     print STDERR "Porportion of single exon genes (of good genes) cannot be computed since only complete genes can be 'good'.\n";
 }
 
 if ( !defined($suppress) ) {
-    open( GENELENGTH, ">$file_name.average_gene_length.out" )
-    or die "Cannot open file: $file_name.average_gene_length.out\n";
+    open( GENELENGTH, ">$file_name.average_gene_length.out" ) or die "Cannot open file: $file_name.average_gene_length.out\n";
     print GENELENGTH "$average_gene_length\t$average_nr_introns\n";
-    close(GENELENGTH)
-    or die("Could not close file $file_name.average_gene_length.out!\n");
+    close(GENELENGTH) or die("Could not close file $file_name.average_gene_length.out!\n");
 }
 
 ############### sub functions ##############
@@ -293,17 +298,43 @@ sub introns {
     while (<INTRONS>) {
         chomp;
         @line = split( /\t/, $_ );
-        if ( scalar(@line) == 9 ) {
-            $introns{ $line[0] }{ $line[6] }{ $line[3] }{ $line[4] } = $line[5];
-            $intron_mults += $line[5];
-            if ($filterOutShort) {
-                use integer;
-                my $segm = $line[3] / $filterOutShortLength;
-                push( @{ $introns_for_filterOutShort{ $line[0] }{$segm} }, $_ );
+        if ($line[2] eq "intron") {
+            if ( scalar(@line) == 9 ) {
+                $introns{ $line[0] }{ $line[6] }{ $line[3] }{ $line[4] } = $line[5];
+                $intron_mults += $line[5];
+                if ($filterOutShort) {
+                    use integer;
+                    my $segm = $line[3] / $filterOutShortLength;
+                    push( @{ $introns_for_filterOutShort{ $line[0] }{$segm} }, $_ );
+                }
+            }
+        } elsif ($line[2] eq "start") {
+            if ($line[6] eq "+") {
+                $startCoordinates{$line[0]."_".$line[6]."_".$line[3]} = 1;
+                $observed_start_stop = 1;
+            } else {
+                $startCoordinates{$line[0]."_".$line[6]."_".$line[4]} = 1;
+                $observed_start_stop = 1;
+            }
+        } elsif ($line[2] eq "stop") {
+            if ($line[6] eq "+") {
+                $stopCoordinates{$line[0]."_".$line[6]."_".$line[4]} = 1;
+                $observed_start_stop = 1;
+            } else {
+                $stopCoordinates{$line[0]."_".$line[6]."_".$line[3]} = 1;
+                $observed_start_stop = 1;
             }
         }
     }
     close(INTRONS) or die("Could not close file $introns!\n");
+
+    if( defined($observed_start_stop) && defined($cds_file) ) {
+        print STDERR "WARNING: the hints file provided to filterGenemark.pl contains "
+            . "start and stop hints (that may potentially support single exon genes, too), "
+            . "and an additional file with evidence for single CDS genes has been provided "
+            . "($cds_file). We will ignore the file $cds_file because it contains "
+            . "likely information that is redundant with the hints file.\n"
+    }
 }
 
 # read in cds
@@ -342,10 +373,9 @@ sub convert_and_filter {
         $output_file_good = "$file_name.f.good.gtf";
         $output_file_bad  = "$file_name.f.bad.gtf";
 
-        open( GOOD, ">" . $output_file_good )
-        or die "Cannot open file: $output_file_good\n";
-        open( BAD, ">" . $output_file_bad )
-        or die "Cannot open file: $output_file_bad\n";
+        open( GOOD, ">" . $output_file_good ) or die "Cannot open file: $output_file_good\n";
+        open( BAD, ">" . $output_file_bad ) or die "Cannot open file: $output_file_bad\n";
+        open( MULTI_ANCHORED, ">>", "$file_name.f.multi_anchored.gtf" ) or die ( "Cannot open file: $file_name.f.multi_anchored.gtf\n" );
     }
 
     if ( !defined($suppress) ) {
@@ -379,57 +409,36 @@ sub convert_and_filter {
                 }
             }
 
-            if (   ( $line[2] eq "start_codon" && $line[6] eq "+" )
-                || ( $line[2] eq "stop_codon" && $line[6] eq "-" ) )
-            {
-                $start_codon
-                = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
+            if (   ( $line[2] eq "start_codon" && $line[6] eq "+" ) || ( $line[2] eq "stop_codon" && $line[6] eq "-" ) ) {
+                $start_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
                 $gene_start = $line[3];
                 $start_ID   = $ID_old[1];
                 if ($filterOutShort) {
                     $sumMult{$ID_new} = 0;
                 }
 
-                # gene ends
-            }
-            elsif (( $line[2] eq "stop_codon" && $line[6] eq "+" )
-                || ( $line[2] eq "start_codon" && $line[6] eq "-" ) )
-            {
+            # gene ends
+            } elsif (( $line[2] eq "stop_codon" && $line[6] eq "+" ) || ( $line[2] eq "start_codon" && $line[6] eq "-" ) ) {
                 if ( $start_ID eq $ID_old[1] ) {
                     $length += $line[4] - $gene_start;
                     $nr_of_complete++;
                     $bool_complete = "true";
                 }
-                $stop_codon
-                = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
-
-                # exons, CDS usw., i.e. no start or stop codon
-            }
-            elsif ($line[2] ne "start_codon"
-                && $line[2] ne "stop_codon"
-                && defined($introns) )
-            {
+                $stop_codon = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$ID_new\n";
+            # exons, CDS usw., i.e. no start or stop codon
+            } elsif ($line[2] ne "start_codon" && $line[2] ne "stop_codon" && defined($introns) ) {
                 if ( $line[2] eq "CDS" ) {
                     if ( $bool_intron eq "false" ) {
                         $intron_start = $line[4] + 1;
                         $bool_intron  = "true";
-                    }
-                    else {
+                    } else {
                         $intron_end = $line[3] - 1;
                         # check if exons are defined in intron hash made of intron input
-                        if (defined(
-                            $introns{ $line[0] }{ $line[6] }
-                            {$intron_start}{$intron_end}
-                            )
-                        )
-                        {
+                        if ( defined ( $introns{$line[0]}{ $line[6]}{$intron_start}{$intron_end} ) ) {
                             $true_count++;
-                            $mults += $introns{ $line[0] }{ $line[6] }
-                            {$intron_start}{$intron_end};
+                            $mults += $introns{ $line[0] }{ $line[6]}{$intron_start}{$intron_end};
                             if ($filterOutShort) {
-                                $sumMult{$ID_new}
-                                += $introns{ $line[0] }{ $line[6] }
-                                {$intron_start}{$intron_end};
+                                $sumMult{$ID_new} += $introns{$line[0]}{$line[6]}{$intron_start}{$intron_end};
                             }
                         }
                         $intron_start = $line[4] + 1;
@@ -452,8 +461,8 @@ sub convert_and_filter {
     if ( !defined($suppress) ) {
         close(BAD)  or die("Could not close file $output_file_bad!\n");
         close(GOOD) or die("Could not close file $output_file_good!\n");
+        close( MULTI_ANCHORED ) or die ( "Cannot open file: $file_name.f.multi_anchored.gtf\n" );
     }
-
     close(GENEMARK) or die("Could not close file $genemark!\n");
     if ( !defined($suppress) ) {
         close(OUTPUT) or die("Could not close file $output_file!\n");
@@ -466,15 +475,17 @@ sub print_gene {
     if ($filterOutShort) {
         $boolShortBad = "false";
 
-        # variables compute average CDS size of gene
+        # variables for computing average CDS size of gene
         my $nCds = 0;
         my @cdsLine;
 
         # variables to determine CDS to be checked upstream
         my $checkUpstreamOf;
+
         # screen also downstream of stop last CDS/might indicate wrong frame!
         my $checkDownstreamOf;
         my $checkStrand;
+
         foreach (@CDS) {
             if (m/\tCDS\t/) {
                 @cdsLine     = split(/\t/);
@@ -545,8 +556,7 @@ sub print_gene {
                     if (not($checkDownstreamOf / $filterOutShortLength == ( $checkDownstreamOf + 2 * $maxCdsSize{ $cdsLine[8] } ) / $filterOutShortLength ) ) {
                         $screenBlocksDown[1] = ( $checkDownstreamOf + 2 * $maxCdsSize{ $cdsLine[8] } );
                     }
-                }
-                elsif ( $checkStrand eq "-" ) {
+                } elsif ( $checkStrand eq "-" ) {
                     use integer;
                     $screenBlocksDown[0] = $checkDownstreamOf / $filterOutShortLength;
                     if (not($checkDownstreamOf / $filterOutShortLength == ($checkDownstreamOf - 2 * $maxCdsSize{ $cdsLine[8] } ) / $filterOutShortLength)) {
@@ -593,35 +603,38 @@ sub print_gene {
         $average_nr_introns += $size - 1;
     }
 
-    # all exons in intron file
+    # all exons that have support from introns in hints file
     if ( $bool_good eq "true" && $bool_complete eq "true" && !$filterOutShort && not (scalar(@CDS) == 2) ) {
         $nr_of_good++;
         $good_mults += $mults;
         if ( !defined($suppress) ) {
             print GOOD "$start_codon";
+            print MULTI_ANCHORED "$start_codon";
 	    my $cdsC = 0;
 	    for ( my $i=0; $i<scalar(@CDS); $i++){
 		$cdsC++;
                 print GOOD "$CDS[$i]\n";
+                print MULTI_ANCHORED "$CDS[$i]\n";
             }
             print GOOD "$stop_codon";
+            print MULTI_ANCHORED "$stop_codon";
         }
-
-        # not all exons in intron file or gene incomplete
-    }
-    elsif ($bool_good eq "true" && $bool_complete eq "true" && $filterOutShort && $boolShortBad eq "false" && not (scalar(@CDS) == 2) ) {
+    # not all exons in intron file or gene incomplete
+    } elsif ($bool_good eq "true" && $bool_complete eq "true" && $filterOutShort && $boolShortBad eq "false" && not (scalar(@CDS) == 2) ) {
         # filter for genes that do NOT have an upstream intron in close proximity
         $nr_of_good++;
         $good_mults += $mults;
         if ( !defined($suppress) ) {
             print GOOD "$start_codon";
+            print MULTI_ANCHORED "$start_codon";
             foreach (@CDS) {
                 print GOOD "$_\n";
+                print MULTI_ANCHORED "$_\n";
             }
             print GOOD "$stop_codon";
+            print MULTI_ANCHORED "$stop_codon";
         }
-    }
-    else {
+    } else {
         if(not(scalar(@CDS) == 2)){
             $nr_of_bad++;
             if ( !defined($suppress) ) {
@@ -671,48 +684,84 @@ sub add_single_cds {
         $required_single_cds_genes = $available_single_cds_genes
     }
     $goodOneExonGenes = $required_single_cds_genes;
-    # select genes that overlap with given CDSpart hints in @cdshints
-    my @printCDS;
-    my @badCDS;
-    print "Number of cds hints is ".scalar(keys %cds_hints)."\n";
-    if ( ( (scalar (keys %cds_hints) ) > 0 ) && ( $available_single_cds_genes > 0 ) ) {
-        while (my ($goodGeneIdx, $goodGene) = each %goodSingleCDSgenes) {
-            my @t = split(/\t/, $goodGene);
-            foreach ( @{$cds_hints{$t[0]}} ) {
-                # check whether cds is an exact overlap of coordinates and strand;
-                if ( ( $_->{'start'} >= $t[3] ) && ($_->{'start'} <= $t[4]) && ( $_->{'end'} <= $t[4] ) && ($_->{'end'} >= $t[3]) && ( $_->{'strand'} eq $t[6] ) ) {
-                    push @printCDS, $goodGene;
-                    delete $goodSingleCDSgenes{$goodGeneIdx};
-                    last;
-                }
-            }
 
+    my @printCDS;
+    my @anchoredSingle;
+    my @badCDS;
+
+    # Select single exon genes supported by start and stop codon
+    if ( $available_single_cds_genes > 0 ) {
+        while (my ($goodGeneIdx, $goodGene) = each %goodSingleCDSgenes) {
+            my @gene = split(/\t/, $goodGene);
+            my $geneStart = $gene[3];
+            my $geneEnd = $gene[4];
+            if ($gene[6] eq "-") {
+                $geneStart = $gene[4];
+                $geneEnd = $gene[3];
+            }
+            if (defined $startCoordinates{$gene[0]."_".$gene[6]."_".$geneStart} and defined $stopCoordinates{$gene[0]."_".$gene[6]."_".$geneEnd}) {
+                push @printCDS, $goodGene;
+                push @anchoredSingle, $goodGene;
+                delete $goodSingleCDSgenes{$goodGeneIdx};
+            }
+        }
+    }
+
+    if(not(defined($observed_start_stop))){
+        # select genes that overlap with given CDSpart hints in @cdshints
+        # skip if any start/stop was observed in hints.gff file because this
+        # will likely result in a duplication of single exon genes with support
+        print "Number of cds hints is ".scalar(keys %cds_hints)."\n";
+        if ( ( (scalar (keys %cds_hints) ) > 0 ) && ( $available_single_cds_genes > 0 ) ) {
+            while (my ($goodGeneIdx, $goodGene) = each %goodSingleCDSgenes) {
+                my @t = split(/\t/, $goodGene);
+                foreach ( @{$cds_hints{$t[0]}} ) {
+                    # check whether cds is an exact overlap of coordinates and strand;
+                    if ( ( $_->{'start'} >= $t[3] ) && ($_->{'start'} <= $t[4]) && ( $_->{'end'} <= $t[4] ) && ($_->{'end'} >= $t[3]) && ( $_->{'strand'} eq $t[6] ) ) {
+                        push @printCDS, $goodGene;
+                        delete $goodSingleCDSgenes{$goodGeneIdx};
+                        last;
+                    }
+                }
+
+            }
         }
     }
     # check how many random non supported single cds genes are still missing
     my $stillLacking = $required_single_cds_genes - scalar( @printCDS );
-
-    #permute good genes, if I want to select n random ones, take the first n entries, later
-    @goodKeys = keys %goodSingleCDSgenes;
-    foreach my $i (0..$required_single_cds_genes-1) {
-        my $j = rand @goodKeys;
-        ($goodKeys[$i], $goodKeys[$j]) = ($goodKeys[$j], $goodKeys[$i]);
-    }
-    # select random genes without support and add to print list
-    for(my $i=0; $i<$stillLacking; $i++) {
-        push @printCDS, $goodSingleCDSgenes{$goodKeys[$i]};
-        delete $goodSingleCDSgenes{$goodKeys[$i]};
-    }
-    # select bad genes
-    for(my $i = $stillLacking; $i < scalar(@goodKeys); $i++){
-        push @badCDS, $goodSingleCDSgenes{$goodKeys[$i]};
+    if ($stillLacking > 0) {
+        #permute good genes, if I want to select n random ones, take the first n entries, later
+        @goodKeys = keys %goodSingleCDSgenes;
+        foreach my $i (0..$required_single_cds_genes-1) {
+            my $j = rand @goodKeys;
+            ($goodKeys[$i], $goodKeys[$j]) = ($goodKeys[$j], $goodKeys[$i]);
+        }
+        # select random genes without support and add to print list
+        for(my $i=0; $i<$stillLacking; $i++) {
+            push @printCDS, $goodSingleCDSgenes{$goodKeys[$i]};
+            delete $goodSingleCDSgenes{$goodKeys[$i]};
+        }
+        # select bad genes
+        for(my $i = $stillLacking; $i < scalar(@goodKeys); $i++){
+            push @badCDS, $goodSingleCDSgenes{$goodKeys[$i]};
+        }
     }
 
     # print to files
+    open( SINGLE_ANCHORED, ">>", "$file_name.f.single_anchored.gtf" )
+        or die ( "Cannot open file: $file_name.f.single_anchored.gtf\n" );
+
+    foreach my $tmp (@anchoredSingle) {
+        if( defined ( $tmp ) ) {
+            $tmp =~ s/\texon\t/\tCDS\t/;
+            print SINGLE_ANCHORED $tmp."\n";
+        }
+    }
+
     open( GOOD, ">>", "$file_name.f.good.gtf")
-        or die "Cannot open file: $file_name.f.good.gtf\n";
+        or die ( "Cannot open file: $file_name.f.good.gtf\n" );
     open( BAD, ">>" , "$file_name.f.bad.gtf" )
-        or die "Cannot open file: $file_name.f.bad.gtf\n";
+        or die ( "Cannot open file: $file_name.f.bad.gtf\n" );
     foreach my $good (@printCDS) {
         if( defined ( $good ) ) {
             $good =~ s/\texon\t/\tCDS\t/;
@@ -731,6 +780,8 @@ sub add_single_cds {
         print BAD $badSingleCDSgenes{$_}."\n";
         $nr_of_bad++;
     }
+
+    close (SINGLE_ANCHORED) or die ( "Cannot close file: $file_name.f.single_anchored.gtf!\n" );
     close (GOOD) or die ( "Cannot close file: $file_name.f.good.gtf!\n" );
     close (BAD) or die ( "Cannot close file: $file_name.f.bad.gtf!\n" );
 
