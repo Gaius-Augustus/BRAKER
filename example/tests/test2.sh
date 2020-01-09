@@ -24,4 +24,4 @@ fi
 #
 # Be aware that this test uses a custom exstrinsic.cfg file at the moment.
 
-( time braker.pl --genome=../genome.fa --hints=../prothint_augustus_reg.gff,../evidence_augustus.gff,../top_chains.gff --evidence=../evidence.gff --prothints=../prothint.gff --epmode --softmasking --workingdir=$wd --extrinsicCfgFiles=../../scripts/cfg/top_chain_order.cfg) &> test2.log
+( time braker.pl --genome=../genome.fa --hints=../prothint_augustus_reg.gff,../evidence_augustus.gff,../top_chains.gff --evidence=../evidence.gff --prothints=../prothint.gff --epmode --softmasking --workingdir=$wd --extrinsicCfgFiles=../../scripts/cfg/top_chain_order.cfg --cores=11 --eval=/home/katharina/git/BRAKER/example/annot.gtf --skipOptimize ) &> test2.log
