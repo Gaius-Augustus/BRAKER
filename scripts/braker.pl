@@ -1069,6 +1069,15 @@ if ( (!-d $genemarkDir) && ! $trainFromGth) {
     print LOG "mkdir $genemarkDir\n" if ($v > 2);
 }
 
+if ( defined($genemarkesDir) ) {
+    make_path($genemarkesDir) or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to create direcotry $genemarkesDir!\n");
+    print LOG "\# "
+        . (localtime)
+        . ": create working directory $genemarkesDir.\n" if ($v > 2);
+    print LOG "mkdir $genemarkesDir\n" if ($v > 2);
+}
+
 # check gthTrainGeneFile
 if ( $gth2traingenes ) {
     $gthTrainGeneFile = "$otherfilesDir/gthTrainGenes.gtf";
@@ -4799,7 +4808,7 @@ sub check_bam_headers {
 sub run_prothint {
     print LOG "\# " . (localtime)
         . ": Running ProtHint to produce hints from protein sequence file "
-        . "(this may take a couple of hours)\n" if ($v > 2);
+        . "(this may take a couple of hours)...\n" if ($v > 2);
 
     # step 1: remove dots from protein file and concatenate
     my $protein_file = $otherfilesDir."/proteins.fa";
@@ -4832,8 +4841,7 @@ sub run_prothint {
         $cmdString .= "nice ";
     }
     $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneMarkGtf $genemarkesDir/genemark.gtf $otherfilesDir/genome.fa $otherfilesDir/proteins.fa";
-    print LOG "\# " . (localtime)
-         ": starting prothint.py\n" if ($v > 3);
+    print LOG "\# " . (localtime) . ": starting prothint.py\n" if ($v > 3);
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
         or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -4909,7 +4917,7 @@ sub run_prothint {
         or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nfailed to execute: $perlCmdString!\n"); 
-    $cmdString = "mv $otherfilesDir/prothint_reg.gff $otherfilesDir/prothint.gff";
+    $cmdString = "mv $otherfilesDir/prothint_reg.gff $otherfilesDir/prothint_augustus.gff";
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
         or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -4917,6 +4925,49 @@ sub run_prothint {
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
 
     # step 6: add hints onto hintsfile.gff that need to go there
+    open(HINTS, ">>", "$otherfilesDir/hintsfile.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
+    # evidence_augustus.gff modified file
+    open(EV_AUG, "<", "$otherfilesDir/evidence_augustus.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/evidence_augustus.gff\n");
+    while(<EV_AUG>){
+        print HINTS $_;
+    }
+    close(EV_AUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/evidence_augustus.gff\n");
+    # modified top chains
+    open(TOP_CH, "<", "$otherfilesDir/top_chains.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/top_chains.gff\n");
+    while(<TOP_CH>){
+        print HINTS $_;
+    }
+    close(TOP_CH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/top_chains.gff\n");
+    # prothint.gff after logistic regression
+    open(PHT, "<", "$otherfilesDir/prothint_augustus.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/prothint_augustus.gff\n");
+    while(<PHT>){
+        print HINTS $_;
+    }
+    close(PHT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/prothint_augustus.gff\n");
+    close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile.gff!\n");
+
+    print LOG "\# " . (localtime)
+        . ": Generating hints with ProtHint finished.\n" if ($v > 2);
 }
 
 ####################### make_rnaseq_hints ######################################
@@ -6110,13 +6161,15 @@ sub check_genemark_hints {
                 . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
                 . "total, $nIntrons unique introns are contained. "
                 .  "$nIntronsAboveThreshold have a multiplicity >= 10.) Possibly, you "
-                . "are trying to run braker.pl on data that does not supply "
+                . "are trying to run braker.pl on data that does not provide sufficient "
                 . "multiplicity information. This will e.g. happen if you try to "
                 . "use introns generated from assembled RNA-Seq transcripts; or if "
                 . "you try to run braker.pl in epmode with mappings from proteins "
-                . "without sufficient hits per locus.\n"
+                . "without sufficient hits per locus. Or if you use the example data"
+                . " set (orthodb_small.fa).\n"
                 . "# A low number of intron hints with sufficient multiplicity may "
-                . "result in a crash of GeneMark-EX.\n"
+                . "result in a crash of GeneMark-EX (it should not crash with the "
+                . "example data set).\n"
                 . "#*********\n";
         print LOG $prtStr if ($v > 0);
         print STDOUT $prtStr;
