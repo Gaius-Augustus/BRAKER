@@ -2,13 +2,14 @@
 
 # BRAKER User Guide
 
-Katharina J. Hoff
-University of Greifswald
-Germany
+<u>Authors of BRAKER:</u> Katharina J. Hoff, Tomas Bruna, Alexandrea Lomsadze, Mario Stanke, Mark Borodovsky
 
-katharina.hoff@uni-greifswald.de
-+49 3834 420 4624
-https://github.com/Gaius-Augustus/BRAKER
+<u>Contacts for Github Repository of BRAKER at 
+https://github.com/Gaius-Augustus/BRAKER:</u>
+
+Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624
+
+Tomas Bruna, Georgia Tech, U.S.A., bruna.tomas@gatech.edu
 
 
 Contents
@@ -55,6 +56,7 @@ Contents
     -   [Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training)](#testing-braker-with-proteins-of-close-homoogy-and-rna-seq-data-rna-seq-and-protein-supported-training)
     -   [Testing BRAKER with pre-trained parameters](#testing-braker-with-pre-trained-parameters)
     -   [Testing BRAKER with genome sequence](#testing-braker-with-genome-sequence)
+-   [Starting BRAKER on the basis of previously existing BRAKER runs](#starting-braker-on-the-basis-of-previously-existing-braker-runs)
 -   [Bug reporting](#bug-reporting)
     -   [Reporting bugs on github](#reporting-bugs-on-github)
     -   [Common problems](#common-problems)
@@ -1012,6 +1014,29 @@ Implemented in `test8.sh`. Call:
 ```
 
 Runtime of this command is ~606 minutes.
+
+Starting BRAKER on the basis of previously existing BRAKER runs
+===============================================================
+
+There is currently no clean way to restart a failed BRAKER run (after solving some problem). However, it is possible to start a new BRAKER run based on results from a previous run -- given that the old run produced the required intermediate results. We will in the following refer to the old working directory with variable `${BRAKER_OLD}`, and to the new BRAKER working directory with `${BRAKER_NEW}`.
+
+Option 1: starting BRAKER with existing hints file(s)
+-----------------------------------------------------
+
+If you have access to an existing BRAKER output that contains hintsfiles that were generated from extrinsic data, such as RNA-Seq or protein sequences, you can recycle these hints files in a new BRAKER run.
+
+<u>1a) RNA-Seq hints only:</u>
+
+Start a new job using the previously from-bam-generated hints with the following command:
+
+```
+    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --softmasking
+```
+
+<u>1b) Proteins hints from a run in `--epmode` only:</u>
+
+
 
 Bug reporting
 =============
