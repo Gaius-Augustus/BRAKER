@@ -931,7 +931,7 @@ The following command will test the pipeline according to Figure [2](#fig2) (imp
        --softmasking
 ```
 
-Runtime of this command is ~185 minutes.
+Runtime of this command is ~174 minutes.
 
 Testing BRAKER with hints from proteins of unknown evolutionary distance
 -------------------------------------------------------------------------
@@ -939,11 +939,11 @@ Testing BRAKER with hints from proteins of unknown evolutionary distance
 The following command will test the pipeline according to Figure [3](#fig3) (implemented in `test2.sh`):
 
 ```
-    braker.pl --genome=genome.fa --hints=ep.hints \
+    braker.pl --genome=../genome.fa --prot_seq=../orthodb_small.fa \
        --epmode --softmasking
 ```
 
-Runtime of this command is ~275 minutes.
+Runtime of this command is ~24 minutes (including the runtime of ProtHint).
 
 Testing BRAKER with hints from proteins of unknown evolutionary distance and RNA-Seq
 ------------------------------------------------------------------------------------
@@ -951,8 +951,8 @@ Testing BRAKER with hints from proteins of unknown evolutionary distance and RNA
 The following command will test a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [4](#fig4), implemented in `test3.sh`:
 
 ```
-    braker.pl --genome=genome.fa --hints=ep.hints \
-       --bam=RNAseq.bam --etpmode --softmasking
+    braker.pl --genome=../genome.fa --prot_seq=../orthodb_small.fa \
+       --bam=../RNAseq.bam --etpmode --softmasking
 ```
 
 Runtime of this command is ~380 minutes.
@@ -967,7 +967,7 @@ The following command will test the pipeline according to Figure [5](#fig5) (imp
        --prg=gth --trainFromGth --softmasking
 ```
 
-Runtime of this command is ~137 minutes.
+Runtime of this command is ~143 minutes.
 
 Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq supported training)
 --------------------------------------------------------------------------------------------
@@ -990,7 +990,7 @@ The following command will test the pipeline according to Figure [7](#fig7) (imp
        --prg=gth --bam=RNAseq.bam --gth2traingenes \
        --softmasking
 
-Runtime of this command is ~346 minutes.
+Runtime of this command is ~236 minutes.
 
 Testing BRAKER with pre-trained parameters
 ------------------------------------------
@@ -1002,7 +1002,7 @@ The training step of all pipelines can be skipped with the option `--skipAllTrai
        --species=fly --skipAllTraining --softmasking
 ```
 
-Runtime of this command is ~54 minutes.
+Runtime of this command is ~55 minutes.
 
 Testing BRAKER with genome sequence
 -----------------------------------
@@ -1027,14 +1027,32 @@ If you have access to an existing BRAKER output that contains hintsfiles that we
 
 <u>1a) RNA-Seq hints only:</u>
 
-Start a new job using the previously from-bam-generated hints with the following command:
+Start a new job using the previously from-bam-generated hints with the following command (test1_restart1.sh, 182 minutes):
 
 ```
     braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --softmasking
+       --softmasking --workingdir=${BRAKER_NEW}
 ```
 
-<u>1b) Proteins hints from a run in `--epmode` only:</u>
+
+<u>1b) Protein hints from a run in `--epmode` only (test2_restart1.sh):</u>
+
+```
+    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --prothints=${BRAKER_OLD}/prothints.gff \
+       --evidence=${BRAKER_OLD}/evidence.gff \
+       --softmasking --workingdir=${BRAKER_NEW}
+```
+
+<u>1c) Protein and RNA-Seq hints from a run in `--etpmode`:</u>
+
+```
+    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --prothints=${BRAKER_OLD}/prothints.gff \
+       --evidence=${BRAKER_OLD}/evdience.gff \
+       --softmasking --workingdir=${BRAKER_NEW}
+
+```
 
 
 
@@ -1121,13 +1139,13 @@ Common problems
 Citing BRAKER and software called by BRAKER
 =============================================
 
-Since BRAKER is a pipeline that calls several Bioinformatics tools, publication of results obtained by BRAKER requires that not only BRAKER is cited, but also the tools that are called by BRAKER:
+Since BRAKER is a pipeline that calls several Bioinformatics tools, publication of results obtained by BRAKER requires that not only BRAKER is cited, but also the tools that are called by BRAKER. BRAKER will output a file `what-to-cite.txt` in the BRAKER working directory, informing you about which exact sources apply to your run.
 
 -   Always cite:
 
     -   Hoff, K.J., Lomsadze, A., Borodovsky, M. and Stanke, M. (2019). Whole-Genome Annotation with BRAKER. Methods Mol Biol. 1962:65-95, doi: 10.1007/978-1-4939-9173-0_5.
 
-    -   Hoff, K.J., Lange, S., Lomsadze, A., Borodovsky, M. and Stanke, M. (2015). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5):767-769.
+    -   Hoff, K.J., Lange, S., Lomsadze, A., Borodovsky, M. and Stanke, M. (2016). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5):767-769.
 
     -   Stanke, M., Diekhans, M., Baertsch, R. and Haussler, D. (2008). Using native and syntenically mapped cDNA alignments to improve de novo gene finding. Bioinformatics, doi: 10.1093/bioinformatics/btn013.
 
@@ -1151,9 +1169,17 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Ter-Hovhannisyan, V., Lomsadze, A., Chernoff, Y.O. and Borodovsky, M. (2008). Gene prediction in novel fungal genomes using an ab initio algorithm with unsupervised training. Genome research, pages gr--081612, 2008.
 
--   If BRAKER was executed with RNA-Seq information or with information from proteins of remote homology, then GeneMark-EX was used; cite:
+-  If BRAKER was run with proteins of unknown phylogenetic distance (--epmode or --etpmode), please cite all tools that are used by the ProtHint pipeline to generate hints:
 
-    -   Lomsadze, A., Burns, P.D. and Borodovsky, M. (2014). Integration of mapped RNA-Seq reads into automatic training of eukaryotic gene finding algorithm. Nucleic Acids Research, 42(15):e119.
+    -   Bruna, T., Lomsadze, A., Borodovsky, M. (2020) GeneMark-EP and -EP+: automatic eukaryotic gene prediction supported by spliced aligned proteins. Preprint on bioarXive at doi: <https://doi.org/10.1101/2019.12.31.891218 >.
+
+    -   Buchfink, B., Xie, C., Huson, D.H. (2015). Fast and sensitive protein alignment using DIAMOND. Nature Methods 12:59-60.
+
+    -   Lomsadze, A., Ter-Hovhannisyan, V., Chernoff, Y.O. and Borodovsky, M. (2005). Gene identification in novel eukaryotic genomes by self-training algorithm. Nucleic Acids Research, 33(20):6494--6506.
+
+    -   Iwata, H., and Gotoh, O. (2012). Benchmarking spliced alignment programs including Spaln2, an extended version of Spaln that incorporates additional species-specific features. Nucleic acids research, 40(20), e161-e161.
+
+    -   Gotoh, O., Morita, M., Nelson, D. R. (2014). Assessment and refinement of eukaryotic gene structure prediction with gene-structure-aware multiple protein sequence alignment. BMC bioinformatics, 15(1), 189.
 
 -   If BRAKER was executed with RNA-Seq alignments in bam-format, then SAMtools was used, cite:
 
@@ -1167,7 +1193,8 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
 -  If BRAKER called MakeHub for creating a track data hub for visualization of BRAKER results with the UCSC Genome Browser, cite:
 
-   -   Hoff, K.J. (2019) MakeHub: Fully automated generation of UCSC Genome Browser Assembly Hubs. Preprint on bioarXive, doi: <https://doi.org/10.1101/550145>.
+    -   Hoff, K.J. (2019) MakeHub: Fully automated generation of UCSC Genome Browser Assembly Hubs. Genomics, Proteomics and Bioinformatics, in press 2020, preprint on bioarXive, doi: <https://doi.org/10.1101/550145>.
+
 
 License
 =======
