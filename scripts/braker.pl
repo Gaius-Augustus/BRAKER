@@ -386,6 +386,9 @@ EXPERT OPTIONS
                                     problems with a braker.pl run, you 
                                     might want to keep these files, therefore
                                     nocleanup can be activated.)
+--genemark_hintsfile=hints.gff      Hints file for GeneMark-ETP produced by a
+                                    previous BRAKER run. Excluding contents or
+                                    evidence.gff.
 
 
 DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
@@ -533,6 +536,7 @@ my $hintsfile;           # hints file (all hints)
 my $prot_hintsfile;      # hints file with protein hints
 my $genemark_hintsfile;  # contains only intron hints in case $hintsfile also
                          # contains other hints types
+my $gm_hints; # command line passed genemark_hintsfile from previous ETP run
 my $limit = 10000000;    # maximum for generic species Sp_$limit
 my $logfile;             # contains used shell commands
 my $optCfgFile;          # optinonal extrinsic config file for AUGUSTUS
@@ -730,7 +734,8 @@ GetOptions(
     'skip_fixing_broken_genes!'    => \$skip_fixing_broken_genes,
     'gc_probability=s'             => \$gc_prob,
     'evidence=s'                   => \$evidence_hints,
-    'prothints=s'                  => \$prothint_file
+    'prothints=s'                  => \$prothint_file,
+    'genemark_hintsfile=s'         => \$gm_hints
 );
 
 if ($help) {
@@ -747,6 +752,29 @@ if($nocleanup){
     $cleanup = 0;
 }
 
+# Define publications to be cited ##############################################
+# braker1, braker-whole, aug-cdna, aug-hmm, diamond, blast1, blast2, gm-es, 
+# gm-et, gm-ep, gm-fungus, samtools, bamtools, gth, exonerate, spaln, spaln2,
+# makehub
+my %pubs;
+$pubs{'braker1'} = "\nHoff, K. J., Lange, S., Lomsadze, A., Borodovsky, M., & Stanke, M. (2016). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5), 767-769.\n";
+$pubs{'braker-whole'} = "\nHoff, K. J., Lomsadze, A., Borodovsky, M., & Stanke, M. (2019). Whole-genome annotation with BRAKER. In Gene Prediction (pp. 65-95). Humana, New York, NY.\n";
+$pubs{'aug-cdna'} = "\nStanke, M., Diekhans, M., Baertsch, R., & Haussler, D. (2008). Using native and syntenically mapped cDNA alignments to improve de novo gene finding. Bioinformatics, 24(5), 637-644.\n";
+$pubs{'aug-hmm'} = "\nStanke, M., Schöffmann, O., Morgenstern, B., & Waack, S. (2006). Gene prediction in eukaryotes with a generalized hidden Markov model that uses hints from external sources. BMC Bioinformatics, 7(1), 62.\n";
+$pubs{'diamond'} = "\nBuchfink, B., Xie, C., & Huson, D. H. (2015). Fast and sensitive protein alignment using DIAMOND. Nature Methods, 12(1), 59.\n";
+$pubs{'blast1'} = "\nAltschul, S. F., Gish, W., Miller, W., Myers, E. W., & Lipman, D. J. (1990). Basic local alignment search tool. Journal of Molecular Biology, 215(3), 403-410.\n";
+$pubs{'blast2'} = "\nCamacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoulos, J., Bealer, K., & Madden, T. L. (2009). BLAST+: architecture and applications. BMC Bioinformatics, 10(1), 421.\n";
+$pubs{'gm-es'} = "\nLomsadze, A., Ter-Hovhannisyan, V., Chernoff, Y. O., & Borodovsky, M. (2005). Gene identification in novel eukaryotic genomes by self-training algorithm. Nucleic acids research, 33(20), 6494-6506.\n";
+$pubs{'gm-et'} = "\nLomsadze, A., Burns, P. D., & Borodovsky, M. (2014). Integration of mapped RNA-Seq reads into automatic training of eukaryotic gene finding algorithm. Nucleic acids research, 42(15), e119-e119.\n";
+$pubs{'gm-ep'} = "\nBruna, T., Lomsadze, A., & Borodovsky, M. (2020). GeneMark-EP and-EP+: automatic eukaryotic gene prediction supported by spliced aligned proteins. bioRxiv, 2019-12.\n";
+$pubs{'gm-fungus'} = "\nTer-Hovhannisyan, V., Lomsadze, A., Chernoff, Y. O., & Borodovsky, M. (2008). Gene prediction in novel fungal genomes using an ab initio algorithm with unsupervised training. Genome research, 18(12), 1979-1990.\n";
+$pubs{'samtools'} = "\nLi, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., ... & Durbin, R. (2009). The sequence alignment/map format and SAMtools. Bioinformatics, 25(16), 2078-2079.\n";
+$pubs{'bamtools'} = "\nBarnett, D. W., Garrison, E. K., Quinlan, A. R., Strömberg, M. P., & Marth, G. T. (2011). BamTools: a C++ API and toolkit for analyzing and managing BAM files. Bioinformatics, 27(12), 1691-1692.\n";
+$pubs{'gth'} = "\nGremme, G. (2013). Computational gene structure prediction.\n";
+$pubs{'spaln'} = "\nGotoh, O. (2008). A space-efficient and accurate method for mapping and aligning cDNA sequences onto genomic sequence. Nucleic acids research, 36(8), 2630-2638.\n";
+$pubs{'spaln2'} = "\nIwata, H., & Gotoh, O. (2012). Benchmarking spliced alignment programs including Spaln2, an extended version of Spaln that incorporates additional species-specific features. Nucleic acids research, 40(20), e161-e161.\n";
+$pubs{'exonerate'} = "\nSlater, G. S. C., & Birney, E. (2005). Automated generation of heuristics for biological sequence comparison. BMC bioinformatics, 6(1), 31.\n";
+
 # Make paths to input files absolute ###########################################
 
 make_paths_absolute();
@@ -755,7 +783,9 @@ make_paths_absolute();
 
 my $wdGiven;
 # if no working directory is set, use current directory
-if ( !defined $workDir ) {
+if ( !defined $workDir ) {;
+
+    ;
     $wdGiven = 0;
     $workDir = $currentDir;
 }else {
@@ -1063,6 +1093,19 @@ open( LOG, ">" . $logfile ) or die("ERROR in file " . __FILE__ ." at line "
     . __LINE__ ."\nCannot open file $logfile!\n");
 print LOG $logString;
 
+# open cite file
+print LOG "\# "
+        . (localtime)
+        . ": creating file that contains citations for this BRAKER run at "
+        . "$otherfilesDir/what-to-cite.txt...\n" if ($v > 2);
+open( CITE, ">", "$otherfilesDir/what-to-cite") or die("ERROR in file " . __FILE__ ." at line "
+    . __LINE__ ."\n$otherfilesDir/what-to-cite!\n");
+print CITE "When publishing results of this BRAKER run, please cite the following sources:\n";
+print CITE "------------------------------------------------------------------------------\n";
+print CITE $pubs{'braker1'}; $pubs{'braker1'} = "";
+print CITE $pubs{'braker-whole'}; $pubs{'braker-whole'} = "";
+
+
 if ( (!-d $genemarkDir) && ! $trainFromGth) {
     make_path($genemarkDir) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to create direcotry $genemarkDir!\n");
@@ -1081,7 +1124,7 @@ if ( defined($genemarkesDir) ) {
     print LOG "mkdir $genemarkesDir\n" if ($v > 2);
 }
 
-# check gthTrainGeneFile
+# set gthTrainGenes file
 if ( $gth2traingenes ) {
     $gthTrainGeneFile = "$otherfilesDir/gthTrainGenes.gtf";
 }
@@ -1098,6 +1141,18 @@ if ( defined($geneMarkGtf) ) {
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
 }
 
+# softlink genemark_hintsfile.gff
+if ( defined($gm_hints) ) {
+    print LOG "\#  "
+        . (localtime)
+        . ": creating softlink of $gm_hints to "
+        . "$otherfilesDir/genemark_hintsfile.gff.\n" if ($v > 2);
+    $cmdString =  "ln -s $gm_hints $otherfilesDir/genemark_hintsfile.gff";
+    print LOG "$cmdString\n" if ($v > 2);
+    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
 # copy evidence.gff file, do not softlink because file might be modified in ETPmode
 if ( defined($evidence_hints) ){
     print LOG "\#  "
@@ -1108,6 +1163,24 @@ if ( defined($evidence_hints) ){
     print LOG "$cmdString\n" if ($v > 2);
     system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
+}
+
+# check whether all required files are specified if genemark_hintsfile.gff is given
+if( defined( $gm_hints) ) {
+    if( not( defined ( $evidence_hints) ) && not( scalar(@hints) >= 1) ) {
+        $prtStr = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "The option --genemark_hintsfile=string was specified, but "
+                . "at least one of the options --hints=string(s) and "
+                . "--evidence=string were not given. All files must be specified "
+                . "in order to start a BRAKER run that builds on top hints produced "
+                . "in a previous BRAKER run in --etpmode!\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+    }
+
 }
 
 # softlink prothint.gff
@@ -1435,6 +1508,9 @@ clean_up();         # delete all empty files
 print LOG "\#**********************************************************************************\n"
         . "\#                               BRAKER RUN FINISHED                                \n"
         . "\#**********************************************************************************\n";
+
+close(CITE) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+    ."\nCould not close file $otherfilesDir/what-to-cite.txt!\n");
 
 close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
     ."\nCould not close log file $logfile!\n");
@@ -4713,6 +4789,7 @@ sub check_bam_headers {
                 # samtools installed. try to correct BAM file
             }
             else {
+                print CITE $pubs{'samtools'}; $pubs{'samtools'} = "";
                 if ( not ( defined ($SAMTOOLS_PATH) ) ) {
                     $prtStr = "#*********\n"
                             . "# WARNING: The environment variable SAMTOOLS_PATH is "
@@ -4812,6 +4889,12 @@ sub run_prothint {
     print LOG "\# " . (localtime)
         . ": Running ProtHint to produce hints from protein sequence file "
         . "(this may take a couple of hours)...\n" if ($v > 2);
+
+    print CITE $pubs{'gm-ep'}; $pubs{'gm-ep'} = "";
+    print CITE $pubs{'gm-es'}; $pubs{'gm-es'} = "";
+    print CITE $pubs{'diamond'}; $pubs{'diamond'} = "";
+    print CITE $pubs{'spaln'}; $pubs{'spaln'} = "";
+    print CITE $pubs{'spaln2'}; $pubs{'spaln2'} = "";
 
     # step 1: remove dots from protein file and concatenate
     my $protein_file = $otherfilesDir."/proteins.fa";
@@ -5002,6 +5085,10 @@ sub make_rnaseq_hints {
     print LOG "\# "
         . (localtime)
         . ": Converting bam files to hints\n" if ($v > 2);
+
+    print CITE $pubs{'samtools'}; $pubs{'samtools'} = "";
+    print CITE $pubs{'bamtools'}; $pubs{'bamtools'} = "";
+
     # step 1: run augustus bam2hints in parallel
     my $bam_hints;
     my $hintsfile_temp = "$otherfilesDir/hintsfile.temp.gff";
@@ -5135,6 +5222,7 @@ sub make_prot_hints {
                         . (localtime)
                         . ": running Genome Threader to produce protein to "
                         . "genome alignments\n"  if ($v > 3);
+                    print CITE $pubs{'gth'}; $pubs{'gth'} = "";
                 }
                 elsif ( $prg eq "exonerate" ) {
                     $perlCmdString .= "--prg=exonerate ";
@@ -5142,6 +5230,7 @@ sub make_prot_hints {
                         . (localtime)
                         . ": running Exonerate to produce protein to "
                         . "genome alignments\n" if ($v > 3);
+                    print CITE $pubs{'exonerate'}; $pubs{'exonerate'} = "";
                 }
                 elsif ( $prg eq "spaln" ) {
                     $perlCmdString .= "--prg=spaln ";
@@ -5149,6 +5238,8 @@ sub make_prot_hints {
                         . (localtime)
                         . ": running Spaln to produce protein to "
                         . "genome alignments\n" if ($v > 3);
+                    print CITE $pubs{'spaln'}; $pubs{'spaln'} = "";
+                    print CITE $pubs{'spaln2'}; $pubs{'spaln2'} = "";
                 }
                 if ( $CPU > 1 ) {
                     $perlCmdString .= "--CPU=$CPU ";
@@ -6166,6 +6257,7 @@ sub GeneMark_ES {
             }
             if ($fungus) {
                 $perlCmdString .= " --fungus";
+                print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
             }
             if ($soft_mask) {
                 $perlCmdString .= " --soft_mask=1000";
@@ -6207,6 +6299,9 @@ sub GeneMark_ES {
 
 sub GeneMark_ET {
     print LOG "\# " . (localtime) . ": Executing GeneMark-ET\n" if ($v > 2);
+    
+    print CITE $pubs{'gm-et'}; $pubs{'gm-et'} = "";
+
     if ( !$skipGeneMarkET ) {
         if (!uptodate( [ $genome, $genemark_hintsfile ], 
             ["$genemarkDir/genemark.gtf"] ) || $overwrite ) {
@@ -6244,6 +6339,7 @@ sub GeneMark_ET {
                            .  "--max_intergenic 50000 --cores=$CPU --gc_donor $gc_prob";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
+                print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
             }
             if ($soft_mask) {
                 $perlCmdString .= " --soft_mask 1000"
@@ -6284,6 +6380,11 @@ sub GeneMark_ET {
 
 sub GeneMark_EP {
     print LOG "\# ". (localtime) . ": Running GeneMark-EP\n" if ($v > 2);
+    print CITE $pubs{'gm-ep'}; $pubs{'gm-ep'} = "";
+    print CITE $pubs{'gm-es'}; $pubs{'gm-es'} = "";
+    print CITE $pubs{'diamond'}; $pubs{'diamond'} = "";
+    print CITE $pubs{'spaln'}; $pubs{'spaln'} = "";
+    print CITE $pubs{'spaln2'}; $pubs{'spaln2'} = "";
     if ( !$skipGeneMarkEP ) {
         if (!uptodate( [ $genome, $genemark_hintsfile ], 
             ["$genemarkDir/genemark.gtf"] ) || $overwrite ) {
@@ -6320,6 +6421,7 @@ sub GeneMark_EP {
             }
             if ($fungus) {
                 $perlCmdString .= " --fungus";
+                print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
             }
             if ($soft_mask) {
                 $perlCmdString .= " --soft_mask 1000";
@@ -6358,6 +6460,12 @@ sub GeneMark_EP {
 
 sub GeneMark_ETP {
     print LOG "\# " . (localtime) . ": Running GeneMark-ETP\n" if ($v > 2);
+    print CITE $pubs{'gm-et'}; $pubs{'gm-et'} = "";
+    print CITE $pubs{'gm-ep'}; $pubs{'gm-ep'} = "";
+    print CITE $pubs{'gm-es'}; $pubs{'gm-es'} = "";
+    print CITE $pubs{'diamond'}; $pubs{'diamond'} = "";
+    print CITE $pubs{'spaln'}; $pubs{'spaln'} = "";
+    print CITE $pubs{'spaln2'}; $pubs{'spaln2'} = "";
     if ( !$skipGeneMarkETP ) {
         if (!uptodate(
                 [ $genome, $genemark_hintsfile ],
@@ -6400,6 +6508,7 @@ sub GeneMark_ETP {
                            .  "--cores=$CPU --gc_donor $gc_prob";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
+                print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
             }
             if ($soft_mask) {
                 $perlCmdString .= " --soft_mask 1000";
@@ -7165,11 +7274,14 @@ sub training_augustus {
                            .  "$otherfilesDir/traingenes.good.nr.fa "
                            .  "--DIAMOND_PATH=$DIAMOND_PATH --cores=$CPU "
                            .  "--diamond 1> $stdoutfile 2>$errorfile";
+            print CITE $pubs{'diamond'}; $pubs{'diamond'} = "";
         }else{
             $perlCmdString .= "perl $string $otherfilesDir/traingenes.good.fa "
                            .  "$otherfilesDir/traingenes.good.nr.fa "
                            .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU 1> "
                            .  "$stdoutfile 2>$errorfile";
+            print CITE $pubs{'blast1'}; $pubs{'blast1'} = "";
+            print CITE $pubs{'blast2'}; $pubs{'blast2'} = "";
         }
         print LOG "\# "
             . (localtime)
@@ -8211,6 +8323,10 @@ sub augustus {
         $genesetId = "_utr";
     }
     print LOG "\# " . (localtime) . ": RUNNING AUGUSTUS\n" if ($v > 2);
+
+    print CITE $pubs{'aug-cdna'}; $pubs{'aug-cdna'} = "";
+    print CITE $pubs{'aug-hmm'}; $pubs{'aug-hmm'} = "";
+
     $augpath = "$AUGUSTUS_BIN_PATH/augustus";
     my @genome_files;
     my $genome_dir = "$otherfilesDir/genome_split";
@@ -10268,12 +10384,15 @@ sub train_utr {
                            .  "--DIAMOND_PATH=$DIAMOND_PATH --cores=$CPU "
                            .  "--diamond 1> $otherfilesDir/utr.aa2nonred.stdout "
                            .  "2> $errorfilesDir/utr.aa2nonred.stderr";
+            print CITE $pubs{'diamond'}; $pubs{'diamond'} = "";
         }else{
             $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
                            .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
                            .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU 1> "
                            .  "$otherfilesDir/utr.aa2nonred.stdout "
                            .  "2> $errorfilesDir/utr.aa2nonred.stderr";
+            print CITE $pubs{'blast1'}; $pubs{'blast1'} = "";
+            print CITE $pubs{'blast2'}; $pubs{'blast2'} = "";
         }
         print LOG "\# "
             . (localtime)
@@ -11226,6 +11345,9 @@ sub all_preds_gtf2gff3 {
 sub make_hub {
     print LOG  "\# " . (localtime) . ": generating track data hub for UCSC "
            . " Genome Browser\n" if ($v > 2);
+
+    print CITE $pubs{'makehub'}; $pubs{'makehub'} = "";
+
     my $cmdStr = $PYTHON3_PATH . "/python3 " . $MAKEHUB_PATH . "/make_hub.py -g " . $genome 
             . " -e " . $email . " -l " . "hub_" . substr($species, 0, 3) 
             . " -L " . $species . " -X " . $otherfilesDir . " -P ";
