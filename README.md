@@ -979,7 +979,7 @@ The following command will test the pipeline according to Figure [6](#fig6) (imp
        --prg=gth --bam=RNAseq.bam --softmasking
 ```
 
-Runtime of this command is ~214 minutes.
+Runtime of this command is ~302 minutes.
 
 Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training)
 -------------------------------------------------------------------------------------------------------
@@ -1013,7 +1013,7 @@ Implemented in `test8.sh`. Call:
     braker.pl --genome=genome.fa --esmode --softmasking
 ```
 
-Runtime of this command is ~606 minutes.
+Runtime of this command is ~382 minutes.
 
 Starting BRAKER on the basis of previously existing BRAKER runs
 ===============================================================
@@ -1025,7 +1025,7 @@ Option 1: starting BRAKER with existing hints file(s)
 
 If you have access to an existing BRAKER output that contains hintsfiles that were generated from extrinsic data, such as RNA-Seq or protein sequences, you can recycle these hints files in a new BRAKER run.
 
-<u>1a) RNA-Seq hints only:</u>
+<u>1a) RNA-Seq hints only (test1.sh):</u>
 
 Start a new job using the previously from-bam-generated hints with the following command (test1_restart1.sh, 182 minutes):
 
@@ -1035,26 +1035,51 @@ Start a new job using the previously from-bam-generated hints with the following
 ```
 
 
-<u>1b) Protein hints from a run in `--epmode` only (test2_restart1.sh):</u>
+<u>1b) Protein hints from a run in `--epmode` (test2.sh, test2_restart1.sh, 12 minutes):</u>
 
 ```
     braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
        --prothints=${BRAKER_OLD}/prothints.gff \
        --evidence=${BRAKER_OLD}/evidence.gff \
-       --softmasking --workingdir=${BRAKER_NEW}
+       --softmasking --epmode --workingdir=${BRAKER_NEW}
 ```
 
-<u>1c) Protein and RNA-Seq hints from a run in `--etpmode`:</u>
+<u>1c) Protein and RNA-Seq hints from a run in `--etpmode` (test3.sh, test3_restart1.sh, minutes):</u>
 
 ```
     braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --prothints=${BRAKER_OLD}/prothints.gff \
-       --evidence=${BRAKER_OLD}/evdience.gff \
-       --softmasking --workingdir=${BRAKER_NEW}
+       --genemark_hintsfile=${BRAKER_OLD}/genemark_hintsfile.gff \
+       --evidence=${BRAKER_OLD}/evidince.gff \
+       --softmasking --etpmode --workingdir=${BRAKER_NEW}
 
 ```
 
+<u>1d) Proteins of close homology, generating training genes with GenomeThreader (test4.sh):</u>
 
+Currently no option to restart after training gene generation.
+
+<u>1e) Proteins of close homology & training from RNA-Seq data with GeneMark-ET (test5.sh, test5_restart1.sh, minutes)
+
+```
+    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --softmasking --workingdir=${BRAKER_NEW}
+```
+
+<u>1f) Proteins of close homology -- also in training genes -- & training from RNA-Seq data with GeneMark-ET (test6.sh)</u>
+
+Currently no option to restart after training gene generation.
+
+<u>1g) AUGUSTUS prediction only with RNA-Seq data (test7.sh, test7_restart1.sh, minutes)</u>
+
+```
+    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --species=fly --skipAllTraining --softmasking \
+       --workingdir=${BRAKER_NEW}
+```
+
+<u>1h) No hints involved with --esmode (test8.sh)</u>
+
+Cannot be restarted after hints generation.
 
 Bug reporting
 =============
