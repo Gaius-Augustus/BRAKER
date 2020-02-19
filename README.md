@@ -1035,7 +1035,9 @@ Start a new job using the previously from-bam-generated hints with the following
 ```
 
 
-<u>1b) Protein hints from a run in `--epmode` (test2.sh, test2_restart1.sh, 12 minutes):</u>
+<u>1b) Protein hints from a run in `--epmode` (test2.sh)</u>
+
+Start a new job using the previously from-prothint-generated hints with the following command (test2_restart1.sh, 84 minutes):
 
 ```
     braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
@@ -1044,12 +1046,13 @@ Start a new job using the previously from-bam-generated hints with the following
        --softmasking --epmode --workingdir=${BRAKER_NEW}
 ```
 
-<u>1c) Protein and RNA-Seq hints from a run in `--etpmode` (test3.sh, test3_restart1.sh, minutes):</u>
+<u>1c) Protein and RNA-Seq hints from a run in `--etpmode` (test3.sh)</u>
+Start a new job using the previously from-prothint-generated hints and bam-generated hints with the following command (test3_restart1.sh,  minutes):
 
 ```
     braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
        --genemark_hintsfile=${BRAKER_OLD}/genemark_hintsfile.gff \
-       --evidence=${BRAKER_OLD}/evidince.gff \
+       --evidence=${BRAKER_OLD}/evidence.gff \
        --softmasking --etpmode --workingdir=${BRAKER_NEW}
 
 ```
@@ -1058,7 +1061,9 @@ Start a new job using the previously from-bam-generated hints with the following
 
 Currently no option to restart after training gene generation.
 
-<u>1e) Proteins of close homology & training from RNA-Seq data with GeneMark-ET (test5.sh, test5_restart1.sh, minutes)
+<u>1e) Proteins of close homology & training from RNA-Seq data with GeneMark-ET (test5.sh)</u>
+
+Start a new job using the previously from-bam-generated hints with the following command (stest5_restart1.sh, 270 minutes):
 
 ```
     braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
@@ -1069,7 +1074,7 @@ Currently no option to restart after training gene generation.
 
 Currently no option to restart after training gene generation.
 
-<u>1g) AUGUSTUS prediction only with RNA-Seq data (test7.sh, test7_restart1.sh, minutes)</u>
+<u>1g) AUGUSTUS prediction only with RNA-Seq data (test7.sh, test7_restart1.sh, 60minutes)</u>
 
 ```
     braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
@@ -1080,6 +1085,67 @@ Currently no option to restart after training gene generation.
 <u>1h) No hints involved with --esmode (test8.sh)</u>
 
 Cannot be restarted after hints generation.
+
+
+Option 2: starting BRAKER after GeneMark-EX had finished
+--------------------------------------------------------
+
+<u>1a) RNA-Seq hints only (test1.sh):</u>
+
+Start a new job using the previously generating GeneMark-ET file with the following command (test1_restart2.sh,  minutes):
+
+```
+    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --geneMarkGtf=${BRAKER_OLD}/genemark.gtf \
+       --softmasking --workingdir=${BRAKER_NEW}
+```
+
+<u>1b) Protein hints from a run in `--epmode` (test2.sh, test2_restart2.sh, minutes):</u>
+
+```
+    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --prothints=${BRAKER_OLD}/prothints.gff \
+       --evidence=${BRAKER_OLD}/evidence.gff \
+       --softmasking --epmode --workingdir=${BRAKER_NEW}
+```
+
+<u>1c) Protein and RNA-Seq hints from a run in `--etpmode` (test3.sh, test3_restart1.sh,  minutes):</u>
+
+```
+    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --genemark_hintsfile=${BRAKER_OLD}/genemark_hintsfile.gff \
+       --evidence=${BRAKER_OLD}/evidence.gff \
+       --softmasking --etpmode --workingdir=${BRAKER_NEW}
+
+```
+
+<u>1d) Proteins of close homology, generating training genes with GenomeThreader (test4.sh):</u>
+
+Currently no option to restart after training gene generation.
+
+<u>1e) Proteins of close homology & training from RNA-Seq data with GeneMark-ET (test5.sh, test5_restart1.sh, 270 minutes)
+
+```
+    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --softmasking --workingdir=${BRAKER_NEW}
+```
+
+<u>1f) Proteins of close homology -- also in training genes -- & training from RNA-Seq data with GeneMark-ET (test6.sh)</u>
+
+Currently no option to restart after training gene generation.
+
+<u>1g) AUGUSTUS prediction only with RNA-Seq data (test7.sh, test7_restart1.sh, 60minutes)</u>
+
+```
+    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
+       --species=fly --skipAllTraining --softmasking \
+       --workingdir=${BRAKER_NEW}
+```
+
+<u>1h) No hints involved with --esmode (test8.sh)</u>
+
+Cannot be restarted after hints generation.
+
 
 Bug reporting
 =============
