@@ -957,8 +957,8 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
             . ": REMARK: The GeneMark-EX step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
     if ( not($trainFromGth) && not($useexisting)) {
-        if (    not( -f "$genemarkDir/genemark.gtf" )
-            and not( -f $geneMarkGtf ) )
+        if (    not( -e "$genemarkDir/genemark.gtf" )
+            and not( -e rel2abs($geneMarkGtf) ) )
         {
             $prtStr = "\# "
                     . (localtime)
@@ -968,9 +968,9 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
                     . "$genemarkDir and no valid file --geneMarkGtf=... was "
                     . "specified.\n";
             $logString .= $prtStr;
-            if ( defined($geneMarkGtf) ) {
+            if ( defined(rel2abs($geneMarkGtf)) ) {
                 $prtStr = "       The specified geneMarkGtf=... file was "
-                        . "$geneMarkGtf. This is not an accessible file.\n";
+                        . rel2abs($geneMarkGtf).". This is not an accessible file.\n";
                 $logString .= $prtStr;
             }
             print STDERR $logString;
@@ -981,8 +981,8 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
     && not ($skipAllTraining) && not ( defined($AUGUSTUS_hints_preds) ) ) {
     $prtStr = "REMARK: The GeneMark-EP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
-    if (    not( -f "$genemarkDir/genemark.gtf" )
-        and not( -f $geneMarkGtf ) )
+    if (    not( -e "$genemarkDir/genemark.gtf" )
+        and not( -e rel2abs($geneMarkGtf) ) )
     {
         $prtStr = "\# " . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
@@ -996,7 +996,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
                     . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "The specified geneMarkGtf=... file was "
-                    . "$geneMarkGtf. This is not an accessible file.\n";
+                    . rel2abs($geneMarkGtf).". This is not an accessible file.\n";
             $logString .= $prtStr;
             print STDERR $logString;
         }
@@ -1006,8 +1006,8 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
     && not($skipAllTraining) && not ( defined($AUGUSTUS_hints_preds) )){
     $prtStr = "REMARK: The GeneMark-ETP step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
-    if (    not( -f "$genemarkDir/genemark.gtf" )
-        and not( -f $geneMarkGtf ) )
+    if (    not( -e "$genemarkDir/genemark.gtf" )
+        and not( -e rel2abs($geneMarkGtf) ) )
     {
         $prtStr = "\# "
                 . (localtime)
@@ -1023,7 +1023,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "The specified geneMarkGtf=... file was "
-                . "$geneMarkGtf. This is not an accessible file.\n";
+                . rel2abs($geneMarkGtf).". This is not an accessible file.\n";
             $logString .= $prtStr;
             print STDERR $logString;
         }
@@ -1033,8 +1033,8 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
     && not($skipAllTraining) && not ( defined($AUGUSTUS_hints_preds) ) ){
     $prtStr = "REMARK: The GeneMark-ES step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
-    if (    not( -f "$genemarkDir/genemark.gtf" )
-        and not( -f $geneMarkGtf ) )
+    if (    not( -e "$genemarkDir/genemark.gtf" )
+        and not( -e rel2abs($geneMarkGtf) ) )
     {
         $prtStr = "\# "
                 . (localtime)
@@ -1050,7 +1050,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "The specified geneMarkGtf=... file was "
-                . "$geneMarkGtf. This is not an accessible file.\n";
+                . rel2abs($geneMarkGtf).". This is not an accessible file.\n";
             $logString .= $prtStr;
             print STDERR $logString;
         }
@@ -1133,9 +1133,9 @@ if ( $gth2traingenes ) {
 if ( defined($geneMarkGtf) ) {
     print LOG "\#  "
         . (localtime)
-        . ": creating softlink of $geneMarkGtf to "
+        . ": creating softlink of ".rel2abs($geneMarkGtf)." to "
         . "$genemarkDir/genemark.gtf.\n" if ($v > 2);
-    $cmdString =  "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
+    $cmdString =  "ln -s ".rel2abs($geneMarkGtf)." $genemarkDir/genemark.gtf";
     print LOG "$cmdString\n" if ($v > 2);
     system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
@@ -1436,33 +1436,41 @@ if ( (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) ) && ($ESmode == 0
 
 
 # train gene predictors
-if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) )) {
+if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
     if ( not($trainFromGth) ) {
         print LOG "\#**********************************************************************************\n"
                 . "\#                              RUNNING GENEMARK-EX                                 \n"
                 . "\#**********************************************************************************\n";
         if ( $EPmode == 0 && $ETPmode==0 && $ESmode == 0 ) {
-            check_genemark_hints();
-            GeneMark_ET();    # run GeneMark-ET
+            if( not( defined( $geneMarkGtf ) ) ){
+                check_genemark_hints();
+                GeneMark_ET();    # run GeneMark-ET
+            }
             filter_genemark();
         } elsif ( $EPmode == 1 ) {
             # remove reformatting of hintsfile, later!
             # format_ep_hints(); # not required anymore since provided as $prothint_file
             # create_evidence_gff(); # not required anymore since provided as $evidence
-            check_genemark_hints();
-            GeneMark_EP();
+            if( not( defined( $geneMarkGtf ) ) ){
+                check_genemark_hints();
+                GeneMark_EP();
+            }
             filter_genemark();
         } elsif ( $ETPmode == 1 ) {
             # format_ep_hints(); # not required anymore since provided as $prothint_file
-            if(not(defined($gm_hints))){
-                create_evidence_gff(); # evidence from both RNA-Seq and proteins
-                append_prothint_to_genemark_hints();
+            if ( not( defined( $geneMarkGtf ) ) ){
+                if ( not( defined( $gm_hints ) ) ){
+                    create_evidence_gff(); # evidence from both RNA-Seq and proteins
+                    append_prothint_to_genemark_hints();
+                }
+                check_genemark_hints();
+                GeneMark_ETP();
             }
-            check_genemark_hints(); 
-            GeneMark_ETP();
             filter_genemark();
         } elsif  ( $ESmode == 1 ) {
-            GeneMark_ES($genemarkDir);
+            if( not( defined( $geneMarkGtf ) ) ){
+                GeneMark_ES($genemarkDir);
+            }
             filter_genemark();
         }
     }
@@ -3796,7 +3804,7 @@ sub check_gff {
     }
     close(GFF) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nCould not close gff file $gfffile!\n");
-    if ( !@bam ) {
+    if ( !@bam && !$skipAllTraining) {
         if ( $nIntrons < 1000 ) {
             $prtStr = "#*********\n"
                     . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
@@ -4436,7 +4444,7 @@ sub check_options {
             print STDERR $logString;
             exit(1);
         }
-        if ( (!@prot_seq_files and !@prot_aln_files)) {
+        if ( (!@prot_seq_files and !@prot_aln_files) and not($skipAllTraining) ) {
             $prtStr
                 = "\# "
                 . (localtime)
@@ -5897,7 +5905,7 @@ sub get_genemark_hints {
             . "\nFailed to execute: $cmdString\n");
     }
 
-    if( $EPmode == 0 ) {
+    if( $EPmode == 0 && not($skipAllTraining)) {
         $cmdString = "mv $gm_hints_rnaseq.tmp $genemark_hintsfile";
         print LOG "$cmdString\n" if ($v > 3);
         system($cmdString) == 0 or clean_abort(
