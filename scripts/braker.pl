@@ -4338,14 +4338,23 @@ sub check_options {
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
-    }
-    elsif ( defined($trainFromGth) && not( $prg eq "gth" ) ) {
+    } elsif ( defined($trainFromGth) && not( $prg eq "gth" ) ) {
         $prtStr
             = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "Option --trainFromGth can only be specified with "
             . "option --prg=gth!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    } elsif ( ( defined ($trainFromGth) || $prg eq "gth" ) && ( $ETPmode == 1 ) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "With --etpmode, usage of GenomeThreader is not supported "
+                . "(options --gth2traingenes and --prg=gth)!\n";
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
