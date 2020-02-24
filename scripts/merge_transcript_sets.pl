@@ -75,21 +75,32 @@ foreach(@ARGV){
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
     open(IN, "<", $file.".sorted") or die ("ERROR: in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to open file $file".".sorted for reading!\n");
+    my @store_for_txid = (); # gene lines do not contain transcript_id and can only be appended later
     while(<IN>){
-        my $line = $_;
-        $line =~ m/transcript_id "([^"]+)";/;
-        my $txid = $1;
-        push(@{$txid_to_elements{$txid}}, $line);
-        # currently, UTR features are ignored
-        if($line =~ m/\tCDS\t/){
-            my @t = split(/\t/, $line);
-            if(not(defined($txid_to_struct{$txid}))){
-                $txid_to_struct{$txid} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+        if(not($_=~m/\#/)){
+            my $line = $_;
+            my $txid;
+            if($line =~ m/transcript_id/){
+                $line =~ m/transcript_id "([^"]+)";/;
+                $txid = $1;
+                push(@{$txid_to_elements{$txid}}, $line);
+                foreach(@store_for_txid){
+                    push(@{$txid_to_elements{$txid}}, $_)
+                }
+                @store_for_txid = ();
             }else{
-                $txid_to_struct{$txid} .= "_".$t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+                push(@store_for_txid, $line);
+            }
+            # currently, UTR features are ignored
+            if($line =~ m/\tCDS\t/){
+                my @t = split(/\t/, $line);
+                if(not(defined($txid_to_struct{$txid}))){
+                    $txid_to_struct{$txid} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+                }else{
+                    $txid_to_struct{$txid} .= "_".$t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+                }
             }
         }
-
     }
     close(IN) or die ("ERROR: in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to close file $file".".sorted!\n");
