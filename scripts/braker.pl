@@ -5239,7 +5239,7 @@ sub make_prot_hints {
             "startAlign.pl",        $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         $errorfile = "$errorfilesDir/startAlign.stderr";
-        $logfile   = "$errorfilesDir/startAlign.stdout";
+        $logfile   = "$otherfilesDir/startAlign.stdout";
         for ( my $i = 0; $i < scalar(@prot_seq_files); $i++ ) {
             if ( !uptodate( [ $prot_seq_files[$i] ], [$prot_hintsfile] )
                 || $overwrite )

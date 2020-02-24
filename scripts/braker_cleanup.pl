@@ -109,7 +109,7 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"genome.fa.cidx", "getAnnoFastaFromJoingenes.augustus.hints_tmp.stdout", "getAnnoFastaFromJoingenes.augustus.ab_initio_tmp.stdout",
 	"augustus.ab_initio.tmp.gtf", "augustus.ab_initio.gff", "augustus.hints.gff", "augustus.hints.tmp.gtf",
 	"getAnnoFastaFromJoingenes.augustus.hints_hints.stdout", "getAnnoFastaFromJoingenes.augustus.ab_initio_.stdout",
-	"getAnnoFastaFromJoingenes.augustus.hints_.stdout");
+	"getAnnoFastaFromJoingenes.augustus.hints_.stdout", "startAlign.stdout");
 
 my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneMark-ES/run",
 	"GeneMark-ET/data", "GeneMark-ET/info", "GeneMark-ET/output", "GeneMark-ET/run",
