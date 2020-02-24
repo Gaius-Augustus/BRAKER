@@ -1263,9 +1263,10 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
         = "$AUGUSTUS_CONFIG_PATH/species/$species/$species" . "_";
     my @confFiles = (
         "exon_probs.pbl",   "igenic_probs.pbl",
-        "intron_probs.pbl", "metapars.cfg",
+        "intron_probs.pbl",
         "parameters.cfg",   "weightmatrix.txt"
     );
+
     foreach (@confFiles) {
         if ( not( -e "$specPath" . "$_" ) ) {
             $prtStr
