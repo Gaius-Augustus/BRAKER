@@ -4045,7 +4045,22 @@ sub check_options {
     my $operatingSystem = "$^O";
     my $cpus_available  = 1;
     if ( $operatingSystem eq "linux" ) {
-        $cpus_available = `nproc`;
+        my $epath = which 'nproc';
+        if(defined($epath)){
+            $cpus_available = `nproc`;
+        }elsif(-e "/proc/cpuinfo"){
+            $cpus_available = `grep -c ^processor /proc/cpuinfo`;
+        }else{
+            $prtStr = "\# "
+                    . (localtime)
+                    . ": WARNING: braker.pl was unable to determine the number "
+                    . "of available cores on your system. Will proceed working "
+                    . "with the number of cores that you requested when "
+                    . "starting braker.pl.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            $cpus_available = $CPU;
+        }
     }
     else {    # Mac OS X
         $cpus_available = `sysctl -n hw.ncpu`;
