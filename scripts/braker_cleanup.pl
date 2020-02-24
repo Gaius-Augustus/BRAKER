@@ -86,7 +86,7 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"getAnnoFasta.augustus.hints.stdout", "optimize_augustus.stdout", "secondtest.stdout",
 	"train.gb", "GeneMark-ES/genemark.d.gtf", "GeneMark-ES/genemark.f.good.gtf", 
 	"GeneMark-ES/gmes.log", "GeneMark-ES/logfile", "GeneMark-ES/run.cfg", 
-	"GeneMark-ES/training.fna", "GeneMark-ES.stdout", "genemark_hintsfile.gff", "GeneMark-ET/genemark.d.gtf", 
+	"GeneMark-ES/training.fna", "GeneMark-ES.stdout", "GeneMark-ET/genemark.d.gtf", 
 	"GeneMark-ET/genemark.f.good.gtf", "GeneMark-ET/genemark.c.gtf", "GeneMark-ET/genemark.average_gene_length.out",
 	"GeneMark-ET/gmes.log", "GeneMark-ET/logfile", "GeneMark-ET/run.cfg", 
 	"GeneMark-ET/training.fna", "GeneMark-ET/genemark.f.bad.gtf", "GeneMark-ET.stdout", "filterGenemark.stdout", 
@@ -108,8 +108,8 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"secondetraining.stdout", "startAlign_gth.log", "protein_alignment_gth.gff3", "ex1.cfg", "getAnnoFastaFromJoingenes.augustus.hints.stdout", 
 	"genome.fa.cidx", "getAnnoFastaFromJoingenes.augustus.hints_tmp.stdout", "getAnnoFastaFromJoingenes.augustus.ab_initio_tmp.stdout",
 	"augustus.ab_initio.tmp.gtf", "augustus.ab_initio.gff", "augustus.hints.gff", "augustus.hints.tmp.gtf",
-	"getAnnoFastaFromJoingenes.augustus.hints_hints.stdout", "evidence.gff", "getAnnoFastaFromJoingenes.augustus.ab_initio_.stdout",
-	"getAnnoFastaFromJoingenes.augustus.hints_.stdout");
+	"getAnnoFastaFromJoingenes.augustus.hints_hints.stdout", "getAnnoFastaFromJoingenes.augustus.ab_initio_.stdout",
+	"getAnnoFastaFromJoingenes.augustus.hints_.stdout", "startAlign.stdout");
 
 my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneMark-ES/run",
 	"GeneMark-ET/data", "GeneMark-ET/info", "GeneMark-ET/output", "GeneMark-ET/run",
