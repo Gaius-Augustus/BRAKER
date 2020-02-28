@@ -580,18 +580,6 @@ picking a release from <https://github.com/Gaius-Augustus/MakeHub/releases>. Ext
 
 BRAKER will try to locate the make_hub.py script by using an environment variable `$MAKEHUB_PATH`. Alternatively, this can be supplied as command line argument (`--MAKEHUB_PATH=/your/path/to/MakeHub/`). BRAKER can also try to guess the location of MakeHub on your system.
 
-#### Eval
-
-In some (non de novo annotation) scenarios, BRAKER will be run to benchmark BRAKER predictions against an existing reference annotation (option `--annot=annot,gtf`). For doing this, BRAKER uses the Eval package <sup name="a17">[R17](#f17)</sup>.
-
-Eval is available for download from <http://mblab.wustl.edu/software.html>. After extraction, add the location of eval scripts to your `$PATH`:
-
-```
-    PATH=/path/to/eval:$PATH
-```
-
-BRAKER will try to locate the eval scripts by searching `evaluate_gtf.pl` on your system, i.e. the eval scripts must be in your `$PATH` for usage with BRAKER.
-
 Running BRAKER
 ===============
 
