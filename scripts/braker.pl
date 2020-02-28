@@ -720,7 +720,7 @@ GetOptions(
     'etpmode!'                     => \$ETPmode,
     'AUGUSTUS_ab_initio!'          => \$ab_initio,
     'eval=s'                       => \$annot,
-    'eval_pesudo=s'                => \$annot_pseudo,
+    'eval_pseudo=s'                => \$annot_pseudo,
     'verbosity=i'                  => \$v,
     'downsampling_lambda=s'        => \$lambda,
     'splice_sites=s'               => \@splice_cmd_line,
@@ -1085,6 +1085,14 @@ if ( !-d $otherfilesDir ) {
     $logString .= $prtStr if ( $v > 2 );
     make_path($otherfilesDir) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to create directory $otherfilesDir!\n");
+}
+
+# make paths to reference annotation files absolute if they were given
+if(defined($annot)){
+    $annot = rel2abs($annot);
+}
+if(defined($annot_pseudo)){
+    $annot_pseudo = rel2abs($annot_pseudo);
 }
 
 # open log file
@@ -9736,14 +9744,6 @@ sub evaluate {
     print LOG "\# "
         . (localtime)
         . ": Trying to evaluate braker.pl gene prediction files...\n" if ($v > 2);
-    open( SEQLIST, ">", $seqlist ) or die("ERROR in file " . __FILE__
-        . " at line ". __LINE__ ."\nCould not open file $seqlist!\n");
-    while ( my ( $locus, $size ) = each %scaffSizes ) {
-        chomp $locus;
-        $locus =~ s/^>//;
-        print SEQLIST $locus . "\n";
-    }
-    close(SEQLIST);
     if ( -e "$otherfilesDir/augustus.ab_initio.gtf" ) {
         print LOG "\# "
             . (localtime)
@@ -9855,23 +9855,20 @@ sub evaluate {
             print ACC "\t$_";
         }
         print ACC "\n";
+
         my @gene_sens;
         my @gene_spec;
         my @trans_sens;
         my @trans_spec;
         my @exon_sens;
         my @exon_spec;
-        my @nuc_sens;
-        my @nuc_spec;
-        for( my $i = 0; $i < 8; $i ++){
+        for( my $i = 0; $i < 6; $i ++){
             if( $i == 0 ){ print ACC "Gene_Sensitivity" }
             elsif( $i == 1 ){ print ACC "Gene_Specificity" }
             elsif( $i == 2 ){ print ACC "Transcript_Sensitivity" }
             elsif( $i == 3 ){ print ACC "Transcript_Specificity" }
             elsif( $i == 4 ){ print ACC "Exon_Sensitivity" }
             elsif( $i == 5 ){ print ACC "Exon_Specificity" }
-            elsif( $i == 6 ){ print ACC "Nucleotide_Sensitivity" }
-            elsif( $i == 7 ){ print ACC "Nucleotide_Specificity" }
             foreach(@accKeys){
                 chomp(${$accuracy{$_}}[$i]);
                 print ACC "\t".${$accuracy{$_}}[$i];
@@ -9887,10 +9884,6 @@ sub evaluate {
                     push(@exon_sens, ${$accuracy{$_}}[$i]);
                 }elsif($i == 5){
                     push(@exon_spec, ${$accuracy{$_}}[$i]);
-                }elsif($i == 6){
-                    push(@nuc_sens, ${$accuracy{$_}}[$i]);
-                }elsif($i == 7){
-                    push(@nuc_spec, ${$accuracy{$_}}[$i]);
                 }
             }
             print ACC "\n";
@@ -9914,14 +9907,6 @@ sub evaluate {
                 print ACC "Exon_F1"; 
                 my @f1_exon = pairwise { (2*$a*$b)/($a+$b)} @exon_sens, @exon_spec;
                 foreach(@f1_exon){
-                    print ACC "\t";
-                    printf ACC "%.2f", $_;
-                }
-                print ACC "\n";
-            }elsif( $i == 7 ){
-                print ACC "Nucleotide_F1"; 
-                my @f1_nuc = pairwise { (2*$a*$b)/($a+$b)} @nuc_sens, @nuc_spec;
-                foreach(@f1_nuc){
                     print ACC "\t";
                     printf ACC "%.2f", $_;
                 }
@@ -9951,16 +9936,14 @@ sub eval_gene_pred {
     print LOG "\# "
         . (localtime)
         . ": Trying to evaluate predictions in file $gtfFile\n" if ($v > 3);
-    $cmdString = "$compute_accuracies $annot $annot_pseudo $gtfFile cds intron gene > $gtfFile.eval.out";
-    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute $cmdString\n");
-    #print LOG "\# "
-    #    . (localtime)
-    #    . ": Extracting results from $gtfFile.eval.out\n"
-    #    . "cat $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'\n"
-    #    if ($v > 3);
-    #my @eval_result = `cat $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'`;
-    #$accuracy{$gtfFile} = \@eval_result;
+    $cmdString = "$compute_accuracies $annot $annot_pseudo $gtfFile gene trans cds";
+    my @res = `$cmdString`; # when using system, it did not print to file
+    my @eval_result;
+    foreach(@res){
+        my @line = split(/\t/);
+        push(@eval_result, $line[1]);
+    }
+    $accuracy{$gtfFile} = \@eval_result;
 }
 
 ####################### train_utr ##############################################
