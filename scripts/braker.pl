@@ -351,7 +351,9 @@ EXPERT OPTIONS
                                     -r 76 -v 100 -n 15 -i 0.7 -m 0.3 -w 70 
                                     -c 100 -p 0.5 
 --eval=reference.gtf                Reference set to evaluate predictions
-                                    against (using the eval package)
+                                    against (using evaluation scripts from GaTech)
+--eval_pseudo=pseudo.gff3           File with pseudogenes that will be excluded 
+                                    from accuracy evaluation (may be empty file)
 --AUGUSTUS_hints_preds=s            File with AUGUSTUS hints predictions; will
                                     use this file as basis for UTR training;
                                     only UTR training and prediction is
@@ -543,6 +545,7 @@ my $optCfgFile;          # optinonal extrinsic config file for AUGUSTUS
 my $otherfilesDir;  # directory for other files besides GeneMark-ET output and
                     # parameter files
 my $annot;          # reference annotation to compare predictions to
+my $annot_pseudo;   # file with pseudogenes to be excluded from accuracy measurements
 my %accuracy;       # stores accuracy results of gene prediction runs
 my $overwrite = 0; # overwrite existing files (except for species parameter files)
 my $parameterDir;     # directory of parameter files for species
@@ -717,6 +720,7 @@ GetOptions(
     'etpmode!'                     => \$ETPmode,
     'AUGUSTUS_ab_initio!'          => \$ab_initio,
     'eval=s'                       => \$annot,
+    'eval_pesudo=s'                => \$annot_pseudo,
     'verbosity=i'                  => \$v,
     'downsampling_lambda=s'        => \$lambda,
     'splice_sites=s'               => \@splice_cmd_line,
@@ -3605,10 +3609,6 @@ sub check_upfront {
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     find(
-        "eval_multi_gtf.pl",       $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    find(
         "gtf2gff.pl",       $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
@@ -3623,6 +3623,16 @@ sub check_upfront {
     if(not($skip_fixing_broken_genes)){
         find(
             "fix_in_frame_stop_codon_genes.py", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+    }
+    if(defined($annot)){
+        find(
+            "compare_intervals_exact.pl", $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+        );
+        find(
+            "compute_accuracies.sh", $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
         );
     }
@@ -9928,94 +9938,29 @@ sub evaluate {
 
 ####################### eval_gene_pred #########################################
 # * evaluate a particular gene set in gtf format
+# * switched to scripts form GaTech written by Alex & Tomas in Februrary 2020
+# * their scripts are included in BRAKER repository
 ################################################################################
 
 sub eval_gene_pred {
     my $gtfFile        = shift;
-    my $eval_multi_gtf = find(
-        "eval_multi_gtf.pl",    $AUGUSTUS_BIN_PATH,
+    my $compute_accuracies = find(
+        "compute_accuracies.sh",    $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
-    my $epath = which 'evaluate_gtf.pl';
-    if(defined($epath)){
-        $epath = dirname( abs_path($epath) );
-    }else{
-        print LOG "\# "
-            . (localtime)
-            . ": ERROR: Cannot find validate_gtf because which did not find evaluate_gtf.pl!\n";
-        exit(1);
-    }
-    my $validate_gtf = "$epath/validate_gtf.pl";
-    if ( not( -e $validate_gtf ) ) {
-        print LOG "\# "
-            . (localtime)
-            . ": ERROR: Cannot find validate_gtf at $validate_gtf!\n";
-        exit(1);
-    }
-
-    my $firstStepFile = $gtfFile;
     print LOG "\# "
         . (localtime)
         . ": Trying to evaluate predictions in file $gtfFile\n" if ($v > 3);
-    $firstStepFile =~ s/\.gtf/\.f\.gtf/;
-    print LOG "\# "
-        . (localtime)
-        . ": firstStepFile is $firstStepFile\n" if ($v > 3);
-    my $secondStepFile = $firstStepFile;
-    $secondStepFile =~ s/\.f\.gtf/\.f\.fixed\.gtf/;
-    print LOG "\# "
-        . (localtime)
-        . ": secondStepFile is $secondStepFile\n" if ($v > 3);
-    print LOG "\# "
-        . (localtime)
-        . ": Filtering $gtfFile for CDS, exon, start_codon and UTR features, \n"
-        . "writing to $firstStepFile.\n" if ($v > 3);
-    open( FIRST, ">", $firstStepFile )
-        or die("ERROR in file " . __FILE__ ." at line ". __LINE__ ."\nCould \n"
-            . "not open file $firstStepFile!\n");
-    open( AUG, "<", $gtfFile ) or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nCould not open file $gtfFile!\n");
-    while (<AUG>) {
-        my @t = split(/\t/);
-        if(scalar(@t)==9){
-            if (   ( $t[2] eq "CDS" )
-                or ( $t[2] eq "exon" )
-                or ( $t[2] eq "start_codon" ))
-            {
-                print FIRST $_;
-            }
-        }
-    }
-    close(AUG)   or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $gtfFile!\n");
-    close(FIRST) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $firstStepFile!\n");
-    print LOG "\# "
-        . (localtime)
-        . ": Validating gtf of $firstStepFile, results are written to "
-        . "$secondStepFile\n" if ($v > 3);
-    $cmdString = "$validate_gtf -c -f $firstStepFile 2> /dev/null";
-    print LOG "$cmdString\n" if ($v > 3);
+    $cmdString = "$compute_accuracies $annot $annot_pseudo $gtfFile cds intron gene > $gtfFile.eval.out";
     system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute $cmdString\n");
-    print LOG "\# "
-        . (localtime)
-        . ": Running eval on $secondStepFile\n" if ($v > 3);
-    $cmdString = "$eval_multi_gtf $otherfilesDir/seqlist $annot $secondStepFile > $gtfFile.eval.out";
-    print LOG $cmdString."\n" if ($v > 3);
-    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute $cmdString\n");
-    print LOG "\# "
-        . (localtime)
-        . ": Extracting results from $gtfFile.eval.out\n"
-        . "cat $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'\n"
-        if ($v > 3);
-    my @eval_result = `cat $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'`;
-    $accuracy{$gtfFile} = \@eval_result;
-    unlink($firstStepFile)  or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to delete file $firstStepFile!\n");
-    unlink($secondStepFile) or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to delete $secondStepFile!\n");
+    #print LOG "\# "
+    #    . (localtime)
+    #    . ": Extracting results from $gtfFile.eval.out\n"
+    #    . "cat $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'\n"
+    #    if ($v > 3);
+    #my @eval_result = `cat $gtfFile.eval.out | head -14 | tail -8 | cut -f2 | perl -pe \'s/%//\'`;
+    #$accuracy{$gtfFile} = \@eval_result;
 }
 
 ####################### train_utr ##############################################
