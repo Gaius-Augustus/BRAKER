@@ -1,4 +1,7 @@
 # ----------------------------------------------------------------------
+# | integration of GeneMark-EP/EP+ | braker.pl (Hoff)     | 28.2.2020  |
+# | switched from eval to GaTech   | braker.pl (Hoff)     |            |
+# | scripts for evaluation         |                      |            |
 # | generation of coding seq and   | braker.pl (Hoff)     | 10.9.2018  |
 # | protein FASTA file integrated  |                      |            |
 # | usage of stranded RNA-Seq data | braker.pl (Hoff)     | 20.8.2018  |
