@@ -572,6 +572,15 @@ This tool is required, only, if you would like to run protein to genome alignmen
 
 BRAKER will try to locate the Exonerate executable by using an environment variable `$ALIGNMENT_TOOL_PATH`. Alternatively, this can be supplied as command line argument (`--ALIGNMENT_TOOL_PATH=/your/path/to/exonerate`).
 
+#### Tools from UCSC
+
+If you switch `--UTR=on`, bamToWig.py will require the following tools that can be downloaded from <http://hgdownload.soe.ucsc.edu/admin/exe>:
+
+ * twoBitInfo
+
+ * faToTwoBit
+
+It is optional to install these tools into your $PATH. If you don't, and you switch `--UTR=on`, bamToWig.py will automatically download them into the working directory.
 
 #### MakeHub
 
