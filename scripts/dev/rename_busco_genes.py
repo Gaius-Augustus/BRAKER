@@ -49,13 +49,11 @@ input_files = [f for f in listdir(args.input_directory) if isfile(join(args.inpu
 try:
     with open(args.outfile, 'w') as out_handle:
         for file in input_files:
-            print("file is " + file)
             bid = re.search(r'([^.]+)\.gff', file).group(1)
             try:
                 with open(join(args.input_directory, file), "r") as gff_handle:
                     for line in gff_handle:
                         if re.search(r'\tCDS\t', line):
-                            print(line)
                             new_line = re.sub(r'g(\d+)', r'g\1_' + re.escape(bid), line)
                             out_handle.write(new_line)
             except IOError:
