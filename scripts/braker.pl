@@ -9867,27 +9867,39 @@ sub evaluate {
             print ACC "\n";
             if( $i == 1 ){
                 print ACC "Gene_F1"; 
-                my @f1_gene = pairwise { (2*$a*$b)/($a+$b)} @gene_sens, @gene_spec;
-                foreach(@f1_gene){
-                    print ACC "\t";
-                    printf ACC "%.2f", $_;
+                if( ($a+$b)  > 0) {
+                    my @f1_gene = pairwise { (2*$a*$b)/($a+$b)} @gene_sens, @gene_spec;                        
+                    foreach(@f1_gene){
+                        print ACC "\t";
+                        printf ACC "%.2f", $_;
+                    }
+                } else {
+                    print ACC "\tNA";
                 }
                 print ACC "\n";
             }elsif( $i == 3 ){
                 print ACC "Transcript_F1"; 
-                my @f1_trans = pairwise { (2*$a*$b)/($a+$b)} @trans_sens, @trans_spec;
-                foreach(@f1_trans){
-                    print ACC "\t";
-                    printf ACC "%.2f", $_;
+                if( ($a+$b)  > 0) {                
+                    my @f1_trans = pairwise { (2*$a*$b)/($a+$b)} @trans_sens, @trans_spec;
+                    foreach(@f1_trans){
+                        print ACC "\t";
+                        printf ACC "%.2f", $_;
+                    }
+                } else {
+                    print ACC "\tNA";
                 }
                 print ACC "\n";
             }elsif( $i == 5 ){
-                print ACC "Exon_F1"; 
-                my @f1_exon = pairwise { (2*$a*$b)/($a+$b)} @exon_sens, @exon_spec;
-                foreach(@f1_exon){
-                    print ACC "\t";
-                    printf ACC "%.2f", $_;
-                }
+                print ACC "Exon_F1";
+                if( ($a+$b)  > 0) {   
+                    my @f1_exon = pairwise { (2*$a*$b)/($a+$b)} @exon_sens, @exon_spec;
+                    foreach(@f1_exon){
+                        print ACC "\t";
+                        printf ACC "%.2f", $_;
+                    }
+                } else {
+                    print ACC "\tNA";
+                }   
                 print ACC "\n";
             }
         }
