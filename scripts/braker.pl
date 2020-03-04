@@ -1503,8 +1503,8 @@ if( not ( defined ($skipIterativePrediction) )  && $EPmode == 1 ) {
     print LOG "\#**********************************************************************************\n"
             . "\#              PREDICTING GENES WITH AUGUSTUS (NO UTRS, ITERATION 2)               \n"
             . "\#**********************************************************************************\n";
+    move_aug_preds(); # store as *_iter1*
     run_prothint_iter2();
-    move_aug_preds();
     augustus("off");    # run augustus without UTR with hints from ProtHint iteration 2
     merge_transcript_sets("off");
 
@@ -5145,8 +5145,8 @@ sub run_prothint_iter2 {
     }
     # THIS IS WHERE I AM, NEED TO MODIFY CALL, TODO!
     $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneSeeds "
-               . "$otherfilesDir/augustus.hints.gtf --prevGeneSeeds $otherfilesDir/GeneMark-ES/genemark.gtf "
-               . "--prevSpalnGff $otherfilesDir/spaln.iter1.gff $otherfilesDir/genome.fa "
+               . "$otherfilesDir/augustus.hints_iter1.gtf --prevGeneSeeds $otherfilesDir/GeneMark-ES/genemark.gtf "
+               . "--prevSpalnGff $otherfilesDir/Spaln/spaln_iter1.gff $otherfilesDir/genome.fa "
                . "$otherfilesDir/proteins.fa";
     print LOG "\# " . (localtime) . ": starting prothint.py\n" if ($v > 3);
     print LOG "$cmdString\n" if ($v > 3);
@@ -5360,14 +5360,27 @@ sub move_aug_preds {
             $useexisting, "ERROR in file " . __FILE__ ." at line "
             . __LINE__ ."\nFailed to execute: $cmdString!\n");
     }
-    if(-e $otherfilesDir."/spaln.gff"){
-        my $new_name = "spaln.iter1.gff";
-        $cmdString = "mv $otherfilesDir/spaln.gff $otherfilesDir/$new_name";
+    if(-e $otherfilesDir."/Spaln/spaln.gff"){
+        my $new_name = "spaln_iter1.gff";
+        $cmdString = "mv $otherfilesDir/Spaln/spaln.gff $otherfilesDir/Spaln/$new_name";
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
             $useexisting, "ERROR in file " . __FILE__ ." at line "
             . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+    my @prot_hint_files = ('evidence.gff', 'evidence_augustus.gff', 'prothint.gff', 'prothint_augustus.gff');
+    foreach(@aug_files){
+        if(-e $otherfilesDir."/".$_){
+            my $new_name = $_;
+            $new_name =~ s/\.gff/_iter1\.gff/;
+            $cmdString = "mv $otherfilesDir/$_ $otherfilesDir/$new_name";
+            print LOG "$cmdString\n" if ($v > 3);
+            system("$cmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to execute: $cmdString!\n");
+        }
     }
 }
 
@@ -6435,7 +6448,7 @@ sub check_genemark_hints {
             . "\nCould not close file $genemark_hintsfile!\n");
     }elsif( $EPmode == 1 ) {
         print LOG "\# " . (localtime)
-            . ": Checking whether file $otherfilesDir/prothint.gff and $evidence_hints contains "
+            . ": Checking whether file $otherfilesDir/prothint.gff and $otherfilesDir/evidence.gff contains "
             . "sufficient multiplicity information...\n" if ($v > 2);
         open( PH, "<", $otherfilesDir."/prothint.gff" )
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
