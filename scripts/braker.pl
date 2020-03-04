@@ -328,6 +328,8 @@ EXPERT OPTIONS
                                     that gene.
 --skipOptimize                      Skip optimize parameter step (not
                                     recommended).
+--skipIterativePrediction           Skip iterative prediction in --epmode (does 
+                                    not affect other modes, saves a bit of runtime)
 --skipGetAnnoFromFasta              Skip calling the python3 script
                                     getAnnoFastaFromJoingenes.py from the
                                     AUGUSTUS tool suite. This script requires
@@ -559,6 +561,7 @@ my $skipGeneMarkEP = 0; # skip GeneMark-EP and use provided GeneMark-EP output
 my $skipGeneMarkETP = 0;
 my $skipGeneMarkES = 0;
 my $skipoptimize   = 0; # skip optimize parameter step
+my $skipIterativePrediction;
 my $skipAllTraining = 0;    # skip all training (including no GeneMark-EX run)
 my $skipGetAnnoFromFasta = 0; # requires python3 & biopython
 my $species;                # species name
@@ -694,6 +697,7 @@ GetOptions(
     'skipGeneMark-EP!'             => \$skipGeneMarkEP,
     'skipGeneMark-ETP!'            => \$skipGeneMarkETP,
     'skipOptimize!'                => \$skipoptimize,
+    'skipIterativePrediction!'     => \$skipIterativePrediction,
     'skipAllTraining!'             => \$skipAllTraining,
     'skipGetAnnoFromFasta!'        => \$skipGetAnnoFromFasta,
     'species=s'                    => \$species,
@@ -1506,6 +1510,17 @@ if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
             . "\#**********************************************************************************\n";
     augustus("off");    # run augustus without UTR
     merge_transcript_sets("off");
+}
+
+if( not ( defined ($skipIterativePrediction) )  && $EPmode == 1 ) {
+    print LOG "\#**********************************************************************************\n"
+            . "\#              PREDICTING GENES WITH AUGUSTUS (NO UTRS, ITERATION 2)               \n"
+            . "\#**********************************************************************************\n";
+    move_aug_preds(); # store as *_iter1*
+    run_prothint_iter2();
+    augustus("off");    # run augustus without UTR with hints from ProtHint iteration 2
+    merge_transcript_sets("off");
+
 }
 
 if ( @bam && ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds) ) && not($skipAllTraining) ) ) { # if you give this input, train parameters!
@@ -5130,6 +5145,267 @@ sub run_prothint {
         . ": Generating hints with ProtHint finished.\n" if ($v > 2);
 }
 
+
+####################### run_prothint_iter2 #####################################
+# * execute ProtHint with additional seeds compared to run_prothint() from 
+#   augustus.hints.gtf
+################################################################################
+
+sub run_prothint_iter2 {
+    print LOG "\# " . (localtime)
+        . ": Running ProtHint again with additional seeds from augustus.hints.gtf "
+        . "to produce more hints from protein sequence file "
+        . "(this may take a couple of hours)...\n" if ($v > 2);
+
+    # step 1: call prothint
+    print LOG "\# " . (localtime)
+        . ": Calling prothint.py...\n" if ($v > 3);
+    $cmdString = "";
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    # THIS IS WHERE I AM, NEED TO MODIFY CALL, TODO!
+    $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneSeeds "
+               . "$otherfilesDir/augustus.hints_iter1.gtf --prevGeneSeeds $otherfilesDir/GeneMark-ES/genemark.gtf "
+               . "--prevSpalnGff $otherfilesDir/Spaln/spaln_iter1.gff $otherfilesDir/genome.fa "
+               . "$otherfilesDir/proteins.fa";
+    print LOG "\# " . (localtime) . ": starting prothint.py\n" if ($v > 3);
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__
+        . " at line ". __LINE__
+        . "\nFailed to execute $cmdString!\n");
+
+    # step 2: modify evidence_augustus.gff
+    print LOG "\# " . (localtime)
+        . ": Changing hints source in evidence_augustus.gff from src=P to src=M...\n" if ($v > 3);
+    my $ev_aug_tmp = $otherfilesDir."/evidence_augustus_tmp.gff";
+    open(EV_AUG, "<", $otherfilesDir."/evidence_augustus.gff") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to open file $otherfilesDir/evidence_augustus.gff!\n");
+    open(EV_AUG_MOD, ">", $ev_aug_tmp) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to open file $ev_aug_tmp!\n");
+    while(<EV_AUG>){
+        my $line = $_;
+        $line =~ s/src=P;/src=M;/;
+        print EV_AUG_MOD $line;
+    }
+    close(EV_AUG_MOD) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to close file $ev_aug_tmp!\n");
+    close(EV_AUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to close file $otherfilesDir/evidence_augustus.gff!\n");
+    $cmdString = "mv $ev_aug_tmp $otherfilesDir/evidence_augustus.gff";
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+
+    # step 3: modify top_chains.gff
+    print LOG "\# " . (localtime)
+        . ": Changing hints source in top_chains.gff from src=P to src=C...\n" if ($v > 3);
+    my $top_chain_tmp = $otherfilesDir."/top_chains_tmp.gff";
+    open(TOP_CH, "<", $otherfilesDir."/top_chains.gff") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to open file $otherfilesDir/top_chains.gff!\n");
+    open(TP_CH_MOD, ">", $top_chain_tmp) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to open file $top_chain_tmp!\n");
+    while(<TOP_CH>){
+        my $line = $_;
+        $line =~ s/src=P;/src=MC;/;
+        print TP_CH_MOD $line;
+    }
+    close(TP_CH_MOD) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to close file $top_chain_tmp!\n");
+    close(TOP_CH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nfailed to close file $otherfilesDir/top_chains.gff!\n");
+    $cmdString = "mv $top_chain_tmp $otherfilesDir/top_chains.gff";
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+        
+    # step 4: logistic regression on prothint augustus hints (non src=M)
+    print LOG "\# " . (localtime)
+        . ": Applying logistic regression to separate hints in prothint.gff in two more classes...\n" if ($v > 3);
+    $string = find(
+        "log_reg_prothints.pl",     $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+     $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "perl $string --prothint=$otherfilesDir/prothint.gff "
+        . "--out=$otherfilesDir/prothint_reg.gff 1> $otherfilesDir/prothint_reg.out "
+        . "2>$errorfilesDir/prothint_reg.err";
+    print LOG "$perlCmdString\n" if ($v > 3);
+    system("$perlCmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to execute: $perlCmdString!\n"); 
+    $cmdString = "mv $otherfilesDir/prothint_reg.gff $otherfilesDir/prothint_augustus.gff";
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+
+    # step 5: remove previous ProtHint hints from hintsfile.gff
+    print LOG "\# " . (localtime)
+        . ": Removing first iteration ProtHint hints from "
+        . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
+    $cmdString = "mv $otherfilesDir/hintsfile.gff $otherfilesDir/hintsfile_iteration1.gff";
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    open(HINTS1, "<", "$otherfilesDir/hintsfile_iteration1.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile_iteration1.gff!\n");
+    open(HINTS2, ">", "$otherfilesDir/hintsfile.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
+    while(<HINTS1>){
+        if(not ($_ =~ m/\tProtHint\t/) ) {
+            print HINTS2 $_;
+        }
+    }
+    close(HINTS2) or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile.gff!\n");
+    close(HINTS1) or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile_iteration1.gff!\n");
+
+    # step 6: add hints onto hintsfile.gff that need to go there
+    print LOG "\# " . (localtime)
+        . ": Appending hints from $otherfilesDir/evidence_augustus.gff to "
+        . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
+    open(HINTS, ">>", "$otherfilesDir/hintsfile.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
+    # evidence_augustus.gff modified file
+    open(EV_AUG, "<", "$otherfilesDir/evidence_augustus.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/evidence_augustus.gff\n");
+    while(<EV_AUG>){
+        print HINTS $_;
+    }
+    close(EV_AUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/evidence_augustus.gff\n");
+    # modified top chains
+    print LOG "\# " . (localtime)
+        . ": Appending hints from $otherfilesDir/top_chains.gff to "
+        . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
+    open(TOP_CH, "<", "$otherfilesDir/top_chains.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/top_chains.gff\n");
+    while(<TOP_CH>){
+        print HINTS $_;
+    }
+    close(TOP_CH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/top_chains.gff\n");
+    # prothint_augustus.gff after logistic regression
+    print LOG "\# " . (localtime)
+        . ": Appending hints from $otherfilesDir/prothint_augustus.gff to "
+        . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
+    open(PHT, "<", "$otherfilesDir/prothint_augustus.gff") or 
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/prothint_augustus.gff\n");
+    while(<PHT>){
+        print HINTS $_;
+    }
+    close(PHT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/prothint_augustus.gff\n");
+    close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile.gff!\n");
+
+    print LOG "\# " . (localtime)
+        . ": Generating hints with ProtHint iteration 2 finished.\n" if ($v > 2);
+
+}
+
+####################### move_aug_preds #########################################
+# * move:
+#   augustus.hints.gtf -> augustus.hints_iter1.gtf
+#   augustus.hints.aa -> augustus.hints_iter1.aa
+#   augustus.hints.gff -> augustus.hints_iter1.gff
+#   augustus.hints.codingseq -> augustus.hints_iter1.codingseq
+################################################################################
+
+sub move_aug_preds {
+    print LOG "\# "
+        . (localtime)
+        . ": Moving augustus hints predictions from iteration 1\n" if ($v > 2);
+    my @aug_files = ('augustus.hints.gtf', 'augustus.hints.gff', 
+        'augustus.hints.aa', 'augustus.hints.codingseq');
+    foreach(@aug_files){
+        if(-e $otherfilesDir."/".$_){
+            my $new_name = $_;
+            $new_name =~ s/hints/hints_iter1/;
+            $cmdString = "mv $otherfilesDir/$_ $otherfilesDir/$new_name";
+            print LOG "$cmdString\n" if ($v > 3);
+            system("$cmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to execute: $cmdString!\n");
+        }
+    }
+    if(-e $otherfilesDir.".braker.gtf"){
+        my $new_name = "braker.iter1.gtf";
+        $cmdString = "mv $otherfilesDir/braker.gtf $otherfilesDir/$new_name";
+        print LOG "$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+    if(-e $otherfilesDir."/Spaln/spaln.gff"){
+        my $new_name = "spaln_iter1.gff";
+        $cmdString = "mv $otherfilesDir/Spaln/spaln.gff $otherfilesDir/Spaln/$new_name";
+        print LOG "$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+    my @prot_hint_files = ('evidence.gff', 'evidence_augustus.gff', 'prothint.gff', 'prothint_augustus.gff');
+    foreach(@aug_files){
+        if(-e $otherfilesDir."/".$_){
+            my $new_name = $_;
+            $new_name =~ s/\.gff/_iter1\.gff/;
+            $cmdString = "mv $otherfilesDir/$_ $otherfilesDir/$new_name";
+            print LOG "$cmdString\n" if ($v > 3);
+            system("$cmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to execute: $cmdString!\n");
+        }
+    }
+}
+
+
 ####################### make_rnaseq_hints ######################################
 # * make hints from BAM files
 # * merge hints files from different BAM files
@@ -6193,7 +6469,7 @@ sub check_genemark_hints {
             . "\nCould not close file $genemark_hintsfile!\n");
     }elsif( $EPmode == 1 ) {
         print LOG "\# " . (localtime)
-            . ": Checking whether file $otherfilesDir/prothint.gff and $evidence_hints contains "
+            . ": Checking whether file $otherfilesDir/prothint.gff and $otherfilesDir/evidence.gff contains "
             . "sufficient multiplicity information...\n" if ($v > 2);
         open( PH, "<", $otherfilesDir."/prothint.gff" )
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
@@ -9761,6 +10037,19 @@ sub evaluate {
             if ($v > 3);
     }
 
+        if ( -e "$otherfilesDir/augustus.hints_iter1.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $otherfilesDir/augustus.hints_iter1.gtf!\n"
+            if ($v > 3);
+        eval_gene_pred("$otherfilesDir/augustus.hints_iter1.gtf");
+    }else{
+        print LOG "\# "
+            . (localtime)
+            . ": did not find $otherfilesDir/augustus_hints_iter1.gtf!\n"
+            if ($v > 3);
+    }
+
     if ( -e "$otherfilesDir/augustus.hints_utr.gtf" ) {
         print LOG "\# "
             . (localtime)
@@ -9794,6 +10083,17 @@ sub evaluate {
         print LOG "\# "
             . (localtime)
             . ": did not find $otherfilesDir/braker.gtf!\n" if ($v > 3);
+    }
+
+    if ( -e "$otherfilesDir/braker_iter1.gtf" ) {
+        print LOG "\# "
+            . (localtime)
+            . ": evaluating $otherfilesDir/braker_iter1.gtf!\n" if ($v > 3);
+        eval_gene_pred("$otherfilesDir/braker_iter1.gtf");
+    }else{
+        print LOG "\# "
+            . (localtime)
+            . ": did not find $otherfilesDir/braker_iter1.gtf!\n" if ($v > 3);
     }
 
     if ( -e "$otherfilesDir/braker_utr.gtf" ) {
