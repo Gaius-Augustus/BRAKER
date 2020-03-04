@@ -5144,7 +5144,10 @@ sub run_prothint_iter2 {
         $cmdString .= "nice ";
     }
     # THIS IS WHERE I AM, NEED TO MODIFY CALL, TODO!
-    $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneMarkGtf $otherfilesDir/augustus.hints.gtf --spaln $otherfilesDir/spaln.gff $otherfilesDir/genome.fa $otherfilesDir/proteins.fa";
+    $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneSeeds "
+               . "$otherfilesDir/augustus.hints.gtf --prevGeneSeeds $otherfilesDir/GeneMark-ES/genemark.gtf "
+               . "--prevSpalnGff $otherfilesDir/spaln.iter1.gff $otherfilesDir/genome.fa "
+               . "$otherfilesDir/proteins.fa";
     print LOG "\# " . (localtime) . ": starting prothint.py\n" if ($v > 3);
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
@@ -5350,7 +5353,16 @@ sub move_aug_preds {
     }
     if(-e $otherfilesDir.".braker.gtf"){
         my $new_name = "braker.iter1.gtf";
-        $cmdString = "mv $otherfilesDir/$_ $otherfilesDir/$new_name";
+        $cmdString = "mv $otherfilesDir/braker.gtf $otherfilesDir/$new_name";
+        print LOG "$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0
+            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nFailed to execute: $cmdString!\n");
+    }
+    if(-e $otherfilesDir."/spaln.gff"){
+        my $new_name = "spaln.iter1.gff";
+        $cmdString = "mv $otherfilesDir/spaln.gff $otherfilesDir/$new_name";
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0
             or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
