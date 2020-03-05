@@ -5262,7 +5262,7 @@ sub run_prothint_iter2 {
     print LOG "\# " . (localtime)
         . ": Removing first iteration ProtHint hints from "
         . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
-    $cmdString = "mv $otherfilesDir/hintsfile.gff $otherfilesDir/hintsfile_iteration1.gff";
+    $cmdString = "mv $otherfilesDir/hintsfile.gff $otherfilesDir/hintsfile_iter1.gff";
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
         or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
