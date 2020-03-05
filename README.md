@@ -222,6 +222,8 @@ installed:
 
 -   `YAML`
 
+-   `Math::Utils`
+
 For ProtHint,  optionally used by BRAKER,  also install:
 
 -   `MCE::Mutex`

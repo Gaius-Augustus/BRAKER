@@ -3303,7 +3303,8 @@ sub check_upfront {
         "Scalar::Util::Numeric", "POSIX", "List::Util",
         "FindBin", "File::Which", "Cwd", "File::Spec::Functions",
         "File::Basename", "File::Copy", "Term::ANSIColor",
-        "strict", "warnings", "File::HomeDir", "List::MoreUtils"
+        "strict", "warnings", "File::HomeDir", "List::MoreUtils",
+        "Math::Utils"
     );
 
     foreach my $module (@module_list) {
