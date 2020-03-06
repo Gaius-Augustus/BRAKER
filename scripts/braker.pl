@@ -5269,10 +5269,10 @@ sub run_prothint_iter2 {
         or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
-    open(HINTS1, "<", "$otherfilesDir/hintsfile_iteration1.gff") or 
+    open(HINTS1, "<", "$otherfilesDir/hintsfile_iter1.gff") or 
         clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile_iteration1.gff!\n");
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile_iter1.gff!\n");
     open(HINTS2, ">", "$otherfilesDir/hintsfile.gff") or 
         clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5289,7 +5289,7 @@ sub run_prothint_iter2 {
     close(HINTS1) or 
         clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile_iteration1.gff!\n");
+        . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile_iter1.gff!\n");
 
     # step 6: add hints onto hintsfile.gff that need to go there
     print LOG "\# " . (localtime)
