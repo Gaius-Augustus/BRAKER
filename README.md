@@ -145,7 +145,7 @@ Figure 4: BRAKER pipeline C: training GeneMark-TP on protein spliced alignment, 
 
 ![braker2-main-d\[fig4\]](docs/figs/braker2_ep_rnaseq.png)
 
-Figure 5: BRAKER pipeline D: training GeneMark-ETP/ETP+ supported by RNA-Seq alignment information and information from proteins (proteins can be of longer evolutionary distance). Please be aware that GeneMark-ETP/ETP+ is still under development, BRAKER can currently execute a precursor of the mature version. Prediction with AUGUSTUS using the information, in addition chained CDSpart hints. Introns supported by both RNA-Seq and protein alignment information are treated as “true positive introns”, their prediction in gene structures by GeneMark-ETP+ and AUGUSTUS is enforced. **Important:** It is not always best to use all evidence! So far, we found this approach to work well for large genomes, but accuracy on small and medium sized genomes is unstable. Please have a look at the poster from PAG 2020 before running this pipeline.
+Figure 5: BRAKER pipeline D: training GeneMark-ETP/ETP+ supported by RNA-Seq alignment information and information from proteins (proteins can be of longer evolutionary distance). Please be aware that GeneMark-ETP/ETP+ is still under development, BRAKER can currently execute a precursor of the mature version. Introns supported by both RNA-Seq and protein alignment information are treated as “true positive introns”, their prediction in gene structures by GeneMark-ETP+ and AUGUSTUS is enforced. **Important:** It is not always best to use all evidence! So far, we found this approach to work well for large genomes, but accuracy on small and medium sized genomes is unstable. Please have a look at the poster from PAG 2020 before running this pipeline.
 
 -   Genome file and file with proteins of short evolutionary distance (see Figure [6](#fig5)); this approach is suitable if RNA-Seq data is not available and if the reference species is very closely related. **Note*:* This pipeline is deprecated since pipeline C can also use proteins of closely related species in addition to OrthoDB.
 
@@ -716,7 +716,7 @@ The prediction of features in `evidence.gff` will be enforced by GeneMark-EP+. S
 
 ### BRAKER with proteins of short evolutionary distance
 
-This approach is suitable if RNA-Seq data for the species of the target genome is not available and if a well annotated and very closely related reference species is available and you don't want to use the approach for proteins of unknown evolutionary distance.
+This is a deprecated pipeline that was before the only suitable approach if RNA-Seq data for the species of the target genome is not available and if a well annotated and very closely related reference species is available and you don't want to use the approach for proteins of unknown evolutionary distance (where we back then weren't sure how it'd perform on proteins of short evolutionary distance).
 
 For running BRAKER in this mode, type:
 
@@ -759,7 +759,7 @@ Supported features in column 3 are intron, CDSpart, start, stop.
 
 ### BRAKER with RNA-Seq and protein data
 
-The native mode for running BRAKER with RNA-Seq and protein data is ```--etpmode```. This will call GeneMark-ETP (which is currently only available as a premature version by using GeneMark-ES/ET/EP/EP+), which will use RNA-Seq and protein hints for training GeneMark-ETP. Hints that are supported by both sources and proteins hints of particularly high quality are enforced in gene prediction with GeneMark-ETP. Subsequently, AUGUSTUS is trained on GeneMark-ETP predictions and genes with hints are predicted by AUGUSTUS. To call the pipeline in this mode, run:
+The native mode for running BRAKER with RNA-Seq and protein data is ```--etpmode```. This will call GeneMark-ETP (which is currently only available as a premature version by using current state GeneMark-ES/ET/EP/EP+, improvements are to be expected, soon), which will use RNA-Seq and protein hints for training GeneMark-ETP. Hints that are supported by both sources and proteins hints of particularly high quality are enforced in gene prediction with GeneMark-ETP. Subsequently, AUGUSTUS is trained on GeneMark-ETP predictions and genes with hints are predicted by AUGUSTUS. To call the pipeline in this mode, run:
 
 ```
     braker.pl --genome=genome.fa --prot_seq=orthodb.fa \
