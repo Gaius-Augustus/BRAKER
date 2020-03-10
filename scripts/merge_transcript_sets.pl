@@ -62,10 +62,9 @@ if( $help || (scalar(@ARGV) < 1) ) {
   exit(0);
 }
 
-my %txid_to_struct;
 my %txid_to_elements;
 my %uniq_struct_to_txid;
-
+my $file_counter = 1;
 foreach(@ARGV){
     my $file = $_;
     print STDERR "Processing file $file\n";
@@ -76,9 +75,11 @@ foreach(@ARGV){
     open(IN, "<", $file.".sorted") or die ("ERROR: in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to open file $file".".sorted for reading!\n");
     my @store_for_txid = (); # gene lines do not contain transcript_id and can only be appended later
+    my %txid_to_struct_local;
     while(<IN>){
         if(not($_=~m/\#/)){
             my $line = $_;
+            $line =~ s/\"([^"]+)\"/\"file_${file_counter}_$1\"/g;
             my $txid;
             if($line =~ m/transcript_id/){
                 $line =~ m/transcript_id "([^"]+)";/;
@@ -89,15 +90,16 @@ foreach(@ARGV){
                 }
                 @store_for_txid = ();
             }else{
+                $line =~ s/\t([\t]+)$/\tfile_${file_counter}_$1/;
                 push(@store_for_txid, $line);
             }
             # currently, UTR features are ignored
             if($line =~ m/\tCDS\t/){
                 my @t = split(/\t/, $line);
-                if(not(defined($txid_to_struct{$txid}))){
-                    $txid_to_struct{$txid} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+                if(not(defined($txid_to_struct_local{$txid}))){
+                    $txid_to_struct_local{$txid} = $t[0]."_".$t[3]."_".$t[4]."_".$t[6];
                 }else{
-                    $txid_to_struct{$txid} .= "_".$t[0]."_".$t[3]."_".$t[4]."_".$t[6];
+                    $txid_to_struct_local{$txid} .= "_".$t[0]."_".$t[3]."_".$t[4]."_".$t[6];
                 }
             }
         }
@@ -108,15 +110,19 @@ foreach(@ARGV){
         . __LINE__ ."\nFailed to delete file $file".".sorted!\n");
     # always keep the first occuring transcript structure, only add from other gene sets if it has not been in the set, yet
     # this might discard alternative UTR splicing isoforms at present
-    while (my ($key, $value) = each (%txid_to_struct)){
+    while (my ($key, $value) = each (%txid_to_struct_local)){
+        #print "key is $key and value is $value\n";
         if(not(defined($uniq_struct_to_txid{$value}))){
+            #print "adding transcript\n";
             $uniq_struct_to_txid{$value} = $key;
         }
     }
+    $file_counter++;
 }
 
 # print result
 while (my ($key, $value) = each (%uniq_struct_to_txid)){
+    #print "\n".$key."\n";
     foreach(@{$txid_to_elements{$value}}){
         print $_;
     }    
