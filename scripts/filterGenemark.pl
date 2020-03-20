@@ -90,6 +90,8 @@ OPTIONS
                                 AUGUSTUS
 --cdspart_cutoff=n              CDSpart cutoff that was used for generating hints
                                 default 15
+--randomSeed=n                  Use this random seed for adding random single-exon
+                                genes.
 
 Format:
 seqname <TAB> source <TAB> feature <TAB> start <TAB> end <TAB> score <TAB> strand <TAB> frame <TAB> gene_id value <TAB> transcript_id value
@@ -163,6 +165,7 @@ my %startCoordinates;
 # set of stop hints coordinates
 my %stopCoordinates;
 my $observed_start_stop;
+my $randomSeed;
 
 if ( @ARGV == 0 ) {
     print "$usage\n";
@@ -177,6 +180,7 @@ GetOptions(
     'filterOutShort!' => \$filterOutShort,
     'singleCDSfile=s' => \$cds_file,
     'cdspart_cutoff=s'=> \$cutoff,
+    'randomSeed=n'    => \$randomSeed,
     'help!'           => \$help
     );
 
@@ -732,6 +736,9 @@ sub add_single_cds {
     if ($stillLacking > 0) {
         #permute good genes, if I want to select n random ones, take the first n entries, later
         @goodKeys = keys %goodSingleCDSgenes;
+        if (defined $randomSeed) {
+            srand($randomSeed);
+        }
         foreach my $i (0..$required_single_cds_genes-1) {
             my $j = rand @goodKeys;
             ($goodKeys[$i], $goodKeys[$j]) = ($goodKeys[$j], $goodKeys[$i]);
