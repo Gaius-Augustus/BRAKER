@@ -6968,6 +6968,34 @@ sub filter_genemark {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nFailed to execute: $perlCmdString\n");
+
+
+            my $minTrainGenes = 4000;
+            print LOG "\# "
+                . (localtime)
+                . ": Ensuring at least $minTrainGenes genes in training file \n" if ($v > 3);
+            $string = find(
+                "ensure_n_training_genes.py",    $AUGUSTUS_BIN_PATH,
+                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+            );
+            $errorfile     = "$errorfilesDir/ensure_min_n_training_genes.stderr";
+            $stdoutfile    = "$otherfilesDir/ensure_min_n_training_genes.stdout";
+            my $pythonCmdString = "";
+            if ($nice) {
+                $pythonCmdString .= "nice ";
+            }
+            $pythonCmdString .= "python3 $string "
+                           .  "--goodGenes $genemarkDir/genemark.f.good.gtf "
+                           .  "--badGenes $genemarkDir/genemark.f.bad.gtf "
+                           .  "--N $minTrainGenes "
+                           .  "--randomSeed 1 ";
+            $pythonCmdString .= "1>$stdoutfile 2>$errorfile";
+            print LOG "$pythonCmdString\n" if ($v > 3);
+            system("$pythonCmdString") == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                $useexisting, "ERROR in file " . __FILE__ ." at line "
+                . __LINE__ ."\nFailed to execute: $pythonCmdString\n");
+
         } else {
             print LOG "\# " . (localtime)
                 . ": skip filtering genemark genes because file "
