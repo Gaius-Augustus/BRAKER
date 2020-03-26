@@ -6955,7 +6955,8 @@ sub filter_genemark {
             }
             $perlCmdString .= "perl $string "
                            .  "--genemark=$genemarkDir/genemark.gtf "
-                           .  "--hints=$hintsfile ";
+                           .  "--hints=$hintsfile "
+                           .  "--randomSeed=1 ";
             if ($filterOutShort) {
                 $perlCmdString .= "--filterOutShort "
             }
