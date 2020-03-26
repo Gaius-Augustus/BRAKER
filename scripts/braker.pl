@@ -6985,7 +6985,7 @@ sub filter_genemark {
             if ($nice) {
                 $pythonCmdString .= "nice ";
             }
-            $pythonCmdString .= "python3 $string "
+            $pythonCmdString .= "$PYTHON3_PATH/python3 $string "
                            .  "--goodGenes $genemarkDir/genemark.f.good.gtf "
                            .  "--badGenes $genemarkDir/genemark.f.bad.gtf "
                            .  "--N $minTrainGenes "
