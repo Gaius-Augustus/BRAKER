@@ -414,6 +414,16 @@ environment variable (`$AUGUSTUS_CONFIG_PATH`), or both directories can be suppl
 
 For all your BASH sessions, add the above lines to a startup script (e.g.`~/.bashrc`).
 
+#### Python3
+
+On Ubuntu, Python3 is usually installed by default, `python3` will be in your `$PATH` variable, by default, and BRAKER will automatically locate it. However, you have the option to specify the `python3` binary location in two other ways:
+
+1.  Export an environment variable `$PYTHON3_PATH`, e.g. in your `~/.bashrc` file:
+
+        export PYTHON3_PATH=/path/to/python3/
+
+2.  Specify the command line option `--PYTHON3_PATH=/path/to/python3/` to `braker.pl`.
+
 #### Bamtools
 
 Download BAMTOOLS (e.g. `git clone https://github.com/pezmaster31/bamtools.git`). Install
@@ -502,28 +512,18 @@ command line argument (`--SAMTOOLS_PATH=/your_path_to_samtools/`), or by using a
 
 Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the environment variable for all bash sessions.
 
-#### Python3 and Biopython
+#### Biopython
 
-If Python3 and Biopython are installed, BRAKER can generate FASTA-files with coding sequences and protein sequences predicted by AUGUSTUS and generate track data hubs for visualization of a BRAKER run with MakeHub <sup name="a16">[R16](#f16)</sup>. If Python3 (and cdbfasta/cdbyank) is available, BRAKER is able to correct AUGUSTUS genes with in frame stop codons (spliced stop codons).
-All are an optional steps. The first can be disabled with the command-line flag `--skipGetAnnoFromFasta`, the second can be activated by using the command-line options `--makehub --email=your@mail.de`, the last can be deactivated with `--skip_fixing_broken_genes`; Python3 and Biopython are not required if neither of these optional steps shall be performed.
+If Biopython is installed, BRAKER can generate FASTA-files with coding sequences and protein sequences predicted by AUGUSTUS and generate track data hubs for visualization of a BRAKER run with MakeHub <sup name="a16">[R16](#f16)</sup>.
+These are optional steps. The first can be disabled with the command-line flag `--skipGetAnnoFromFasta`, the second can be activated by using the command-line options `--makehub --email=your@mail.de`, Biopython is not required if neither of these optional steps shall be performed.
 
-On Ubuntu, Python3 is usually installed by default. Install the Python3 package manager with:
+On Ubuntu, install Python3 package manager with:
 
     `sudo apt-get install python3-pip`
 
-Subsequently, install Biopython with:
+Then, install Biopython with:
 
     `sudo pip3 install biopython`
-
-On Ubuntu, python3 will be in your `$PATH` variable, by default, and BRAKER will automatically locate it. However, you have the option to specify the `python3` binary location in two other ways:
-
-1.  Export an environment variable `$PYTHON3_PATH`, e.g. in your `~/.bashrc` file:
-
-```
-        export PYTHON3_PATH=/path/to/python3/
-```
-
-2.  Specify the command line option `--PYTHON3_PATH=/path/to/python3/` to `braker.pl`.
 
 #### cdbfasta
 
@@ -1379,7 +1379,7 @@ Common problems
 
 -   *Does BRAKER depend on Python3?*
 
-    Partially. The options `--make_hub` and `--UTR` will require Python3. The general required for Python3 for generating e.g. the protein sequence output file can be disabled with `--skipGetAnnoFromFasta`. So, if you use BRAKER with `--skipGetAnnoFromFasta` and not with `--make_hub` and `--UTR`, BRAKER does not require Python3. The python scripts employed by BRAKER are not compatible with Python2.
+    It does. The python scripts employed by BRAKER are not compatible with Python2.
 
 -   *Why does BRAKER predict more genes than I expected?*
 
