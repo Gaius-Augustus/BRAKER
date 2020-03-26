@@ -6574,7 +6574,7 @@ sub GeneMark_ES {
                 print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
             }
             if ($soft_mask) {
-                $perlCmdString .= " --soft_mask=1000";
+                $perlCmdString .= " --soft_mask auto";
                       # version prior to 4.29, apparently also in version 4.33
                       #     $perlCmdString .= " --soft 1000"; # version 4.29
             }
@@ -6656,7 +6656,7 @@ sub GeneMark_ET {
                 print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
             }
             if ($soft_mask) {
-                $perlCmdString .= " --soft_mask 1000"
+                $perlCmdString .= " --soft_mask auto"
                     ; # version prior to 4.29, apparently also in version 4.33
                       #     $perlCmdString .= " --soft 1000"; # version 4.29
             }
@@ -6738,7 +6738,7 @@ sub GeneMark_EP {
                 print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
             }
             if ($soft_mask) {
-                $perlCmdString .= " --soft_mask 1000";
+                $perlCmdString .= " --soft_mask auto";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
@@ -6825,7 +6825,7 @@ sub GeneMark_ETP {
                 print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
             }
             if ($soft_mask) {
-                $perlCmdString .= " --soft_mask 1000";
+                $perlCmdString .= " --soft_mask auto";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
