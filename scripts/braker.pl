@@ -2892,8 +2892,7 @@ sub check_biopython{
 }
 
 ####################### set_PYTHON3_PATH #######################################
-# * set path to python3 (for getAnnoFastaFromJoingenes.py, 
-#   fix_in_frame_stop_codon_genes.py and make_hub.py)
+# * set path to python3
 ################################################################################
 
 sub set_PYTHON3_PATH {
