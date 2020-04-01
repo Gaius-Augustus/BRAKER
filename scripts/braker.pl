@@ -839,6 +839,7 @@ $logString .= $prtStr if ( $v > 2 );
 set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
+set_PYTHON3_PATH();
 if ( not($trainFromGth) ) {
     set_GENEMARK_PATH()
         ; # skip setting GeneMark path if no GeneMark training will be performed
@@ -863,9 +864,7 @@ if (not ($skipAllTraining)){
 if ( @prot_seq_files && !$ESmode ){
     set_ALIGNMENT_TOOL_PATH();
 }
-if ( not ($skipGetAnnoFromFasta) || $makehub || not ($skip_fixing_broken_genes)){
-    set_PYTHON3_PATH();
-}
+
 if ( $makehub ) {
     set_MAKEHUB_PATH();
 }
@@ -2893,8 +2892,7 @@ sub check_biopython{
 }
 
 ####################### set_PYTHON3_PATH #######################################
-# * set path to python3 (for getAnnoFastaFromJoingenes.py, 
-#   fix_in_frame_stop_codon_genes.py and make_hub.py)
+# * set path to python3
 ################################################################################
 
 sub set_PYTHON3_PATH {
@@ -2977,38 +2975,23 @@ sub set_PYTHON3_PATH {
 
     if ( not( defined($PYTHON3_PATH) ) ) {
         my $python_err;
-        $python_err .= "Python3 is currently required for converting\n"
-                    .  "gene predictions in GTF-format and a genome\n"
-                    .  "file in FASTA-format to FASTA files with coding\n"
-                    .  "sequences and protein sequences using the AUGUSTUS\n"
-                    .  "script getAnnoFastaJoingenes.py with braker.pl,\n"
-                    .  "and for creating track data hubs for visualizing\n"
-                    .  "gene predictions with the UCSC Genome Browser, and\n"
-                    .  " for fixing genes with in frame stop codons.\n"
-                    .  "You can skip execution of getAnnoFastaJoingenes.py\n"
-                    .  "with the braker.pl command line flag --skipGetAnnoFromFasta.\n"
-                    .  "You can skip generation of track data hubs by not providing\n"
-                    .  "the command line option --makehub."
-                    .  "You can skip the fixing of genes with stop codons with the\n"
-                    .  " braker.pl command line flag --skip_fixing_broken_genes.\n"
-                    .  "If you don't want to skip it, you have 3 different "
-                    .  "options to provide a path to python3 to braker.pl:\n"
+        $python_err .= "Python3 was not found. You have 3 different options\n"
+                    .  "to provide a path to python3 to braker.pl:\n"
                     .  "   a) provide command-line argument\n"
-                    .  "      --PYTHON3_PATH=/your/path\n"
+                    .  "          --PYTHON3_PATH=/your/path\n"
                     .  "   b) use an existing environment variable\n"
-                    . "       \$PYTHON3_PATH\n"
+                    .  "          \$PYTHON3_PATH\n"
                     .  "      for setting the environment variable, run\n"
-                    .  "           export PYTHON3_PATH=/your/path\n"
-                    .  "      in your shell. You may append this to your "
-                    .  ".bashrc or .profile file in\n"
-                    .  "      order to make the variable available to all your\n"
-                    .  "      bash sessions.\n"
+                    .  "          export PYTHON3_PATH=/your/path\n"
+                    .  "      in your shell. You may append this to your\n"
+                    .  "      .bashrc or .profile file in order to make the\n"
+                    .  "      variable available to all your bash sessions.\n"
                     .  "   c) braker.pl can try guessing the location of\n"
                     .  "      \$PYTHON3_PATH from the location of a python3\n"
                     .  "      executable that is available in your \$PATH\n"
                     .  "      variable. If you try to rely on this option, you\n"
-                    . "       can check by typing\n"
-                    .  "           which python3\n"
+                    .  "      can check by typing\n"
+                    .  "          which python3\n"
                     .  "      in your shell, whether there is a python3\n"
                     .  "      executable in your \$PATH\n";
         $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
@@ -6985,7 +6968,7 @@ sub filter_genemark {
             if ($nice) {
                 $pythonCmdString .= "nice ";
             }
-            $pythonCmdString .= "python3 $string "
+            $pythonCmdString .= "$PYTHON3_PATH/python3 $string "
                            .  "--goodGenes $genemarkDir/genemark.f.good.gtf "
                            .  "--badGenes $genemarkDir/genemark.f.bad.gtf "
                            .  "--N $minTrainGenes "
