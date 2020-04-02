@@ -6971,8 +6971,7 @@ sub filter_genemark {
             $pythonCmdString .= "$PYTHON3_PATH/python3 $string "
                            .  "--goodGenes $genemarkDir/genemark.f.good.gtf "
                            .  "--badGenes $genemarkDir/genemark.f.bad.gtf "
-                           .  "--N $minTrainGenes "
-                           .  "--randomSeed 1 ";
+                           .  "--N $minTrainGenes ";
             $pythonCmdString .= "1>$stdoutfile 2>$errorfile";
             print LOG "$pythonCmdString\n" if ($v > 3);
             system("$pythonCmdString") == 0
