@@ -343,22 +343,12 @@ gunzip gm_key_64.gz
 mv gm_key_64 .gm_key
 ```
 
-If you are running GeneMark-EX in an Anaconda environment, modify the shebang of all GeneMark-EX scripts to use that perl version:
+Perl scripts within GeneMark-EX are configured with default Perl location at `/usr/bin/perl`.
+
+If you are running GeneMark-EX in an Anaconda environment (or want to use Perl from the `$PATH` variable for any other reason), modify the shebang of all GeneMark-EX scripts with the following command located inside GeneMark-EX folder:
 
 ```
-cd gm_et_linux_64/gmes_petap/
-for f in bet_to_gff.pl bp_seq_select.pl build_mod.pl calc_introns_from_gtf.pl \
-change_path_in_perl_scripts.pl gc_distr.pl get_sequence_from_GTF.pl \
-gmes_petap.pl histogram.pl hmm_to_gtf.pl make_nt_freq_mat.pl \
-parse_by_introns.pl parse_ET.pl parse_gibbs.pl parse_set.pl predict_genes.pl \
-reformat_fasta.pl reformat_gff.pl rescale_gff.pl rnaseq_introns_to_gff.pl \
-run_es.pl run_hmm_pbs.pl scan_for_bp.pl star_to_gff.pl verify_evidence_gmhmm.pl;
-do
-   cat $f | perl -pe 's/\/usr\/bin\/perl/\/usr\/bin\/env perl/' > $f.tmp
-   mv $f.tmp $f
-   chmod u+x $f
-done
-
+perl change_path_in_perl_scripts.pl "/usr/bin/env perl"
 ```
 
 
