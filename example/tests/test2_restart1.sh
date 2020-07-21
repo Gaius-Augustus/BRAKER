@@ -5,8 +5,18 @@ if [ -d $wd ]; then
     rm -r $wd
 fi
 
+# --gm_max_intergenic 10000 option is used here only to make the test run faster.
+# It is not recommended to use this option in real BRAKER runs. The speed increase
+# achieved by adjusting this option is negligible on full-sized genomes.
+
+# Warning: the result of this particular test can slightly differ from the full
+# test run (test2.sh) because the protein hints supplied to GeneMark-EP+ in this
+# test are from ProtHint's second iteration, while in the regular run, GeneMark-EP+
+# uses result from ProtHint's first iteration (see BRAKER2 paper for details).
+
+
 if [ ! -d $oldDir ] ; then
-  echo "ERROR: Directory (with contents) of old BRAKER run $oldDir does not exist, yet. Please run test2.sh before running test2_restart1.sh!"  
+  echo "ERROR: Directory (with contents) of old BRAKER run $oldDir does not exist, yet. Please run test2.sh before running test2_restart1.sh!"
 else
-    ( time braker.pl --genome=../genome.fa --hints=$oldDir/hintsfile.gff --evidence=$oldDir/evidence.gff --prothints=$oldDir/prothint.gff --epmode --softmasking --workingdir=$wd ) &> test2_restart1.log
+    ( time braker.pl --genome=../genome2.fa --hints=$oldDir/hintsfile.gff --evidence=$oldDir/evidence.gff --prothints=$oldDir/prothint.gff --epmode --softmasking --workingdir=$wd --cores 8 --gm_max_intergenic 10000 ) &> test2_restart1.log
 fi
