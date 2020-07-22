@@ -6578,11 +6578,9 @@ sub GeneMark_ES {
             }
             if ($soft_mask) {
                 $perlCmdString .= " --soft_mask auto";
-                      # version prior to 4.29, apparently also in version 4.33
-                      #     $perlCmdString .= " --soft 1000"; # version 4.29
             }
-            if (defined($min_contig)) {
-                  $perlCmdString .= " --min_contig=10000";
+            if(defined($min_contig)){
+                  $perlCmdString .= " --min_contig=$min_contig ";
             }
             if (defined($gm_max_intergenic)) {
                   $perlCmdString .= " --max_intergenic=$gm_max_intergenic";
@@ -6655,16 +6653,14 @@ sub GeneMark_ET {
             if(defined($min_contig)){
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
-            $perlCmdString .= "--ET=$genemark_hintsfile --et_score 10 "
+            $perlCmdString .= "--ET=$genemark_hintsfile "
                            .  "--cores=$CPU --gc_donor $gc_prob";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
                 print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
             }
             if ($soft_mask) {
-                $perlCmdString .= " --soft_mask auto"
-                    ; # version prior to 4.29, apparently also in version 4.33
-                      #     $perlCmdString .= " --soft 1000"; # version 4.29
+                $perlCmdString .= " --soft_mask auto";
             }
             if (defined($gm_max_intergenic)) {
                   $perlCmdString .= " --max_intergenic=$gm_max_intergenic";
@@ -6737,8 +6733,8 @@ sub GeneMark_EP {
             if(defined($min_contig)){
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
-            $perlCmdString .= "--ep_score 4,0.25 --EP "
-                           .  "$otherfilesDir/prothint.gff --cores=$CPU --gc_donor $gc_prob";
+            $perlCmdString .= "--EP $otherfilesDir/prothint.gff --cores=$CPU "
+                           .  " --gc_donor $gc_prob";
             if(-e "$otherfilesDir/evidence.gff"){
                 $perlCmdString .= " --evidence $otherfilesDir/evidence.gff ";
             }
