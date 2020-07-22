@@ -5,9 +5,9 @@ if [ -d $wd ]; then
 fi
 
 # Note:
-# The file ../RNASeq.bam is not contained in the github repository!
+# The file ../RNASeq2.bam is not contained in the github repository!
 # Make sure that you downloaded this file with
-# wget http://bioinf.uni-greifswald.de/bioinf/braker/RNAseq.bam
+# wget wget http://topaz.gatech.edu/GeneMark/Braker/RNAseq2.bam
 # before running this test.
 # Alternatively, you can replace --bam=../RNASeq.bam by --hints=../RNASeq.hints
 
