@@ -6,7 +6,7 @@ if [ -d $wd ]; then
 fi
 
 if [ ! -d $oldDir ] ; then
-  echo "ERROR: Directory (with contents) of old BRAKER run $oldDir does not exist, yet. Please run test1.sh before running test1_restart2.sh!"  
+  echo "ERROR: Directory (with contents) of old BRAKER run $oldDir does not exist, yet. Please run test1.sh before running test1_restart2.sh!"
 else
-    ( time braker.pl --genome=../genome.fa --hints=$oldDir/hintsfile.gff --geneMarkGtf=$oldDir/GeneMark-ET/genemark.gtf --softmasking --workingdir=$wd ) &> test1_restart2.log
+    ( time braker.pl --genome=../genome2.fa --hints=$oldDir/hintsfile.gff --geneMarkGtf=$oldDir/GeneMark-ET/genemark.gtf --softmasking --workingdir=$wd --cores 8 ) &> test1_restart2.log
 fi

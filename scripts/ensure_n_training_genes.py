@@ -3,8 +3,10 @@
 # Tomas Bruna
 #
 # Ensure that the file with "good" GeneMark training genes contains at least N
-# genes. If the file contains < N genes, add random genes from the file with
-# "bad" genes.
+# genes. If the file contains < N genes, add additional genes from the file with
+# "bad" genes. The bad genes are added based on their support by hints: Genes
+# which are supported by most hints (normalized by the number of exons) are
+# added first.
 # ==============================================================
 
 
@@ -12,13 +14,47 @@ import argparse
 import csv
 import re
 import sys
-import random
 from collections import OrderedDict
 
 
 def extractFeature(text, feature):
     regex = feature + ' "([^"]+)"'
-    return re.search(regex, text).groups()[0]
+    search = re.search(regex, text)
+    if search:
+        return search.groups()[0]
+    else:
+        return None
+
+
+class Gene:
+
+    def __init__(self, row, geneId):
+        self.rows = [row]
+        self.anchoredCount = 0
+        self.anchoredSum = 0
+        self.geneId = geneId
+        self.countSupport(row)
+
+    def addRow(self, row):
+        self.countSupport(row)
+        self.rows.append(row)
+
+    def countSupport(self, row):
+        if row[2] != "CDS":
+            return
+
+        evidence = extractFeature(row[8], "anchored")
+        if evidence == "1_1":
+            self.anchoredSum += 2
+        elif evidence is not None:
+            self.anchoredSum += 1
+        self.anchoredCount += 1
+
+    def getSupportRatio(self):
+        return float(self.anchoredSum) / self.anchoredCount
+
+    def __lt__(self, other):
+        return self.getSupportRatio() > other.getSupportRatio()
 
 
 def loadGenes(genesFile):
@@ -26,9 +62,9 @@ def loadGenes(genesFile):
     for row in csv.reader(open(genesFile), delimiter='\t'):
         geneId = extractFeature(row[8], "gene_id")
         if geneId not in genes:
-            genes[geneId] = [row]
+            genes[geneId] = Gene(row, geneId)
         else:
-            genes[geneId].append(row)
+            genes[geneId].addRow(row)
     return genes
 
 
@@ -46,24 +82,21 @@ def ensureNGoodGenes(goodGenes, badGenes, N):
                          ' set.\n')
         toAdd = len(badGenes)
 
+    sortedBad = sorted(badGenes.values())
     for i in range(toAdd):
-        geneId = random.choice(list(badGenes.keys()))
-        goodGenes[geneId] = badGenes.pop(geneId)
+        goodGenes[sortedBad[i].geneId] = badGenes.pop(sortedBad[i].geneId)
 
 
 def printGenes(genes, output):
     f = open(output, 'w')
     for key in genes:
-        for row in genes[key]:
+        for row in genes[key].rows:
             f.write("\t".join(row) + "\n")
     f.close()
 
 
 def main():
     args = parseCmd()
-
-    if args.randomSeed:
-        random.seed(args.randomSeed)
 
     goodGenes = loadGenes(args.goodGenes)
     badGenes = loadGenes(args.badGenes)
@@ -79,8 +112,12 @@ def parseCmd():
     parser = argparse.ArgumentParser(description='Ensure that the file with\
                                      "good" GeneMark training genes contains\
                                      at least N genes. If the file contains\
-                                     < N genes, add random genes from the file\
-                                     with "bad" genes.')
+                                     < N genes, add additional genes from the\
+                                     file with "bad" genes. The bad genes are\
+                                     added based on their support by hints:\
+                                     Genes which are supported by most hints\
+                                     (normalized by the number of exons) are \
+                                     added first.')
 
     parser.add_argument('--goodGenes', type=str, required=True,
                         help='"Good" genemark training genes')
@@ -90,10 +127,6 @@ def parseCmd():
 
     parser.add_argument('--N', type=int, required=True,
                         help='Minimum required number of good genes.')
-
-    parser.add_argument('--randomSeed', type=int, required=False,
-                        help='Use this random seed for adding genes from\
-                        "bad" file.')
 
     return parser.parse_args()
 

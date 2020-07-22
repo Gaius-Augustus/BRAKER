@@ -450,6 +450,9 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 --gc_probability=DECIMAL            Probablity for donor splice site pattern GC 
                                     for gene prediction with GeneMark-EX,
                                     default value is 0.001
+--gm_max_intergenic=INT             Adjust maximum allowed size of intergenic
+                                    regions in GeneMark-EX. If not used, the value
+                                    is automatically determined by GeneMark-EX.
 
 
 DESCRIPTION
@@ -654,6 +657,7 @@ my $min_contig; # min contig length for GeneMark, e.g. to be used in combination
 my $grass; # switch on GC treatment for GeneMark-ES/ET
 my $ttable = 1; # translation table to be used
 my $gc_prob = 0.001;
+my $gm_max_intergenic;
 my $skip_fixing_broken_genes; # skip execution of fix_in_frame_stop_codon_genes.py
 @forbidden_words = (
     "system",    "exec",  "passthru", "run",    "fork",   "qx",
@@ -741,6 +745,7 @@ GetOptions(
     'translation_table=s'          => \$ttable,
     'skip_fixing_broken_genes!'    => \$skip_fixing_broken_genes,
     'gc_probability=s'             => \$gc_prob,
+    'gm_max_intergenic=s'          => \$gm_max_intergenic,
     'evidence=s'                   => \$evidence_hints,
     'prothints=s'                  => \$prothint_file,
     'genemark_hintsfile=s'         => \$gm_hints
@@ -6579,6 +6584,9 @@ sub GeneMark_ES {
             if (defined($min_contig)) {
                   $perlCmdString .= " --min_contig=10000";
             }
+            if (defined($gm_max_intergenic)) {
+                  $perlCmdString .= " --max_intergenic=$gm_max_intergenic";
+            }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Executing gmes_petap.pl\n" 
                 if ($v > 3);
@@ -6648,7 +6656,7 @@ sub GeneMark_ET {
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
             $perlCmdString .= "--ET=$genemark_hintsfile --et_score 10 "
-                           .  "--max_intergenic 50000 --cores=$CPU --gc_donor $gc_prob";
+                           .  "--cores=$CPU --gc_donor $gc_prob";
             if ($fungus) {
                 $perlCmdString .= " --fungus";
                 print CITE $pubs{'gm-fungus'}; $pubs{'gm-fungus'} = "";
@@ -6657,6 +6665,9 @@ sub GeneMark_ET {
                 $perlCmdString .= " --soft_mask auto"
                     ; # version prior to 4.29, apparently also in version 4.33
                       #     $perlCmdString .= " --soft 1000"; # version 4.29
+            }
+            if (defined($gm_max_intergenic)) {
+                  $perlCmdString .= " --max_intergenic=$gm_max_intergenic";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Executing gmes_petap.pl\n" 
@@ -6726,7 +6737,7 @@ sub GeneMark_EP {
             if(defined($min_contig)){
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
-            $perlCmdString .= "--max_intergenic 50000 --ep_score 4,0.25 --EP "
+            $perlCmdString .= "--ep_score 4,0.25 --EP "
                            .  "$otherfilesDir/prothint.gff --cores=$CPU --gc_donor $gc_prob";
             if(-e "$otherfilesDir/evidence.gff"){
                 $perlCmdString .= " --evidence $otherfilesDir/evidence.gff ";
@@ -6737,6 +6748,9 @@ sub GeneMark_EP {
             }
             if ($soft_mask) {
                 $perlCmdString .= " --soft_mask auto";
+            }
+            if (defined($gm_max_intergenic)) {
+                  $perlCmdString .= " --max_intergenic=$gm_max_intergenic";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
@@ -6812,7 +6826,6 @@ sub GeneMark_ETP {
             if(defined($min_contig)){
                   $perlCmdString .= "--min_contig=$min_contig ";
             }
-            $perlCmdString .= "--max_intergenic 50000 ";
             if(-e "$otherfilesDir/evidence.gff"){
                 $perlCmdString .= "--evidence $otherfilesDir/evidence.gff ";
             }
@@ -6824,6 +6837,9 @@ sub GeneMark_ETP {
             }
             if ($soft_mask) {
                 $perlCmdString .= " --soft_mask auto";
+            }
+            if (defined($gm_max_intergenic)) {
+                  $perlCmdString .= " --max_intergenic=$gm_max_intergenic";
             }
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running gmes_petap.pl\n" 
@@ -6986,8 +7002,7 @@ sub filter_genemark {
             $pythonCmdString .= "$PYTHON3_PATH/python3 $string "
                            .  "--goodGenes $genemarkDir/genemark.f.good.gtf "
                            .  "--badGenes $genemarkDir/genemark.f.bad.gtf "
-                           .  "--N $minTrainGenes "
-                           .  "--randomSeed 1 ";
+                           .  "--N $minTrainGenes ";
             $pythonCmdString .= "1>$stdoutfile 2>$errorfile";
             print LOG "$pythonCmdString\n" if ($v > 3);
             system("$pythonCmdString") == 0
