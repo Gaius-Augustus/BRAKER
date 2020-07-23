@@ -5004,7 +5004,9 @@ sub run_prothint {
     if ($nice) {
         $cmdString .= "nice ";
     }
-    $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneMarkGtf $genemarkesDir/genemark.gtf $otherfilesDir/genome.fa $otherfilesDir/proteins.fa";
+    $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneMarkGtf "
+                    . "$genemarkesDir/genemark.gtf $otherfilesDir/genome.fa "
+                    . "$otherfilesDir/proteins.fa";
     print LOG "\# " . (localtime) . ": starting prothint.py\n" if ($v > 3);
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
@@ -5013,121 +5015,7 @@ sub run_prothint {
         . " at line ". __LINE__
         . "\nFailed to execute $cmdString!\n");
 
-    # step 4: modify evidence_augustus.gff
-    print LOG "\# " . (localtime)
-        . ": Changing hints source in evidence_augustus.gff from src=P to src=M...\n" if ($v > 3);
-    my $ev_aug_tmp = $otherfilesDir."/evidence_augustus_tmp.gff";
-    open(EV_AUG, "<", $otherfilesDir."/evidence_augustus.gff") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to open file $otherfilesDir/evidence_augustus.gff!\n");
-    open(EV_AUG_MOD, ">", $ev_aug_tmp) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to open file $ev_aug_tmp!\n");
-    while(<EV_AUG>){
-        my $line = $_;
-        $line =~ s/src=P;/src=M;/;
-        print EV_AUG_MOD $line;
-    }
-    close(EV_AUG_MOD) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to close file $ev_aug_tmp!\n");
-    close(EV_AUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to close file $otherfilesDir/evidence_augustus.gff!\n");
-    $cmdString = "mv $ev_aug_tmp $otherfilesDir/evidence_augustus.gff";
-    print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute: $cmdString!\n");
-
-    # step 5: modify top_chains.gff
-    print LOG "\# " . (localtime)
-        . ": Changing hints source in top_chains.gff from src=P to src=C...\n" if ($v > 3);
-    my $top_chain_tmp = $otherfilesDir."/top_chains_tmp.gff";
-    open(TOP_CH, "<", $otherfilesDir."/top_chains.gff") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to open file $otherfilesDir/top_chains.gff!\n");
-    open(TP_CH_MOD, ">", $top_chain_tmp) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to open file $top_chain_tmp!\n");
-    while(<TOP_CH>){
-        my $line = $_;
-        $line =~ s/src=P;/src=MC;/;
-        print TP_CH_MOD $line;
-    }
-    close(TP_CH_MOD) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to close file $top_chain_tmp!\n");
-    close(TOP_CH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to close file $otherfilesDir/top_chains.gff!\n");
-    $cmdString = "mv $top_chain_tmp $otherfilesDir/top_chains.gff";
-    print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute: $cmdString!\n");
-        
-    # step 5: logistic regression on prothint augustus hints (non src=M)
-    print LOG "\# " . (localtime)
-        . ": Applying logistic regression to separate hints in prothint.gff in two more classes...\n" if ($v > 3);
-    $string = find(
-        "log_reg_prothints.pl",     $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-     $perlCmdString = "";
-    if ($nice) {
-        $perlCmdString .= "nice ";
-    }
-    $perlCmdString .= "perl $string --prothint=$otherfilesDir/prothint.gff "
-        . "--out=$otherfilesDir/prothint_reg.gff 1> $otherfilesDir/prothint_reg.out "
-        . "2>$errorfilesDir/prothint_reg.err";
-    print LOG "$perlCmdString\n" if ($v > 3);
-    system("$perlCmdString") == 0
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to execute: $perlCmdString!\n"); 
-    $cmdString = "mv $otherfilesDir/prothint_reg.gff $otherfilesDir/prothint_augustus.gff";
-    print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute: $cmdString!\n");
-
-    # step 6: add hints onto hintsfile.gff that need to go there
-    print LOG "\# " . (localtime)
-        . ": Appending hints from $otherfilesDir/evidence_augustus.gff to "
-        . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
-    open(HINTS, ">>", "$otherfilesDir/hintsfile.gff") or 
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
-    # evidence_augustus.gff modified file
-    open(EV_AUG, "<", "$otherfilesDir/evidence_augustus.gff") or 
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to open file $otherfilesDir/evidence_augustus.gff\n");
-    while(<EV_AUG>){
-        print HINTS $_;
-    }
-    close(EV_AUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to close file $otherfilesDir/evidence_augustus.gff\n");
-    # modified top chains
-    print LOG "\# " . (localtime)
-        . ": Appending hints from $otherfilesDir/top_chains.gff to "
-        . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
-    open(TOP_CH, "<", "$otherfilesDir/top_chains.gff") or 
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to open file $otherfilesDir/top_chains.gff\n");
-    while(<TOP_CH>){
-        print HINTS $_;
-    }
-    close(TOP_CH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to close file $otherfilesDir/top_chains.gff\n");
-    # prothint_augustus.gff after logistic regression
+    # step 4: add hints to hintsfile.gff
     print LOG "\# " . (localtime)
         . ": Appending hints from $otherfilesDir/prothint_augustus.gff to "
         . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
@@ -5135,12 +5023,19 @@ sub run_prothint {
         clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nfailed to open file $otherfilesDir/prothint_augustus.gff\n");
+
+    open(HINTS, ">>", "$otherfilesDir/hintsfile.gff") or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
+
     while(<PHT>){
         print HINTS $_;
     }
     close(PHT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nfailed to close file $otherfilesDir/prothint_augustus.gff\n");
+
     close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile.gff!\n");
@@ -5168,11 +5063,12 @@ sub run_prothint_iter2 {
     if ($nice) {
         $cmdString .= "nice ";
     }
-    # THIS IS WHERE I AM, NEED TO MODIFY CALL, TODO!
+
     $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneSeeds "
-               . "$otherfilesDir/augustus.hints_iter1.gtf --prevGeneSeeds $otherfilesDir/GeneMark-ES/genemark.gtf "
-               . "--prevSpalnGff $otherfilesDir/Spaln/spaln_iter1.gff $otherfilesDir/genome.fa "
-               . "$otherfilesDir/proteins.fa";
+               . "$otherfilesDir/augustus.hints_iter1.gtf --prevGeneSeeds "
+               . "$otherfilesDir/GeneMark-ES/genemark.gtf "
+               . "--prevSpalnGff $otherfilesDir/Spaln/spaln_iter1.gff "
+               . "$otherfilesDir/genome.fa $otherfilesDir/proteins.fa";
     print LOG "\# " . (localtime) . ": starting prothint.py\n" if ($v > 3);
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
@@ -5181,88 +5077,7 @@ sub run_prothint_iter2 {
         . " at line ". __LINE__
         . "\nFailed to execute $cmdString!\n");
 
-    # step 2: modify evidence_augustus.gff
-    print LOG "\# " . (localtime)
-        . ": Changing hints source in evidence_augustus.gff from src=P to src=M...\n" if ($v > 3);
-    my $ev_aug_tmp = $otherfilesDir."/evidence_augustus_tmp.gff";
-    open(EV_AUG, "<", $otherfilesDir."/evidence_augustus.gff") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to open file $otherfilesDir/evidence_augustus.gff!\n");
-    open(EV_AUG_MOD, ">", $ev_aug_tmp) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to open file $ev_aug_tmp!\n");
-    while(<EV_AUG>){
-        my $line = $_;
-        $line =~ s/src=P;/src=M;/;
-        print EV_AUG_MOD $line;
-    }
-    close(EV_AUG_MOD) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to close file $ev_aug_tmp!\n");
-    close(EV_AUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to close file $otherfilesDir/evidence_augustus.gff!\n");
-    $cmdString = "mv $ev_aug_tmp $otherfilesDir/evidence_augustus.gff";
-    print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute: $cmdString!\n");
-
-    # step 3: modify top_chains.gff
-    print LOG "\# " . (localtime)
-        . ": Changing hints source in top_chains.gff from src=P to src=C...\n" if ($v > 3);
-    my $top_chain_tmp = $otherfilesDir."/top_chains_tmp.gff";
-    open(TOP_CH, "<", $otherfilesDir."/top_chains.gff") or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to open file $otherfilesDir/top_chains.gff!\n");
-    open(TP_CH_MOD, ">", $top_chain_tmp) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to open file $top_chain_tmp!\n");
-    while(<TOP_CH>){
-        my $line = $_;
-        $line =~ s/src=P;/src=MC;/;
-        print TP_CH_MOD $line;
-    }
-    close(TP_CH_MOD) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to close file $top_chain_tmp!\n");
-    close(TOP_CH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nfailed to close file $otherfilesDir/top_chains.gff!\n");
-    $cmdString = "mv $top_chain_tmp $otherfilesDir/top_chains.gff";
-    print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute: $cmdString!\n");
-        
-    # step 4: logistic regression on prothint augustus hints (non src=M)
-    print LOG "\# " . (localtime)
-        . ": Applying logistic regression to separate hints in prothint.gff in two more classes...\n" if ($v > 3);
-    $string = find(
-        "log_reg_prothints.pl",     $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-     $perlCmdString = "";
-    if ($nice) {
-        $perlCmdString .= "nice ";
-    }
-    $perlCmdString .= "perl $string --prothint=$otherfilesDir/prothint.gff "
-        . "--out=$otherfilesDir/prothint_reg.gff 1> $otherfilesDir/prothint_reg.out "
-        . "2>$errorfilesDir/prothint_reg.err";
-    print LOG "$perlCmdString\n" if ($v > 3);
-    system("$perlCmdString") == 0
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to execute: $perlCmdString!\n"); 
-    $cmdString = "mv $otherfilesDir/prothint_reg.gff $otherfilesDir/prothint_augustus.gff";
-    print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0
-        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute: $cmdString!\n");
-
-    # step 5: remove previous ProtHint hints from hintsfile.gff
+    # step 2: remove previous ProtHint hints from hintsfile.gff
     print LOG "\# " . (localtime)
         . ": Removing first iteration ProtHint hints from "
         . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
@@ -5294,40 +5109,7 @@ sub run_prothint_iter2 {
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile_iter1.gff!\n");
 
-    # step 6: add hints onto hintsfile.gff that need to go there
-    print LOG "\# " . (localtime)
-        . ": Appending hints from $otherfilesDir/evidence_augustus.gff to "
-        . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
-    open(HINTS, ">>", "$otherfilesDir/hintsfile.gff") or 
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
-    # evidence_augustus.gff modified file
-    open(EV_AUG, "<", "$otherfilesDir/evidence_augustus.gff") or 
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to open file $otherfilesDir/evidence_augustus.gff\n");
-    while(<EV_AUG>){
-        print HINTS $_;
-    }
-    close(EV_AUG) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to close file $otherfilesDir/evidence_augustus.gff\n");
-    # modified top chains
-    print LOG "\# " . (localtime)
-        . ": Appending hints from $otherfilesDir/top_chains.gff to "
-        . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
-    open(TOP_CH, "<", "$otherfilesDir/top_chains.gff") or 
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to open file $otherfilesDir/top_chains.gff\n");
-    while(<TOP_CH>){
-        print HINTS $_;
-    }
-    close(TOP_CH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-        $useexisting, "ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nfailed to close file $otherfilesDir/top_chains.gff\n");
-    # prothint_augustus.gff after logistic regression
+    # step 4: add hints to hintsfile.gff
     print LOG "\# " . (localtime)
         . ": Appending hints from $otherfilesDir/prothint_augustus.gff to "
         . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
@@ -5335,12 +5117,19 @@ sub run_prothint_iter2 {
         clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nfailed to open file $otherfilesDir/prothint_augustus.gff\n");
+
+    open(HINTS, ">>", "$otherfilesDir/hintsfile.gff") or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
+
     while(<PHT>){
         print HINTS $_;
     }
     close(PHT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nfailed to close file $otherfilesDir/prothint_augustus.gff\n");
+
     close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile.gff!\n");
