@@ -1470,7 +1470,6 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
             filter_genemark();
         } elsif ( $EPmode == 1 ) {
             # remove reformatting of hintsfile, later!
-            # format_ep_hints(); # not required anymore since provided as $prothint_file
             # create_evidence_gff(); # not required anymore since provided as $evidence
             if( not( defined( $geneMarkGtf ) ) ){
                 check_genemark_hints();
@@ -1478,7 +1477,6 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
             }
             filter_genemark();
         } elsif ( $ETPmode == 1 ) {
-            # format_ep_hints(); # not required anymore since provided as $prothint_file
             if ( not( defined( $geneMarkGtf ) ) ){
                 if ( not( defined( $gm_hints ) ) ){
                     create_evidence_gff(); # evidence from both RNA-Seq and proteins
@@ -6028,71 +6026,6 @@ sub get_genemark_hints {
         "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nFailed to delete file $gm_hints_rnaseq.tmp\n");
     }
-}
-
-####################### format_ep_hints ########################################
-# * format output from Atlanta protein mapping pipeline for AUGUSTUS and
-#   GeneMark, i.e. replace Intron by intron, set last column fields src/mult/pri
-#   for AUGUSTUS
-# * this function can be deleted once the output format of the mapping pipeline
-#   is natively compatible
-################################################################################
-
-sub format_ep_hints {
-    print LOG "\# "
-        . (localtime)
-        . ": Reformating hints file for GeneMark-E(T)P and AUGUSTUS\n" if ($v > 2);
-    open( INTRONS, "<", $genemark_hintsfile )
-        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nCould not open file $genemark_hintsfile!\n");
-    open( OUT, ">", "$otherfilesDir/tmp.hints" )
-        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nCould not open file $otherfilesDir/tmp.hints!\n");
-    while (<INTRONS>) {
-        my @t = split(/\t/);
-        print OUT "$t[0]\t$t[1]\t$t[2]\t$t[3]\t$t[4]\t$t[5]\t$t[6]\t$t[7]\t";
-        if ($t[8] =~ m/Parent=/){
-            if ( $t[5] == 1 ) {
-                print OUT "pri=4;";
-                if($t[7] =~ m/src=([^;])/){
-                    print OUT "src=".$1."\n";
-                }else{
-                    print OUT "src=P\n";
-                }
-            } else {
-                print OUT "mult=$t[5];pri=4;";
-                if($t[7] =~ m/src=([^;])/){
-                    print OUT "src=".$1."\n";
-                }else{
-                    print OUT "src=P\n";
-                }
-            }
-        }elsif( $t[8] =~ m/so?u?rce?=/){
-            if(not($_ =~ m/prio?r?i?t?y?=/)){
-                print OUT "pri=4;"
-            }
-            if(not($_=~ m/mult=/) && not ($_ =~ m/gro?u?p=/)){
-                print OUT "mult=$t[5];"
-            }
-            print OUT $t[8];
-        }elsif( not ( $t[8] =~ m/so?u?rce?=/) ) {
-            $prtStr = "#*********\n"
-                    . "# WARNING: Format of hintsfile $genemark_hintsfile is "
-                    . "incorrect in the last column, possibly src="
-                    . "tag is missing!\n$t[8]"
-                    . "#*********\n";
-            print STDOUT $prtStr;
-            print LOG $prtStr;
-        }
-    }
-    close (OUT) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $otherfilesDir/tmp.hints!\n");
-    close(INTRONS) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-        . "\nCould not close file $genemark_hintsfile!\n");
-    $cmdString = "mv $otherfilesDir/tmp.hints $genemark_hintsfile";
-    print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0 or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute: $cmdString\n");
 }
 
 ####################### create_evidence_gff ####################################
