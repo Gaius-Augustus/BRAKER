@@ -6111,8 +6111,6 @@ sub create_evidence_gff {
 #   individual data sets
 ################################################################################
 
-# TODO: Update checks
-
 sub check_genemark_hints {
     my $nIntrons               = 0;
     my $nIntronsAboveThreshold = 0;
@@ -6122,79 +6120,37 @@ sub check_genemark_hints {
     else {
         $GeneMarkIntronThreshold = 10;
     }
-    if( ($EPmode == 0 && $ETPmode ==0 && $ESmode == 0) || $ETPmode ) {
-        print LOG "\# "
-            . (localtime)
-            . ": Checking whether file $genemark_hintsfile contains "
-            . "sufficient multiplicity information...\n" if ($v > 2);
-        open( GH, "<", $genemark_hintsfile )
-            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nCould not open file $genemark_hintsfile!\n");
-        while (<GH>) {
-            my @line = split(/\t/);
-            if ( scalar(@line) == 9 ) {
-                $nIntrons++;
-                if ( $line[5] =~ m/(\d+)/ ) {
-                    if ( $1 >= $GeneMarkIntronThreshold ) {
-                        $nIntronsAboveThreshold++;
-                    }
+    print LOG "\# "
+        . (localtime)
+        . ": Checking whether file $genemark_hintsfile contains "
+        . "sufficient multiplicity information...\n" if ($v > 2);
+    open( GH, "<", $genemark_hintsfile )
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
+            "ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nCould not open file $genemark_hintsfile!\n");
+    while (<GH>) {
+        my @line = split(/\t/);
+        if ( scalar(@line) == 9 ) {
+            $nIntrons++;
+            if ( $line[5] =~ m/(\d+)/ ) {
+                if ( $1 >= $GeneMarkIntronThreshold ) {
+                    $nIntronsAboveThreshold++;
                 }
             }
         }
-        close(GH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nCould not close file $genemark_hintsfile!\n");
-    }elsif( $EPmode == 1 ) {
-        print LOG "\# " . (localtime)
-            . ": Checking whether file $otherfilesDir/prothint.gff and $otherfilesDir/evidence.gff contains "
-            . "sufficient multiplicity information...\n" if ($v > 2);
-        open( PH, "<", $otherfilesDir."/prothint.gff" )
-            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nCould not open file $otherfilesDir/prothint.gff!\n");
-        while (<PH>) {
-            my @line = split(/\t/);
-            if ( scalar(@line) == 9 ) {
-                $nIntrons++;
-                if ( $line[5] =~ m/(\d+)/ ) {
-                    if ( $1 >= $GeneMarkIntronThreshold ) {
-                        $nIntronsAboveThreshold++;
-                    }
-                }
-            }
-        }
-        close(PH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nCould not close file $otherfilesDir/prothint.gff!\n");
-        open( EV, "<", $otherfilesDir."/evidence.gff" )
-            or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nCould not open file $otherfilesDir/evidence.gff!\n");
-        while (<EV>) {
-            my @line = split(/\t/);
-            if ( scalar(@line) == 9 ) {
-                $nIntrons++;
-                if ( $line[5] =~ m/(\d+)/ ) {
-                    if ( $1 >= $GeneMarkIntronThreshold ) {
-                        $nIntronsAboveThreshold++;
-                    }
-                }
-            }
-        }
-        close(EV) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-            $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
-            . "\nCould not close file $otherfilesDir/evidence.gff!\n");
     }
+    close(GH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nCould not close file $genemark_hintsfile!\n");
     if ( $nIntronsAboveThreshold < 150 ) {
         $prtStr = "#*********\n"
                 . "# WARNING: \n"
                 . "# The hints file(s) for GeneMark-EX contain less than 150 "
                 . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
                 . "total, $nIntrons unique introns are contained. "
-                .  "$nIntronsAboveThreshold have a multiplicity >= $GeneMarkIntronThreshold.)
-                . Possibly, you are trying to run braker.pl on data that does not provide
-                . sufficient multiplicity information. This will e.g. happen if you try to "
+                . "$nIntronsAboveThreshold have a multiplicity >= $GeneMarkIntronThreshold.)\n"
+                . "# Possibly, you are trying to run braker.pl on data that does not provide "
+                . "sufficient multiplicity information. This will e.g. happen if you try to "
                 . "use introns generated from assembled RNA-Seq transcripts; or if "
                 . "you try to run braker.pl in epmode with mappings from proteins "
                 . "without sufficient hits per locus. Or if you use the example data "
