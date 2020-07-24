@@ -6086,7 +6086,6 @@ sub create_evidence_gff {
 
     while (<HINTS>) {
         if ($_ =~ m/src=M/) {
-            print EV $_;
             my @t = split(/\t/, $_);
             $t[2] =~ s/Intron/intron/;
             $t[2] =~ s/start/start_codon/;
