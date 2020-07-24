@@ -1111,6 +1111,13 @@ print CITE "--------------------------------------------------------------------
 print CITE $pubs{'braker1'}; $pubs{'braker1'} = "";
 print CITE $pubs{'braker-whole'}; $pubs{'braker-whole'} = "";
 
+# define $genemark_hintsfile: is needed because genemark can only handle intron
+# hints in braker.pl, AUGUSTUS can also handle other hints types
+$hintsfile = "$otherfilesDir/hintsfile.gff";
+truncate $hintsfile, 0;
+if(! $trainFromGth && ! $ESmode && not ( defined($AUGUSTUS_hints_preds) )) {
+    $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
+}
 
 if ( (!-d $genemarkDir) && ! $trainFromGth) {
     make_path($genemarkDir) or die("ERROR in file " . __FILE__ ." at line "
@@ -1373,13 +1380,6 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
             . "#*********\n";
     print STDOUT $prtStr;
     print LOG $prtStr;
-}
-
-# define $genemark_hintsfile: is needed because genemark can only handle intron
-# hints in braker.pl, AUGUSTUS can also handle other hints types
-$hintsfile          = "$otherfilesDir/hintsfile.gff";
-if(! $trainFromGth && ! $ESmode && not ( defined($AUGUSTUS_hints_preds) )) {
-    $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
 }
 
 if($ESmode==0){
