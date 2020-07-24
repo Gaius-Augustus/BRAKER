@@ -5892,13 +5892,13 @@ sub get_genemark_hints {
     my $warnProt = 0;
     while (<HINTS>) {
         if ( $_ =~ m/\tintron\t/i && ($_ =~ m/src=E/) ) {
-            $_ =~ s/intron/Intron/;
+            $_ =~ s/Intron/intron/;
             print OUTRNASEQ $_;
-        }elsif ( $_ =~ m/\tintron\t/i && ($_ =~ m/src=P/) ) {
+        }elsif ( $_ =~ m/src=P/ ) {
             my @t = split(/\t/, $_);
             $t[2] =~ s/Intron/intron/;
-            $t[2] =~ s/start_codon/start/;
-            $t[2] =~ s/stop_codon/stop/;
+            $t[2] =~ s/start/start_codon/;
+            $t[2] =~ s/stop/stop_codon/;
             $t[8] =~ m/mult=([^;]+);/;
             $t[5] = $1;
             print OUTPROT join("\t", @t);
@@ -6130,9 +6130,9 @@ sub check_genemark_hints {
             . "\nCould not open file $genemark_hintsfile!\n");
     while (<GH>) {
         my @line = split(/\t/);
-        if ( scalar(@line) == 9 ) {
+        if ( scalar(@line) == 9 && $line[2] eq "intron" ) {
             $nIntrons++;
-            if ( $line[5] =~ m/(\d+)/ ) {
+            if ( $line[5] =~ m/(\d+)/) {
                 if ( $1 >= $GeneMarkIntronThreshold ) {
                     $nIntronsAboveThreshold++;
                 }
