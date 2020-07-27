@@ -591,7 +591,7 @@ my $nice;    # flag that determines whether system calls should be executed
 my ( $target_1, $target_2, $target_3, $target_4, $target_5) = 0;
                       # variables that store AUGUSTUS accuracy after different
                       # training steps
-my $prg = "";              # variable to store protein alignment tool
+my $prg;              # variable to store protein alignment tool
 my @prot_seq_files;   # variable to store protein sequence file name
 my @prot_aln_files;   # variable to store protein alignment file name
 my $ALIGNMENT_TOOL_PATH;
@@ -4285,23 +4285,16 @@ sub check_options {
             $prg = "gth";
         }
         elsif ( !defined($prg) && (($EPmode == 1)||($ETPmode==1)) ) {
+            # TODO: ProtHint is the only compatible option in ep mode, the BRAKER arguments
+            # should better reflect that.
             $prg = "ph";
             $prtStr = "#*********\n"
-                    . "# WARNING: No alignment tool was specified for aligning "
-                    . "protein sequences against genome. Setting ProSplign as "
+                    . "# No alignment tool was specified for aligning "
+                    . "protein sequences against genome. Setting ProtHint as "
                     . "default alignment tool for running BRAKER in GeneMark-EP or -ETP "
                     . "mode.\n"
                     . "#*********\n";
             $logString .= $prtStr if ($v > 0 );
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR:  in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "Running ProSplign from within BRAKER is currently "
-                . "not supported. Aborting braker.pl!\n";
-            $logString .= $prtStr;
-            print STDERR $logString;
-            exit(1);
         }
     }
 
@@ -5221,7 +5214,7 @@ sub make_prot_hints {
         ."\nFailed to execute $cmdString!\n");
 
     # from fasta files
-    if ( @prot_seq_files && $EPmode == 0 && $ETPmode == 0) {
+    if ( @prot_seq_files ) {
         $string = find(
             "startAlign.pl",        $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
@@ -5316,31 +5309,14 @@ sub make_prot_hints {
             }
         }
     }
-    # the following is accomplished further up
-    #elsif ( @prot_seq_files && ( $EPmode == 1 or $ETPmode == 1)) {
-        # run_prothint();
-    #}
 
     # convert pipeline created protein alignments to protein hints
     if ( @prot_seq_files && -e $alignment_outfile ) {
         if ( !uptodate( [$alignment_outfile], [$prot_hintsfile] )
             || $overwrite )
         {
-            if ( -s $alignment_outfile && $EPmode == 0 && $ETPmode == 0) {
+            if ( -s $alignment_outfile ) {
                 aln2hints( $alignment_outfile, $prot_hints_file_temp );
-            }
-            elsif ( -s $alignment_outfile && ($EPmode == 1||$ETPmode==1) ) {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Conversion of ProSplign alignments within "
-                    . "braker.pl is currently not supported. To run braker.pl with "
-                    . "GeneMark-EP/-ETP, please provide --hints=intronhints.gff! Aborting "
-                    . "braker.pl!\n";
-                print LOG $prtStr;
-                clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
-                    $useexisting, $prtStr);
             }
             else {
                 print LOG "\# "
@@ -5353,7 +5329,7 @@ sub make_prot_hints {
     }
 
     # convert command line specified protein alignments to protein hints
-    if ( @prot_aln_files && $EPmode == 0 && $ETPmode == 0) {
+    if ( @prot_aln_files ) {
         for ( my $i = 0; $i < scalar(@prot_aln_files); $i++ ) {
             if ( !uptodate( [ $prot_aln_files[$i] ], [$prot_hintsfile] )
                 || $overwrite )
@@ -5369,19 +5345,9 @@ sub make_prot_hints {
             }
         }
     }
-    elsif ( @prot_aln_files && ($EPmode == 1 || $ETPmode == 1)) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "Conversion of ProSplign alignments within "
-            . "braker.pl is currently not supported. Aborting braker.pl!\n";
-        print LOG $prtStr;
-        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting, $prtStr);
-    }
 
     # appending protein hints to $hintsfile (combined with RNA_Seq if available)
-    if ( ( -f $prot_hints_file_temp || $overwrite ) && $EPmode == 0 && $ETPmode == 0) {
+    if ( -f $prot_hints_file_temp || $overwrite ) {
         if ( !uptodate( [$prot_hints_file_temp], [$prot_hintsfile] )
             || $overwrite )
         {
@@ -5437,7 +5403,7 @@ sub make_prot_hints {
             unlink($toBeSortedHintsFile);
         }
     }
-    if ( -z $prot_hintsfile && $EPmode == 0 && $ETPmode == 0 ) {
+    if ( -z $prot_hintsfile ) {
         $prtStr
             = "\# "
             . (localtime)
