@@ -1105,8 +1105,8 @@ print CITE "--------------------------------------------------------------------
 print CITE $pubs{'braker1'}; $pubs{'braker1'} = "";
 print CITE $pubs{'braker-whole'}; $pubs{'braker-whole'} = "";
 
-# define $genemark_hintsfile: is needed because genemark can only handle intron
-# hints in braker.pl, AUGUSTUS can also handle other hints types
+# Separate $genemark_hintsfile is needed because the format of hints for GeneMark and
+# AUGUSTUS differs
 $hintsfile = "$otherfilesDir/hintsfile.gff";
 truncate $hintsfile, 0;
 if(! $trainFromGth && ! $ESmode && not ( defined($AUGUSTUS_hints_preds) )) {
@@ -1368,15 +1368,17 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
             }
             filter_genemark();
         } elsif ( $EPmode == 1 ) {
-            create_evidence_gff();
             if( not( defined( $geneMarkGtf ) ) ){
+                create_evidence_gff();
                 check_genemark_hints();
                 GeneMark_EP();
             }
             filter_genemark();
         } elsif ( $ETPmode == 1 ) {
+            # Call this function regardless of $geneMarkGtf, since it prepares manual hints for
+            # AUGUSTUS as well
+            create_evidence_gff();
             if ( not( defined( $geneMarkGtf ) ) ){
-                create_evidence_gff();
                 check_genemark_hints();
                 GeneMark_ETP();
             }
@@ -1396,9 +1398,9 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
     training_augustus();
 }
 
-if ( $skipAllTraining == 1 && ( ($ETPmode == 1) ) ){
-    create_evidence_gff(); # otherwise no manual etp hints...
-    #check_genemark_hints();
+if ( $skipAllTraining && $ETPmode == 1 ){
+    # Prepares manual hints for AUGUSTUS
+    create_evidence_gff();
 }
 
 if( not ( defined( $AUGUSTUS_hints_preds ) ) ){
