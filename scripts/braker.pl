@@ -380,9 +380,6 @@ EXPERT OPTIONS
                                     problems with a braker.pl run, you 
                                     might want to keep these files, therefore
                                     nocleanup can be activated.)
---genemark_hintsfile=hints.gff      Hints file for GeneMark-ETP produced by a
-                                    previous BRAKER run. Excluding contents or
-                                    evidence.gff.
 
 
 DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
@@ -531,9 +528,7 @@ my $help;                # print usage
 my @hints;               # input hints file names
 my $hintsfile;           # hints file (all hints)
 my $prot_hintsfile;      # hints file with protein hints
-my $genemark_hintsfile;  # contains only intron hints in case $hintsfile also
-                         # contains other hints types
-my $gm_hints; # command line passed genemark_hintsfile from previous ETP run
+my $genemark_hintsfile;  # hinsfile compatible with GeneMark-E*
 my $limit = 10000000;    # maximum for generic species Sp_$limit
 my $logfile;             # contains used shell commands
 my $optCfgFile;          # optinonal extrinsic config file for AUGUSTUS
@@ -733,8 +728,7 @@ GetOptions(
     'translation_table=s'          => \$ttable,
     'skip_fixing_broken_genes!'    => \$skip_fixing_broken_genes,
     'gc_probability=s'             => \$gc_prob,
-    'gm_max_intergenic=s'          => \$gm_max_intergenic,
-    'genemark_hintsfile=s'         => \$gm_hints
+    'gm_max_intergenic=s'          => \$gm_max_intergenic
 );
 
 if ($help) {
@@ -1154,60 +1148,6 @@ if ( defined($geneMarkGtf) ) {
         . __LINE__ ."\nFailed to execute: $cmdString!\n");
 }
 
-# softlink genemark_hintsfile.gff
-if ( defined($gm_hints) ) {
-    print LOG "\#  "
-        . (localtime)
-        . ": creating softlink of $gm_hints to "
-        . "$otherfilesDir/genemark_hintsfile.gff.\n" if ($v > 2);
-    $cmdString =  "ln -s ".rel2abs($gm_hints)." $otherfilesDir/genemark_hintsfile.gff";
-    print LOG "$cmdString\n" if ($v > 2);
-    system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
-        . __LINE__ ."\nFailed to execute: $cmdString!\n");
-    # if genemark_hintsfile.gff was specified, it's the restart of a job and --hints was also specified
-    # and is expected to have exactly one file, not several, the hintsfile.gff of a previous job
-    if( defined ($hints[0]) ) {
-        print LOG "\#  "
-            . (localtime)
-            . ": creating softlink of $hints[0] to "
-           . "$otherfilesDir/hintsfile.gff.\n" if ($v > 2);
-        $cmdString =  "ln -s ".rel2abs($hints[0])." $otherfilesDir/hintsfile.gff";
-        print LOG "$cmdString\n" if ($v > 2);
-        system($cmdString) == 0 or die("ERROR in file " . __FILE__ ." at line "
-            . __LINE__ ."\nFailed to execute: $cmdString!\n");
-    }else{
-        $prtStr = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "The option --genemark_hintsfile=string was specified, but "
-                . "the option --hints=string and "
-                . "was not given. Both files must be specified "
-                . "in order to start a BRAKER run that builds on top hints produced "
-                . "in a previous BRAKER run in --etpmode or --epmode!\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
-    }
-}
-
-# check whether all required files are specified if genemark_hintsfile.gff is given
-if( defined( $gm_hints) ) {
-    if( not( scalar(@hints) >= 1) ) {
-        $prtStr = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "The option --genemark_hintsfile=string was specified, but "
-                . "at least one of the options --hints=string(s) and "
-                . "--evidence=string were not given. All files must be specified "
-                . "in order to start a BRAKER run that builds on top hints produced "
-                . "in a previous BRAKER run in --etpmode!\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
-    }
-
-}
-
 # create parameter directory
 if ( !-d $parameterDir ) {
     make_path($parameterDir) or die("ERROR in file " . __FILE__ ." at line "
@@ -1403,20 +1343,17 @@ if ( @bam ) {
 }
 
 # add other user supplied hints
-if (@hints && not ( defined($AUGUSTUS_hints_preds) ) && not( defined($gm_hints) ) ) {
+if (@hints && not (defined($AUGUSTUS_hints_preds))) {
     add_other_hints();
 }
 
 # extract intron hints from hintsfile.gff for GeneMark (in ETP mode also used for AUGUSTUS)
 
 if ( (! $trainFromGth || ($skipAllTraining==1 && $ETPmode==0) ) && ($ESmode == 0)) {
-    if (not ( defined($AUGUSTUS_hints_preds) ) && not( defined($gm_hints) ) ){ # this might be questionable, only ok if users provide 
-                                                 # the hintsfile from previous run, which they probably 
-                                                 # will
-       get_genemark_hints();
+    if (not ( defined($AUGUSTUS_hints_preds))) {
+        get_genemark_hints();
     }
 }
-
 
 # train gene predictors
 if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
@@ -1439,9 +1376,7 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
             filter_genemark();
         } elsif ( $ETPmode == 1 ) {
             if ( not( defined( $geneMarkGtf ) ) ){
-                if ( not( defined( $gm_hints ) ) ){
-                    create_evidence_gff(); # evidence from both RNA-Seq and proteins
-                }
+                create_evidence_gff();
                 check_genemark_hints();
                 GeneMark_ETP();
             }
