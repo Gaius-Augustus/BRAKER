@@ -3687,7 +3687,6 @@ sub check_gff {
     $logString .= $prtStr if ($v > 2);
     open( GFF, $gfffile ) or die ( "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nCannot open file: $gfffile\n" );
-    my $nIntrons            = 0;
     my $printedAllowedHints = 0;
     my %foundFeatures;
 
@@ -3729,15 +3728,6 @@ sub check_gff {
             }
         }
 
-        # intron hints are the sole source of extrinsic information for
-        # GeneMark-ET, thus, if no bam file is given, the
-        # supplied hints file must contain intron hints (many)
-        if ( !@bam ) {
-            if ( $gff_line[2] eq "intron" ) {
-                $nIntrons++;
-            }
-        }
-
         # if no extrinsic.cfg is specified, parameters in braker.pl written
         # extrinsic.cfg correspond to hints in @allowedHints, only; other
         # hints will be treated with neutral malus/bonus. Issue corresponding
@@ -3775,19 +3765,6 @@ sub check_gff {
     }
     close(GFF) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nCould not close gff file $gfffile!\n");
-    if ( !@bam && !$skipAllTraining) {
-        if ( $nIntrons < 1000 ) {
-            $prtStr = "#*********\n"
-                    . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Since no bam file was supplied, GeneMark-ET must take "
-                    . "intron information from hints file $gfffile. This file "
-                    . "contains only $nIntrons intron hints. GeneMark-ET training "
-                    . "will thus likely fail.!\n"
-                    . "#*********\n";
-            $logString .= $prtStr if ($v > 0);
-            print STDOUT $logString if ($v > 0);
-        }
-    }
 }
 
 ####################### check_options ##########################################
@@ -6035,6 +6012,8 @@ sub create_evidence_gff {
 sub check_genemark_hints {
     my $nIntrons               = 0;
     my $nIntronsAboveThreshold = 0;
+    my $minNIntrons = 1000;
+    my $minNIntronsAboveThreshold = 150;
     if ( $EPmode || $ETPmode ) {
         $GeneMarkIntronThreshold = 4;
     }
@@ -6044,7 +6023,7 @@ sub check_genemark_hints {
     print LOG "\# "
         . (localtime)
         . ": Checking whether file $genemark_hintsfile contains "
-        . "sufficient multiplicity information...\n" if ($v > 2);
+        . "enough hints and sufficient multiplicity information...\n" if ($v > 2);
     open( GH, "<", $genemark_hintsfile )
         or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
             "ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -6063,19 +6042,30 @@ sub check_genemark_hints {
     close(GH) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line ". __LINE__
         . "\nCould not close file $genemark_hintsfile!\n");
-    if ( $nIntronsAboveThreshold < 150 ) {
+
+    if ( $nIntrons < $minNIntrons ) {
+            $prtStr = "#*********\n"
+                    . "# WARNING: \n"
+                    . "# The hints file(s) for GeneMark-EX contain less than $minNIntrons introns. "
+                    . "(In total, $nIntrons unique introns are contained.)\n"
+                    . "# Genemark-EX might fail due to the low number of hints.\n"
+                    . "#*********\n";
+            print LOG $prtStr if ($v > 0);
+            print STDOUT $prtStr;
+    }
+
+    if ( $nIntronsAboveThreshold < $minNIntronsAboveThreshold ) {
         $prtStr = "#*********\n"
                 . "# WARNING: \n"
-                . "# The hints file(s) for GeneMark-EX contain less than 150 "
-                . "introns with multiplicity >= $GeneMarkIntronThreshold! (In "
-                . "total, $nIntrons unique introns are contained. "
-                . "$nIntronsAboveThreshold have a multiplicity >= $GeneMarkIntronThreshold.)\n"
+                . "# The hints file(s) for GeneMark-EX contain less than $minNIntronsAboveThreshold "
+                . "introns with multiplicity >= $GeneMarkIntronThreshold! (In total, $nIntrons unique "
+                . "introns are contained. $nIntronsAboveThreshold have a multiplicity "
+                . ">= $GeneMarkIntronThreshold.)\n"
                 . "# Possibly, you are trying to run braker.pl on data that does not provide "
                 . "sufficient multiplicity information. This will e.g. happen if you try to "
                 . "use introns generated from assembled RNA-Seq transcripts; or if "
                 . "you try to run braker.pl in epmode with mappings from proteins "
-                . "without sufficient hits per locus. Or if you use the example data "
-                . "set (orthodb_small.fa).\n"
+                . "without sufficient hits per locus. Or if you use the example data set.\n"
                 . "# A low number of intron hints with sufficient multiplicity may "
                 . "result in a crash of GeneMark-EX (it should not crash with the "
                 . "example data set).\n"
