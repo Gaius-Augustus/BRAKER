@@ -4056,21 +4056,21 @@ sub check_options {
         }
     }
 
-    # check whether RNA-Seq files are specified
-    if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth & !$skipAllTraining 
-        && !$ESmode ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "No RNA-Seq or hints file(s) from RNA-Seq specified. "
-            . "Please set at least one RNAseq BAM file or at least one hints "
-            . "file from RNA-Seq (must contain intron hints from src b2h in "
-            . "column 2) to run BRAKER in mode for training from RNA-Seq.\n"
-            . "$usage";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
+    # check whether a valid set of input files is provided
+    if (!$foundRNASeq && !$foundProt && !$ESmode && !$skipAllTraining) {
+            $prtStr = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "# In addition to a genome file, braker.pl requires at "
+                . "least one of the following files/flags as input (unless "
+                . "you run braker.pl --esmode):\n"
+                . "    --bam=file.bam\n"
+                . "    --hints=file.hints\n"
+                . "    --prot_seq=file.fa\n"
+                . "    --prot_aln=file.aln --trainFromGth\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
     }
 
     if ( $EPmode == 1 ) {
@@ -4189,29 +4189,6 @@ sub check_options {
                 . "#*********\n";
         $logString .= $prtStr if($v > 0);
         $useexisting = 0;
-    }
-
-    # check whether a valid set of input files is provided
-    if (   ( !@bam && !@hints )
-        && ( !$trainFromGth && !@hints )
-        && ( !$trainFromGth && !@prot_seq_files )
-        && ( !$trainFromGth && !@prot_aln_files ) 
-        && ( !$ESmode ))
-    {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "in addition to a genome file, braker.pl requires at "
-            . "least one of the following files/flags as input (unless "
-            . "you run braker.pl --esmode):\n"
-            . "    --bam=file.bam\n"
-            . "    --hints=file.hints\n"
-            . "    --prot_seq=file.fa --trainFromGth\n"
-            . "    --prot_aln=file.aln --trainFromGth\n$usage";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
     }
 
     if ( $ESmode && (@bam || @hints || @prot_seq_files || @prot_aln_files ) ) {
