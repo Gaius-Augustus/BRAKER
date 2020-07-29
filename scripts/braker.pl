@@ -625,8 +625,9 @@ my $GeneMarkIntronThreshold;
    # contained, braker will be aborted. Default value is determined by mode of
    # GeneMark-EX: currently 10 for ET and 4 for EP/EPT
 my $ab_initio;    # flag for output of AUGUSTUS ab initio predictions
-my $foundRNASeq = 0; # stores whether hintsfile contains src=E
-my $foundProt = 0; # stores whether hintsfile contains src=P
+my $foundRNASeq = 0; # stores whether any external RNA-Seq input was found
+my $foundProt = 0; # stores whether any external protein input was found
+my $foundProteinHint = 0; # stores whether hintsfile contains src=P
 my $lambda = 2; # labmda of poisson distribution for downsampling of training genes
 my @splice_cmd_line;
 my @splice;
@@ -810,6 +811,9 @@ if ( !-w $workDir ) {
     print STDERR $logString;
     exit(1);
 }
+
+# determine in which mode to run braker.pl #####################################
+determineRunMode();
 
 # configure which tools BRAKER is going to run #################################
 # * use command line argument if given
@@ -3170,6 +3174,56 @@ sub set_MAKEHUB_PATH {
     }
 }
 
+
+################################################################################
+# Based on input files, determine in which mode to run BRAKER                  #
+################################################################################
+
+sub determineRunMode {
+    if(@bam){
+        $foundRNASeq = 1;
+    }
+
+    if (@prot_seq_files) {
+        $foundProt++;
+    }
+
+    if(@hints){
+         foreach (@hints) {
+            $foundRNASeq += check_hints($_);
+        }
+    }
+
+    # Mode was already specified on command line
+    if ($EPmode || $ETPmode || $ESmode || $trainFromGth) {
+        return;
+    }
+
+    if ($foundRNASeq && $foundProt) {
+        # GeneMark-ET training, protein hints will be used in prediction
+        if ($prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln") {
+            return;
+        } else {
+            $prtStr .= "#*********\n"
+                    . "# WARNING: "
+                    . "Both protein and RNA-Seq external sources of information "
+                    . "were detected. It is likely you are trying to run BRAKER "
+                    . "in the ETP mode. To do that, use the --etpmode flag.\n"
+                    . "#*********\n";
+            $logString .= $prtStr;
+            print STDOUT $prtStr;
+        }
+    } elsif ($foundProt && (!defined($prg) || $prg eq "ph")) {
+        $prtStr = "\# "
+                . (localtime)
+                . ": REMARK: Protein input detected, BRAKER will be executed "
+                . "in the EP mode (--epmode).\n";
+        $logString .= $prtStr;
+        $EPmode = 1;
+        $prg = "ph";
+    }
+}
+
 ####################### check_upfront ##########################################
 # * check for scripts, perl modules, executables, extrinsic config files
 ################################################################################
@@ -3327,7 +3381,6 @@ sub check_upfront {
     # check for alignment executable and in case of SPALN for environment variables
     my $prot_aligner;
     if (@prot_seq_files) {
-        $foundProt++;
         if ( $prg eq 'gth' ) {
             $prot_aligner = "$ALIGNMENT_TOOL_PATH/gth";
             if ( !-f $prot_aligner ) {
@@ -4002,17 +4055,6 @@ sub check_options {
             check_gff( $hints[$i] );
         }
     }
-
-    # check what what hint sources are in hints file
-    if(@bam){
-        $foundRNASeq = 1;
-    }
-    if(@hints){
-         foreach (@hints) {
-            $foundRNASeq += check_hints($_);
-        }
-    }
-
 
     # check whether RNA-Seq files are specified
     if ( !@bam && !@hints && $EPmode == 0 && !$trainFromGth & !$skipAllTraining 
@@ -5756,6 +5798,7 @@ sub check_hints {
     my @areP = `cut -f 9 $thisHintsFile | grep src=P`;
     if( scalar( @areP ) > 0 ) {
         $foundProt++;
+        $foundProteinHint++;
     }
     return $ret;
 }
