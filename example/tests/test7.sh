@@ -4,4 +4,4 @@ if [ -d $wd ]; then
     rm -r $wd
 fi
 
-( time braker.pl --genome=../genome.fa --bam=../RNAseq.bam --species=fly --skipAllTraining --softmasking --workingdir=$wd ) &> test7.log
+( time braker.pl --genome=../genome2.fa --bam=../RNAseq2.bam --species=arabidopsis --skipAllTraining --softmasking --workingdir=$wd --cores 8 ) &> test7.log
