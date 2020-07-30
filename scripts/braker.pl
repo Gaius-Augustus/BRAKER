@@ -3469,6 +3469,21 @@ sub check_upfront {
         $foundProt++;
     }
 
+    # This needs to be checked before checking alignment executables, therefore
+    # it is not in the check_options function.
+    if ( length($prg) > 0 && ($EPmode || $ETPmode)) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "# --prg option is not compatible with --epmode/--etpmode."
+            . " In these modes, BRAKER used ProtHint to map and align"
+            . "proteins.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
     # check for alignment executable and in case of SPALN for environment variables
     my $prot_aligner;
     if (@prot_seq_files) {
