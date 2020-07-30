@@ -4368,34 +4368,22 @@ sub check_options {
                     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                     . "protein sequence file $prot_seq_files[$i] does "
                     . "not exist.\n";
-            $logString .= $prtStr;
-            print STDERR $logString;
+                $logString .= $prtStr;
+                print STDERR $logString;
                 exit(1);
             }
         }
-        if ( !defined($prg) && $EPmode == 0 && $ETPmode == 0) {
 
-            # if no alignment tools was specified, set Genome Threader as default
-            $prtStr = "#*********\n"
-                    . "# WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "No alignment tool was specified for aligning protein"
-                    . " sequences against genome. Setting GenomeThreader as "
-                    . "default alignment tool.\n"
-                    . "#*********\n";
-            $logString .= $prtStr if ($v > 0);
-            $prg = "gth";
-        }
-        elsif ( !defined($prg) && (($EPmode == 1)||($ETPmode==1)) ) {
-            # TODO: ProtHint is the only compatible option in ep mode, the BRAKER arguments
-            # should better reflect that.
-            $prg = "ph";
-            $prtStr = "#*********\n"
-                    . "# No alignment tool was specified for aligning "
-                    . "protein sequences against genome. Setting ProtHint as "
-                    . "default alignment tool for running BRAKER in GeneMark-EP or -ETP "
-                    . "mode.\n"
-                    . "#*********\n";
-            $logString .= $prtStr if ($v > 0 );
+        if ( !defined($prg) && !$EPmode && !$ETPmode) {
+            $prtStr = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "# No alignment tool was specified for aligning protein "
+                . "sequences against genome. Either run BRAKER in --epmode/--etpmode "
+                . "or specify the tool to use (see --prg) option.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
         }
     }
 
@@ -4444,24 +4432,20 @@ sub check_options {
         }
     }
 
-    # check whether alignment program is given
+    # check whether a valid alignment program is given
     if ( length($prg) > 0 ) {
         if (    not( $prg =~ m/gth/ )
             and not( $prg =~ m/exonerate/ )
-            and not( $prg =~ m/spaln/ )
-            and not( $prg =~ m/ph/)
-            and $EPmode == 0  and $ETPmode == 0)
+            and not( $prg =~ m/spaln/ ))
         {
             $prtStr
                 = "\# "
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "An alignment tool other than prothint (ph), gth, exonerate and spaln"
-                . " has been specified with option --prg=$prg . BRAKER "
+                . "# An alignment tool other than gth, exonerate and spaln "
+                . "has been specified with option --prg=$prg. BRAKER "
                 . "currently only supports the options gth, exonerate and "
-                . "spaln for running BRAKER in GeneMark-ET mode, and ProtHint "
-                . "for running BRAKER in GeneMark-EP/-ETP mode. BRAKER was now "
-                . "started in GeneMark-ET mode.\n";
+                . "spaln for running BRAKER in GeneMark-ET mode.\n";
             $logString .= $prtStr;
             print STDERR $logString;
             exit(1);
