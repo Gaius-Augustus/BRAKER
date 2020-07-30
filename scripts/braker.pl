@@ -4166,17 +4166,15 @@ sub check_options {
         $logString .= $prtStr if ($v > 1);
     }
 
-    # evidence_hints was here, deleted it.
-    # TODO: UPDATE
-    if ((($EPmode == 1 || $ETPmode == 1) && not(defined($hintsfile)) &&  scalar(@prot_seq_files)<0 && not($prg eq "ph")) == 1) {
+    if (($EPmode == 1 || $ETPmode == 1) && !$foundProt) {
         $prtStr = "\# "
                  . (localtime)
                  . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                 . "If option --epmode is used, either the options \"--prg=ph "
-                 . "--prot_seq=proteins.fasta\" (to run ProtHint) or the options "
-                 . "\"--evidence=evidence.gff --prothints=prothint.gff "
-                 . "--hints=prothint_augustus.gff,evidence_augustus.gff\" "
-                 . "(output files of ProtHint) must be specified!\n";
+                 . "# If the option --epmode or --etpmode is used, a protein input "
+                 . "needs to be specified. Either use the --prot_seq option "
+                 . "in which case BRAKER will use ProtHint to generate protein "
+                 . "hints or provide existing protein hints from ProtHint with "
+                 . "the --hints option\n";
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
