@@ -521,6 +521,8 @@ my $genbank;             # genbank file name
 my $genemarkDir;         # directory for GeneMark-ET output
 my $GENEMARK_PATH;
 my $GMET_path;           # GeneMark-ET path
+my $PROTHINT_PATH;
+my $prothint_path;
 my $genome;              # name of sequence file
 my %scaffSizes;          # length of scaffolds
 my $gff3 = 0;            # create output file in GFF3 format
@@ -673,6 +675,7 @@ GetOptions(
     'fungus!'                      => \$fungus,
     'extrinsicCfgFiles=s'           => \@extrinsicCfgFiles,
     'GENEMARK_PATH=s'              => \$GMET_path,
+    'PROTHINT_PATH=s'              => \$prothint_path,
     'AUGUSTUS_hints_preds=s'       => \$AUGUSTUS_hints_preds,
     'genome=s'                     => \$genome,
     'gff3'                         => \$gff3,
@@ -2258,6 +2261,128 @@ sub set_SAMTOOLS_PATH {
     }
 }
 
+####################### set_PROTHINT_PATH #######################################
+# * set path to prothint.py
+################################################################################
+
+sub set_PROTHINT_PATH {
+    # try to get path from ENV
+    if ( defined( $ENV{'PROTHINT_PATH'} ) && not (defined($prothint_path)) ) {
+        if ( -d $ENV{'PROTHINT_PATH'} ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Found environment variable \$PROTHINT_PATH. Setting "
+                . "\$PROTHINT_PATH to ".$ENV{'PROTHINT_PATH'}."\n";
+            $logString .= $prtStr if ($v > 1);
+            $PROTHINT_PATH = $ENV{'PROTHINT_PATH'};
+        } else {
+            $prtStr = "#*********\n"
+                    . "# WARNING: Environment variable PROTHINT_PATH exists "
+                    . "but value $ENV{'PROTHINT_PATH'} is not a directory. Will not "
+                    . "set \$PROTHINT_PATH to $ENV{'PROTHINT_PATH'}!\n"
+                    . "#*********\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    } elsif (not(defined($prothint_path))) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Did not find environment variable \$PROTHINT_PATH\n";
+        $logString .= $prtStr if ($v > 1);
+    }
+
+    # try to get path from command line
+    if ( defined($prothint_path) ) {
+        if ( -d $prothint_path ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$PROTHINT_PATH to command line argument "
+                . "--PROTHINT_PATH value $prothint_path.\n";
+            $logString .= $prtStr if ($v > 1);
+            $PROTHINT_PATH = $prothint_path;
+        }
+        else {
+            $prtStr = "#*********\n"
+                    . "# WARNING: Command line argument --PROTHINT_PATH was "
+                    . "supplied but value $prothint_path is not a directory. Will not "
+                    . "set \$PROTHINT_PATH to $prothint_path!\n"
+                    . "#*********\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    # try to guess
+    if ( not( defined($PROTHINT_PATH) )
+        || length($PROTHINT_PATH) == 0 )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Trying to guess \$PROTHINT_PATH from location of prothint.py"
+            . " executable that is available in your \$PATH\n";
+        $logString .= $prtStr if ($v > 1);
+        my $epath = which 'prothint.py';
+        if(defined($epath)){
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$PROTHINT_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $PROTHINT_PATH = dirname($epath);
+            }
+        }
+        else {
+            $prtStr = "#*********\n"
+                    . "# WARNING: Guessing the location of \$PROTHINT_PATH "
+                    . "failed / BRAKER failed "
+                    . "to detect prothint.py with \"which prothint.py\"!\n"
+                    . "#*********\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    if ( not( defined($PROTHINT_PATH) ) ) {
+        my $makehub_err;
+        $makehub_err .= "There are 3 alternative ways to set this variable for braker.pl\n"
+                    .  "   a) provide command-line argument --PROTHINT_PATH=/your/path\n"
+                    .  "   b) use an existing environment variable \$PROTHINT_PATH\n"
+                    .  "      for setting the environment variable, run\n"
+                    .  "           export PROTHINT_PATH=/your/path\n"
+                    .  "      in your shell. You may append this to your .bashrc or\n"
+                    .  "      .profile file in order to make the variable available to\n"
+                    .  "      all your bash sessions.\n"
+                    .  "   c) braker.pl can try guessing the location of\n"
+                    .  "      \$PROTHINT_PATH from the location of a prothint.py\n"
+                    .  "      executable that is available in your \$PATH variable\n"
+                    .  "      If you try to rely on this option, you can check by\n"
+                    .  "      typing\n"
+                    .  "           which prothint.py\n"
+                    .  "      in your shell, whether there is a prothint.py\n"
+                    .  "      executable in your \$PATH\n";
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            . " at line ". __LINE__ . "\n"
+            . "\$PROTHINT_PATH not set!\n"
+            . "ProtHint needs to be set to generate protein hints from protein\n"
+            . "sequence file(s) in EP and ETP modes.\n";
+        $logString .= $prtStr;
+        $logString .= $makehub_err if ($v > 1);
+        print STDERR $logString;
+        exit(1);
+    }
+    if ( not ( -x "$PROTHINT_PATH/prothint.py" ) ) {
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "$PROTHINT_PATH/prothint.py is not an executable file!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+}
+
 ####################### set_ALIGNMENT_TOOL_PATH ################################
 # * set path to protein alignment tool (GenomeThreader, Spaln or Exonerate)
 ################################################################################
@@ -2393,37 +2518,7 @@ sub set_ALIGNMENT_TOOL_PATH {
                                 . "#*********\n";
                         $logString .= $prtStr if ($v > 0);
                     }
-                } elsif ( $prg eq "ph") {
-                    $prtStr
-                        = "\# "
-                        . (localtime)
-                        . ": Trying to guess \$ALIGNMENT_TOOL_PATH "
-                        . "from location of ProtHint executable in your \$PATH\n";
-                    $logString .= $prtStr if ($v > 1);
-                    my $epath = which 'prothint.py';
-                    if(defined($epath)){
-                        if ( -d dirname($epath) ) {
-                            $prtStr
-                                = "\# "
-                                . (localtime)
-                                . ": Setting \$ALIGNMENT_TOOL_PATH to "
-                                . dirname($epath) . "\n";
-                            $logString .= $prtStr if ($v > 1);
-                            $ALIGNMENT_TOOL_PATH = dirname($epath);
-                        }
-                    }
-                    else {
-                        $prtStr = "#*********\n"
-                                . "# WARNING: Guessing the location of "
-                                . "\$ALIGNMENT_TOOL_PATH failed / BRAKER failed to "
-                                . "guess the location of alignment tool with "
-                                . "\"which prothint.py\"!\n"
-                                . "#*********\n";
-                        $logString .= $prtStr if ($v > 0);
-                    }
-
                 }
-                # ProtHint also requires DIAMOND and Spaln, but apparently it brings binaries along
             }
         }
 
@@ -2461,10 +2556,6 @@ sub set_ALIGNMENT_TOOL_PATH {
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "\$ALIGNMENT_TOOL_PATH not set!\n";
-            $logString .= $prtStr;
-            $prtStr
-                = "This is an obligatory argument if you provided protein "
-                . "sequence file(s).\n";
             $logString .= $prtStr;
             $logString .= $aln_err_str if ($v > 1);
             print STDERR $logString;
