@@ -7437,13 +7437,21 @@ sub training_augustus {
                 = "\# "
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "Training gene file in genbank format $trainGb2 does not "
-                . "contain any training genes. Possible known cause: "
-                . "no training genes with sufficient extrinsic evidence support "
-                . "or of sufficient length were produced by GeneMark-ES/ET. "
-                .  "If you think this is the cause for your problems, "
+                . "# Training gene file in genbank format $trainGb2 does not "
+                . "contain any training genes. Possible known causes:\n"
+                . "# (a) The AUGUSTUS script filterGenesIn_mRNAname.pl is not "
+                . "up-to-date with this version of BRAKER. To solve this issue, "
+                . "either get the latest AUGUSTUS from its master branch with\n"
+                . "    git clone git\@github.com:Gaius-Augustus/Augustus.git\n"
+                . "or download the latest version of filterGenesIn_mRNAname.pl from "
+                . "https://github.com/Gaius-Augustus/Augustus/blob/master/scripts/filterGenesIn_mRNAname.pl "
+                . "and replace the old script in your AUGUSTUS installation folder.\n"
+                . "# (b) No training genes with sufficient extrinsic evidence support "
+                . "or of sufficient length were produced by GeneMark-EX. "
+                . "If you think this is the cause for your problem, "
                 . "consider running BRAKER with different evidence or without "
                 . "any evidence (--esmode) for training.\n";
+            print LOG $prtStr;
             print STDERR $prtStr;
                 clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                     $prtStr);
