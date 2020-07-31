@@ -853,8 +853,13 @@ if( @bam ) {
 if (not ($skipAllTraining)){
     set_BLAST_or_DIAMOND_PATH();
 }
-if ( @prot_seq_files && !$ESmode ){
-    set_ALIGNMENT_TOOL_PATH();
+
+if (@prot_seq_files && !$ESmode){
+    if ($EPmode || $ETPmode) {
+        set_PROTHINT_PATH();
+    } elsif ($prg) {
+        set_ALIGNMENT_TOOL_PATH();
+    }
 }
 
 if ( $makehub ) {
@@ -3290,28 +3295,27 @@ sub determineRunMode {
         return;
     }
 
+    # Proteins will be handled with the old method.
+    if (defined($prg)) {
+        return;
+    }
+
     if ($foundRNASeq && $foundProt) {
-        # GeneMark-ET training, protein hints will be used in prediction
-        if ($prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln") {
-            return;
-        } else {
-            $prtStr .= "#*********\n"
-                    . "# WARNING: "
-                    . "Both protein and RNA-Seq external sources of information "
-                    . "were detected. It is likely you are trying to run BRAKER "
-                    . "in the ETP mode. To do that, use the --etpmode flag.\n"
-                    . "#*********\n";
-            $logString .= $prtStr;
-            print STDOUT $prtStr;
-        }
-    } elsif ($foundProt && (!defined($prg) || $prg eq "ph")) {
+        $prtStr .= "#*********\n"
+                . "# WARNING: "
+                . "Both protein and RNA-Seq external sources of information "
+                . "were detected. It is likely you are trying to run BRAKER "
+                . "in the ETP mode. To do that, use the --etpmode flag.\n"
+                . "#*********\n";
+        $logString .= $prtStr;
+        print STDOUT $prtStr;
+    } elsif ($foundProt) {
         $prtStr = "\# "
                 . (localtime)
                 . ": REMARK: Protein input detected, BRAKER will be executed "
                 . "in the EP mode (--epmode).\n";
         $logString .= $prtStr;
         $EPmode = 1;
-        $prg = "ph";
     }
 }
 
@@ -3469,9 +3473,9 @@ sub check_upfront {
         $foundProt++;
     }
 
-    # This needs to be checked before checking alignment executables, therefore
+    # This should be checked before checking alignment executables, therefore
     # it is not in the check_options function.
-    if ( length($prg) > 0 && ($EPmode || $ETPmode)) {
+    if ( defined($prg) && ($EPmode || $ETPmode)) {
         $prtStr
             = "\# "
             . (localtime)
@@ -3486,7 +3490,7 @@ sub check_upfront {
 
     # check for alignment executable and in case of SPALN for environment variables
     my $prot_aligner;
-    if (@prot_seq_files) {
+    if (@prot_seq_files && defined($prg)) {
         if ( $prg eq 'gth' ) {
             $prot_aligner = "$ALIGNMENT_TOOL_PATH/gth";
             if ( !-f $prot_aligner ) {
@@ -4431,7 +4435,7 @@ sub check_options {
     }
 
     # check whether a valid alignment program is given
-    if ( length($prg) > 0 ) {
+    if ( defined($prg) ) {
         if (    not( $prg =~ m/gth/ )
             and not( $prg =~ m/exonerate/ )
             and not( $prg =~ m/spaln/ ))
@@ -4484,7 +4488,7 @@ sub check_options {
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
-    } elsif ( ( defined ($trainFromGth) || $prg eq "gth" ) && ( $ETPmode == 1 ) ) {
+    } elsif ( ( defined ($trainFromGth) || (defined($prg) && $prg eq "gth" )) && ( $ETPmode == 1 ) ) {
             $prtStr
                 = "\# "
                 . (localtime)
@@ -4977,7 +4981,7 @@ sub run_prothint {
     if ($nice) {
         $cmdString .= "nice ";
     }
-    $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneMarkGtf "
+    $cmdString = "$PROTHINT_PATH/prothint.py --threads=$CPU --geneMarkGtf "
                     . "$genemarkesDir/genemark.gtf $otherfilesDir/genome.fa "
                     . "$otherfilesDir/proteins.fa";
     print LOG "\# " . (localtime) . ": starting prothint.py\n" if ($v > 3);
@@ -5037,7 +5041,7 @@ sub run_prothint_iter2 {
         $cmdString .= "nice ";
     }
 
-    $cmdString = "$ALIGNMENT_TOOL_PATH/prothint.py --threads=$CPU --geneSeeds "
+    $cmdString = "$PROTHINT_PATH/prothint.py --threads=$CPU --geneSeeds "
                . "$otherfilesDir/augustus.hints_iter1.gtf --prevGeneSeeds "
                . "$otherfilesDir/GeneMark-ES/genemark.gtf "
                . "--prevSpalnGff $otherfilesDir/Spaln/spaln_iter1.gff "
@@ -5274,8 +5278,7 @@ sub make_rnaseq_hints {
 }
 
 ####################### make_prot_hints ########################################
-# * run protein to genome alignment (gth, spaln or exonerate if EPmode/ETPmode
-#   == 0, or ProtHint if EPmode/ETPmode ==1 && prg == ph
+# * run protein to genome alignment (gth, spaln or exonerate)
 # * convert alignments to hints (calls aln2hints)
 # * converts GenomeThreader alignments to hints (calls gth2gtf)
 ################################################################################
@@ -8368,32 +8371,23 @@ sub augustus {
                         $extrinsicCfgFile = $extrinsicCfgFile2;
                     }else{
                         if ( $foundProt>0 && $foundRNASeq==0 ){
-                            if(defined($prg)){
-                                if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
-                                    if( $localUTR eq "off" ) {
-                                        assign_ex_cfg ("gth.cfg");
-                                    }else{
-                                        assign_ex_cfg ("gth_utr.cfg")
-                                    }
-                                }elsif($EPmode==1){
-                                    if( $localUTR eq "off" ) {
-                                        assign_ex_cfg ("ep.cfg");
-                                    }else{
-                                        assign_ex_cfg ("ep_utr.cfg");
-                                    }
-
-                                }else{
-                                    $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
-                                        ." at line " . __LINE__
-                                        . "\nunsupported alignment program $prg given!\n";
-                                    print STDERR $prtStr;
-                                    print LOG $prtStr;
+                            if ($EPmode) {
+                                if( $localUTR eq "off" ) {
+                                    assign_ex_cfg ("ep.cfg");
+                                } else {
+                                    assign_ex_cfg ("ep_utr.cfg");
+                                }
+                            } elsif (defined($prg)){
+                                if ( $localUTR eq "off" ) {
+                                    assign_ex_cfg ("gth.cfg");
+                                } else {
+                                    assign_ex_cfg ("gth_utr.cfg");
                                 }
                             }
-                        }elsif( $foundProt==0 && $foundRNASeq > 0){
-                            if( $localUTR eq "off" ) {
+                        } elsif ( $foundProt==0 && $foundRNASeq > 0){
+                            if ( $localUTR eq "off" ) {
                                 assign_ex_cfg ("rnaseq.cfg");
-                            }else{
+                            } else {
                                 assign_ex_cfg ("rnaseq_utr.cfg");
                             }
                         }
@@ -8428,32 +8422,24 @@ sub augustus {
                     }elsif(defined($extrinsicCfgFile2) && $localUTR eq "on"){
                         $extrinsicCfgFile = $extrinsicCfgFile2;
                     }else{
-                        if ( ($foundProt>0 && $foundRNASeq==0) ){
-                            if (defined ($prg) || $EPmode == 1) {
-                                if ( $prg eq "gth" || $prg eq "exonerate" || $prg eq "spaln" || $prg eq "gemoma") {
-                                    if ( $localUTR eq "off" ) {
-                                        assign_ex_cfg ("gth.cfg");
-                                    }else{
-                                        assign_ex_cfg ("gth_utr.cfg");
-                                    }
-                                }elsif($EPmode == 1){
-                                    if( $localUTR eq "off" ) {
-                                        assign_ex_cfg ("ep.cfg");
-                                    }else{
-                                        assign_ex_cfg ("ep_utr.cfg");
-                                    }
-                                }else{
-                                    $prtStr = "\# " . (localtime) . ": ERROR in file " . __FILE__
-                                        ." at line " . __LINE__
-                                        . "\nunsupported alignment program $prg given!\n";
-                                    print STDERR $prtStr;
-                                    print LOG $prtStr;
+                        if ( $foundProt>0 && $foundRNASeq==0 ){
+                            if ($EPmode) {
+                                if( $localUTR eq "off" ) {
+                                    assign_ex_cfg ("ep.cfg");
+                                } else {
+                                    assign_ex_cfg ("ep_utr.cfg");
+                                }
+                            } elsif (defined($prg)) {
+                                if ( $localUTR eq "off" ) {
+                                    assign_ex_cfg ("gth.cfg");
+                                } else {
+                                    assign_ex_cfg ("gth_utr.cfg");
                                 }
                             }
-                        }elsif( $foundProt==0 && $foundRNASeq > 0) {
-                            if($localUTR eq "off") {
+                        } elsif ( $foundProt==0 && $foundRNASeq > 0) {
+                            if ( $localUTR eq "off") {
                                 assign_ex_cfg ("rnaseq.cfg");
-                            }else{
+                            } else {
                                 assign_ex_cfg ("rnaseq_utr.cfg");
                             }
                         }
