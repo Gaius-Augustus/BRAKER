@@ -828,10 +828,10 @@ set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
 set_PYTHON3_PATH();
-if ( not($trainFromGth) ) {
+if (!$trainFromGth && !defined($geneMarkGtf) && !$skipAllTraining &&
+    !defined($AUGUSTUS_hints_preds)) {
     set_GENEMARK_PATH()
-        ; # skip setting GeneMark path if no GeneMark training will be performed
-} else {
+} elsif ($trainFromGth) {
     if ( not ( defined ($gth2traingenes) ) ) {
             $prtStr
             = "#*********\n"
