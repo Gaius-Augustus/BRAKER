@@ -49,22 +49,34 @@ use warnings;
 
 my $usage = <<'ENDUSAGE';
 
-braker.pl     Pipeline for predicting genes with GeneMark-EX and AUGUSTUS with
-            RNA-Seq
+DESCRIPTION
+
+braker.pl   Pipeline for predicting genes with GeneMark-EX and AUGUSTUS with
+            RNA-Seq and/or proteins
 
 SYNOPSIS
 
-braker.pl [OPTIONS] --genome=genome.fa --bam=rnaseq.bam
+braker.pl [OPTIONS] --genome=genome.fa {--bam=rnaseq.bam | --prot_seq=prot.fa}
 
 INPUT FILE OPTIONS
 
 --genome=genome.fa                  fasta file with DNA sequences
 --bam=rnaseq.bam                    bam file with spliced alignments from
                                     RNA-Seq
+--prot_seq=prot.fa                  A protein sequence file in multi-fasta
+                                    format used to generate protein hints.
+                                    Unless otherwise specified, braker.pl will
+                                    run in "EP mode" which uses ProtHint to
+                                    generate protein hints and GeneMark-EP+ to
+                                    train AUGUSTUS.
 --hints=hints.gff                   Alternatively to calling braker.pl with a
-                                    bam file, it is possible to call it with a
-                                    file that contains introns extracted from
-                                    RNA-Seq (or other data) in gff format.
+                                    bam or protein fasta file, it is possible to
+                                    call it with a .gff file that contains
+                                    introns extracted from RNA-Seq and/or
+                                    protein hints (most frequently coming
+                                    from ProtHint). If you wish to use the
+                                    ProtHint hints, use its
+                                    "prothint_augustus.gff" output file.
                                     This flag also allows the usage of hints
                                     from additional extrinsic sources for gene
                                     prediction with AUGUSTUS. To consider such
@@ -72,25 +84,14 @@ INPUT FILE OPTIONS
                                     to use the flag --extrinsicCfgFiles to
                                     specify parameters for all sources in the
                                     hints file (including the source "E" for
-                                    intron hints from RNA-Seq). If you ran
-                                    ProtHint before calling BRAKER, specify
-                                    the files prothint_augustus.gff and
-                                    evidence_augustus.gff, here.
---prot_seq=prot.fa                  A protein sequence file in multiple fasta
-                                    format. This file will be used to generate
-                                    protein hints for AUGUSTUS by running one
-                                    of the three alignment tools Exonerate
-                                    (--prg=exonerate), Spaln (--prg=spaln) or
-                                    GenomeThreader (--prg=gth). Default is
-                                    GenomeThreader if the tool is not
-                                    specified.  Currently, hints from protein
-                                    sequences are only used in the prediction
-                                    step with AUGUSTUS.
+                                    intron hints from RNA-Seq)
 --prot_aln=prot.aln                 Alignment file generated from aligning
                                     protein sequences against the genome with
                                     either Exonerate (--prg=exonerate), or
                                     Spaln (--prg=spaln), or GenomeThreader
-                                    (--prg=gth).
+                                    (--prg=gth). This option can be used as
+                                    an alternative to --prot_seq file or protein
+                                    hints in the --hints file.
                                     To prepare alignment file, run Spaln2 with
                                     the following command:
                                     spaln -O0 ... > spalnfile
@@ -123,19 +124,14 @@ FREQUENTLY USED OPTIONS
 --esmode                            Run GeneMark-ES (genome sequence only) and 
                                     train AUGUSTUS on long genes predicted by 
                                     GeneMark-ES. Final predictions are ab initio
---epmode                            Run GeneMark-EP with intron hints provided
-                                    from protein data. This mode is not 
-                                    comptabile with using the aligners
-                                    GenomeThreader, Exonerate and Spaln (stand alone) 
-                                    within braker.pl. ProtHint (with Spaln) as 
-                                    alignment producing software is compatible.
---etpmode                           Run GeneMark-ETP with hints provided from
-                                    proteins and RNA-Seq data. This mode is not
-                                    compatible with using the aligners
-                                    GenomeThreader, Exonerate and Spaln (stand alone) 
-                                    within braker.pl. ProtHint (with Spaln)
-                                    as alignment poducing pipeline is 
-                                    compatible.
+--epmode                            Run ProtHint to generate protein hints (if
+                                    not already specified with --hints option)
+                                    and use the hints in GeneMark-EP+ to create
+                                    a training set for AUGUSTUS.
+--etpmode                           Use RNA-Seq and protein hints in GeneMark-ETP+
+                                    to create a training set for AUGUSTUS. The
+                                    protein hints are generated by ProtHint (see
+                                    --epmode).
 --gff3                              Output in GFF3 format (default is gtf
                                     format)
 --cores                             Specifies the maximum number of cores that
@@ -153,6 +149,9 @@ FREQUENTLY USED OPTIONS
 --alternatives-from-evidence=true   Output alternative transcripts based on
                                     explicit evidence from hints (default is
                                     true).
+--fungus                            GeneMark-EX option: run algorithm with
+                                    branch point model (most useful for fungal
+                                    genomes)
 --crf                               Execute CRF training for AUGUSTUS;
                                     resulting parameters are only kept for
                                     final predictions if they show higher
@@ -165,19 +164,18 @@ FREQUENTLY USED OPTIONS
                                     Alternatively, if UTR parameters already
                                     exist, training step will be skipped and
                                     those pre-existing parameters are used.
---prg=ph|gth|exonerate|spaln        Alignment tool for generating hints from
-                                    similarity of protein sequence data to
-                                    genome data. Method ph (ProtHint with Spaln)
-                                    is generally suitable; gth (GenomeThreader),
-                                    exonerate (Exonerate) or Spaln2
-                                    (spaln) are suitable for proteins of closely
-                                    related species, only.
-                                    This option should be specified correctly in 
-                                    case --prot_seq or --prot_aln options are used
-                                    (--prot_aln option is not required of hints
-                                    for AUGUSTUS were generated with ProtHint, in
-                                    that case, hints are provided with --hints=file
-                                    and --prg=ph is not required).
+--prg=gth|exonerate|spaln           Specify an alternative method for generating
+                                    hints from similarity of protein sequence
+                                    data to genome data (alternative to the
+                                    default --epmode/--etpmode in which ProtHint
+                                    is used to generate the protein hints).
+                                    Available methods  are: gth (GenomeThreader),
+                                    exonerate (Exonerate), or spaln (Spaln2).
+                                    Note that this option is suitable only for
+                                    proteins of closely related species (while
+                                    the --epmode is generally applicable).
+                                    This option is required in case --prot_aln
+                                    option is used.
 --gth2traingenes                    Generate training gene structures for
                                     AUGUSTUS from GenomeThreader alignments.
                                     (These genes can either be used for
@@ -240,8 +238,12 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
                                     variable) to fix BAM files automatically,
                                     if necessary. Has higher priority than
                                     environment variable.
+--PROTHINT_PATH=/path/to/           Set path to the directory with prothint.py.
+                                    (if not specified as PROTHINT_PATH
+                                    environment variable). Has higher priority
+                                    than environment variable.
 --ALIGNMENT_TOOL_PATH=/path/to/tool Set path to alignment tool
-                                    (prothint.py, GenomeThreader, Spaln, or Exonerate)
+                                    (GenomeThreader, Spaln, or Exonerate)
                                     if not specified as environment
                                     ALIGNMENT_TOOL_PATH variable. Has higher
                                     priority than environment variable.
@@ -335,9 +337,6 @@ EXPERT OPTIONS
 --skip_fixing_broken_genes          If you do not have python3, you can choose
                                     to skip the fixing of stop codon including
                                     genes (not recommended).
---fungus                            GeneMark-EX option: run algorithm with
-                                    branch point model (most useful for fungal
-                                    genomes)
 --rnaseq2utr_args=params            Expert option: pass alternative parameters
                                     to rnaseq2utr as string, default parameters:
                                     -r 76 -v 100 -n 15 -i 0.7 -m 0.3 -w 70 
@@ -442,24 +441,21 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     is automatically determined by GeneMark-EX.
 
 
-DESCRIPTION
+EXAMPLE
 
-Example:
-
+To run with RNA-Seq
 
 braker.pl [OPTIONS] --genome=genome.fa --species=speciesname \
     --bam=accepted_hits.bam
 braker.pl [OPTIONS] --genome=genome.fa --species=speciesname \
     --hints=rnaseq.gff
 
-To run with protein data from remote species and GeneMark-EP:
+To run with protein sequences
 
-braker.pl [OPTIONS] --genome=genome.fa --hints=proteinintrons.gff --epmode=1
-
-To run with protein data from a very closely related species:
-
-braker.pl [OPTIONS] --genome=genome.fa --prot_seq=proteins.fa --prg=gth \
-    --gth2traingenes --trainFromGth
+braker.pl [OPTIONS] --genome=genome.fa --species=speciesname \
+    --prot_seq=proteins.fa
+braker.pl [OPTIONS] --genome=genome.fa --species=speciesname \
+    --hints=prothint_augustus.gff
 
 ENDUSAGE
 
