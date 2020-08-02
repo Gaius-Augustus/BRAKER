@@ -15,8 +15,8 @@ fi
 # uses result from ProtHint's first iteration (see BRAKER2 paper for details).
 
 
-if [ ! -d $oldDir ] ; then
-  echo "ERROR: Directory (with contents) of old BRAKER run $oldDir does not exist, yet. Please run test2.sh before running test2_restart1.sh!"
-else
-    ( time braker.pl --genome=../genome2.fa --hints=$oldDir/hintsfile.gff --evidence=$oldDir/evidence.gff --prothints=$oldDir/prothint.gff --epmode --softmasking --workingdir=$wd --cores 8 --gm_max_intergenic 10000 ) &> test2_restart1.log
-fi
+#if [ ! -d $oldDir ] ; then
+#  echo "ERROR: Directory (with contents) of old BRAKER run $oldDir does not exist, yet. Please run test2.sh before running test2_restart1.sh!"
+#else
+( time braker.pl --genome=../genome2.fa --hints=$oldDir/hintsfile.gff --softmasking --workingdir=$wd --cores 8 --gm_max_intergenic 10000 ) &> test2_restart1.log
+#fi
