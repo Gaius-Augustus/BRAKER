@@ -4942,7 +4942,7 @@ sub run_prothint {
     print CITE $pubs{'spaln'}; $pubs{'spaln'} = "";
     print CITE $pubs{'spaln2'}; $pubs{'spaln2'} = "";
 
-    # step 1: remove dots from protein file and concatenate
+    # step 1: concatenate protein files
     my $protein_file = $otherfilesDir."/proteins.fa";
     open(PROT_ALL, ">", $protein_file) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -4952,9 +4952,7 @@ sub run_prothint {
             $useexisting, "ERROR in file " . __FILE__ ." at line "
             . __LINE__ ."\nfailed to open file $_!\n");
         while(<PROT>){
-            my $line = $_;
-            $line =~ s/\.//;
-            print PROT_ALL $line;
+            print PROT_ALL $_;
         }
         close(PROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
             $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5081,7 +5079,7 @@ sub run_prothint_iter2 {
         $useexisting, "ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile_iter1.gff!\n");
 
-    # step 4: add hints to hintsfile.gff
+    # step 3: add hints to hintsfile.gff
     print LOG "\# " . (localtime)
         . ": Appending hints from $otherfilesDir/prothint_augustus.gff to "
         . "$otherfilesDir/hintsfile.gff\n" if ($v > 3);
