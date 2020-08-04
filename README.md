@@ -37,7 +37,7 @@ The development of BRAKER was supported by the National Institutes of Health (NI
 Contents
 ========
 
--   [Authors](#contributors)
+-   [Authors](#authors-of-braker)
 -   [Funding](#funding)
 -   [What is BRAKER?](#what-is-braker)
 -   [Keys to successful gene prediction](#keys-to-successful-gene-prediction)
@@ -46,19 +46,19 @@ Contents
     -   [Supported software versions](#supported-software-versions)
     -   [BRAKER](#braker)
         -   [Perl pipeline dependencies](#perl-pipeline-dependencies)
-        -   [BRAKER components](#executability)
+        -   [BRAKER components](#braker-components)
         -   [Bioinformatics software dependencies](#bioinformatics-software-dependencies)
             -   [Mandatory tools](#mandatory-tools)
             -   [Optional tools](#optional-tools)
 -   [Running BRAKER](#running-braker)
-    -   [BRAKER pipeline modes](#braker-pipeline-modes)
+    -   [BRAKER pipeline modes](#different-braker-pipeline-modes)
         -   [BRAKER with RNA-Seq data](#braker-with-rna-seq-data)
-        -   [BRAKER with proteins of unknown evolutionary distance](#braker-with-proteins-of-unknown-evolutionary-distance)
+        -   [BRAKER with proteins of any evolutionary distance](#braker-with-proteins-of-any-evolutionary-distance)
         -   [BRAKER with proteins of short evolutionary distance](#braker-with-proteins-of-short-evolutionary-distance)
         -   [BRAKER with RNA-Seq and protein data](#braker-with-rna-seq-and-protein-data)
     -   [Description of selected BRAKER command line options](#description-of-selected-braker-command-line-options)
         -   [--ab_initio](#--ab_initio)
-        -   [--augustus_args=--some\_arg=bla](#--augustus_argssome_argbla)
+        -   [--augustus_args=--some\_arg=bla](#--augustus_args--some_argbla)
         -   [--cores=INT](#--coresint)
         -   [--fungus](#--fungus)
         -   [--softmasking](#--softmasking)
@@ -66,14 +66,14 @@ Contents
         -   [--crf](#--crf)
         -   [--lambda=int](#--lambdaint)
         -   [--UTR=on](#--utron)
-        -   [--stranded=+,-,.,...](#--stranded-....)
-	    -   [--makehub --email=your@mail.de](#--makehub)
+        -   [--stranded=+,-,.,...](#--stranded-)
+	    -   [--makehub --email=your@mail.de](#--makehub---emailyourmailde)
 -   [Output of BRAKER](#output-of-braker)
 -   [Example data](#example-data)
     -   [Data description](#data-description)
     -   [Testing BRAKER with RNA-Seq data](#testing-braker-with-rna-seq-data)
-    -   [Testing BRAKER with hints from proteins of unknown evolutionary distance](#testing-braker-with-hints-from-proteins-of-unknown-evolutionary-distance)
-    -   [Testing BRAKER with hints from proteins of unknown evolutionary distance and RNA-Seq](#testing-braker-with-hints-from-proteins-of-unknown-evolutionary-distance-and-rna-seq)
+    -   [Testing BRAKER with hints from proteins of any evolutionary distance](#testing-braker-with-hints-from-proteins-of-any-evolutionary-distance)
+    -   [Testing BRAKER with hints from proteins of any evolutionary distance and RNA-Seq](#testing-braker-with-hints-from-proteins-of-any-evolutionary-distance-and-rna-seq)
     -   [Testing BRAKER with proteins of close homology](#testing-braker-with-proteins-of-close-homology)
     -   [Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq supported training)](#testing-braker-with-proteins-of-close-homology-and-rna-seq-data-rna-seq-supported-training)
     -   [Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training)](#testing-braker-with-proteins-of-close-homoogy-and-rna-seq-data-rna-seq-and-protein-supported-training)
@@ -135,17 +135,17 @@ Figure 3: BRAKER pipeline B: training GeneMark-ET supported by RNA-Seq spliced a
 
 
 
--   Genome file and database of proteins that may be of **unknown** evolutionary distance to the target species (see Figure [4](#fig3)); this approach is particularly suitable if no RNA-Seq data is available. This method will work better with proteins from species that are rather close to the target species, but accuracy will drop only very little if the reference proteins are more distant from the target species. **Important:** This approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database. BRAKER has been tested with OrthoDB <sup name="a19">[R19](#f19)</sup>, successfully. The ProtHint <sup name="a18">[R18](#f18)</sup> protein mapping database for generating required hints for BRAKER is available for download at <https://github.com/gatech-genemark/ProtHint>. (You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction.)
+-   Genome file and database of proteins that may be of **unknown** evolutionary distance to the target species (see Figure [4](#fig3)); this approach is particularly suitable if no RNA-Seq data is available. This method will work better with proteins from species that are rather close to the target species, but accuracy will drop only very little if the reference proteins are more distant from the target species. **Important:** This approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database. BRAKER has been tested with OrthoDB <sup name="a19">[R19](#f19)</sup>, successfully. The ProtHint <sup name="a18">[R18](#f18)</sup> protein mapping pipeline for generating required hints for BRAKER is available for download at <https://github.com/gatech-genemark/ProtHint>, the instructions on how to prepare the OrthoDB input proteins are documented at https://github.com/gatech-genemark/ProtHint#protein-database-preparation. You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction.
 
 ![braker2-main-c\[fig3\]](docs/figs/braker2_ep.png)
 
-Figure 4: BRAKER pipeline C: training GeneMark-TP on protein spliced alignment, start and stop information, prediction with AUGUSTUS with that same information, in addition chained CDSpart hints. Proteins used here can be of longer evolutionary distance to the target organism.
+Figure 4: BRAKER pipeline C: training GeneMark-EP+ on protein spliced alignment, start and stop information, prediction with AUGUSTUS with that same information, in addition chained CDSpart hints. Proteins used here can be of any evolutionary distance to the target organism.
 
 -   Genome and RNA-Seq file from the same species, and proteins that may be of **unknown** evolutionary distance to the target species (see figure [5](#fig4)); **important:** this approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database, e.g. OrthoDB is suitable. (You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction.)
 
 ![braker2-main-d\[fig4\]](docs/figs/braker2_ep_rnaseq.png)
 
-Figure 5: BRAKER pipeline D: training GeneMark-ETP/ETP+ supported by RNA-Seq alignment information and information from proteins (proteins can be of longer evolutionary distance). Please be aware that GeneMark-ETP/ETP+ is still under development, BRAKER can currently execute a precursor of the mature version. Introns supported by both RNA-Seq and protein alignment information are treated as “true positive introns”, their prediction in gene structures by GeneMark-ETP+ and AUGUSTUS is enforced. **Important:** It is not always best to use all evidence! So far, we found this approach to work well for large genomes, but accuracy on small and medium sized genomes is unstable. Please have a look at the poster from PAG 2020 before running this pipeline.
+Figure 5: BRAKER pipeline D: training GeneMark-ETP+ supported by RNA-Seq alignment information and information from proteins (proteins can be of any evolutionary distance). Please be aware that GeneMark-ETP+ is still under development, BRAKER can currently execute a precursor of the mature version. Introns supported by both RNA-Seq and protein alignment information are treated as “true positive introns”, their prediction in gene structures by GeneMark-ETP+ and AUGUSTUS is enforced. **Important:** It is not always best to use all evidence! So far, we found this approach to work well for large genomes, but accuracy on small and medium sized genomes is unstable. Please have a look at the poster from PAG 2020 before running this pipeline.
 
 -   Genome file and file with proteins of short evolutionary distance (see Figure [6](#fig5)); this approach is suitable if RNA-Seq data is not available and if the reference species is very closely related. **Note*:* This pipeline is deprecated since pipeline C can also use proteins of closely related species in addition to OrthoDB.
 
@@ -172,15 +172,15 @@ Supported software versions
 
 At the time of release, this BRAKER version was tested with:
 
--   AUGUSTUS 3.3.3 <sup name="g2">[F2](#g2)</sup>
+-   AUGUSTUS 3.3.4 <sup name="g2">[F2](#g2)</sup>
 
--   GeneMark-ES/ET/EP 4.48_3.60_lic
+-   GeneMark-ES/ET/EP 4.59_lic
 
 -   BAMTOOLS 2.5.1<sup name="a5">[R5](#f5)</sup>
 
 -   SAMTOOLS 1.7-4-g93586ed<sup name="a6">[R6](#f6)</sup>
 
--   ProtHint 2.4.0
+-   ProtHint 2.5.0
 
 -   GenomeThreader 1.7.0<sup name="a7">[R7](#f7)</sup>
 
@@ -224,7 +224,7 @@ installed:
 
 -   `Math::Utils`
 
-For ProtHint,  optionally used by BRAKER,  also install:
+For ProtHint, used when protein input is supplied,  also install:
 
 -   `MCE::Mutex`
 
@@ -233,8 +233,7 @@ For ProtHint,  optionally used by BRAKER,  also install:
 
 On Ubuntu, for example, install the modules with CPANminus<sup name="g4">[F4](#g4)</sup>: `sudo cpanm Module::Name`, e.g. `sudo cpanm Hash::Merge`.
 
-BRAKER also uses a Perl module `helpMod.pm` that is not available on CPAN. This module is part of the BRAKER release and does not require
-separate installation.
+BRAKER also uses a Perl module `helpMod.pm` that is not available on CPAN. This module is part of the BRAKER release and does not require separate installation.
 
 If you do not have root permissions on the Linux machine, try setting up an **Anaconda** (<https://www.anaconda.com/distribution/>) environment as follows:
 
@@ -262,7 +261,7 @@ Subsequently install BRAKER and other software "as usual" while being in your co
 
 ### BRAKER components
 
-BRAKER is a collection of Perl scripts and a Perl module. The main script that will be called in order to run BRAKER is `braker.pl`. Additional Perl components are:
+BRAKER is a collection of Perl and Python scripts and a Perl module. The main script that will be called in order to run BRAKER is `braker.pl`. Additional Perl and Python components are:
 
 -   `align2hints.pl`
 
@@ -278,9 +277,11 @@ BRAKER is a collection of Perl scripts and a Perl module. The main script that w
 
 -   `downsample_traingenes.pl`
 
-All Perl scripts (files ending with `*.pl`) that are part of BRAKER must be executable in order to run BRAKER. This should already be the case if you download BRAKER from GitHub. Executability may be overwritten if you e.g. transfer BRAKER on a USB-stick to another computer. In order to check whether required files are executable, run the following command in the directory that contains BRAKER Perl scripts:
+-   `ensure_n_training_genes.py`
 
-    ls -l *.pl
+All scripts (files ending with `*.pl` and `*.py`) that are part of BRAKER must be executable in order to run BRAKER. This should already be the case if you download BRAKER from GitHub. Executability may be overwritten if you e.g. transfer BRAKER on a USB-stick to another computer. In order to check whether required files are executable, run the following command in the directory that contains BRAKER Perl scripts:
+
+    ls -l *.pl *.py
 
 The output should be similar to this:
 
@@ -289,6 +290,7 @@ The output should be similar to this:
     -rwxr-xr-x 1 katharina katharina   6090 Feb 19 09:35 braker_cleanup.pl
     -rwxr-xr-x 1 katharina katharina 408782 Aug 17 18:24 braker.pl
     -rwxr-xr-x 1 katharina katharina   5024 Mai  7 10:25 downsample_traingenes.pl
+    -rwxr-xr-x 1 katharina katharina   5024 Mai  7 10:23 ensure_n_training_genes.py
     -rwxr-xr-x 1 katharina katharina   4542 Apr  3  2019 filter_augustus_gff.pl
     -rwxr-xr-x 1 katharina katharina  30453 Mai  7 10:25 filterGenemark.pl
     -rwxr-xr-x 1 katharina katharina   5754 Mai  7 10:25 filterIntronsFindStrand.pl
@@ -301,7 +303,7 @@ The output should be similar to this:
 
 It is important that the `x` in `-rwxr-xr-x` is present for each script. If that is not the case, run
 
-    `chmod a+x *.pl`
+    `chmod a+x *.pl *.py`
 
 in order to change file attributes.
 
@@ -323,15 +325,13 @@ BRAKER calls upon various bioinformatics software tools that are not part of BRA
 
 #### GeneMark-EX
 
-Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/GeneMark/license_download.cgi>. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
+Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/GeneMark/license_download.cgi> (the GeneMark-ES/ET/EP) option. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
 
 If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl`, automatically. Otherwise, BRAKER can find GeneMark-EX executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark-EX/gmes_petap/`).
 
 In order to set the environment variable for your current Bash session, type:
 
-```
     export GENEMARK_PATH=/your_path_to_GeneMark-ET/gmes_petap/
-```
 
 Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.<sup name="g5">[F5](#g5)</sup>
 
@@ -351,16 +351,17 @@ If you are running GeneMark-EX in an Anaconda environment (or want to use Perl f
 perl change_path_in_perl_scripts.pl "/usr/bin/env perl"
 ```
 
+You can check whether GeneMark-EX is installed properly by running the `check_install.bash` and/or executing examples in `GeneMark-E-tests` directory.
 
 #### AUGUSTUS
 
-Download AUGUSTUS from <https://github.com/Gaius-Augustus/Augustus>. Unpack AUGUSTUS and install AUGUSTUS according to AUGUSTUS `README.TXT`. ***Do not use outdated AUGUSTUS versions from other sources, e.g. Debian package or Bioconda package! BRAKER highly depends in particular on an up-to-date Augustus/scripts directory, and other sources are often lagging behind!***
+Download AUGUSTUS from its master branch at <https://github.com/Gaius-Augustus/Augustus>. Unpack AUGUSTUS and install AUGUSTUS according to AUGUSTUS `README.TXT`. ***Do not use outdated AUGUSTUS versions from other sources, e.g. Debian package or Bioconda package! BRAKER highly depends in particular on an up-to-date Augustus/scripts directory, and other sources are often lagging behind. Currently, the latest release of AUGUSTUS (v3.3.3) is not compatible with BRAKER, please obtain AUGUSTUS by `git clone git@github.com:Gaius-Augustus/Augustus.git`***
 
 You should compile AUGUSTUS on your own system in order to avoid problems with versions of libraries used by AUGUSTUS. Compilation instructions are provided in the AUGUSTUS `README.TXT` file (`Augustus/README.txt`).
 
 AUGUSTUS consists of `augustus`, the gene prediction tool, additional C++ tools located in `Augustus/auxprogs` and Perl scripts located in `Augustus/scripts`. Perl scripts must be executable (see instructions in section [BRAKER components](#executability).
 
-The C++ tool `bam2hints` is an essential component of BRAKER. Sources are located in `Augustus/auxprogs/bam2hints`. Make sure that you compile `bam2hints` on your system (it should be automatically compiled when AUGUSTUS is compiled, but in case of problems with `bam2hints`, please read troubleshooting instructions in `Augustus/auxprogs/bam2hints/README`).
+The C++ tool `bam2hints` is an essential component of BRAKER when run with RNA-Seq. Sources are located in `Augustus/auxprogs/bam2hints`. Make sure that you compile `bam2hints` on your system (it should be automatically compiled when AUGUSTUS is compiled, but in case of problems with `bam2hints`, please read troubleshooting instructions in `Augustus/auxprogs/bam2hints/README`).
 
 If you would like to train UTR parameters and integrate RNA-Seq coverage information into gene prediction with BRAKER (which is possible only if an RNA-Seq bam-file is provided as extrinsic evidence) and `utrrnaseq` in the `auxprogs` directory are also required. If compilation with the default `Makefile` fails, please read troubleshooting instructions in `Augustus/auxprogs/utrrnaseq/README`.
 
@@ -379,10 +380,10 @@ In order to make the variable available to all Bash sessions, add the above line
 
 ##### Important:
 
-BRAKER expects the entire `config` directory of AUGUSTUS at `$AUGUSTUS_CONFIG_PATH`, i.e. the subfolders `species` with its contents (at least `generic`) and `extrinsic`! Providing an writable but empty folder at `$AUGUSTUS_CONFIG_PATH` will not work for BRAKER. If you need
+BRAKER expects the entire `config` directory of AUGUSTUS at `$AUGUSTUS_CONFIG_PATH`, i.e. the subfolders `species` with its contents (at least `generic`) and `extrinsic`! Providing a writable but empty folder at `$AUGUSTUS_CONFIG_PATH` will not work for BRAKER. If you need
 to separate augustus binary and `$AUGUSTUS_CONFIG_PATH`, we recommend that you recursively copy the un-writable config contents to a writable location.
 
-You have a system-wide installation of AUGUSTUS at `/usr/bin/augustus`, an unwritable copy of `config` sits at `/usr/bin/augustus_config/`. The folder `/home/yours/` is writable to you. Copy with the following command (and additionally set the then required variables):
+If you have a system-wide installation of AUGUSTUS at `/usr/bin/augustus`, an unwritable copy of `config` sits at `/usr/bin/augustus_config/`. The folder `/home/yours/` is writable to you. Copy with the following command (and additionally set the then required variables):
 
 ```
 cp -r /usr/bin/Augustus/config/ /home/yours/
@@ -436,17 +437,7 @@ Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the e
 
 You can use either NCBI BLAST+ or DIAMOND for removal of redundant training genes. You do not need both tools. If DIAMOND is present, it will be preferred because it is much faster.
 
-On Ubuntu, install NCBI BLAST+ with `sudo apt-get install ncbi-blast+`.
-
-If already in your `$PATH` variable, BRAKER will find blastp, automatically. Otherwise, BRAKER can locate the blastp binary either by using an environment variable `$BLAST_PATH`, or by taking a command line argument (`--BLAST_PATH=/your_path_to_blast/`). In order to set the environment variable e.g. for your current bash session, type:
-
-```
-    export BLAST_PATH=/your_path_to_blast/
-```
-
-Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the environment variable for all bash sessions.
-
-If you decide for DIAMOND, obtain and unpack as follows:
+Obtain and unpack DIAMOND as follows:
 
 ```
     wget http://github.com/bbuchfink/diamond/releases/download/v0.9.24/diamond-linux64.tar.gz
@@ -461,15 +452,23 @@ If already in your `$PATH` variable, BRAKER will find diamond, automatically. Ot
 
 Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the environment variable for all bash sessions.
 
-### Optional tools
+If you decide for BLAST+, install NCBI BLAST+ with `sudo apt-get install ncbi-blast+`.
+
+If already in your `$PATH` variable, BRAKER will find blastp, automatically. Otherwise, BRAKER can locate the blastp binary either by using an environment variable `$BLAST_PATH`, or by taking a command line argument (`--BLAST_PATH=/your_path_to_blast/`). In order to set the environment variable e.g. for your current bash session, type:
+
+```
+    export BLAST_PATH=/your_path_to_blast/
+```
+
+Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the environment variable for all bash sessions.
 
 #### ProtHint
 
-ProtHint is a pipeline for generating hints for GeneMark-EX and AUGUSTUS from proteins of unknown evolutionary distance developed by Tomas Bruna and Alexandre Lomsadze at Mark Borodovsky's lab. BRAKER can run ProtHint, or ProtHint can be executed as a separate step during data preparation. ProtHint is available from <https://github.com/gatech-genemark/ProtHint>. Download as follows:
+ProtHint is a pipeline for generating hints for GeneMark-EX and AUGUSTUS from proteins of any evolutionary distance. If protein sequences are given on input, BRAKER runs ProtHint automatically. Alternatively, ProtHint can be executed as a separate step during data preparation. ProtHint is available from <https://github.com/gatech-genemark/ProtHint>. Download as follows:
 
-```
     git clone https://github.com/gatech-genemark/ProtHint.git
-```
+
+or by getting the latest release from https://github.com/gatech-genemark/ProtHint/releases.
 
 ProtHint has software requirements of its own. In addition to the Perl modules required by BRAKER, it needs
 
@@ -478,11 +477,13 @@ MCE::Mutex
 threads
 ```
 
-ProtHint also requires Python 3.3. or higher.
+You can easily verify ProtHint's installation by running the test in https://github.com/gatech-genemark/ProtHint/tree/master/example.
 
-ProtHint requires DIAMOND, Spaln, and optionally ProSplign. The requirement of GeneMark-ES will already be fulfilled if you installed BRAKER dependencies above. For further installation instructions, please check <https://github.com/gatech-genemark/ProtHint>.
+ProtHint requires DIAMOND and Spaln, both of which come with ProtHint's installation. ProtHint's requirement of GeneMark-ES will already be fulfilled if you installed BRAKER dependencies above. For further installation instructions, please check <https://github.com/gatech-genemark/ProtHint>.
 
-BRAKER will try to locate the prothint.py executable by using an environment variable `$ALIGNMENT_TOOL_PATH`. Alternatively, this can be supplied as command line argument (`--ALIGNMENT_TOOL_PATH=/your/path/to/ProtHint/bin`).
+If already in your `$PATH` variable, BRAKER will find prothint.py, automatically. Otherwise, BRAKER will try to locate the prothint.py executable by using an environment variable `$PROTHINT_PATH`. Alternatively, this can be supplied as a command line argument `--PROTHINT_PATH=/your/path/to/ProtHint/bin`.
+
+### Optional tools
 
 #### Samtools
 
@@ -546,13 +547,15 @@ On Ubuntu, cdbfasta and cdbyank will be in your `$PATH` variable after installat
 
 **Note:** Support of GenomeThreader within BRAKER is deprecated.
 
-This tool is required, only, if you would like to run protein to genome alignments with BRAKER using GenomeThreader. This is a suitable approach if an annotated species of short evolutionary distance to your target genome is available. Download GenomeThreader from <http://genomethreader.org/>. Unpack and install according to `gth/README`.
+This tool is required, only, if you would like to run protein to genome alignments with BRAKER using GenomeThreader. This is a suitable approach only if an annotated species of short evolutionary distance to your target genome is available. Download GenomeThreader from <http://genomethreader.org/>. Unpack and install according to `gth/README`.
 
 BRAKER will try to locate the GenomeThreader executable by using an environment variable `$ALIGNMENT_TOOL_PATH`. Alternatively, this can be supplied as command line argument (`--ALIGNMENT_TOOL_PATH=/your/path/to/gth`).
 
 #### Spaln
 
-This tool is required if you run ProtHint or if you would like to run protein to genome alignments with BRAKER using Spaln outside of ProtHint. We recommend running Spaln through ProtHint for BRAKER. ProtHint brings along a Spaln binary. If that does not work on your system, download Spaln from <https://github.com/ogotoh/spaln>. Unpack and install according to `spaln/doc/SpalnReadMe22.pdf`.
+**Note:** Support of stand-alone Spaln (ouside of ProtHint) within BRAKER is deprecated.
+
+This tool is required if you run ProtHint or if you would like to run protein to genome alignments with BRAKER using Spaln outside of ProtHint. Using Spaln outside of ProtHint is a suitable approach only if an annotated species of short evolutionary distance to your target genome is available. We recommend running Spaln through ProtHint for BRAKER. ProtHint brings along a Spaln binary. If that does not work on your system, download Spaln from <https://github.com/ogotoh/spaln>. Unpack and install according to `spaln/doc/SpalnReadMe22.pdf`.
 
 BRAKER will try to locate the Spaln executable by using an environment variable `$ALIGNMENT_TOOL_PATH`. Alternatively, this can be supplied as command line argument (`--ALIGNMENT_TOOL_PATH=/your/path/to/spaln`).
 
@@ -560,7 +563,7 @@ BRAKER will try to locate the Spaln executable by using an environment variable 
 
 **Note:** Support of Exonerate within BRAKER is deprecated.
 
-This tool is required, only, if you would like to run protein to genome alignments with BRAKER using Exonerate. This is a suitable approach if an annotated species of short evolutionary distance to your target genome is available. (We recommend the usage of GenomeThreader instad of Exonerate because Exonerate is comparably slower and has lower specificity than GenomeThreader.) Download Exonerate from <https://github.com/nathanweeks/exonerate>. Unpack and install according to `exonerate/README`. (On Ubuntu, download and install by typing `sudo apt-get install exonerate`.)
+This tool is required, only, if you would like to run protein to genome alignments with BRAKER using Exonerate. This is a suitable approach only if an annotated species of short evolutionary distance to your target genome is available. (We recommend the usage of GenomeThreader instad of Exonerate because Exonerate is comparably slower and has lower specificity than GenomeThreader.) Download Exonerate from <https://github.com/nathanweeks/exonerate>. Unpack and install according to `exonerate/README`. (On Ubuntu, download and install by typing `sudo apt-get install exonerate`.)
 
 BRAKER will try to locate the Exonerate executable by using an environment variable `$ALIGNMENT_TOOL_PATH`. Alternatively, this can be supplied as command line argument (`--ALIGNMENT_TOOL_PATH=/your/path/to/exonerate`).
 
@@ -620,6 +623,38 @@ The format of such a hints file must be as follows (tabulator separated file):
 
 The source `b2h` in the second column and the source tag `src=E` in the last column are essential for BRAKER to determine whether a hint has been generated from RNA-Seq data.
 
+### BRAKER with proteins of any evolutionary distance
+
+This approach is suitable for genomes of species for which no RNA-Seq libraries are available. A large database of proteins (with possibly longer evolutionary distance to the target species) may be used in this case. The ProtHint version that is currently integrated in BRAKER is illustrated in figure [9](#fig8).
+
+![braker2-main-a](docs/figs/gatech-prot-pipeline.png)
+
+Figure 9: ProtHint protein mapping pipeline for proteins of any evolutionary distance. Pipeline automatically determines which alignments are from close relatives, and which are from rather distant relatives.
+
+For running BRAKER in this mode, type:
+
+    braker.pl --genome=genome.fa --prot_seq=proteins.fa --softmasking
+
+We recommend using OrthoDB as basis for `proteins.fa`. The instructions on how to prepare the input OrthoDB proteins are documented here: https://github.com/gatech-genemark/ProtHint#protein-database-preparation.
+
+You can of course add additional protein sequences to that file, or try with a completely different database. Any database will need several representatives for each protein, though.
+
+Instead of having BRAKER run ProtHint, you can also start BRAKER with hints already produced by ProtHint, by providing ProtHint's `prothint_augustus.gff` output:
+
+    braker.pl --genome=genome.fa --hints=prothint_augustus.gff --softmasking
+
+The format of `prothint_augustus.gff` in this mode looks like this:
+
+```
+2R ProtHint intron 11506230 11506648 4 + . src=M;mult=4;pri=4
+2R ProtHint intron 9563406  9563473  1 + . grp=69004_0:001de1_702_g;src=C;pri=4;
+2R ProtHint intron 8446312  8446371  1 + . grp=43151_0:001cae_473_g;src=C;pri=4;
+2R ProtHint intron 8011796  8011865  2 - . src=P;mult=1;pri=4;al_score=0.12;
+2R ProtHint start  234524   234526   1 + . src=P;mult=1;pri=4;al_score=0.08;
+```
+
+The prediction of all hints with `src=M` will be enforced. Hints with `src=C` are 'chained evidence', i.e. they will only be incorporated if all members of the group (grp=...) can be incorporated in a single transcript. All other hints have `src=P` in the last column. Supported features in column 3 are `intron`, `start`, `stop` and `CDSpart`.
+
 #### Training and prediction of UTRs, integration of coverage information
 
 If RNA-Seq (and only RNA-Seq) data is provided to BRAKER as a bam-file, and if the genome is softmasked for repeats, BRAKER can automatically train UTR parameters for AUGUSTUS. After successful training of UTR parameters, BRAKER will automatically predict genes including coverage information form RNA-Seq data. Example call:
@@ -655,58 +690,9 @@ You may additionally include bam files from unstranded libraries. Those files wi
 
 **Warning:** This feature is experimental and currently has low priority on our maintenance list!
 
-### BRAKER with proteins of unknown evolutionary distance
-
-This approach is suitable for genomes of species for which no RNA-Seq libraries are available. A (large) database of proteins (with possibly longer evolutionary distance to the target species) may be used in this case. The ProtHint version that is currently integrated in BRAKER is illustrated in figure [9](#fig8).
-
-![braker2-main-a](docs/figs/gatech-prot-pipeline.png)
-
-Figure 9: ProtHint protein mapping pipeline for proteins of unkown evolutionary distance. Pipeline automatically determines which alignments are from close relatives, and which are from rather distant relatives.
-
-For running BRAKER in this mode, type:
-
-```
-   braker.pl --genome=genome.fa --prot_seq=protein.fa \
-      --epmode --softmasking
-```
-
-We recommend using OrthoDB as basis for protein.fa. You can of course add additional protein sequences to that file, or try with a completely different database. Any database will need several representatives for each protein, though.
-
-Instead of having BRAKER run ProtHint, you can also start BRAKER with hints already produced by ProtHint. Please have a look at section [Starting BRAKER on the basis of previously existing BRAKER runs](#starting-braker-on-the-basis-of-previously-existing-braker-runs) for this. We currently do not recommend to generate the hints files from ProtHint outside of BRAKER since numerous post processing steps are carried out within BRAKER.
-
-The format of `hintsfile.gff` for AUGUSTUS in this mode looks like this:
-
-```
-2R ProtHint intron 11506230 11506648 4 + . src=M;mult=4;pri=4
-2R ProtHint intron 9563406  9563473  1 + . grp=69004_0:001de1_702_g;src=C;pri=4;
-2R ProtHint intron 8446312  8446371  1 + . grp=43151_0:001cae_473_g;src=C;pri=4;
-2R ProtHint intron 8011796  8011865  2 - . src=P;mult=1;pri=4;
-
-```
-
-The prediction of all hints with src=M will be enforced. Hints with src=C are 'chained evidence', i.e. they will only be incorporated if all members of the group (grp=...) can be incorporated. All other hints have src=P in the last column. Supported features in column 3 are intron, start_codon, stop_codon and CDSpart.
-
-The format of `prothint.gff` for GeneMark-EP looks like this:
-
-```
-2R ProtHint Intron      10479911 10479963 2 - . al_score=0.273752; splice_sites=gt_ag; topProt=TRUE;
-2R ProtHint start_codon 11244290 11244292 1 + 0 al_score=0.304132; topProt=TRUE; CDS_overlap=0;
-2R ProtHint stop_codon  11340635 11340637 2 - 0 al_score=0.0247934;
-```
-All hints in above file are used during training of GeneMark-EP. Supported features in column 3 are Intron, start_codon and stop_codon.
-
-The format of `evidence.gff` for GeneMark-EP looks like this:
-
-```
-2R ProtHint Intron     7705590  7705645  5 - . al_score=0.26192; splice_sites=gt_ag;
-2R ProtHint stop_codon 11339257 11339259 4 - 0 al_score=0.0958678;
-```
-
-The prediction of features in `evidence.gff` will be enforced by GeneMark-EP+. Supported features in column 3 are Intron, start_codon and stop_codon.
-
 ### BRAKER with proteins of short evolutionary distance
 
-This is a deprecated pipeline that was before the only suitable approach if RNA-Seq data for the species of the target genome is not available and if a well annotated and very closely related reference species is available and you don't want to use the approach for proteins of unknown evolutionary distance (where we back then weren't sure how it'd perform on proteins of short evolutionary distance).
+This is a deprecated pipeline that was before the only suitable approach if RNA-Seq data for the species of the target genome is not available and if a well annotated and very closely related reference species is available and you don't want to use the approach for proteins of any evolutionary distance (where we back then weren't sure how it'd perform on proteins of short evolutionary distance).
 
 For running BRAKER in this mode, type:
 
@@ -749,7 +735,7 @@ Supported features in column 3 are intron, CDSpart, start, stop.
 
 ### BRAKER with RNA-Seq and protein data
 
-The native mode for running BRAKER with RNA-Seq and protein data is ```--etpmode```. This will call GeneMark-ETP (which is currently only available as a premature version by using current state GeneMark-ES/ET/EP/EP+, improvements are to be expected, soon), which will use RNA-Seq and protein hints for training GeneMark-ETP. Hints that are supported by both sources and proteins hints of particularly high quality are enforced in gene prediction with GeneMark-ETP. Subsequently, AUGUSTUS is trained on GeneMark-ETP predictions and genes with hints are predicted by AUGUSTUS. To call the pipeline in this mode, run:
+The native mode for running BRAKER with RNA-Seq and protein data is `--etpmode`. This will call GeneMark-ETP (which is currently only available as a premature version by using current state GeneMark-ES/ET/EP/EP+, improvements are to be expected, soon), which will use RNA-Seq and protein hints for training GeneMark-ETP. Hints that are supported by both sources and proteins hints of particularly high quality are enforced in gene prediction with GeneMark-ETP. Subsequently, AUGUSTUS is trained on GeneMark-ETP predictions and genes with hints are predicted by AUGUSTUS. To call the pipeline in this mode, run:
 
 ```
     braker.pl --genome=genome.fa --prot_seq=orthodb.fa \
@@ -808,11 +794,11 @@ Please run `braker.pl --help` to obtain a full list of options.
 
 ### --epmode
 
-Run BRAKER in EP-mode, i.e. with proteins of unknown evolutionary distance as processed by ProtHint within BRAKER. Should be provided with `--prot_seq=orthodb.fa`.
+Run BRAKER in EP-mode, i.e. with proteins of any evolutionary distance as processed by ProtHint within BRAKER. This mode is turned on by default when only protein input is detected. Should be provided with either `--prot_seq=orthodb.fa` or protein hints `--hints=prothint_augustus.gff`.
 
 ### --etpmode
 
-Run BRAKER in ETP-mode, i.e. with proteins of unknown evolutionary distance processed by ProtHint, and with RNA-Seq data. Should to be provided with `prot_seq=orthodb.fa` and additional RNA-Seq data can be  provided either as additional hints file, or as `--bam=rnaseq.bam`.
+Run BRAKER in ETP-mode, i.e. with proteins of any evolutionary distance processed by ProtHint, and with RNA-Seq data. Should to be provided with `prot_seq=orthodb.fa` and `--bam=rnaseq.bam`. Alternatively, the RNA-Seq and protein hints can be provided as processed hints with the `--hints` opiton.
 
 ### --ab\_initio
 
@@ -824,7 +810,7 @@ One or several command line arguments to be passed to AUGUSTUS, if several argum
 
 ### --cores=INT
 
-Specifies the maximum number of cores that can be used during computation. BRAKER has to run some steps on a single core, others can take advantage of multiple cores. The optimal core number of all steps is 8. If you use more than 8 cores, this will not speed up all parallelized steps, in particular, the time consuming `optimize_augustus.pl` will not use more than 8 cores. However, if you don’t mind some cores being idle, using more than 8 cores will speed up other steps.
+Specifies the maximum number of cores that can be used during computation. BRAKER has to run some steps on a single core, others can take advantage of multiple cores. If you use more than 8 cores, this will not speed up all parallelized steps, in particular, the time consuming `optimize_augustus.pl` will not use more than 8 cores. However, if you don’t mind some cores being idle, using more than 8 cores will speed up other steps.
 
 ### --fungus
 
@@ -872,14 +858,14 @@ If `--makehub` and `--email=your@mail.de` (with your valid e-mail adress) are pr
 
 ### --gc_probability=DECIMAL
 
-By default, GeneMark-ES/ET uses a probability of 0.001 for predicting the donor splice site pattern GC (instead of GT). It may make sense to increase this value for species where this donor splice site is more common. For example, in the species *Emiliania huxleyi*, about 50% of donor splice sites have the pattern GC (https://media.nature.com/original/nature-assets/nature/journal/v499/n7457/extref/nature12221-s2.pdf, page 5).
+By default, GeneMark-EX uses a probability of 0.001 for predicting the donor splice site pattern GC (instead of GT). It may make sense to increase this value for species where this donor splice site is more common. For example, in the species *Emiliania huxleyi*, about 50% of donor splice sites have the pattern GC (https://media.nature.com/original/nature-assets/nature/journal/v499/n7457/extref/nature12221-s2.pdf, page 5).
 
 Output of BRAKER
 =================
 
 BRAKER produces several important output files in the working directory.
 
--   augustus.hints.gtf: Genes predicted by AUGUSTUS with intron hints from given extrinsic evidence. This file will be missing if BRAKER was run with the option `--esmode`.
+-   augustus.hints.gtf: Genes predicted by AUGUSTUS with hints from given extrinsic evidence. This file will be missing if BRAKER was run with the option `--esmode`.
 
 -   augustus.hints_utr.gtf: Genes predicted by AUGUSTUS with UTR parameters and coverage information from RNA-Seq data in GTF-format. The file will only be present if BRAKER was run with the option `--UTR=on` and a RNA-Seq BAM-file.
 
@@ -889,7 +875,8 @@ BRAKER produces several important output files in the working directory.
 
 -   GeneMark-E*/genemark.gtf: Genes predicted by GeneMark-ES/ET/EP/EP+ in GTF-format. This file will be missing if BRAKER was executed with proteins of close homology and the option `--trainFromGth`.
 
--   braker.gtf: All transcript variants predicted either by AUGUSTUS (with hints if available) or by GeneMark-ES/ET/EP/EP+.
+
+-   braker.gtf: Union of augustus.hints.gtf and reliable GeneMark-EX predictions (genes fully supported by external evidence). In `--esmode`, this is the union of augustus.ab_initio.gtf and all GeneMark-ES genes. Thus, this set is generally more sensitive (more genes correctly predicted) and can be less specific (more false-positive predictions can be present).
 
 -   hintsfile.gff: The extrinsic evidence data extracted from RNAseq.bam and/or protein data.
 
@@ -897,7 +884,7 @@ AUGUSTUS output files may be present with the following name endings and formats
 
 -   GTF-format is always produced.
 
--   GFF3-format is produced if the flat `--gff3` was specified to BRAKER.
+-   GFF3-format is produced if the flag `--gff3` was specified to BRAKER.
 
 -   Coding sequences in FASTA-format are produced if the flag `--skipGetAnnoFromFasta` was not set.
 
@@ -923,43 +910,33 @@ Example data
 
 An incomplete example data set is contained in the directory `BRAKER/example`. In order to complete the data set, please download the RNA-Seq alignment file (134 MB) with `wget`:
 
-```
     cd BRAKER/example
-    wget http://bioinf.uni-greifswald.de/bioinf/braker/RNAseq.bam
-```
+    wget http://topaz.gatech.edu/GeneMark/Braker/RNAseq.bam
+
 
 The example data set was not compiled in order to achieve optimal prediction accuracy, but in order to test pipeline components.
 
 Data description
 ----------------
 
-Data corresponds to *Drosophila melanogaster* chromosome 2R from flybase release R5, first 12000000 nucleotides.
+Data corresponds to the last 1,000,000 nucleotides of _Arabidopsis thaliana_'s chromosome Chr5.
 
-RNA-Seq alignments were obtained by mapping Illumina paired-end librariy SRR023505 to the genome file using STAR with standard parameters (single pass mapping).
+RNA-Seq alignments were obtained by [VARUS](https://github.com/Gaius-Augustus/VARUS).
 
-For `prot.fa` (representative for proteins of close homology), Protein sequences from Drosophila ananassae release R1.05 were aligned to the genome sequence of Drosophila melanogaster chromosome R2 using GenomeThreader with parameters `-gff3out -skipalignmentout -paralogs -prseedlength 20 -prhdist 2 -gcmincoverage 80 -prminmatchlen 20`. Protein sequence records of mapped proteins were stored in proteins.fa.
-
-For `orthodb_small.fa`, the *Arthopoda* section of OrthoDB v9 was randomly downsized to contain only 500 entries.
+The protein sequences are a subset of [OrthoDB v10 plants proteins](https://v100.orthodb.org/download/odb10_plants_fasta.tar.gz).
 
 List of files:
 
 -   `genome.fa` - genome file in fasta format
-
--   `RNAseq.bam` - RNA-Seq alignment file in bam format (this file is not in github, it must be downloaded separately from <http://bioinf.uni-greifswald.de/bioinf/braker/RNAseq.bam>)
-
+-   `RNAseq.bam` - RNA-Seq alignment file in bam format (this file is not a part of this repository, it must be downloaded separately from <http://topaz.gatech.edu/GeneMark/Braker/RNAseq.bam>)
 -   `RNAseq.hints` - RNA-Seq hints (can be used instead of RNAseq.bam as RNA-Seq input to BRAKER)
+-   `proteins.fa` - protein sequences in fasta format
 
--   `prot.fa` - protein sequences of close homology in fasta format
+The below given commands assume that you configured all paths to tools by exporting bash variables or that you have the necessary tool in your $PATH.
 
--   `orthodb_small.fa` - small proportion of OrthoDB in fasta format
+The example data set also contains scripts `tests/test*.sh` that will execute below listed commands for testing BRAKER with the example data set. You find example results of AUGUSTUS and GeneMark-EX in the folder `results/test*`. Be aware that BRAKER contains several parts where random variables are used, i.e. results that you obtain when running the tests may not be exactly identical.
 
-Testing BRAKER is time consuming because a full test requires the assembly of sufficient training data and subsequent training of gene predictors. Consider running BRAKER threaded (e.g. `--cores=8`) for testing. You can also select the `--skipOptimize` option for all tests that include training of AUGUSTUS in order to speed up testing.
-
-The below given commands assume that you configured all paths to tools by exporting bash variables.
-
-The example data set also contains scripts `tests/test*.sh` that will execute below listed commands for testing BRAKER with the example data set. You find example results of AUGUSTUS and GeneMark-EX in the folder `results/test*`. Be aware that BRAKER contains several parts where random variables are used, i.e. results that you obtain when running the tests must not be exactly identical.
-
-We give runtime estimations derived from computing on a single core *Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz*.
+We give runtime estimations derived from computing on *Intel(R) Xeon(R) CPU E5530 @ 2.40GHz*.
 
 Testing BRAKER with RNA-Seq data
 --------------------------------
@@ -973,7 +950,7 @@ The following command will test the pipeline according to Figure [3](#fig2) (imp
 
 Runtime of this command is ~174 minutes.
 
-Testing BRAKER with hints from proteins of unknown evolutionary distance
+Testing BRAKER with hints from proteins of any evolutionary distance
 -------------------------------------------------------------------------
 
 The following command will test the pipeline according to Figure [4](#fig3) (implemented in `test2.sh`):
@@ -985,7 +962,7 @@ The following command will test the pipeline according to Figure [4](#fig3) (imp
 
 Runtime of this command is ~24 minutes (including the runtime of ProtHint).
 
-Testing BRAKER with hints from proteins of unknown evolutionary distance and RNA-Seq
+Testing BRAKER with hints from proteins of any evolutionary distance and RNA-Seq
 ------------------------------------------------------------------------------------
 
 The following command will test a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4), implemented in `test3.sh`:
@@ -1299,36 +1276,32 @@ Start a new job using parameters from GeneMark-ES based AUGUSTUS training with t
 Bug reporting
 =============
 
-Before reporting bugs, please check that you are using the most recent versions of GeneMark-EX, AUGUSTUS and BRAKER. Also, check the list of [Common problems](#common-problems), and the Issue list on Github before reporting bugs. We do monitor open issues on Github. Sometimes, we are unable to help you, immediatly, but we try hard to solve your problems.
+Before reporting bugs, please check that you are using the most recent versions of GeneMark-EX, AUGUSTUS and BRAKER. Also, check the list of [Common problems](#common-problems), and the Issue list on GitHub before reporting bugs. We do monitor open issues on GitHub. Sometimes, we are unable to help you, immediately, but we try hard to solve your problems.
 
-Reporting bugs on github
+Reporting bugs on GitHub
 ------------------------
 
-If you found a bug, please open an issue at <https://github.com/Gaius-Augustus/BRAKER/issues> (or contact katharina.hoff@uni-greifswald.de).
+If you found a bug, please open an issue at <https://github.com/Gaius-Augustus/BRAKER/issues> (or contact katharina.hoff@uni-greifswald.de or bruna.tomas@gatech.edu).
 
 Information worth mentioning in your bug report:
 
 Check in `braker/yourSpecies/braker.log` at which step `braker.pl` crashed.
 
-There are a number of other files that might be of interest, depending on where in the pipeline the problem occured. Some of the following files will not be present if they did not contain any errors.
+There are a number of other files that might be of interest, depending on where in the pipeline the problem occurred. Some of the following files will not be present if they did not contain any errors.
 
 -   `braker/yourSpecies/errors/bam2hints.*.stderr` - will give details on a bam2hints crash (step for converting bam file to intron gff file)
 
--   `braker/yourSpecies/hintsfile.gff` - is this file empty? If yes, something went wrong during hints generation - does this file contain hints from source “b2h” and of type “intron”? If not: GeneMark-ET will not be able to execute properly.
-
--   `braker/yourSpecies/startAlign.stderr` - if you provided a protein fasta file and this file is not empty, something went wrong during protein alignment
-
--   `braker/yourSpecies/startAlign.stdout` - may give clues on at which point protein alignment went wrong
+-   `braker/yourSpecies/hintsfile.gff` - is this file empty? If yes, something went wrong during hints generation - does this file contain hints from source “b2h” and of type “intron”? If not: GeneMark-ET will not be able to execute properly. Conversely, GeneMark-EP+ will not be able to execute correctly if hints from the source "ProtHint" are missing.
 
 -   `braker/yourSpecies/(align_gthalign_exoneratealign_spaln)/*err` - errors reported by the alignment tools gth/exonerate/spaln
 
--   `braker/yourSpecies/errors/GeneMark-ET.stderr` - errors reported by GeneMark-ET
+-   `braker/yourSpecies/errors/GeneMark-{ET,EP}.stderr` - errors reported by GeneMark-ET/EP+
 
--   `braker/yourSpecies/errors/GeneMark-ET.stdout` - may give clues about the point at which errors in GeneMark-ET occured
+-   `braker/yourSpecies/errors/GeneMark-{ET,EP).stdout` - may give clues about the point at which errors in GeneMark-ET/EP+ occured
 
--   `braker/yourSpecies/GeneMark-ET/genemark.gtf` - is this file empty? If yes, something went wrong during executing GeneMark-ET
+-   `braker/yourSpecies/GeneMark-{ET,EP}/genemark.gtf` - is this file empty? If yes, something went wrong during executing GeneMark-ET/EP+
 
--   `braker/yourSpecies/GeneMark-ET/genemark.f.good.gtf` - is this file empty? If yes, something went wrong during filtering GeneMark-ET genes for training AUGUSTUS
+-   `braker/yourSpecies/GeneMark-{ET,EP}/genemark.f.good.gtf` - is this file empty? If yes, something went wrong during filtering GeneMark-ET/EP+ genes for training AUGUSTUS
 
 -   `braker/yourSpecies/genbank.good.gb` - try a “grep -c LOCUS genbank.good.gb” to determine the number of training genes for training AUGUSTUS, should not be low
 
@@ -1339,6 +1312,10 @@ There are a number of other files that might be of interest, depending on where 
 -   `braker/yourSpecies/errors/optimize_augustus.stderr` - contains errors optimize\_augustus.pl (additional training set for AUGUSTUS)
 
 -   `braker/yourSpecies/errors/augustus*.stderr` - contain AUGUSTUS execution errors
+
+-   `braker/yourSpecies/startAlign.stderr` - if you provided a protein fasta file and `--prg` option and this file is not empty, something went wrong during protein alignment
+
+-   `braker/yourSpecies/startAlign.stdout` - may give clues on at which point protein alignment went wrong
 
 Common problems
 ---------------
@@ -1353,7 +1330,7 @@ Common problems
 
 -   *GeneMark fails!*
 
-    (a) GeneMark requires a valid hidden key file in your home directory (`~/.gm_key`). The fiel expires after 200 days. Please check whether you have a valid key file before reporting an issue about this. Also, BRAKER may issue a WARNING that GeneMark is likely going to file due to limited extrinsic evidence. If you see that warning, please don't open an issue but try a different approach towards annotating your genome. For example, you can add more evidence data, you can try the protein mapping pipeline approach, you can try running `--esmode` without extrinsic evidence, ...
+    (a) GeneMark requires a valid hidden key file in your home directory (`~/.gm_key`). The file expires after 200 days. Please check whether you have a valid key file before reporting an issue about this. Also, BRAKER may issue a WARNING that GeneMark is likely going to file due to limited extrinsic evidence. If you see that warning, please don't open an issue but try a different approach towards annotating your genome. For example, you can add more evidence data, you can try the protein mapping pipeline approach, you can try running `--esmode` without extrinsic evidence, ...
 
     (b) GeneMark by default only uses contigs longer than 50k for training. If you have a highly fragmented assembly, this might lead to "no data" for training. You can override the default minimal length by setting the BRAKER argument `--min_contig=10000`.
 
@@ -1377,7 +1354,7 @@ Common problems
 
 -   *I am running BRAKER in Anaconda and something fails...*
 
-    Update AUGUSTUS and BRAKER from github with `git clone https://github.com/Gaius-Augustus/Augustus.git` and `git clone https://github.com/Gaius-Augustus/BRAKER.git`. The Anaconda installation is great, but it relies on releases of AUGUSTUS and BRAKER - which are often lagging behind. Please use the current github code, instead.
+    Update AUGUSTUS and BRAKER from github with `git clone https://github.com/Gaius-Augustus/Augustus.git` and `git clone https://github.com/Gaius-Augustus/BRAKER.git`. The Anaconda installation is great, but it relies on releases of AUGUSTUS and BRAKER - which are often lagging behind. Please use the current GitHub code, instead.
 
 
 Citing BRAKER and software called by BRAKER
@@ -1413,9 +1390,9 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Ter-Hovhannisyan, V., Lomsadze, A., Chernoff, Y.O. and Borodovsky, M. (2008). Gene prediction in novel fungal genomes using an ab initio algorithm with unsupervised training. Genome research, pages gr--081612, 2008.
 
--  If BRAKER was run with proteins of unknown phylogenetic distance (--epmode or --etpmode), please cite all tools that are used by the ProtHint pipeline to generate hints:
+-  If BRAKER was run with proteins of any phylogenetic distance (--epmode or --etpmode), please cite all tools that are used by the ProtHint pipeline to generate hints:
 
-    -   Bruna, T., Lomsadze, A., Borodovsky, M. (2020) GeneMark-EP and -EP+: automatic eukaryotic gene prediction supported by spliced aligned proteins. Preprint on bioarXive at doi: <https://doi.org/10.1101/2019.12.31.891218 >.
+    -   Bruna, T., Lomsadze, A., & Borodovsky, M. (2020). GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026.
 
     -   Buchfink, B., Xie, C., Huson, D.H. (2015). Fast and sensitive protein alignment using DIAMOND. Nature Methods 12:59-60.
 
@@ -1450,7 +1427,7 @@ Footnotes
 
 <b id="g1">[F1]</b> EX = ES/ET/EP/ETP, all available for download under the name *GeneMark-ES/ET/EP* [↩](#g1)
 
-<b id="g2">[F2]</b> Please use the latest version of AUGUSTUS distributed by the original developers, it is available from github at <https://github.com/Gaius-Augustus/Augustus>. Problems have been reported from users that tried to run BRAKER with AUGUSTUS releases maintained by third parties, i.e. Bioconda. [↩](#g2)
+<b id="g2">[F2]</b> Please use the latest version from the master branch of AUGUSTUS distributed by the original developers, it is available from github at <https://github.com/Gaius-Augustus/Augustus>. Problems have been reported from users that tried to run BRAKER with AUGUSTUS releases maintained by third parties, i.e. Bioconda. Currently, the latest release of AUGUSTUS (v3.3.3) is not compatible with BRAKER, please obtain AUGUSTUS by `git clone git@github.com:Gaius-Augustus/Augustus.git`. [↩](#g2)
 
 <b id="g3">[F3]</b> Not tested in this release, we recommend using GenomeThreader, instead  [↩](#g3)
 
@@ -1498,7 +1475,6 @@ Oxford University Press: 2078--9.[↩](#a6)
 
 <b id="f16">[R16]</b> Hoff, K.J. 2019. MakeHub: Fully automated generation of UCSC Genome Browser Assembly Hubs. *Genomics, Proteomics and Bioinformatics*, in press, preprint on bioarXive, doi: <https://doi.org/10.1101/550145>.[↩](#a16)
 
-<b id="f17">[R17]</b> Bruna, T., Lomsadze, A., and Borodovsky, M. 2020. Bruna, Tomas, Alexandre Lomsadze, and Mark Borodovsky. GeneMark-EP and-EP+: automatic eukaryotic gene prediction supported by spliced aligned proteins. preprint on bioarXive, doi: <https://doi.org/10.1101/2019.12.31.891218 5>.[↩](#a17)
+<b id="f17">[R17]</b> Bruna, T., Lomsadze, A., & Borodovsky, M. 2020. GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026. doi: <https://doi.org/10.1093/nargab/lqaa026>.[↩](#a17)
 
 <b id="f18">[R18]</b> Kriventseva, E. V., Kuznetsov, D., Tegenfeldt, F., Manni, M., Dias, R., Simão, F. A., and Zdobnov, E. M. 2019. OrthoDB v10: sampling the diversity of animal, plant, fungal, protist, bacterial and viral genomes for evolutionary and functional annotations of orthologs. Nucleic Acids Research, 47(D1), D807-D811.[↩](#a18)
-
