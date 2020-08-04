@@ -625,11 +625,11 @@ The source `b2h` in the second column and the source tag `src=E` in the last col
 
 ### BRAKER with proteins of any evolutionary distance
 
-This approach is suitable for genomes of species for which no RNA-Seq libraries are available. A large database of proteins (with possibly longer evolutionary distance to the target species) may be used in this case. The ProtHint version that is currently integrated in BRAKER is illustrated in figure [9](#fig8).
+This approach is suitable for genomes of species for which no RNA-Seq libraries are available. A large database of proteins (with possibly longer evolutionary distance to the target species) should be used in this case. This mode is illustrated in figure [9](#fig8).
 
-![braker2-main-a](docs/figs/gatech-prot-pipeline.png)
+![braker2-main-a](docs/figs/braker2-full.png)
 
-Figure 9: ProtHint protein mapping pipeline for proteins of any evolutionary distance. Pipeline automatically determines which alignments are from close relatives, and which are from rather distant relatives.
+Figure 9: BRAKER with proteins of any evolutionary distance. ProtHint protein mapping pipelines is used to generate protein hints. ProtHint automatically determines which alignments are from close relatives, and which are from rather distant relatives.
 
 For running BRAKER in this mode, type:
 
