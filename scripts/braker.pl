@@ -8791,12 +8791,11 @@ sub join_aug_pred {
     $string = find(
         "join_aug_pred.pl",     $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
-    my $cat_file;
-    if(-e "$otherfilesDir/augustus.tmp1.gff"){
-        $cat_file = "$otherfilesDir/augustus.tmp2.gff";
-    }else{
-        $cat_file = "$otherfilesDir/augustus.tmp1.gff";
+    my $n = 1;
+    while (-e "$otherfilesDir/augustus.tmp${n}.gff") {
+        $n += 1;
     }
+    my $cat_file = "$otherfilesDir/augustus.tmp${n}.gff";
     my @t = split(/\//, $pred_dir);
     $t[scalar(@t)-1] =~ s/\///;
     my $error_cat_file = "$errorfilesDir/augustus_".$t[scalar(@t)-1].".err";
