@@ -13,7 +13,7 @@ fi
 if [ ! -d $oldDir ] ; then
   echo "ERROR: Directory (with contents) of old BRAKER run $oldDir does not exist, yet. Please run test5.sh before running test5_restart1.sh!"
 else
-    ( time braker.pl --genome=../genome2.fa --hints=$oldDir/hintsfile.gff --softmasking --workingdir=$wd --cores 8 --gm_max_intergenic 10000) &> test5_restart1.log
+    ( time braker.pl --genome=../genome.fa --hints=$oldDir/hintsfile.gff --softmasking --workingdir=$wd --cores 8 --gm_max_intergenic 10000) &> test5_restart1.log
 fi
 
 

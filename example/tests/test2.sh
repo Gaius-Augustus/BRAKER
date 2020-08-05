@@ -8,4 +8,7 @@ fi
 # It is not recommended to use this option in real BRAKER runs. The speed increase
 # achieved by adjusting this option is negligible on full-sized genomes.
 
-( time braker.pl --genome=../genome2.fa --prot_seq=../proteins2.fa --epmode --softmasking --workingdir=$wd --cores=8 --gm_max_intergenic 10000 ) &> test2.log
+# For instructions on how to prepare the proteins.fa input file from OrthoDB,
+# see https://github.com/gatech-genemark/ProtHint#protein-database-preparation
+
+( time braker.pl --genome=../genome.fa --prot_seq=../proteins.fa --epmode --softmasking --workingdir=$wd --cores=8 --gm_max_intergenic 10000 ) &> test2.log

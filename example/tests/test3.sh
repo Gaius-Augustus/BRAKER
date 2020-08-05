@@ -5,9 +5,9 @@ if [ -d $wd ]; then
 fi
 
 # Note:
-# The file ../RNASeq2.bam is not contained in the github repository!
+# The file ../RNASeq.bam is not contained in the github repository!
 # Make sure that you downloaded this file with
-# wget http://topaz.gatech.edu/GeneMark/Braker/RNAseq2.bam
+#     wget http://topaz.gatech.edu/GeneMark/Braker/RNAseq.bam
 # before running this test.
 # Alternatively, you can replace --bam=../RNASeq.bam by --hints=../RNASeq.hints
 
@@ -15,4 +15,7 @@ fi
 # It is not recommended to use this option in real BRAKER runs. The speed increase
 # achieved by adjusting this option is negligible on full-sized genomes.
 
-( time braker.pl --genome=../genome2.fa --prot_seq=../proteins2.fa --bam=../RNAseq2.bam --etpmode --softmasking --workingdir=$wd --cores 8 --gm_max_intergenic 10000 ) &> test3.log
+# For instructions on how to prepare the proteins.fa input file from OrthoDB,
+# see https://github.com/gatech-genemark/ProtHint#protein-database-preparation
+
+( time braker.pl --genome=../genome.fa --prot_seq=../proteins.fa --bam=../RNAseq.bam --etpmode --softmasking --workingdir=$wd --cores 8 --gm_max_intergenic 10000 ) &> test3.log
