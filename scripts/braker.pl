@@ -2842,8 +2842,9 @@ sub check_biopython{
             ." at line ". __LINE__ ."\n"
             . "Could not close file $errorfile!\n");
         $prtStr .= "#*********\n";
-        $logString .= $prtStr;
         $missingPython3Module = 1;
+        print LOG $prtStr;
+        print STDERR $prtStr;
     }
     $errorfile = $errorfilesDir."/find_python3_biopython.err";
     $cmdString = "$PYTHON3_PATH/python3 -c \'from Bio.Seq import Seq\' 1> /dev/null "
@@ -2864,25 +2865,33 @@ sub check_biopython{
             ." at line ". __LINE__ ."\n"
             . "Could not close file $errorfile!\n");
         $prtStr .= "#*********\n";
-        $logString .= $prtStr;
+        print LOG $prtStr;
+        print STDERR $prtStr;
         $missingPython3Module = 1;
     }
     if($missingPython3Module == 1) {
-        $prtStr = "Setting option --skipGetAnnoFromFasta. No FASTA"
-                . " files of the gene predictions will be produced. Please "
-                . " install re and biopython if you want those files produced "
-                . " in future BRAKER runs.\n";
-        $logString .= $prtStr;
-        $skipGetAnnoFromFasta = 1;
-        if( $makehub ) {
-            $prtStr = "MakeHub requires the python modules re and "
-                    . "biopython. No hub will be created because dependencies "
-                    . " are missing. Please install re and biopython if you want "
-                    . "hubs to be produced in future BRAKER runs.\n";
-            $logString .= $prtStr;
-            $makehub = 0;
+        $prtStr = "";
+        if (!$skipGetAnnoFromFasta) {
+            $prtStr = "\# "
+                . (localtime)
+                . ": ERROR: BRAKER requires the python modules re and "
+                . "biopython, at least one of these modules was not found. "
+                . "Please install re and biopython or run BRAKER with the "
+                . "--skipGetAnnoFromFasta option to skip parts of BRAKER "
+                . "which depend on these modules. See the option's description "
+                . "for more details.\n";
         }
-        print STDERR $logString;
+        if($makehub) {
+            $prtStr .= "\# "
+                . (localtime)
+                . ": ERROR: MakeHub requires the python modules re and "
+                . "biopython, at least one of these modules was not found. "
+                . "Please install re and biopython or run BRAKER without "
+                . "the --makehub option.\n";
+        }
+        print LOG $prtStr;
+        print STDERR $prtStr;
+        exit(1);
     }
 }
 
@@ -4501,6 +4510,21 @@ sub check_options {
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "Genome file $genome does not exist.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
+    if (!$skip_fixing_broken_genes && $skipGetAnnoFromFasta) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "# BRAKER needs to run the getAnnoFastaFromJoingenes.py script "
+            . "to fix genes with in-frame stop codons. If you wish to use the "
+            . "--skipGetAnnoFromFasta option, turn off the fixing of stop "
+            . "codon including genes with the --skip_fixing_broken_genes "
+            . "option.\n";
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
@@ -8338,8 +8362,9 @@ sub augustus {
                                   $AUGUSTUS_SCRIPTS_PATH);
                 }
             }
-            get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId);
-
+            if (!$skipGetAnnoFromFasta) {
+                get_anno_fasta("$otherfilesDir/augustus.ab_initio".$genesetId.".gtf", $genesetId);
+            }
         } else {
             print LOG "\# " . (localtime) . ": Skipping predicting genes with "
                 . "AUGUSTUS ab initio because file "
@@ -8402,7 +8427,9 @@ sub augustus {
                                   $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
                         }
                     }
-                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
+                    if (!$skipGetAnnoFromFasta) {
+                        get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
+                    }
                     clean_aug_jobs($hintId);
                 }else{
                     run_augustus_with_joingenes_parallel($genome_dir, $localUTR, $genesetId);
@@ -8452,7 +8479,9 @@ sub augustus {
                                   $AUGUSTUS_SCRIPTS_PATH, $hintsfile, $extrinsicCfgFile);
                         }
                     }
-                    get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
+                    if (!$skipGetAnnoFromFasta) {
+                        get_anno_fasta("$otherfilesDir/augustus.$hintId.gtf", $hintId);
+                    }
                 }else{
                     run_augustus_with_joingenes_single_core($localUTR, $genesetId);
                 }
@@ -9538,7 +9567,9 @@ sub joingenes {
     print LOG "$perlCmdString\n" if ($v > 3);
     system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to execute: $perlCmdString!\n");
-    get_anno_fasta("$otherfilesDir/augustus.hints$genesetId.gtf", "");
+    if (!$skipGetAnnoFromFasta) {
+        get_anno_fasta("$otherfilesDir/augustus.hints$genesetId.gtf", "");
+    }
     print LOG "\# " . (localtime) . "rm $otherfilesDir/join$genesetId.gtf\n";
     unlink "$otherfilesDir/join$genesetId.gtf" or die("ERROR in file " . __FILE__
         . " at line ". __LINE__ ."\nFailed to execute: rm $otherfilesDir/join$genesetId.gtf!\n");
