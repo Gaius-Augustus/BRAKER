@@ -72,8 +72,8 @@ Contents
 -   [Example data](#example-data)
     -   [Data description](#data-description)
     -   [Testing BRAKER with RNA-Seq data](#testing-braker-with-rna-seq-data)
-    -   [Testing BRAKER with hints from proteins of any evolutionary distance](#testing-braker-with-hints-from-proteins-of-any-evolutionary-distance)
-    -   [Testing BRAKER with hints from proteins of any evolutionary distance and RNA-Seq](#testing-braker-with-hints-from-proteins-of-any-evolutionary-distance-and-rna-seq)
+    -   [Testing BRAKER with proteins of any evolutionary distance](#testing-braker-with-proteins-of-any-evolutionary-distance)
+    -   [Testing BRAKER with proteins of any evolutionary distance and RNA-Seq](#testing-braker-with-proteins-of-any-evolutionary-distance-and-rna-seq)
     -   [Testing BRAKER with proteins of close homology](#testing-braker-with-proteins-of-close-homology)
     -   [Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq supported training)](#testing-braker-with-proteins-of-close-homology-and-rna-seq-data-rna-seq-supported-training)
     -   [Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training)](#testing-braker-with-proteins-of-close-homoogy-and-rna-seq-data-rna-seq-and-protein-supported-training)
@@ -932,110 +932,105 @@ List of files:
 -   `RNAseq.hints` - RNA-Seq hints (can be used instead of RNAseq.bam as RNA-Seq input to BRAKER)
 -   `proteins.fa` - protein sequences in fasta format
 
-The below given commands assume that you configured all paths to tools by exporting bash variables or that you have the necessary tool in your $PATH.
+The below given commands assume that you configured all paths to tools by exporting bash variables or that you have the necessary tools in your $PATH.
 
 The example data set also contains scripts `tests/test*.sh` that will execute below listed commands for testing BRAKER with the example data set. You find example results of AUGUSTUS and GeneMark-EX in the folder `results/test*`. Be aware that BRAKER contains several parts where random variables are used, i.e. results that you obtain when running the tests may not be exactly identical.
+
+Several tests use `--gm_max_intergenic 10000` option to make the test runs faster. It is not recommended to use this option in real BRAKER runs, the speed increase achieved by adjusting this option is negligible on full-sized genomes.
 
 We give runtime estimations derived from computing on *Intel(R) Xeon(R) CPU E5530 @ 2.40GHz*.
 
 Testing BRAKER with RNA-Seq data
 --------------------------------
 
-The following command will test the pipeline according to Figure [3](#fig2) (implemented in `test1.sh`):
+The following command will run the pipeline according to Figure [3](#fig2):
 
-```
-    braker.pl --genome=genome.fa --bam=RNAseq.bam \
-       --softmasking
-```
+    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --cores N
 
-Runtime of this command is ~174 minutes.
+This test is implemented in `test1.sh`, expected runtime is ~20 minutes.
 
-Testing BRAKER with hints from proteins of any evolutionary distance
+Testing BRAKER with proteins of any evolutionary distance
 -------------------------------------------------------------------------
 
-The following command will test the pipeline according to Figure [4](#fig3) (implemented in `test2.sh`):
+The following command will run the pipeline according to Figure [4](#fig3):
 
-```
-    braker.pl --genome=../genome.fa --prot_seq=../orthodb_small.fa \
-       --epmode --softmasking
-```
 
-Runtime of this command is ~24 minutes (including the runtime of ProtHint).
+    braker.pl --genome genome.fa --prot_seq proteins.fa --softmasking --cores N
 
-Testing BRAKER with hints from proteins of any evolutionary distance and RNA-Seq
+
+This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
+
+Testing BRAKER with proteins of any evolutionary distance and RNA-Seq
 ------------------------------------------------------------------------------------
 
-The following command will test a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4), implemented in `test3.sh`:
+The following command will run a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4):
 
-```
-    braker.pl --genome=../genome.fa --prot_seq=../orthodb_small.fa \
-       --bam=../RNAseq.bam --etpmode --softmasking
-```
 
-Runtime of this command is ~380 minutes.
+    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam \
+        --etpmode --softmasking --cores N
+
+
+This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
 
 Testing BRAKER with proteins of close homology
 ----------------------------------------------
 
-The following command will test the pipeline according to Figure [6](#fig5) (implemented in `test4.sh`):
+The following command will run the pipeline according to Figure [6](#fig5):
 
-```
-    braker.pl --genome=genome.fa --prot_seq=prot.fa \
-       --prg=gth --trainFromGth --softmasking
-```
 
-Runtime of this command is ~143 minutes.
+    braker.pl --genome genome.fa --prot_seq proteins.fa --prg gth \
+        --trainFromGth --softmasking --cores N
+
+
+This test is implemented in `test4.sh`, expected runtime is ~7 minutes. The fast runtime of this test is mostly caused by generating a low number of training genes. Note that this approach does not scale well with increasing genome size and the number of proteins in a protein database. The runtime on a full genome will be much slower than with the command used in `test2.sh`.
 
 Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq supported training)
 --------------------------------------------------------------------------------------------
 
-The following command will test the pipeline according to Figure [7](#fig6) (implemented in `test5.sh`):
+The following command will run the pipeline according to Figure [7](#fig6):
 
-```
-    braker.pl --genome=genome.fa --prot_seq=prot.fa \
-       --prg=gth --bam=RNAseq.bam --softmasking
-```
 
-Runtime of this command is ~302 minutes.
+    braker.pl --genome genome.fa --prot_seq proteins.fa --prg gth \
+        --bam RNAseq.bam --softmasking --cores N
+
+
+This test is implemented in `test5.sh`, expected runtime is ~20 minutes.
 
 Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training)
 -------------------------------------------------------------------------------------------------------
 
-The following command will test the pipeline according to Figure [8](#fig7) (implemented in `test6.sh`):
+The following command will run the pipeline according to Figure [8](#fig7):
 
-    braker.pl --genome=genome.fa --prot_seq=prot.fa \
-       --prg=gth --bam=RNAseq.bam --gth2traingenes \
-       --softmasking
+    braker.pl --genome genome.fa --prot_seq prot.fa --prg gth \
+        --bam RNAseq.bam --gth2traingenes --softmasking --cores N
 
-Runtime of this command is ~236 minutes.
+This test is implemented in `test6.sh`, expected runtime is ~20 minutes.
 
 Testing BRAKER with pre-trained parameters
 ------------------------------------------
 
-The training step of all pipelines can be skipped with the option `--skipAllTraining`. This means, only AUGUSTUS predictions will be performed, using pre-trained, already existing parameters. For example, you can predict genes with the command (implemented in `test7.sh`):
+The training step of all pipelines can be skipped with the option `--skipAllTraining`. This means, only AUGUSTUS predictions will be performed, using pre-trained, already existing parameters. For example, you can predict genes with the command:
 
 ```
-    braker.pl --genome=genome.fa --bam=RNAseq.bam \
-       --species=fly --skipAllTraining --softmasking
+    braker.pl --genome=genome.fa --bam RNAseq.bam --species=arabidopsis \
+        --skipAllTraining --softmasking --cores N
 ```
 
-Runtime of this command is ~55 minutes.
+This test is implemented in `test7.sh`, expected runtime is ~1 minute.
 
 Testing BRAKER with genome sequence
 -----------------------------------
 
-Implemented in `test8.sh`. Call:
+The following command will run the pipeline with no extrinsic evidence:
 
-```
-    braker.pl --genome=genome.fa --esmode --softmasking
-```
+    braker.pl --genome=genome.fa --esmode --softmasking --cores N
 
-Runtime of this command is ~382 minutes.
+This test is implemented in `test8.sh`, expected runtime is ~20 minutes.
 
 Starting BRAKER on the basis of previously existing BRAKER runs
 ===============================================================
 
-There is currently no clean way to restart a failed BRAKER run (after solving some problem). However, it is possible to start a new BRAKER run based on results from a previous run -- given that the old run produced the required intermediate results. We will in the following refer to the old working directory with variable `${BRAKER_OLD}`, and to the new BRAKER working directory with `${BRAKER_NEW}`. The file `what-to-cite.txt` will always only refer to the software that was actually called by a particular run. You might have to combine the contents of ${BRAKER_NEW}/what-to-cite.txt with ${BRAKER_OLD}/what-to-cite.txt for preparing a publication. The following figure illustrates at which points BRAKER run may be intercepted.
+There is currently no clean way to restart a failed BRAKER run (after solving some problem). However, it is possible to start a new BRAKER run based on results from a previous run -- given that the old run produced the required intermediate results. We will in the following refer to the old working directory with variable `${BRAKER_OLD}`, and to the new BRAKER working directory with `${BRAKER_NEW}`. The file `what-to-cite.txt` will always only refer to the software that was actually called by a particular run. You might have to combine the contents of `${BRAKER_NEW}/what-to-cite.txt` with `${BRAKER_OLD}/what-to-cite.txt` for preparing a publication. The following figure illustrates at which points BRAKER run may be intercepted.
 
 
 ![braker-intercept\[fig8\]](docs/figs/braker-intercept.png)
@@ -1046,232 +1041,19 @@ Figure 10: Points for intercepting a BRAKER run and reusing intermediate results
 Option 1: starting BRAKER with existing hints file(s) before training
 ---------------------------------------------------------------------
 
-If you have access to an existing BRAKER output that contains hintsfiles that were generated from extrinsic data, such as RNA-Seq or protein sequences, you can recycle these hints files in a new BRAKER run.
+If you have access to an existing BRAKER output that contains hintsfiles that were generated from extrinsic data, such as RNA-Seq or protein sequences, you can recycle these hints files in a new BRAKER run. Also, hints from a separate ProtHint run can be directly used in BRAKER.
 
-<u>1a) RNA-Seq hints only (test1.sh):</u>
-
-Start a new job using the previously from-bam-generated hints with the following command (test1_restart1.sh, 115 minutes):
-
-```
-    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --softmasking --workingdir=${BRAKER_NEW}
-```
-
-
-<u>1b) Protein hints from a run in `--epmode` (test2.sh)</u>
-
-Start a new job using the previously from-prothint-generated hints with the following command (test2_restart1.sh, 84 minutes):
-
-```
-    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --prothints=${BRAKER_OLD}/prothints.gff \
-       --evidence=${BRAKER_OLD}/evidence.gff \
-       --softmasking --epmode --workingdir=${BRAKER_NEW}
-```
-
-<u>1c) Protein and RNA-Seq hints from a run in `--etpmode` (test3.sh)</u>
-
-Start a new job using the previously from-prothint-generated hints and bam-generated hints with the following command (test3_restart1.sh,  340 minutes):
-
-```
-    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --genemark_hintsfile=${BRAKER_OLD}/genemark_hintsfile.gff \
-       --evidence=${BRAKER_OLD}/evidence.gff \
-       --softmasking --etpmode --workingdir=${BRAKER_NEW}
-
-```
-
-<u>1d) Proteins of close homology, generating training genes with GenomeThreader (test4.sh):</u>
-
-Currently no option to restart after training gene generation.
-
-<u>1e) Proteins of close homology & training from RNA-Seq data with GeneMark-ET (test5.sh)</u>
-
-Start a new job using the previously from-bam-generated hints and from alignment of proteins of close homology to genome generated hints with the following command (stest5_restart1.sh, 270 minutes):
-
-```
-    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --softmasking --workingdir=${BRAKER_NEW}
-```
-
-<u>1f) Proteins of close homology -- also in training genes -- & training from RNA-Seq data with GeneMark-ET (test6.sh)</u>
-
-Currently no option to restart after training gene generation.
-
-<u>1g) AUGUSTUS prediction only with RNA-Seq data (test7.sh)</u>
-
-Start a new AUGUSTUS prediction-only job using the previously from-bam-generated hints with the following command (test7_restart1.sh, 60 minutes):
-
-```
-    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --species=fly --skipAllTraining --softmasking \
-       --workingdir=${BRAKER_NEW}
-```
-
-<u>1h) No hints involved with --esmode (test8.sh)</u>
-
-Cannot be restarted after hints generation (no hints generated).
-
+The hints can be given to BRAKER with `--hints ${BRAKER_OLD}/hintsfile.gff` option. This is illustrated in the test files `test1_restart1.sh`,  `test2_restart1.sh`,  `test3_restart1.sh`, `test5_restart1.sh`, and `test7_restart1.sh`. The other modes (for which this test is missing) cannot be restarted in this way.
 
 Option 2: starting BRAKER after GeneMark-EX had finished, before training AUGUSTUS
 ----------------------------------------------------------------------------------
 
-<u>2a) RNA-Seq hints only (test1.sh):</u>
-
-Start a new job using the previously generating GeneMark-ET file with the following command (test1_restart2.sh, 120 minutes):
-
-```
-    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --geneMarkGtf=${BRAKER_OLD}/GeneMark-ET/genemark.gtf \
-       --softmasking --workingdir=${BRAKER_NEW}
-```
-
-<u>2b) Protein hints from a run in `--epmode` (test2.sh):</u>
-
-Start a new job using the previously generated GeneMark-EP file with the following command (test2_restart2.sh, 45 minutes):
-
-```
-    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --geneMarkGtf=${BRAKER_OLD}/GeneMark-EP/genemark.gtf \
-       --softmasking --epmode --workingdir=${BRAKER_NEW}
-```
-
-<u>2c) Protein and RNA-Seq hints from a run in `--etpmode` (test3.sh)</u>
-
-Start a new job using the previously generated GeneMark-ETP file with the following command (test3_restart2.sh,  212 minutes):</u>
-
-
-```
-    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --geneMarkGtf=${BRAKER_OLD}/GeneMark-ETP \
-       --softmasking --etpmode --workingdir=${BRAKER_NEW}
-
-```
-
-<u>2d) Proteins of close homology, generating training genes with GenomeThreader (test4.sh):</u>
-
-Cannot be restarted after GeneMark-EX since that software did not run.
-
-<u>2e) Proteins of close homology & training from RNA-Seq data with GeneMark-ET (test5.sh)</u>
-
-Start a new job using the previously from-bam-generated hints and from alignment of proteins of close homology to genome generated hints and the GeneMark-ET output file with the following command (test5_restart2.sh, 232 minutes):
-
-```
-    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --geneMarkGtf=${BRAKER_OLD}/GeneMark-ET/genemark.gtf \
-       --softmasking --workingdir=${BRAKER_NEW}
-```
-
-<u>2f) Proteins of close homology -- also in training genes -- & training from RNA-Seq data with GeneMark-ET (test6.sh)</u>
-
-Currently no option to restart after training gene generation because no mechanism to pass the GenomeThreader training genes to a new run.
-
-<u>2g) AUGUSTUS prediction only with RNA-Seq data (test7.sh)</u>
-
-Cannot be restarted after GeneMark-EX since that software did not run.
-
-<u>2h) No hints involved with --esmode (test8.sh)</u>
-
-Start a new job using the previously generated GeneMark-ES file with the following command (test8_restart2.sh, 376 minutes):
-
-```
-    braker.pl --genome=../genome.fa --esmode \
-       --geneMarkGtf=${BRAKER_OLD}/GeneMark-ES/genemark.gtf \
-       --softmasking --workingdir=${BRAKER_NEW}
-```
+The GeneMark result can be given to BRAKER with `--geneMarkGtf ${BRAKER_OLD}/GeneMark-EX/genemark.gtf` option. This is illustrated in the test files `test1_restart2.sh`,  `test2_restart2.sh`,  `test3_restart2.sh`, `test5_restart2.sh`, and `test8_restart2.sh`. The other modes (for which this test is missing) cannot be restarted in this way.
 
 Option 3: starting BRAKER after AUGUSTUS training
 -------------------------------------------------
 
-<u>3a) RNA-Seq hints only (test1.sh):</u>
-
-Start a new job using parameters from RNA-Seq based AUGUSTUS training with the following command (test1_restart3.sh, 41 minutes):
-
-```
-    SPECIES=$(cat ${BRAKER_OLD}/braker.log | perl -ne \
-       'if(m/AUGUSTUS parameter set with name ([^.]+)\./){print $1;}')
-    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --skipAllTraining --species=${SPECIES} \
-       --softmasking --workingdir=${BRAKER_NEW}
-```
-
-<u>3b) Protein hints from a run in `--epmode` (test2.sh):</u>
-
-Start a new job using parameters from ProtHint/GeneMark-EP/EP+ based AUGUSTUS training with the following command (test2_restart3.sh, 30 minutes):
-
-```
-    SPECIES=$(cat ${BRAKER_OLD}/braker.log | perl -ne \
-       'if(m/AUGUSTUS parameter set with name ([^.]+)\./){print $1;}')
-    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --skipAllTraining --species=${SPECIES}
-       --softmasking --epmode --workingdir=${BRAKER_NEW}
-```
-
-<u>3c) Protein and RNA-Seq hints from a run in `--etpmode` (test3.sh)</u>
-
-Start a new job using parameters from ProtHint and RNA-Seq based AUGUSTUS training using the following command (test3_restart3.sh, 78 minutes):</u>
-
-
-```
-    SPECIES=$(cat ${BRAKER_OLD}/braker.log | perl -ne \
-       'if(m/AUGUSTUS parameter set with name ([^.]+)\./){print $1;}')
-    braker.pl --genome=genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --skipAllTraining --species=${SPECIES} \
-       --softmasking --etpmode --workingdir=${BRAKER_NEW}
-```
-
-<u>3d) Proteins of close homology, generating training genes with GenomeThreader (test4.sh):</u>
-
-Start a new job using parameters from GenomeThreader protein based AUGUSTUS training using the following command (test4_restart3.sh, 28 minutes):
-
-```
-    SPECIES=$(cat ${BRAKER_OLD}/braker.log | perl -ne \
-       'if(m/AUGUSTUS parameter set with name ([^.]+)\./){print $1;}')
-    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --skipAllTraining --species=${SPECIES} --softmasking \
-       --workingdir=${BRAKER_NEW} --prg=gth
-```
-
-<u>3e) Proteins of close homology & training from RNA-Seq data with GeneMark-ET (test5.sh)</u>
-
-Start a new job using parameters from RNA-Seq based AUGUSTUS training and in addition GenomeThreader derived hints from proteins of close homology with the following command (test5_restart3.sh, 86 minutes):
-
-```
-    SPECIES=$(cat ${BRAKER_OLD}/braker.log | perl -ne \
-       'if(m/AUGUSTUS parameter set with name ([^.]+)\./){print $1;}')
-    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --skipAllTraining --softmasking --workingdir=${BRAKER_NEW} \
-       --species=${SPECIES}
-```
-
-<u>3f) Proteins of close homology -- also in training genes -- & training from RNA-Seq data with GeneMark-ET (test6.sh)</u>
-
-Start a new job using parameters from RNA-Seq & proteins of close homology (GenomeThreader) based AUGUSTUS training with the following command (test6_restart3.sh, 85 minutes):
-
-```
-    SPECIES=$(cat ${BRAKER_OLD}/braker.log | perl -ne \
-       'if(m/AUGUSTUS parameter set with name ([^.]+)\./){print $1;}')
-    braker.pl --genome=../genome.fa --hints=${BRAKER_OLD}/hintsfile.gff \
-       --prg=gth --skipAllTraining --softmasking \
-       --workingdir=${BRAKER_NEW} --species=${SPECIES}
-```
-
-<u>3g) AUGUSTUS prediction only with RNA-Seq data (test7.sh)</u>
-
-This is included in the original script test7.sh.
-
-<u>3h) No hints involved with --esmode (test8.sh)</u>
-
-Start a new job using parameters from GeneMark-ES based AUGUSTUS training with the following command (test8_restart3.sh, 20 minutes):
-
-```
-    SPECIES=$(cat ${BRAKER_OLD}/braker.log | perl -ne \
-       'if(m/AUGUSTUS parameter set with name ([^.]+)\./){print $1;}')
-    braker.pl --genome=../genome.fa --esmode --skipAllTraining \
-       --softmasking --workingdir=${BRAKER_NEW} --species=${SPECIES}
-
-```
-
+The trained species parameters for AGUSTUS can be passed with `--skipAllTraining` and `--species $speciesName` options. This is illustrated in `test*_restart3.sh` files.
 
 Bug reporting
 =============
@@ -1478,3 +1260,4 @@ Oxford University Press: 2078--9.[↩](#a6)
 <b id="f17">[R17]</b> Bruna, T., Lomsadze, A., & Borodovsky, M. 2020. GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026. doi: <https://doi.org/10.1093/nargab/lqaa026>.[↩](#a17)
 
 <b id="f18">[R18]</b> Kriventseva, E. V., Kuznetsov, D., Tegenfeldt, F., Manni, M., Dias, R., Simão, F. A., and Zdobnov, E. M. 2019. OrthoDB v10: sampling the diversity of animal, plant, fungal, protist, bacterial and viral genomes for evolutionary and functional annotations of orthologs. Nucleic Acids Research, 47(D1), D807-D811.[↩](#a18)
+
