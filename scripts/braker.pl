@@ -519,6 +519,7 @@ my $GENEMARK_PATH;
 my $GMET_path;           # GeneMark-ET path
 my $PROTHINT_PATH;
 my $prothint_path;
+my $PROTHINT_REQUIRED = "prothint.py 2.5.0";   # Version of ProtHint required for this BRAKER version
 my $genome;              # name of sequence file
 my %scaffSizes;          # length of scaffolds
 my $gff3 = 0;            # create output file in GFF3 format
@@ -3764,6 +3765,37 @@ sub check_upfront {
             print STDERR $logString;
         }
     }
+
+    # Check that ProtHint is running and it is the correct version
+    if (system("$PROTHINT_PATH/prothint.py --version") != 0) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "# Could not run ProtHint. Please check ProtHint installation "
+            . "by running the test located in $PROTHINT_PATH/example "
+            . "folder.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
+    my $prothintVersion = `$PROTHINT_PATH/prothint.py --version`;
+    chomp($prothintVersion);
+    if (!($prothintVersion eq $PROTHINT_REQUIRED)) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "# This version of BRAKER depends on ProtHint version "
+            . "\"$PROTHINT_REQUIRED\", you provided version \"$prothintVersion\". "
+            . "Please install the required version from "
+            . "https://github.com/gatech-genemark/ProtHint/releases.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
 }
 
 ####################### find_ex_cfg ############################################
