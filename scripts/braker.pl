@@ -3766,36 +3766,37 @@ sub check_upfront {
         }
     }
 
-    # Check that ProtHint is running and it is the correct version
-    if (system("$PROTHINT_PATH/prothint.py --version") != 0) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "# Could not run ProtHint. Please check ProtHint installation "
-            . "by running the test located in $PROTHINT_PATH/example "
-            . "folder.\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
-    }
+    if (defined($PROTHINT_PATH)) {
+        # Check that ProtHint is running and it is the correct version
+        if (system("$PROTHINT_PATH/prothint.py --version") != 0) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "# Could not run ProtHint. Please check ProtHint installation "
+                . "by running the test located in $PROTHINT_PATH/example "
+                . "folder.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+        }
 
-    my $prothintVersion = `$PROTHINT_PATH/prothint.py --version`;
-    chomp($prothintVersion);
-    if (!($prothintVersion eq $PROTHINT_REQUIRED)) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "# This version of BRAKER depends on ProtHint version "
-            . "\"$PROTHINT_REQUIRED\", you provided version \"$prothintVersion\". "
-            . "Please install the required version from "
-            . "https://github.com/gatech-genemark/ProtHint/releases.\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
+        my $prothintVersion = `$PROTHINT_PATH/prothint.py --version`;
+        chomp($prothintVersion);
+        if (!($prothintVersion eq $PROTHINT_REQUIRED)) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "# This version of BRAKER depends on ProtHint version "
+                . "\"$PROTHINT_REQUIRED\", you provided version \"$prothintVersion\". "
+                . "Please install the required version from "
+                . "https://github.com/gatech-genemark/ProtHint/releases.\n";
+            $logString .= $prtStr;
+            print STDERR $logString;
+            exit(1);
+        }
     }
-
 }
 
 ####################### find_ex_cfg ############################################
