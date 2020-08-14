@@ -913,6 +913,11 @@ An incomplete example data set is contained in the directory `BRAKER/example`. I
     cd BRAKER/example
     wget http://topaz.gatech.edu/GeneMark/Braker/RNAseq.bam
 
+In case you have trouble accessing that file, there's also a copy available from another server:
+
+    cd BRAKER/example
+    wget http://bioinf.uni-greifswald.de/augustus/datasets/RNAseq.bam
+
 
 The example data set was not compiled in order to achieve optimal prediction accuracy, but in order to test pipeline components.
 
