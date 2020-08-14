@@ -3345,7 +3345,7 @@ sub check_upfront {
     );
 
     if($EPmode or $ETPmode){
-      push(@module_list, "MCE:Mutex");
+      push(@module_list, "MCE::Mutex");
       push(@module_list, "threads");
     }
 
