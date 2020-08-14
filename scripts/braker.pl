@@ -3344,6 +3344,11 @@ sub check_upfront {
         "Math::Utils"
     );
 
+    if($EPmode or $ETPmode){
+      push(@module_list, "MCE:Mutex");
+      push(@module_list, "threads");
+    }
+
     foreach my $module (@module_list) {
         $pmodule = check_install( module => $module );
         if ( !$pmodule ) {
