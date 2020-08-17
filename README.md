@@ -1006,7 +1006,7 @@ The following command will run the pipeline according to Figure [7](#fig6):
 
 This test is implemented in `test5.sh`, expected runtime is ~20 minutes.
 
-Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training)
+Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq and protein supported training)
 -------------------------------------------------------------------------------------------------------
 
 The following command will run the pipeline according to Figure [8](#fig7):
