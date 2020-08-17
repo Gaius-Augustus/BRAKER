@@ -5945,7 +5945,11 @@ sub get_genemark_hints {
             $t[2] =~ s/start/start_codon/;
             $t[2] =~ s/stop/stop_codon/;
             $t[8] =~ m/mult=([^;]+);/;
-            $t[5] = $1;
+            if(defined($1)){
+                  $t[5] = $1;
+            }else{
+                  $t[5] = 1;
+            }
             print OUTPROT join("\t", @t);
         }
     }
