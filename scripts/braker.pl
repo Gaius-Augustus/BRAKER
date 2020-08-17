@@ -9416,7 +9416,7 @@ sub joingenes {
     if ($nice) {
         $perlCmdString .= "nice ";
     }
-    my $gff_file2 = $file1;
+    my $gff_file2 = $file2;
     $gff_file2 =~ s/\.gtf/\.gff/;
     $perlCmdString .= "perl $string --in=$gff_file2 --src=E > $otherfilesDir/file2_ntx";
     print LOG "# Counting the number of transcripts with support from src=E in file $file2...\n";
@@ -9449,7 +9449,7 @@ sub joingenes {
         if ($nice) {
             $perlCmdString .= "nice ";
         }
-        $perlCmdString .= "perl $string --in=$file1 --src=P --out=$join_on_top";
+        $perlCmdString .= "perl $string --in=$gff_file1 --src=P --out=$join_on_top";
         print LOG "# Filtering those genes that have evidence by src=P from $file1...\n";
         print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
@@ -9461,7 +9461,7 @@ sub joingenes {
         if ($nice) {
             $perlCmdString .= "nice ";
         }
-        $perlCmdString .= "perl $string --in=$file2 --src=E --out=$join_on_top";
+        $perlCmdString .= "perl $string --in=$gff_file2 --src=E --out=$join_on_top";
         print LOG "# Filtering those genes that have evidence by src=E from $file2...\n";
         print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0 or die("ERROR in file " . __FILE__
