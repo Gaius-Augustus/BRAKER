@@ -5625,6 +5625,9 @@ sub make_prot_hints {
         gth2gtf( $alignment_outfile, $gthTrainGeneFile );
     }
     if(defined($gemomaGff)){
+        print CITE $pubs{'gemoma1'}; $pubs{'gemoma1'} = "";
+        print CITE $pubs{'gemoma2'}; $pubs{'gemoma2'} = "";
+        print CITE $pubs{'gemoma3'}; $pubs{'gemoma3'} = "";
         $gemomaGtf = $otherfilesDir."/gemoma.gtf";
         gth2gtf($gemomaGff, $gemomaGtf);
         aln2hints( $gemomaGff, $otherfilesDir."/hintsfile.gff" );
