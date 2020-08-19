@@ -185,6 +185,7 @@ FREQUENTLY USED OPTIONS
                                     bam-file is supplied.)
 --trainFromGth                      No GeneMark-Training, train AUGUSTUS from
                                     GenomeThreader alignments
+--gemomaGff=file.gff3               Provide GeMoMa gff file
 --makehub                           Create track data hub with make_hub.py 
                                     for visualizing BRAKER results with the
                                     UCSC GenomeBrowser
@@ -492,6 +493,8 @@ my $email; # for make_hub.py
 my @bam;                      # bam file names
 my @stranded;                 # contains +,-,+,-... corresponding to 
                               # bam files
+my $gemomaGff;
+my $gemomaGtf;
 my $checkOnly = 0;
 my $bamtools_path;
 my $BAMTOOLS_BIN_PATH;
@@ -707,6 +710,7 @@ GetOptions(
     'geneMarkGtf=s'                => \$geneMarkGtf,
     'gth2traingenes!'              => \$gth2traingenes,
     'trainFromGth!'                => \$trainFromGth,
+    'gemomaGff=s'                  => \$gemomaGff,
     'esmode!'                      => \$ESmode,
     'epmode!'                      => \$EPmode,
     'etpmode!'                     => \$ETPmode,
@@ -768,6 +772,9 @@ $pubs{'gth'} = "\nGremme, G. (2013). Computational gene structure prediction.\n"
 $pubs{'spaln'} = "\nGotoh, O. (2008). A space-efficient and accurate method for mapping and aligning cDNA sequences onto genomic sequence. Nucleic acids research, 36(8), 2630-2638.\n";
 $pubs{'spaln2'} = "\nIwata, H., & Gotoh, O. (2012). Benchmarking spliced alignment programs including Spaln2, an extended version of Spaln that incorporates additional species-specific features. Nucleic acids research, 40(20), e161-e161.\n";
 $pubs{'exonerate'} = "\nSlater, G. S. C., & Birney, E. (2005). Automated generation of heuristics for biological sequence comparison. BMC bioinformatics, 6(1), 31.\n";
+$pubs{'gemoma1'} = "\nKeilwagen, J., Hartung, F., Grau, J. (2019) GeMoMa: Homology-based gene prediction utilizing intron position conservation and RNA-seq data. Methods Mol Biol. 1962:161-177, doi: 10.1007/978-1-4939-9173-0_9.\n";
+$pubs{'gemoma2'} = "\nKeilwagen, J., Wenk, M., Erickson, J.L., Schattat, M.H., Grau, J., Hartung F. (2016) Using intron position conservation for homology-based gene prediction. Nucleic Acids Research, 44(9):e89.\n";
+$pubs{'gemoma3'} = "\nKeilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.\n";
 
 # Make paths to input files absolute ###########################################
 
@@ -829,24 +836,30 @@ set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
 set_PYTHON3_PATH();
-if (!$trainFromGth && !defined($geneMarkGtf) && !$skipAllTraining &&
-    !defined($AUGUSTUS_hints_preds)) {
-    set_GENEMARK_PATH()
-} elsif ($trainFromGth) {
-    if ( not ( defined ($gth2traingenes) ) ) {
+if ( not($trainFromGth) and not(defined($gemomaGff)) ) {
+      if( not($skipGeneMarkEP) || not($skipGeneMarkET) || not($skipGeneMarkETP) || not($skipGeneMarkES) ) {
+            set_GENEMARK_PATH()
+      }
+} else {
+      if ( not ( defined ($gth2traingenes) ) and not ( defined ($gemomaGff) ) ) {
             $prtStr
             = "#*********\n"
             . "# WARNING: --gth2traingenes was not enabled, will enable this "
             . "flag, now, because no GeneMark training will be performed!\n"
+            . "Alternatively, you could specificy --gemomaGff=file.gff3.\n"
             . "#*********\n";
-        $logString .= $prtStr if ( $v > 0 );
-        $gth2traingenes = 1;    # enable if no genemark training is performed
-    }
+            $logString .= $prtStr if ( $v > 0 );
+            if( not ( defined ($gemomaGff) ) ) {
+                  $gth2traingenes = 1;    # enable if no genemark training is performed
+            } # else GeMoMa based training will be performed!
+      }
 }
+
 if( @bam ) {
     set_BAMTOOLS_PATH();
     set_SAMTOOLS_PATH();
 }
+
 if (not ($skipAllTraining)){
     set_BLAST_or_DIAMOND_PATH();
 }
@@ -957,7 +970,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
             . (localtime)
             . ": REMARK: The GeneMark-EX step will be skipped.\n";
     $logString .= $prtStr if ( $v > 3 );
-    if ( not($trainFromGth) && not($useexisting)) {
+    if ( not($trainFromGth) && not(defined($gemomaGff)) && not($useexisting)) {
         if (    not( -e "$genemarkDir/genemark.gtf" )
             and not( -e rel2abs($geneMarkGtf) ) )
         {
@@ -1057,9 +1070,9 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
         }
         exit(1);
     }
-} elsif ( ( ( $skipGeneMarkEP && not($trainFromGth) && not ( defined($AUGUSTUS_hints_preds) )) || 
-    ( $skipGeneMarkETP && not ($trainFromGth)  && not ( defined($AUGUSTUS_hints_preds) )) || 
-    ( $skipGeneMarkES && not ($trainFromGth)  && not ( defined($AUGUSTUS_hints_preds) )) ) 
+} elsif ( ( ( $skipGeneMarkEP && not($trainFromGth) && not(defined($gemomaGff)) && not ( defined($AUGUSTUS_hints_preds) )) || 
+    ( $skipGeneMarkETP && not ($trainFromGth) && not(defined($gemomaGff)) && not ( defined($AUGUSTUS_hints_preds) )) || 
+    ( $skipGeneMarkES && not ($trainFromGth) && not(defined($gemomaGff)) && not ( defined($AUGUSTUS_hints_preds) )) ) 
     && not ($skipAllTraining) &&  not ( defined($AUGUSTUS_hints_preds) ) ) {
     $prtStr = "\# "
             . (localtime)
@@ -1092,6 +1105,10 @@ if(defined($annot_pseudo)){
     $annot_pseudo = rel2abs($annot_pseudo);
 }
 
+if(defined($gemomaGff)){
+    $gemomaGff = rel2abs($gemomaGff);
+}
+
 # open log file
 $prtStr = "\# "
         . (localtime)
@@ -1118,11 +1135,11 @@ print CITE $pubs{'braker-whole'}; $pubs{'braker-whole'} = "";
 # AUGUSTUS differs
 $hintsfile = "$otherfilesDir/hintsfile.gff";
 truncate $hintsfile, 0;
-if(! $trainFromGth && ! $ESmode && not ( defined($AUGUSTUS_hints_preds) )) {
+if(! $trainFromGth && !defined($gemomaGff) && ! $ESmode && not ( defined($AUGUSTUS_hints_preds) )) {
     $genemark_hintsfile = "$otherfilesDir/genemark_hintsfile.gff";
 }
 
-if ( (!-d $genemarkDir) && ! $trainFromGth) {
+if ( (!-d $genemarkDir) && ! $trainFromGth && ! defined($gemomaGff) ) {
     make_path($genemarkDir) or die("ERROR in file " . __FILE__ ." at line "
         . __LINE__ ."\nFailed to create direcotry $genemarkDir!\n");
     print LOG "\# "
@@ -1341,7 +1358,7 @@ if($ESmode==0){
 
 if( @prot_seq_files && (($EPmode==1) || ($ETPmode==1)) ){
     run_prothint();
-}elsif( @prot_seq_files or @prot_aln_files 
+}elsif( @prot_seq_files or @prot_aln_files or defined($gemomaGff)
     && not ( defined($AUGUSTUS_hints_preds) ) ){
     make_prot_hints(); # not ProtHint, but old pipeline for generating protein hints!
 }
@@ -1358,14 +1375,14 @@ if (@hints && not (defined($AUGUSTUS_hints_preds))) {
 
 # extract intron hints from hintsfile.gff for GeneMark (in ETP mode also used for AUGUSTUS)
 
-if (!$trainFromGth && !$ESmode && !(defined($geneMarkGtf)) &&
+if (!$trainFromGth && !defined($gemomaGff) && !$ESmode && !(defined($geneMarkGtf)) &&
     !$skipAllTraining && !(defined($AUGUSTUS_hints_preds))) {
     get_genemark_hints();
 }
 
 # train gene predictors
 if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
-    if ( not($trainFromGth) ) {
+    if ( not($trainFromGth) && not(defined($gemomaGff)) ) {
         print LOG "\#**********************************************************************************\n"
                 . "\#                              RUNNING GENEMARK-EX                                 \n"
                 . "\#**********************************************************************************\n";
@@ -3285,7 +3302,7 @@ sub determineRunMode {
         $foundRNASeq = 1;
     }
 
-    if (@prot_seq_files) {
+    if (@prot_seq_files || defined($gemomaGff)) {
         $foundProt++;
     }
 
@@ -3296,7 +3313,7 @@ sub determineRunMode {
     }
 
     # Mode was already specified on command line
-    if ($EPmode || $ETPmode || $ESmode || $trainFromGth) {
+    if ($EPmode || $ETPmode || $ESmode || $trainFromGth || defined($gemomaGff)) {
         return;
     }
 
@@ -3938,6 +3955,16 @@ sub check_options {
         $skipGeneMarkES = 1;
     }
 
+    if (defined($gemomaGff)) {
+        $skipGeneMarkET = 1;
+        $skipGeneMarkEP = 1;
+        $skipGeneMarkETP = 1;
+        $skipGeneMarkES = 1;
+        if(not(defined($prg))){
+            $prg = "gemoma"; # saves users from having to state it...
+      }
+    }
+
     if ($skipAllTraining) {
         $skipoptimize = 1;
         $skipGeneMarkET = 1;
@@ -4186,7 +4213,7 @@ sub check_options {
     }
 
     # check whether a valid set of input files is provided
-    if (!$foundRNASeq && !$foundProt && !$ESmode && !$skipAllTraining) {
+    if (!$foundRNASeq && !$foundProt && !$ESmode && !$skipAllTraining && !defined($gemomaGff)) {
             $prtStr = "\# "
                 . (localtime)
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
@@ -4196,7 +4223,8 @@ sub check_options {
                 . "    --bam=file.bam\n"
                 . "    --hints=file.hints\n"
                 . "    --prot_seq=file.fa\n"
-                . "    --prot_aln=file.aln --trainFromGth\n";
+                . "    --prot_aln=file.aln --trainFromGth\n"
+                . "    --gemomaGff=file.gff3\n";
             $logString .= $prtStr;
             print STDERR $logString;
             exit(1);
@@ -4480,7 +4508,8 @@ sub check_options {
     if ( defined($prg) ) {
         if (    not( $prg =~ m/gth/ )
             and not( $prg =~ m/exonerate/ )
-            and not( $prg =~ m/spaln/ ))
+            and not( $prg =~ m/spaln/ )
+            and not( $prg =~ m/gemoma/))
         {
             $prtStr
                 = "\# "
@@ -4488,13 +4517,13 @@ sub check_options {
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "# An alignment tool other than gth, exonerate and spaln "
                 . "has been specified with option --prg=$prg. BRAKER "
-                . "currently only supports the options gth, exonerate and "
+                . "currently only supports the options gth, gemoma, exonerate and "
                 . "spaln for running BRAKER in GeneMark-ET mode.\n";
             $logString .= $prtStr;
             print STDERR $logString;
             exit(1);
         }
-        if ( (!@prot_seq_files and !@prot_aln_files) and not($skipAllTraining) ) {
+        if ( (!@prot_seq_files and !@prot_aln_files) and not($skipAllTraining) and not(defined($gemomaGff))) {
             $prtStr
                 = "\# "
                 . (localtime)
@@ -4537,6 +4566,29 @@ sub check_options {
                 . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
                 . "With --etpmode, usage of GenomeThreader is not supported "
                 . "(options --gth2traingenes and --prg=gth)!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
+    # check whether trainFromGemoma option is valid
+    if ( defined($gemomaGff) && not( $prg eq "gemoma" ) ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "Option --gemomaGff=file.gff3 can not be specified with "
+            . "option --prg=$prg!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    } elsif ( ( defined ($gemomaGff) && (defined($prg) && $prg eq "gemoma" )) && ( $ETPmode == 1 ) ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "With --etpmode, usage of GeMoMa is not supported "
+                . "(option --gemomaGff=file.gff3)!\n";
         $logString .= $prtStr;
         print STDERR $logString;
         exit(1);
@@ -5572,6 +5624,11 @@ sub make_prot_hints {
         }
         gth2gtf( $alignment_outfile, $gthTrainGeneFile );
     }
+    if(defined($gemomaGff)){
+        $gemomaGtf = $otherfilesDir."/gemoma.gtf";
+        gth2gtf($gemomaGff, $gemomaGtf);
+        aln2hints( $gemomaGff, $otherfilesDir."/hintsfile.gff" );
+    }
 }
 
 ####################### aln2hints ##############################################
@@ -5598,16 +5655,12 @@ sub aln2hints {
             "align2hints.pl",       $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
         );
-        $perlCmdString .= "$string --in=$aln_file --out=$out_file_name ";
-        if ( $prg eq "spaln" ) {
-            $perlCmdString .= "--prg=spaln";
-        }
-        elsif ( $prg eq "gth" ) {
-            $perlCmdString .= "--prg=gth --priority=5";
-        }
-        elsif ( $prg eq "exonerate" ) {
+        $perlCmdString .= "$string --in=$aln_file --out=$out_file_name --prg=$prg";
+        if ( $prg eq "gth" ) {
+            $perlCmdString .= " --priority=5";
+        }elsif ( $prg eq "exonerate" ) {
             $perlCmdString
-                .= "--prg=exonerate --genome_file=$genome --priority=3";
+                .= " --genome_file=$genome --priority=3";
         }
         print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
@@ -5638,7 +5691,7 @@ sub aln2hints {
 
 sub gth2gtf {
     my $align = shift;
-    print LOG "\# " . (localtime) . ": Converting GenomeThreader file $align "
+    print LOG "\# " . (localtime) . ": Converting GenomeThreader or GeMoMa file $align "
     . "to gtf format\n" if ($v > 2);
     my $out   = shift;    # writes to $gthTrainGeneFile
     open( GTH,    "<", $align ) or clean_abort(
@@ -5658,13 +5711,18 @@ sub gth2gtf {
     while (<GTH>) {
         chomp;
         my @gtfLine = split(/\t/);
-        if (m/\tgene\t/) {
-            my @idCol = split( /=/, $gtfLine[8] );
-            $geneId = $idCol[1];
+        if (m/\tgene\t/ || m/\tprediction\t/) {
+            $gtfLine[8] =~ m/=([^;]+)/;
+            $geneId = $1;
         }
         elsif (m/\tCDS\t/) {
-            my @gtfLineLastCol      = split( /;/, $gtfLine[8] );
-            my @gtfLineLastColField = split( /=/, $gtfLineLastCol[1] );
+            my @gtfLineLastColField;
+            if($gtfLine[8] =~ m/;/){
+                my @gtfLineLastCol      = split( /;/, $gtfLine[8] );
+                @gtfLineLastColField = split( /=/, $gtfLineLastCol[1] );
+            }else{
+                @gtfLineLastColField = split( /=/, $gtfLine[8] );
+            }
             if (not( defined( $seen{ "$gtfLine[0]" . "_" . $geneId . "_" } ) )
                 )
             {
@@ -5677,21 +5735,42 @@ sub gth2gtf {
                 . "_"
                 . $geneId . "_"
                 . $gtfLineLastColField[1] )
-            {
-                print GTHGTF "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t"
+            {   
+                if(defined($gemomaGff)){
+                    $gtfLine[8] =~ m/_R(\d+)/; # exclude alternative transcripts from GeMoMa
+                    if($1 == 0){
+                        print GTHGTF "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t"
                             . "$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t"
                             . "$gtfLine[6]\t$gtfLine[7]\tgene_id \""
                             . "$gtfLine[0]_g_" .$geneId . "_"
                             . $gtfLineLastColField[1] . "\"; transcript_id "
                             . "\"$gtfLine[0]_t" . "_" . $geneId . "_"
                             . $gtfLineLastColField[1] . "\";\n";
-                print GTHGTF "$gtfLine[0]\t$gtfLine[1]\texon\t$gtfLine[3]\t"
+                        print GTHGTF "$gtfLine[0]\t$gtfLine[1]\texon\t$gtfLine[3]\t"
                             . "$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t"
                             . "$gtfLine[7]\tgene_id \"$gtfLine[0]_g" . "_"
                             . $geneId . "_"
                             . $gtfLineLastColField[1] . "\"; transcript_id \""
                             . "$gtfLine[0]_t" . "_" . $geneId . "_"
                             . $gtfLineLastColField[1] . "\";\n";
+                    }
+
+                }else{
+                    print GTHGTF "$gtfLine[0]\t$gtfLine[1]\t$gtfLine[2]\t"
+                                . "$gtfLine[3]\t$gtfLine[4]\t$gtfLine[5]\t"
+                                . "$gtfLine[6]\t$gtfLine[7]\tgene_id \""
+                                . "$gtfLine[0]_g_" .$geneId . "_"
+                                . $gtfLineLastColField[1] . "\"; transcript_id "
+                                . "\"$gtfLine[0]_t" . "_" . $geneId . "_"
+                                . $gtfLineLastColField[1] . "\";\n";
+                    print GTHGTF "$gtfLine[0]\t$gtfLine[1]\texon\t$gtfLine[3]\t"
+                                . "$gtfLine[4]\t$gtfLine[5]\t$gtfLine[6]\t"
+                                . "$gtfLine[7]\tgene_id \"$gtfLine[0]_g" . "_"
+                                . $geneId . "_"
+                                . $gtfLineLastColField[1] . "\"; transcript_id \""
+                                . "$gtfLine[0]_t" . "_" . $geneId . "_"
+                                . $gtfLineLastColField[1] . "\";\n";
+                }
             }
         }
     }
@@ -6931,7 +7010,7 @@ sub training_augustus {
                        # stop codon setting and to compute k for cores>8
 
         # set contents of trainGenesGtf file
-        if ( not ($gth2traingenes) and not ($trainFromGth) ) {
+        if ( not ($gth2traingenes) and not ($trainFromGth) and not (defined($gemomaGtf)) ) {
             # create softlink from genemark.gtf to traingenes.gtf
             print LOG "\# "
                 . (localtime)
@@ -6945,7 +7024,7 @@ sub training_augustus {
                     . __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $trainFromGth ) {
             # create softlink from gth.gtf to traingenes.gtf
-             # make gth gb final
+            # make gth gb final
             print LOG "\#  "
                 . (localtime)
                 . ": creating softlink from $gthGtf to $trainGenesGtf.\n"
@@ -6956,12 +7035,23 @@ sub training_augustus {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nfailed to execute: $cmdString!\n");
+        } elsif ( defined($gemomaGtf) ) {
+            print LOG "\#  "
+                . (localtime)
+                . ": creating softlink from $gemomaGtf to $trainGenesGtf.\n"
+                if ($v > 3);
+            $cmdString = "ln -s $gemomaGtf $trainGenesGtf";
+            print LOG "$cmdString\n" if ($v > 3);
+            system($cmdString) == 0
+                or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+                    $useexisting, "ERROR in file " . __FILE__ ." at line "
+                    . __LINE__ ."\nfailed to execute: $cmdString!\n");
         } elsif ( $gth2traingenes and not ($trainFromGth) ) {
             # merge gth and gm gtf files
             combine_gm_and_gth_gtf ( $gmGtf,
                 "$otherfilesDir/protein_alignment_$prg.gff3", $gthGtf,
                 $trainGenesGtf);
-        } else {
+        }else {
             $prtStr
                 = "\# "
                 . (localtime)
@@ -7005,7 +7095,7 @@ sub training_augustus {
 
         # filter "good" genes from train.gb: all gth genes that are left, plus
         # the genemark "good" genes
-        if ( not ( $trainFromGth ) ) {
+        if ( not ( $trainFromGth ) and not ( defined($gemomaGff) ) ) {
             if (not($lambda)){
                 # get good genemark genes
                 print LOG "\# "
@@ -7033,7 +7123,7 @@ sub training_augustus {
             }
         }
 
-        if ( $gth2traingenes ) {
+        if ( $gth2traingenes || $gemomaGff) {
             print LOG "\#  "
                 . (localtime)
                 . ": concatenating good GenomeThreader training genes to "
@@ -7047,10 +7137,18 @@ sub training_augustus {
                 "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
                 "ERROR in file " . __FILE__ ." at line ". __LINE__
                 . "\nCould not open file $trainGenesGtf!\n" );
-            while ( <GTHGOOD> ) {
-                if ( $_ =~ m/\tgth\t/ ) {
-                    print GOODLST $_;
-                }
+            if( $gth2traingenes){
+                  while ( <GTHGOOD> ) {
+                        if ( $_ =~ m/\tgth\t/ ) {
+                              print GOODLST $_;
+                        }
+                  }
+            }else{
+                  while ( <GTHGOOD> ) {
+                        if ( $_ =~ m/\tGeMoMa\t/ ) {
+                              print GOODLST $_;
+                        }
+                  }
             }
            close ( GTHGOOD ) or clean_abort(
             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
@@ -8432,6 +8530,7 @@ sub augustus {
                 # EPmode == 1 -> ep.cfg
                 # EPmode == 0 && !prg -> rnaseq.cfg
                 # trainFromGth -> gth.cfg
+                # gemomaGff -> gemoma.cfg
                 if ( ($foundProt>0 && $foundRNASeq==0) || ($foundProt==0 && $foundRNASeq > 0)) {
                     if(defined($extrinsicCfgFile1) && $localUTR eq "off"){
                         $extrinsicCfgFile = $extrinsicCfgFile1;
@@ -8445,11 +8544,24 @@ sub augustus {
                                 } else {
                                     assign_ex_cfg ("ep_utr.cfg");
                                 }
-                            } elsif (defined($prg)){
-                                if ( $localUTR eq "off" ) {
-                                    assign_ex_cfg ("gth.cfg");
-                                } else {
-                                    assign_ex_cfg ("gth_utr.cfg");
+                            } elsif (defined($prg) || defined($gemomaGff) ){
+                                if($prg eq "gth"){
+                                    if ( $localUTR eq "off" ) {
+                                          assign_ex_cfg ("gth.cfg");
+                                    } else {
+                                          assign_ex_cfg ("gth_utr.cfg");
+                                    }
+                                }elsif(($prg eq "gemoma") || defined($gemomaGff)){
+                                    if ( $localUTR eq "off" ) {
+                                          assign_ex_cfg ("gemoma.cfg");
+                                    } else {
+                                          assign_ex_cfg ("gemoma_utr.cfg");
+                                    }
+                                }else{
+                                    print STDERR "ERROR in file " . __FILE__
+                                            . " at line ". __LINE__
+                                            . "\nNo idea what extrinsic.cfg file to assing!\n";
+                                    exit(1);
                                 }
                             }
                         } elsif ( $foundProt==0 && $foundRNASeq > 0){
@@ -8499,12 +8611,23 @@ sub augustus {
                                 } else {
                                     assign_ex_cfg ("ep_utr.cfg");
                                 }
-                            } elsif (defined($prg)) {
+                            } elsif ($prg eq "gth") {
                                 if ( $localUTR eq "off" ) {
                                     assign_ex_cfg ("gth.cfg");
                                 } else {
                                     assign_ex_cfg ("gth_utr.cfg");
                                 }
+                            } elsif (defined($gemomaGff)){
+                                if ( $localUTR eq "off" ) {
+                                    assign_ex_cfg ("gemoma.cfg");
+                                } else {
+                                    assign_ex_cfg ("gemoma_utr.cfg");
+                                }
+                            } else{
+                                print STDERR "ERROR in file " . __FILE__
+                                      . " at line ". __LINE__
+                                      . "\nNo idea what extrinsic.cfg file to assing!\n";
+                                exit(1);
                             }
                         } elsif ( $foundProt==0 && $foundRNASeq > 0) {
                             if ( $localUTR eq "off") {

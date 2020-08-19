@@ -56,6 +56,7 @@ Contents
         -   [BRAKER with proteins of any evolutionary distance](#braker-with-proteins-of-any-evolutionary-distance)
         -   [BRAKER with proteins of short evolutionary distance](#braker-with-proteins-of-short-evolutionary-distance)
         -   [BRAKER with RNA-Seq and protein data](#braker-with-rna-seq-and-protein-data)
+        -   [BRAKER with GeMoMa predictions](#braker-with-gemoma-predictions)
     -   [Description of selected BRAKER command line options](#description-of-selected-braker-command-line-options)
         -   [--ab_initio](#--ab_initio)
         -   [--augustus_args=--some\_arg=bla](#--augustus_args--some_argbla)
@@ -742,7 +743,7 @@ The native mode for running BRAKER with RNA-Seq and protein data is `--etpmode`.
        --hints=rnaseq.hints --etpmode --softmasking
 ```
 
-You can or course replace the `rnaseq.gff` hints file by a BAM-file, e.g. `--bam=ranseq.bam`.
+You can of course replace the `rnaseq.gff` hints file by a BAM-file, e.g. `--bam=ranseq.bam`.
 
 In addition, the following pipelines can be executed by BRAKER (deprecated pipelines):
 
@@ -750,6 +751,14 @@ In addition, the following pipelines can be executed by BRAKER (deprecated pipel
 
 * Extending training gene set with proteins of short evolutionary distance
 
+### BRAKER with GeMoMa predictions
+
+Instead of training on the basis of GeneMark-EX or GenomeThreader predictions, BRAKER may also train AUGUSTUS on a file `filtered_predictions.gff` in gff3 file produced by GeMoMa <sup name="a19">[R19](#f19)</sup>,<sup name="a20">[R20](#f20)</sup>,<sup name="a21">[R21](#21)</sup>. GeMoMa predictions are subsequently enforced in prediction with AUGUSTUS.
+
+```
+    braker.pl --genome=genome.fa --gemomaGff=gemoma.gff \
+       --softmasking
+```
 
 #### Adding protein data of short evolutionary distance to gene prediction step
 
@@ -851,6 +860,9 @@ Modify `augustus.hints.gtf` to point to the AUGUSTUS predictions with hints from
 
 If `--UTR=on` is enabled, strand-separated bam-files can be provided with `--bam=plus.bam,minus.bam`. In that case, `--stranded=...` should hold the strands of the bam files (`+` for plus strand, `-` for minus strand, `.` for unstranded). Note that unstranded data will be used in the gene prediction step, only, if the parameter `--stranded=...` is set. *This is an experimental feature!*
 
+### --gemomaGff=filtered_predictions.gff3
+
+If this argument is provided, GeneMark-EX will be skipped and AUGUSTUS will be trained on GeMoMa predictions. GeMoMa predictions are subsequently enforced during gene prediction with AUGUSTUS.
 
 ### --makehub --email=your@mail.de
 
@@ -936,6 +948,7 @@ List of files:
 -   `RNAseq.bam` - RNA-Seq alignment file in bam format (this file is not a part of this repository, it must be downloaded separately from <http://topaz.gatech.edu/GeneMark/Braker/RNAseq.bam>)
 -   `RNAseq.hints` - RNA-Seq hints (can be used instead of RNAseq.bam as RNA-Seq input to BRAKER)
 -   `proteins.fa` - protein sequences in fasta format
+(-  `gemoma.gff` - filtered_predictions.gff produced with GeMoMa)
 
 The below given commands assume that you configured all paths to tools by exporting bash variables or that you have the necessary tools in your $PATH.
 
@@ -1036,6 +1049,13 @@ The following command will run the pipeline with no extrinsic evidence:
     braker.pl --genome=genome.fa --esmode --softmasking --cores N
 
 This test is implemented in `test8.sh`, expected runtime is ~20 minutes.
+
+Testing BRAKER with GeMoMa predictions
+---------------------------------------
+
+    braker.pl --genome=genome.fa --gemomaGtf=gemoma.gff --cores=N
+
+This test is implemented in `test9.sh`, expected runtime is ~20 minutes.
 
 Starting BRAKER on the basis of previously existing BRAKER runs
 ===============================================================
@@ -1210,6 +1230,14 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Hoff, K.J. (2019) MakeHub: Fully automated generation of UCSC Genome Browser Assembly Hubs. Genomics, Proteomics and Bioinformatics, in press 2020, preprint on bioarXive, doi: <https://doi.org/10.1101/550145>.
 
+-  If BRAKER was executed using GeMoMa predictions, cite:
+
+    -   Keilwagen, J., Hartung, F., Grau, J. (2019) GeMoMa: Homology-based gene prediction utilizing intron position conservation and RNA-seq data. Methods Mol Biol. 1962:161-177, doi: 10.1007/978-1-4939-9173-0_9.
+
+    -   Keilwagen, J., Wenk, M., Erickson, J.L., Schattat, M.H., Grau, J., Hartung F. (2016) Using intron position conservation for homology-based gene prediction. Nucleic Acids Research, 44(9):e89.
+
+    -   Keilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.
+
 
 License
 =======
@@ -1272,4 +1300,10 @@ Oxford University Press: 2078--9.[↩](#a6)
 <b id="f17">[R17]</b> Bruna, T., Lomsadze, A., & Borodovsky, M. 2020. GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026. doi: <https://doi.org/10.1093/nargab/lqaa026>.[↩](#a17)
 
 <b id="f18">[R18]</b> Kriventseva, E. V., Kuznetsov, D., Tegenfeldt, F., Manni, M., Dias, R., Simão, F. A., and Zdobnov, E. M. 2019. OrthoDB v10: sampling the diversity of animal, plant, fungal, protist, bacterial and viral genomes for evolutionary and functional annotations of orthologs. Nucleic Acids Research, 47(D1), D807-D811.[↩](#a18)
+
+<b id="f18">[R19]</b> Keilwagen, J., Hartung, F., Grau, J. (2019) GeMoMa: Homology-based gene prediction utilizing intron position conservation and RNA-seq data. Methods Mol Biol. 1962:161-177, doi: 10.1007/978-1-4939-9173-0_9.[↩](#a19)
+
+<b id="f18">[R20]</b> Keilwagen, J., Wenk, M., Erickson, J.L., Schattat, M.H., Grau, J., Hartung F. (2016) Using intron position conservation for homology-based gene prediction. Nucleic Acids Research, 44(9):e89.[↩](#a20)
+
+<b id="f18">[R21]</b> Keilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.[↩](#a21)
 
