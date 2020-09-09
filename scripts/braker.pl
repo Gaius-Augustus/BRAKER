@@ -780,6 +780,9 @@ $pubs{'gth'} = "\nGremme, G. (2013). Computational gene structure prediction.\n"
 $pubs{'spaln'} = "\nGotoh, O. (2008). A space-efficient and accurate method for mapping and aligning cDNA sequences onto genomic sequence. Nucleic acids research, 36(8), 2630-2638.\n";
 $pubs{'spaln2'} = "\nIwata, H., & Gotoh, O. (2012). Benchmarking spliced alignment programs including Spaln2, an extended version of Spaln that incorporates additional species-specific features. Nucleic acids research, 40(20), e161-e161.\n";
 $pubs{'exonerate'} = "\nSlater, G. S. C., & Birney, E. (2005). Automated generation of heuristics for biological sequence comparison. BMC bioinformatics, 6(1), 31.\n";
+$pubs{'gemoma1'} = "\nKeilwagen, J., Hartung, F., Grau, J. (2019) GeMoMa: Homology-based gene prediction utilizing intron position conservation and RNA-seq data. Methods Mol Biol. 1962:161-177, doi: 10.1007/978-1-4939-9173-0_9.\n";
+$pubs{'gemoma2'} = "\nKeilwagen, J., Wenk, M., Erickson, J.L., Schattat, M.H., Grau, J., Hartung F. (2016) Using intron position conservation for homology-based gene prediction. Nucleic Acids Research, 44(9):e89.\n";
+$pubs{'gemoma3'} = "\nKeilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.\n";
 
 # Make paths to input files absolute ###########################################
 
@@ -10229,6 +10232,9 @@ sub eval_gene_pred {
 sub run_gushr{
     print LOG "\# " . (localtime) . ": Running GUSHR...\n"
          if ( $v > 2 );
+    print CITE $pubs{'gemoma1'}; $pubs{'gemoma1'} = "";
+    print CITE $pubs{'gemoma2'}; $pubs{'gemoma2'} = "";
+    print CITE $pubs{'gemoma3'}; $pubs{'gemoma3'} = "";
     my $in_gtf = shift;
     my $out_stem = shift;
     $cmdString = "";

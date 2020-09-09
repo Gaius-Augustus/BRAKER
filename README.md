@@ -1087,21 +1087,21 @@ The following command will run the pipeline with no extrinsic evidence:
 
 This test is implemented in `test8.sh`, expected runtime is ~20 minutes.
 
-Testing BRAKER with --UTR=on
+Testing BRAKER with RNA-Seq data and --UTR=on
 ----------------------------
 The following command will run BRAKER with training UTR parameters from RNA-Seq coverage data:
 
     braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --UTR=on --cores N
 
-This test is implemented in `test9.sh`, expected runtime is ~xx minutes.
+This test is implemented in `test9.sh`, expected runtime is ~35 minutes.
 
-Testing BRAKER with --addUTR=on
+Testing BRAKER with RNA-Seq data and --addUTR=on
 ----------------------------
 The following command will add UTRs to augustus.hints.gtf from RNA-Seq coverage data:
 
     braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --addUTR=on --cores N
 
-This test is implemented in `test10.sh`, expected runtime is ~xx minutes.
+This test is implemented in `test10.sh`, expected runtime is ~20 minutes.
 
 
 Starting BRAKER on the basis of previously existing BRAKER runs
