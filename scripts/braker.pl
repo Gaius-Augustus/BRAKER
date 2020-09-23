@@ -3491,7 +3491,7 @@ sub check_upfront {
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "# --prg option is not compatible with --epmode/--etpmode."
-            . " In these modes, BRAKER used ProtHint to map and align"
+            . " In these modes, BRAKER uses ProtHint to map and align "
             . "proteins.\n";
         $logString .= $prtStr;
         print STDERR $logString;
