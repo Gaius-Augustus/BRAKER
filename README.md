@@ -1064,7 +1064,7 @@ The following command will run the pipeline according to Figure [7](#fig6):
 
 
     braker.pl --genome genome.fa --prot_seq proteins.fa --prg gth \
-        --gm_max_intergenic 10000 qq--bam RNAseq.bam --softmasking --cores N
+        --gm_max_intergenic 10000 --bam RNAseq.bam --softmasking --cores N
 
 
 This test is implemented in `test5.sh`, expected runtime is ~20 minutes.
