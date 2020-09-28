@@ -866,10 +866,10 @@ Generate UTR training examples for AUGUSTUS from RNA-Seq coverage information, t
 If you performed a BRAKER run without --UTR=on, you can add UTR parameter training and gene prediction with UTR parameters (and only RNA-Seq hints) with the following command:
 
 ```
-braker.pl --UTR=on --softmasking --genome=genome.fa --bam=rnaseq.bam \
-   --workingdir=some_new_working_directory \
-   --AUGUSTUS_hints_preds=augustus.hints.gtf --flanking_DNA=2000 \
-   --species=somespecies --useexisting
+braker.pl --genome=../genome.fa --addUTR=on --softmasking \
+    --bam=../RNAseq.bam --workingdir=$wd \
+    --AUGUSTUS_hints_preds=augustus.hints.gtf \
+    --cores=8 --skipAllTraining --species=somespecies
 ```
 
 Modify `augustus.hints.gtf` to point to the AUGUSTUS predictions with hints from previous BRAKER run; modify flaning_DNA value to the flanking region from the log file of your previous BRAKER run; modify some_new_working_directory to the location where BRAKER should store results of the additional BRAKER run; modify somespecies to the species name used in your previous BRAKER run.
@@ -881,13 +881,13 @@ Add UTRs from RNA-Seq converage information to AUGUSTUS gene predictions using G
 If you performed a BRAKER run without --addUTR=on, you can add UTRs results of a previous BRAKER run with the following command:
 
 ```
-braker.pl --addUTR=on --softmasking --genome=genome.fa --bam=rnaseq.bam \
-   --workingdir=some_new_working_directory \
-   --AUGUSTUS_hints_preds=augustus.hints.gtf
-   --species=somespecies --useexisting
+braker.pl --genome=../genome.fa --addUTR=on --softmasking \
+    --bam=../RNAseq.bam --workingdir=$wd \
+    --AUGUSTUS_hints_preds=augustus.hints.gtf --cores=8 \
+    --skipAllTraining --species=somespecies
 ```
 
-Modify `augustus.hints.gtf` to point to the AUGUSTUS predictions with hints from previous BRAKER run; modify some_new_working_directory to the location where BRAKER should store results of the additional BRAKER run; modify somespecies to the species name used in your previous BRAKER run.
+Modify `augustus.hints.gtf` to point to the AUGUSTUS predictions with hints from previous BRAKER run; modify some_new_working_directory to the location where BRAKER should store results of the additional BRAKER run; this run will not modify AUGUSTUS parameters. We recommend that you specify the original species of the original run with `--species=somespecies`. Otherwise, BRAKER will create an unneeded species parameters directory `Sp_*`.
 
 ### --stranded=+,-,.,...
 
@@ -911,9 +911,9 @@ BRAKER produces several important output files in the working directory.
 
 -   augustus.hints_utr.gtf: This file may contain different contents depending on how you called BRAKER:
 
-        * If you ran BRAKER with --UTR=on, then this file will contain genes predicted by AUGUSTUS with UTR parameters and coverage information from RNA-Seq data in GTF format.
+    * If you ran BRAKER with --UTR=on, then this file will contain genes predicted by AUGUSTUS with UTR parameters and coverage information from RNA-Seq data in GTF format.
 
-        * If you ran BRAKER with --addUTR=on, then this file will contain genes predicted by AUGUSTUS without UTR parameters and without coverage information from RNA-Seq data. Instead, AUGUSTUS gene predictions with hints will only be extended by UTRs if RNA-Seq coverage allows it (i.e. no separate AUGUSTUS training or run was performed, UTRs are only added from running GUSHR). Genes in are in GTF format.
+    * If you ran BRAKER with --addUTR=on, then this file will contain genes predicted by AUGUSTUS without UTR parameters and without coverage information from RNA-Seq data. Instead, AUGUSTUS gene predictions with hints will only be extended by UTRs if RNA-Seq coverage allows it (i.e. no separate AUGUSTUS training or run was performed, UTRs are only added from running GUSHR). Genes in are in GTF format.
 
 This file will only be present if BRAKER was executed with the options `--UTR=on` or `--addUTR=on` and a RNA-Seq BAM file.
 
@@ -1005,32 +1005,45 @@ Testing BRAKER with RNA-Seq data
 
 The following command will run the pipeline according to Figure [3](#fig2):
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --cores N
+    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking 
+        --gm_max_intergenic 10000 --cores N
 
 This test is implemented in `test1.sh`, expected runtime is ~20 minutes.
 
 Testing BRAKER with proteins of any evolutionary distance
--------------------------------------------------------------------------
+---------------------------------------------------------
 
 The following command will run the pipeline according to Figure [4](#fig3):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --softmasking --cores N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --softmasking
+        --gm_max_intergenic 10000 --cores N
 
 
 This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
 
 Testing BRAKER with proteins of any evolutionary distance and RNA-Seq
-------------------------------------------------------------------------------------
+---------------------------------------------------------------------
 
 The following command will run a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4):
 
 
     braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam \
-        --etpmode --softmasking --cores N
+        --gm_max_intergenic 10000 --etpmode --softmasking --cores N
 
 
 This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
+
+
+You can add UTRs from RNA-Seq data (no AUGUSTUS training) to results of a BRAKER run in ETP-mode the following way:
+
+    braker.pl --genome=../genome.fa --addUTR=on --softmasking \
+        --bam=../RNAseq.bam --workingdir=$wd \
+        --AUGUSTUS_hints_preds=augustus.hints.gtf --cores=8 \
+        --skipAllTraining --species=somespecies
+
+This is implemented in `test3_add_utrs.sh`, expected runtime is ~1 minute.
+
 
 Testing BRAKER with proteins of close homology
 ----------------------------------------------
@@ -1051,7 +1064,7 @@ The following command will run the pipeline according to Figure [7](#fig6):
 
 
     braker.pl --genome genome.fa --prot_seq proteins.fa --prg gth \
-        --bam RNAseq.bam --softmasking --cores N
+        --gm_max_intergenic 10000 qq--bam RNAseq.bam --softmasking --cores N
 
 
 This test is implemented in `test5.sh`, expected runtime is ~20 minutes.
@@ -1062,7 +1075,8 @@ Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq and pro
 The following command will run the pipeline according to Figure [8](#fig7):
 
     braker.pl --genome genome.fa --prot_seq prot.fa --prg gth \
-        --bam RNAseq.bam --gth2traingenes --softmasking --cores N
+        --bam RNAseq.bam --gth2traingenes --softmasking \
+        --gm_max_intergenic 10000 --cores N
 
 This test is implemented in `test6.sh`, expected runtime is ~20 minutes.
 
@@ -1083,20 +1097,21 @@ Testing BRAKER with genome sequence
 
 The following command will run the pipeline with no extrinsic evidence:
 
-    braker.pl --genome=genome.fa --esmode --softmasking --cores N
+    braker.pl --genome=genome.fa --esmode --softmasking \
+        --gm_max_intergenic 10000 --cores N
 
 This test is implemented in `test8.sh`, expected runtime is ~20 minutes.
 
 Testing BRAKER with RNA-Seq data and --UTR=on
-----------------------------
+---------------------------------------------
 The following command will run BRAKER with training UTR parameters from RNA-Seq coverage data:
 
     braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --UTR=on --cores N
 
-This test is implemented in `test9.sh`, expected runtime is ~35 minutes.
+This test is implemented in `test9.sh`, expected runtime is ~20 minutes.
 
 Testing BRAKER with RNA-Seq data and --addUTR=on
-----------------------------
+-------------------------------------------------
 The following command will add UTRs to augustus.hints.gtf from RNA-Seq coverage data:
 
     braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --addUTR=on --cores N
