@@ -164,6 +164,10 @@ FREQUENTLY USED OPTIONS
                                     Alternatively, if UTR parameters already
                                     exist, training step will be skipped and
                                     those pre-existing parameters are used.
+--addUTR=on                         Adds UTRs from RNA-Seq coverage data to 
+                                    augustus.hints.gtf file. Does not perform
+                                    training of AUGUSTUS or gene prediction with
+                                    AUGUSTUS and UTR parameters.
 --prg=gth|exonerate|spaln           Specify an alternative method for generating
                                     hints from similarity of protein sequence
                                     data to genome data (alternative to the
@@ -259,6 +263,14 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
 --PYTHON3_PATH=/path/to             Set path to python3 executable (if not 
                                     specified as envirnonment variable and if
                                     executable is not in your $PATH).
+--JAVA_PATH=/path/to                Set path to java executable (if not
+                                    specified as environment variable and if 
+                                    executable is not in your $PATH), only
+                                    required with flags --UTR=on and --addUTR=on
+--GUSHR_PATH=/path/to               Set path to gushr.py exectuable (if not 
+                                    specified as an environment variable and if 
+                                    executable is not in your $PATH), only required
+                                    with the flags --UTR=on and --addUTR=on
 --MAKEHUB_PATH=/path/to             Set path to make_hub.py (if option --makehub
                                     is used).
 --CDBTOOLS_PATH=/path/to            cdbfasta/cdbyank are required for running
@@ -337,10 +349,6 @@ EXPERT OPTIONS
 --skip_fixing_broken_genes          If you do not have python3, you can choose
                                     to skip the fixing of stop codon including
                                     genes (not recommended).
---rnaseq2utr_args=params            Expert option: pass alternative parameters
-                                    to rnaseq2utr as string, default parameters:
-                                    -r 76 -v 100 -n 15 -i 0.7 -m 0.3 -w 70 
-                                    -c 100 -p 0.5 
 --eval=reference.gtf                Reference set to evaluate predictions
                                     against (using evaluation scripts from GaTech)
 --eval_pseudo=pseudo.gff3           File with pseudogenes that will be excluded 
@@ -475,7 +483,6 @@ my $alternatives_from_evidence = "true";
                  # output alternative transcripts based on explicit evidence
                  # from hints
 my $augpath;     # path to augustus
-my $rnaseq2utr;
 my $augustus_cfg_path;        # augustus config path, higher priority than
                               # $AUGUSTUS_CONFIG_PATH on system
 my $augustus_bin_path;        # path to augustus folder binaries folder
@@ -567,6 +574,7 @@ my $useexisting
                 # on those files
 my $UTR = "off";    # UTR prediction on/off. currently not available für new
                     # species
+my $addUTR = "off";
 my $workDir;        # in the working directory results and temporary files are
                     # stored
 my $filterOutShort; # filterOutShort option (see help)
@@ -602,10 +610,12 @@ my $diamond_path; # command line argument value for $DIAMOND_PATH
 my $BLAST_PATH; # path to blastall and formatdb ncbi blast executable
 my $blast_path; # command line argument value for $BLAST_PATH
 my $python3_path; # command line argument value for $PYTHON3_PATH
+my $java_path;
+my $JAVA_PATH;
+my $gushr_path;
+my $GUSHR_PATH;
 my %hintTypes;    # stores hint types occuring over all generated and supplied
                   # hints for comparison
-                  # additional parameters to be passed to rnaseq2utr
-my $rnaseq2utr_args = "-r 76 -v 100 -n 15 -i 0.7 -m 0.3 -w 70 -c 100 -p 0.5 ";    
 my $rounds = 5;   # rounds used by optimize_augustus.pl
 my $geneMarkGtf;  # GeneMark output file (for skipGeneMark-ET option if not in
                   # braker working directory)
@@ -664,6 +674,8 @@ GetOptions(
     'DIAMOND_PATH=s'               => \$diamond_path,
     'BLAST_PATH=s'                 => \$blast_path,
     'PYTHON3_PATH=s'               => \$python3_path,
+    'JAVA_PATH=s'                  => \$java_path,
+    'GUSHR_PATH=s'                 => \$gushr_path,
     'CDBTOOLS_PATH=s'              => \$cdbtools_path,
     'MAKEHUB_PATH=s'               => \$makehub_path,
     'bam=s'                        => \@bam,
@@ -692,6 +704,7 @@ GetOptions(
     'softmasking!'                 => \$soft_mask,
     'useexisting!'                 => \$useexisting,
     'UTR=s'                        => \$UTR,
+    'addUTR=s'                     => \$addUTR,
     'workingdir=s'                 => \$workDir,
     'filterOutShort!'              => \$filterOutShort,
     'crf!'                         => \$crf,
@@ -702,7 +715,6 @@ GetOptions(
     'prot_seq=s'                   => \@prot_seq_files,
     'prot_aln=s'                   => \@prot_aln_files,
     'augustus_args=s'              => \$augustus_args,
-    'rnaseq2utr_args=s'            => \$rnaseq2utr_args,
     'rounds=s'                     => \$rounds,
     'geneMarkGtf=s'                => \$geneMarkGtf,
     'gth2traingenes!'              => \$gth2traingenes,
@@ -768,6 +780,9 @@ $pubs{'gth'} = "\nGremme, G. (2013). Computational gene structure prediction.\n"
 $pubs{'spaln'} = "\nGotoh, O. (2008). A space-efficient and accurate method for mapping and aligning cDNA sequences onto genomic sequence. Nucleic acids research, 36(8), 2630-2638.\n";
 $pubs{'spaln2'} = "\nIwata, H., & Gotoh, O. (2012). Benchmarking spliced alignment programs including Spaln2, an extended version of Spaln that incorporates additional species-specific features. Nucleic acids research, 40(20), e161-e161.\n";
 $pubs{'exonerate'} = "\nSlater, G. S. C., & Birney, E. (2005). Automated generation of heuristics for biological sequence comparison. BMC bioinformatics, 6(1), 31.\n";
+$pubs{'gemoma1'} = "\nKeilwagen, J., Hartung, F., Grau, J. (2019) GeMoMa: Homology-based gene prediction utilizing intron position conservation and RNA-seq data. Methods Mol Biol. 1962:161-177, doi: 10.1007/978-1-4939-9173-0_9.\n";
+$pubs{'gemoma2'} = "\nKeilwagen, J., Wenk, M., Erickson, J.L., Schattat, M.H., Grau, J., Hartung F. (2016) Using intron position conservation for homology-based gene prediction. Nucleic Acids Research, 44(9):e89.\n";
+$pubs{'gemoma3'} = "\nKeilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.\n";
 
 # Make paths to input files absolute ###########################################
 
@@ -829,6 +844,10 @@ set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
 set_PYTHON3_PATH();
+if($UTR eq "on" || $addUTR eq "on"){
+    set_JAVA_PATH();
+    set_GUSHR_PATH();
+}
 if (!$trainFromGth && !defined($geneMarkGtf) && !$skipAllTraining &&
     !defined($AUGUSTUS_hints_preds)) {
     set_GENEMARK_PATH()
@@ -1092,6 +1111,11 @@ if(defined($annot_pseudo)){
     $annot_pseudo = rel2abs($annot_pseudo);
 }
 
+# convert possible relative path to provided AUGUSTUS file to absolute path
+if( defined( $AUGUSTUS_hints_preds )) {
+    $AUGUSTUS_hints_preds = rel2abs($AUGUSTUS_hints_preds);
+}
+
 # open log file
 $prtStr = "\# "
         . (localtime)
@@ -1196,31 +1220,16 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
     # up with those processes using the same species directory!
     new_species();
 } else {
-    # if no training will be executed, check whether species parameter files exist
-    my $specPath
-        = "$AUGUSTUS_CONFIG_PATH/species/$species/$species" . "_";
-    my @confFiles = (
-        "exon_probs.pbl",   "igenic_probs.pbl",
-        "intron_probs.pbl",
-        "parameters.cfg",   "weightmatrix.txt"
-    );
+    if( defined($AUGUSTUS_hints_preds) && $addUTR eq "off") {  
+        # if no training will be executed, check whether species parameter files exist
+        my $specPath
+            = "$AUGUSTUS_CONFIG_PATH/species/$species/$species" . "_";
+        my @confFiles = (
+            "exon_probs.pbl",   "igenic_probs.pbl",
+            "intron_probs.pbl",
+            "parameters.cfg",   "weightmatrix.txt"
+        );
 
-    foreach (@confFiles) {
-        if ( not( -e "$specPath" . "$_" ) ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "Config file $specPath"
-                . "$_ for species $species "
-                . "does not exist!\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
-            exit(1);
-        }
-    }
-    if ( $UTR eq "on" && !$AUGUSTUS_hints_preds && !$skipAllTraining ) {
-        @confFiles = ( "metapars.utr.cfg", "utr_probs.pbl" );
         foreach (@confFiles) {
             if ( not( -e "$specPath" . "$_" ) ) {
                 $prtStr
@@ -1235,29 +1244,46 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                 exit(1);
             }
         }
-    }elsif( $UTR eq "on" && not(defined($skipAllTraining))) {
-        if( not ( -e $specPath . "metapars.utr.cfg" ) ) {
-            $prtStr = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Config file $specPath"
-                    . "metapars.utr.cfg for species $species "
-                    . "does not exist!\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
-            exit(1);
-        }
-    }elsif( $UTR eq "on" && $skipAllTraining==1 ) {
-        if( not ( -e $specPath . "utr_probs.pbl" ) ) {
-            $prtStr = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Config file $specPath"
-                    . "utr_probs.pbl for species $species "
-                    . "does not exist!\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
-            exit(1);
+        if ( $UTR eq "on" && !$AUGUSTUS_hints_preds && !$skipAllTraining ) {
+            @confFiles = ( "metapars.utr.cfg", "utr_probs.pbl" );
+            foreach (@confFiles) {
+                if ( not( -e "$specPath" . "$_" ) ) {
+                    $prtStr
+                        = "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Config file $specPath"
+                        . "$_ for species $species "
+                        . "does not exist!\n";
+                    print LOG $prtStr;
+                    print STDERR $prtStr;
+                    exit(1);
+                }
+            }
+        }elsif( $UTR eq "on" && not(defined($skipAllTraining))) {
+            if( not ( -e $specPath . "metapars.utr.cfg" ) ) {
+                $prtStr = "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Config file $specPath"
+                        . "metapars.utr.cfg for species $species "
+                        . "does not exist!\n";
+                print LOG $prtStr;
+                print STDERR $prtStr;
+                exit(1);
+            }
+        }elsif( $UTR eq "on" && $skipAllTraining==1 ) {
+            if( not ( -e $specPath . "utr_probs.pbl" ) ) {
+                $prtStr = "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Config file $specPath"
+                        . "utr_probs.pbl for species $species "
+                        . "does not exist!\n";
+                print LOG $prtStr;
+                print STDERR $prtStr;
+                exit(1);
+            }
         }
     }
 }
@@ -1434,25 +1460,26 @@ if ( @bam && ( ($UTR eq "on" || defined($AUGUSTUS_hints_preds) ) && not($skipAll
     print LOG "\#**********************************************************************************\n"
             . "\#                               TRAINING AUGUSTUS UTR PARAMETERS                   \n"
             . "\#**********************************************************************************\n";
-    train_utr(); # includes bam2wig
-} elsif (@bam && $UTR eq "on") {
-    if(!@stranded){
-        bam2wig();
-    }else{
-        bam2stranded_wig();
-    }
+    train_utr(); # runs GUSHR, trains AUGUSTUS
 }
 
-if ( $UTR eq "on") {
+if ( $UTR eq "on" && @bam) {
     if(not @stranded){
+        bam2wig();
         wig2hints(); # convert coverage information to ep hints
     }else{
+        bam2stranded_wig();
         stranded_wig2ep_hints();
     }
     print LOG "\#**********************************************************************************\n"
             . "\#                               PREDICTING GENES WITH AUGUSTUS (UTRS)              \n"
             . "\#**********************************************************************************\n";
     augustus("on"); # run augustus with UTR
+    merge_transcript_sets("on");
+}
+
+if( $addUTR eq "on"){
+    add_utr_to_augustus(); # only runs GUSHR
     merge_transcript_sets("on");
 }
 
@@ -3016,6 +3043,250 @@ sub set_PYTHON3_PATH {
     }
 }
 
+####################### set_JAVA_PATH #######################################
+# * set path to java
+# * also checks whether java version 1.8 is present
+################################################################################
+
+sub set_JAVA_PATH {
+    # try to get path from ENV
+    if ( defined( $ENV{'JAVA_PATH'} ) && not (defined($java_path)) ) {
+        if ( -e $ENV{'JAVA_PATH'} ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Found environment variable \$JAVA_PATH. Setting "
+                . "\$JAVA_PATH to ".$ENV{'JAVA_PATH'}."\n";
+            $logString .= $prtStr if ($v > 1);
+            $JAVA_PATH = $ENV{'JAVA_PATH'};
+        }
+    }elsif(not(defined($java_path))) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Did not find environment variable \$JAVA_PATH\n";
+        $logString .= $prtStr if ($v > 1);
+    }
+
+    # try to get path from command line
+    if ( defined($java_path) ) {
+        my $last_char = substr( $java_path, -1 );
+        if ( $last_char eq "\/" ) {
+            chop($java_path);
+        }
+        if ( -d $java_path ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$JAVA_PATH to command line argument "
+                . "--JAVA_PATH value $java_path.\n";
+            $logString .= $prtStr if ($v > 1);
+            $JAVA_PATH = $java_path;
+        }
+        else {
+            $prtStr = "#*********\n"
+                    . "# WARNING: Command line argument --JAVA_PATH was "
+                    . "supplied but value $java_path is not a directory. Will not "
+                    . "set \$JAVA_PATH to $java_path!\n"
+                    . "#*********\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    # try to guess
+    if ( not( defined($JAVA_PATH) )
+        || length($JAVA_PATH) == 0 )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Trying to guess \$JAVA_PATH from location of java"
+            . " executable that is available in your \$PATH\n";
+        $logString .= $prtStr if ($v > 1);
+        my $epath = which 'java';
+        if(defined($epath)){
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$JAVA_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $JAVA_PATH = dirname($epath);
+            }
+        }
+        else {
+            $prtStr = "#*********\n"
+                    . "# WARNING: Guessing the location of \$JAVA_PATH "
+                    . "failed / BRAKER failed "
+                    . "to detect java with \"which java\"!\n"
+                    . "#*********\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    if ( not( defined($JAVA_PATH) ) ) {
+        my $python_err;
+        $python_err .= "Java was not found. You have 3 different options\n"
+                    .  "to provide a path to java to braker.pl:\n"
+                    .  "   a) provide command-line argument\n"
+                    .  "          --JAVA_PATH=/your/path\n"
+                    .  "   b) use an existing environment variable\n"
+                    .  "          \$JAVA_PATH\n"
+                    .  "      for setting the environment variable, run\n"
+                    .  "          export JAVA_PATH=/your/path\n"
+                    .  "      in your shell. You may append this to your\n"
+                    .  "      .bashrc or .profile file in order to make the\n"
+                    .  "      variable available to all your bash sessions.\n"
+                    .  "   c) braker.pl can try guessing the location of\n"
+                    .  "      \$JAVA_PATH from the location of a java\n"
+                    .  "      executable that is available in your \$PATH\n"
+                    .  "      variable. If you try to rely on this option, you\n"
+                    .  "      can check by typing\n"
+                    .  "          which java\n"
+                    .  "      in your shell, whether there is a java\n"
+                    .  "      executable in your \$PATH\n";
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            . " at line ". __LINE__ . "\n" . "\$JAVA_PATH not set!\n";
+        $logString .= $prtStr;
+        $logString .= $python_err if ($v > 1);
+        print STDERR $logString;
+        exit(1);
+    }
+    if ( not ( -x "$JAVA_PATH/java" ) ) {
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "$JAVA_PATH/java is not an executable file!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+    $cmdString = "java -version 2>&1 | awk -F[\\\"\\\.] -v OFS=. 'NR==1{print \$2,\$3}'";
+    my @javav = `$cmdString` or die("Failed to execute: $cmdString");
+    if(not ($javav[0] =~ m/1\.8/ )){
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            ." at line ". __LINE__ ."\n"
+            . "You have installa java version $javav[0]. GUSHR requires version 1.8!\n"
+            . "You can switch between java versions on your system with:\n"
+            . "sudo update-alternatives --config java\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
+}
+
+####################### set_GUSHR_PATH #######################################
+# * set path to gushr.py
+################################################################################
+
+sub set_GUSHR_PATH {
+    # try to get path from ENV
+    if ( defined( $ENV{'GUSHR_PATH'} ) && not (defined($gushr_path)) ) {
+        if ( -e $ENV{'GUSHR_PATH'} ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Found environment variable \$GUSHR_PATH. Setting "
+                . "\$GUSHR_PATH to ".$ENV{'GUSHR_PATH'}."\n";
+            $logString .= $prtStr if ($v > 1);
+            $GUSHR_PATH = $ENV{'GUSHR_PATH'};
+        }
+    }elsif(not(defined($gushr_path))) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Did not find environment variable \$GUSHR_PATH\n";
+        $logString .= $prtStr if ($v > 1);
+    }
+
+    # try to get path from command line
+    if ( defined($gushr_path) ) {
+        my $last_char = substr( $gushr_path, -1 );
+        if ( $last_char eq "\/" ) {
+            chop($gushr_path);
+        }
+        if ( -d $gushr_path ) {
+            $prtStr
+                = "\# "
+                . (localtime)
+                . ": Setting \$GUSHR_PATH to command line argument "
+                . "--GUSHR_PATH value $gushr_path.\n";
+            $logString .= $prtStr if ($v > 1);
+            $GUSHR_PATH = $gushr_path;
+        }
+        else {
+            $prtStr = "#*********\n"
+                    . "# WARNING: Command line argument --GUSHR_PATH was "
+                    . "supplied but value $gushr_path is not a directory. Will not "
+                    . "set \$GUSHR_PATH to $gushr_path!\n"
+                    . "#*********\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    # try to guess
+    if ( not( defined($GUSHR_PATH) )
+        || length($GUSHR_PATH) == 0 )
+    {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": Trying to guess \$GUSHR_PATH from location of gushr.py"
+            . " executable that is available in your \$PATH\n";
+        $logString .= $prtStr if ($v > 1);
+        my $epath = which 'gushr.py';
+        if(defined($epath)){
+            if ( -d dirname($epath) ) {
+                $prtStr
+                    = "\# "
+                    . (localtime)
+                    . ": Setting \$GUSHR_PATH to "
+                    . dirname($epath) . "\n";
+                $logString .= $prtStr if ($v > 1);
+                $GUSHR_PATH = dirname($epath);
+            }
+        }
+        else {
+            $prtStr = "#*********\n"
+                    . "# WARNING: Guessing the location of \$GUSHR_PATH "
+                    . "failed / BRAKER failed "
+                    . "to detect gushr.py with \"which gushr.py\"!\n"
+                    . "#*********\n";
+            $logString .= $prtStr if ($v > 0);
+        }
+    }
+
+    if ( not( defined($GUSHR_PATH) ) ) {
+        my $python_err;
+        $python_err .= "GUSHR was not found. You have 3 different options\n"
+                    .  "to provide a path to gushr.py to braker.pl:\n"
+                    .  "   a) provide command-line argument\n"
+                    .  "          --GUSHR_PATH=/your/path\n"
+                    .  "   b) use an existing environment variable\n"
+                    .  "          \$GUSHR_PATH\n"
+                    .  "      for setting the environment variable, run\n"
+                    .  "          export GUSHR_PATH=/your/path\n"
+                    .  "      in your shell. You may append this to your\n"
+                    .  "      .bashrc or .profile file in order to make the\n"
+                    .  "      variable available to all your bash sessions.\n"
+                    .  "   c) braker.pl can try guessing the location of\n"
+                    .  "      \$GUSHR_PATH from the location of a gushr.py\n"
+                    .  "      executable that is available in your \$PATH\n"
+                    .  "      variable. If you try to rely on this option, you\n"
+                    .  "      can check by typing\n"
+                    .  "          which gushr.py\n"
+                    .  "      in your shell, whether there is a gushr.py\n"
+                    .  "      executable in your \$PATH\n";
+        $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
+            . " at line ". __LINE__ . "\n" . "\$GUSHR_PATH not set!\n";
+        $logString .= $prtStr;
+        $logString .= $python_err if ($v > 1);
+        print STDERR $logString;
+        exit(1);
+    }
+}
+
 ####################### set_CDBTOOLS_PATH #######################################
 # * set path to cdbfasta/cdbyank
 ################################################################################
@@ -3449,36 +3720,6 @@ sub check_upfront {
         exit(1);
     }
 
-    # check whether rnaseq2utr is executable
-    $rnaseq2utr = "$AUGUSTUS_BIN_PATH/utrrnaseq";
-    if ( $UTR eq "on" && $skipAllTraining == 0 ) {
-        if ( not( -x $rnaseq2utr ) ) {
-            if ( !-f $rnaseq2utr ) {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "rnaseq2utr executable not found at $rnaseq2utr.\n";
-                $logString .= $prtStr;
-            }
-            else {
-                $prtStr
-                    = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "$rnaseq2utr not executable on this machine.\n";
-                $logString .= $prtStr;
-            }
-            $prtStr
-                = "       UTR training from RNA-Seq is enabled. This requires "
-                . "rnaseq2utr. Please check README.TXT of AUGUSTUS to compile "
-                . "rnaseq2utr correctly.\n";
-            $logString .= $prtStr;
-            print STDERR $logString;
-            exit(1);
-        }
-    }
-
     if(@prot_aln_files) {
         $foundProt++;
     }
@@ -3666,7 +3907,7 @@ sub check_upfront {
         find(
             "bamToWig.py", $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-      );
+        );
     }
     find(
         "gtf2gff.pl",           $AUGUSTUS_BIN_PATH,
@@ -4005,7 +4246,9 @@ sub check_options {
         $skipGeneMarkEP = 1;
         $skipGeneMarkETP = 1;
         $skipGeneMarkES = 1;
-        $UTR = "on";
+        if ( not ($addUTR eq "on") ) {
+            $UTR = "on";
+        }
         if( defined($hintsfile) ) {
             $prtStr = "\# " . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line "
@@ -4124,6 +4367,18 @@ sub check_options {
         exit(1);
     }
 
+    if( $addUTR ne "on" && $addUTR ne "off") {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "\"$addUTR\" is not a valid option for --addUTR. Please use either "
+            . "'on' or 'off'.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
     if (   ( $UTR eq "on" && $soft_mask == 0 )
         or ( $UTR eq "on" && not(@bam) ) )
     {
@@ -4140,7 +4395,29 @@ sub check_options {
         print STDERR $logString;
         exit(1);
     }
-    
+
+    if ( $addUTR eq "on" && not(@bam) ) {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "--addUTR=on has been set but no bam files are provided.\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
+    if( $addUTR eq "on"  && $UTR eq "on") {
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . "--addUTR=on and --UTR=on are incompatible options. You can only enable one of them!\n";
+        $logString .= $prtStr;
+        print STDERR $logString;
+        exit(1);
+    }
+
     my $cpus_available = `getconf _NPROCESSORS_ONLN`;
 
     if ( $cpus_available < $CPU ) {
@@ -9957,37 +10234,87 @@ sub eval_gene_pred {
     $accuracy{$gtfFile} = \@eval_result;
 }
 
+####################### run_gushr ##############################################
+# * add UTRs to genes in GTF format with GUSHR
+################################################################################
+
+sub run_gushr{
+    print LOG "\# " . (localtime) . ": Running GUSHR...\n"
+         if ( $v > 2 );
+    print CITE $pubs{'gemoma1'}; $pubs{'gemoma1'} = "";
+    print CITE $pubs{'gemoma2'}; $pubs{'gemoma2'} = "";
+    print CITE $pubs{'gemoma3'}; $pubs{'gemoma3'} = "";
+    my $in_gtf = shift;
+    my $out_stem = shift;
+    $cmdString = "";
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    $cmdString = "$PYTHON3_PATH/python3 $GUSHR_PATH/gushr.py -b ";
+    foreach(@bam){
+        $cmdString .= $_." ";
+    }
+    $cmdString .= "-t $in_gtf -g $otherfilesDir/genome.fa "
+               .  "-o $out_stem -c $CPU -s $SAMTOOLS_PATH "
+               .  "-a $AUGUSTUS_SCRIPTS_PATH -j $JAVA_PATH -q 2 "
+               .  "> $otherfilesDir/gushr.log 2> $errorfilesDir/gushr.err";
+    print LOG "\n$cmdString\n" if ( $v > 3 );
+        system($cmdString) == 0 or die( "ERROR in file " . __FILE__
+            . " at line " . __LINE__
+            . "\nFailed not execute $cmdString!\n" );
+}
+
+####################### add_utr_to_augustus ####################################
+# * only add UTRs from evidence to augustus.hints.gtf
+################################################################################
+
+sub add_utr_to_augustus{
+    print LOG "\# " . (localtime) . ": Adding UTRs to augustus.hints.gtf...\n"
+         if ( $v > 2 );
+        my $augustus_file;
+    if( defined($AUGUSTUS_hints_preds) ) {
+        $augustus_file = $AUGUSTUS_hints_preds;
+    }else{
+        $augustus_file = "$otherfilesDir/augustus.hints.gtf";
+    }
+    my $gushr_outstem = "$otherfilesDir/gushr";
+    run_gushr($augustus_file, $gushr_outstem);
+    $cmdString = "cp $otherfilesDir/gushr.gtf $otherfilesDir/augustus.hints_utr.gtf";
+    print LOG "\n$cmdString\n" if ( $v > 3 );
+        system($cmdString) == 0 or die( "ERROR in file " . __FILE__
+            . " at line " . __LINE__
+            . "\nFailed not execute $cmdString!\n" );
+}
+
+
 ####################### train_utr ##############################################
 # * train UTR parameters for AUGUSTUS
 ################################################################################
 
 sub train_utr {
     print LOG "\# " . (localtime) . ": Training AUGUSTUS UTR parameters\n"
-        if ( $v > 2 );
-    my $loci = 0;
-    my $testSetSize = 0;
-    my $onlyTrainSize = 0;
-    # copy species parameter files, revert later if UTR model does not improve
-    # predictions
-    print LOG "\# " . (localtime)
-        . ": Create backup of current species parameters:\n" if ( $v > 3 );
-    for ( ( "$species" . "_exon_probs.pbl",
-            "$species" . "_igenic_probs.pbl",
-            "$species" . "_intron_probs.pbl" ) ) {
-        print LOG "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ "
-            . "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR\n" if ( $v > 3 );
-        copy( "$AUGUSTUS_CONFIG_PATH/species/$species/$_",
-              "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR" )
-            or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                . "\nCopy of $AUGUSTUS_CONFIG_PATH/species/$species/$_ to "
-                . "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR failed!\n" );
+         if ( $v > 2 );
+    if($addUTR eq "off"){
+        # copy species parameter files, revert later if UTR model does not improve
+        # predictions
+        print LOG "\# " . (localtime)
+            . ": Create backup of current species parameters:\n" if ( $v > 3 );
+        for ( ( "$species" . "_exon_probs.pbl",
+                "$species" . "_igenic_probs.pbl",
+                "$species" . "_intron_probs.pbl" ) ) {
+            print LOG "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ "
+                . "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR\n" if ( $v > 3 );
+            copy( "$AUGUSTUS_CONFIG_PATH/species/$species/$_",
+                  "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR" )
+                or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
+                    . "\nCopy of $AUGUSTUS_CONFIG_PATH/species/$species/$_ to "
+                    . "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR failed!\n" );
+        }
+        chdir($otherfilesDir) or die( "ERROR in file " . __FILE__ . " at line "
+                . __LINE__
+                . "\nCould not change into directory $otherfilesDir!\n" );
     }
-    chdir($otherfilesDir) or die( "ERROR in file " . __FILE__ . " at line "
-            . __LINE__
-            . "\nCould not change into directory $otherfilesDir!\n" );
-
-    # search all start and stop codons from augustus.gtf and write them
-    # to the file stops.and.starts.gff
+    
     my $augustus_file;
     if( defined($AUGUSTUS_hints_preds) ) {
         $augustus_file = $AUGUSTUS_hints_preds;
@@ -10006,562 +10333,276 @@ sub train_utr {
             . "BRAKER run for this species.\n" if ( $v > 2 );
         $flanking_DNA = compute_flanking_region($augustus_file);
     }
+    my $gushr_outstem = "$otherfilesDir/gushr";
+    run_gushr($augustus_file, $gushr_outstem);
 
-    if ( !uptodate( [$augustus_file],
-        ["$otherfilesDir/stops.and.starts.gff"] ) ) {
-
-        filter_augustus($augustus_file);
-        $augustus_file = "$otherfilesDir/augustus.hints.f.gtf";
-        print LOG "\# " . (localtime)
-            . ": extracting all stop and start codons from "
-            . "$augustus_file to stops.and.starts.gff\n"
-            if ( $v > 3 );
-        my %nonRedundantCodons;
-        my @tmpGffLine;
-        open( AUG, "<", "$augustus_file" )
-            or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                . "\nCould not open file "
-                . "$augustus_file!\n" );
-        # remove transcripts that are redundant by start/stop codon position
-        while ( defined( my $i = <AUG> ) ) {
-            if ( $i =~ /\t(start_codon|stop_codon)\t/ ) {
-                @tmpGffLine = split( /\t/, $i );
-                if ( not( defined( $nonRedundantCodons{"$tmpGffLine[0]_$tmpGffLine[3]_$tmpGffLine[4]_$tmpGffLine[6]"} ) ) ) {
-                    $nonRedundantCodons{"$tmpGffLine[0]_$tmpGffLine[3]_$tmpGffLine[4]_$tmpGffLine[6]" } = $i;
-                }
-            }
-        }
-        close(AUG) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file "
-            . "$augustus_file!\n" );
-        open( CODON, ">", "$otherfilesDir/stops.and.starts.gff" )
-            or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                . "\nCould not open file "
-                . "$otherfilesDir/stops.and.starts.gff!\n" );
-        foreach my $key ( keys %nonRedundantCodons ) {
-            print CODON $nonRedundantCodons{$key};
-        }
-        close(CODON) or die( "ERROR in file " . __FILE__ . " at line "
-            . __LINE__ . "\nCould not close file "
-            . "$otherfilesDir/stops.and.starts.gff!\n" );
+    $string = find(
+        "gff2gbSmallDNA.pl",    $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
     }
+    $perlCmdString .= "perl $string $otherfilesDir/gushr.gtf $genome "
+                   .  "$flanking_DNA $otherfilesDir/utr.gb "
+                   .  "--good=$otherfilesDir/gushr_bothutr.lst "
+                   .  "1> $otherfilesDir/gff2gbSmallDNA.utr.stdout "
+                   . "2> $errorfilesDir/gff2gbSmallDNA.utr.stderr";
+    print LOG "\n$perlCmdString\n" if ( $v > 3 );
+    system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
+        . " at line " . __LINE__
+        . "\nFailed to execute: $perlCmdString!\n" );
 
-    if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/rnaseq.utr.hints"] ) ) {
-        print LOG "\# " . (localtime)
-            . ": Filtering RNA-Seq hints for valid splice site AT-AG, storing "
-            . "in $otherfilesDir/rnsaeq.utr.hints\n" if ( $v > 3 );
-        #TODO: do not load entire genome in memory, process chromsome-wise!
-        my %genome_hash;
-        my $hash_key;
-        open( FASTA, "<", $genome ) or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nCould not open file $genome!\n" );
-        LINE: while ( my $line = <FASTA> ) {
-            next LINE if $line =~ m/^#/;
-            if ( $line =~ /^>/ ) {
-                chomp($line);
-                $hash_key = substr( $line, 1, length($line) - 1 );
-            } else {
-                $line =~ s/[\x0A\x0D]+//g;
-                $line =~ s/(\s+)(\n)(\r)//g;
-                $line = uc($line);
-                $genome_hash{$hash_key} .= $line;
-            }
-        }
-        close(FASTA) or die( "ERROR in file " . __FILE__ . " at line "
-                . __LINE__ . "\nCould not close file $genome!\n" );
-        open( HINTS, "<", $hintsfile ) or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__ . "\nCould not open file $hintsfile!\n" );
-        my @gff;
-        my ( $siteA, $siteB, $given, $lastCol );
-        open( UTRHINTS, ">", "$otherfilesDir/rnaseq.utr.hints" )
-            or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "\nCould not open file rnaseq.utr.hints!\n" );
-        while ( my $line = <HINTS> ) {
-            @gff = split( /\t/, $line );
-            if ( ( $gff[1] eq "b2h" ) && ( $gff[2] eq "intron" ) ){
-                $siteA = substr( $genome_hash{ $gff[0] }, ( $gff[3] - 1 ), 2 );
-                $siteB = substr( $genome_hash{ $gff[0] }, ( $gff[4] - 2 ), 2 );
-                $given = $siteA . $siteB;
-                foreach(@splice){
-                    if ( $gff[8] =~ m/mult=(\d+)/ ) {
-                        $lastCol = "mult=".$1."_$_\n";
-                    }else {
-                        $lastCol = "mult=1_$_\n";
-                    }
-                    if ( uc($given) =~ m/$_/ ) {
-                        for(my $i = 0; $i < 8; $i++){
-                            if($i != 6 ) {
-                                print UTRHINTS $gff[$i] . "\t";
-                            }else{
-                                print UTRHINTS "+\t";
-                            }
-                        }
-                        print UTRHINTS $lastCol;
-                    } else {
-                        $given = reverse $given;
-                        $given =~ tr/ACGTacgt/TGCAtgca/;
-                        if ( uc($given) =~ m/$_/ ) {
-                            for(my $i = 0; $i < 8; $i++){
-                                if($i != 6 ) {
-                                    print UTRHINTS $gff[$i] . "\t";
-                                }else{
-                                    print UTRHINTS "-\t";
-                                }
-                            }
-                            print UTRHINTS $lastCol;
-                        }
-                    }
-                }
-            }
-        }
-        close(UTRHINTS) or die( "ERROR in file " . __FILE__ . " at line "
-            . __LINE__ . "\nCould not close file "
-            . "$otherfilesDir/rnaseq.utr.hints!\n" );
-        close(HINTS) or die( "ERROR in file " . __FILE__ . " at line "
-            . __LINE__ . "\nCould not close file $hintsfile!\n" );
-    }
+    # assign LOCI locations to txIDs
+    open (TRAINUTRGB1, "<", "$otherfilesDir/utr.gb") or die(
+        "ERROR in file " . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $otherfilesDir/utr.gb!\n" );
 
-    # create wiggle file from bam files
-    if(!@stranded){
-        if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/merged.wig"] ) ) {
-            bam2wig()
-        }
-    }else{
-        bam2stranded_wig();
-    }
-
-    # call utrrnaseq; if no stranded data is supplied, once, if stranded
-    # or mixed data is provided, for plus and minus strand; unstranded data
-    # will be ignored in this case:
-    if(!@stranded){
-        if ( !uptodate( ["$hintsfile"], ["$otherfilesDir/utrs.gff"] ) ) {
-            print LOG "\# " . (localtime) . ": Creating $otherfilesDir/utrs.gff\n"
-                if ( $v > 3 );
-            if(!@stranded){
-                $cmdString = "";
-                if ($nice) {
-                    $cmdString .= "nice ";
-                }
-                $cmdString .= "$rnaseq2utr --in-scaffold-file $genome "
-                           .  "-C $otherfilesDir/stops.and.starts.gff "
-                           .  "-I $otherfilesDir/rnaseq.utr.hints "
-                           .  "-W $otherfilesDir/merged.wig "
-                           .  "-o $otherfilesDir/utrs.gff ";
-                if( $rnaseq2utr_args ) {
-                    $cmdString .= "$rnaseq2utr_args ";
-                }
-                $cmdString .=  "1> $otherfilesDir/rnaseq2utr.stdout "
-                            .  "2> $errorfilesDir/rnaseq2utr.err";
-                print LOG "\n$cmdString\n" if ( $v > 3 );
-                system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
-                    . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
-                # utrrnaseq has a bug that outputs "fake copies" of UTR lines where the
-                # fourth column contains smaller coordinates thant he third gff column
-                # have to fix this, for now, remove those lines in braker
-                # Katharina fixed the utrrnaseq issues on August 13th 2018, could
-                # remove the UTRFIX code from braker, now.
-                print LOG "\# " . (localtime) . ": fixing utrrnaseq output\n";
-                open (UTR, "<", "$otherfilesDir/utrs.gff" ) or die( "ERROR in file "
-                    . __FILE__ . " at line " . __LINE__
-                    . "\nCan not open file $otherfilesDir/utrs.gff!\n" );
-                open (UTRFIX, ">", "$otherfilesDir/utrs.f.gff") or die( "ERROR in file "
-                    . __FILE__ . " at line " . __LINE__
-                    . "\nCan not open file $otherfilesDir/utrs.f.gff!\n" );
-                while(<UTR>) {
-                    my @l = split(/\t/);
-                    if($l[4] > $l[3]){
-                        print UTRFIX $_;
-                    }
-                }
-                close(UTRFIX) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                    . "\nCould not close file $otherfilesDir/utrs.f.gff!\n" );
-                close(UTR) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                    . "\nCould not close file $otherfilesDir/utrs.gff!\n" );
-                $cmdString = "mv $otherfilesDir/utrs.f.gff $otherfilesDir/utrs.gff";
-                print LOG "\n$cmdString\n" if ($v > 3);
-                system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
-                    . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
-            }
-        }
-    }else{
-        my @names;
-        my $utrs_file = "$otherfilesDir/utrs.gff";
-        if(-e "$otherfilesDir/rnaseq_plus.bam"){
-            push(@names, "plus");
-        }
-        if(-e "$otherfilesDir/rnaseq_minus.bam"){
-            push(@names, "minus");
-        }
-        foreach(@names){
-            my $this_strand;
-            if($_ eq "plus"){
-                $this_strand = "+";
-            }else{
-                $this_strand = "-";
-            }
-            $cmdString = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-            $cmdString .= "$rnaseq2utr --in-scaffold-file $genome "
-                       .  "-C $otherfilesDir/stops.and.starts.gff "
-                       .  "-I $otherfilesDir/rnaseq.utr.hints "
-                       .  "-W $otherfilesDir/rnaseq_".$_.".wig "
-                       .  "-o $otherfilesDir/utrs_".$_.".gff ";
-            if( $rnaseq2utr_args ) {
-                $cmdString .= "$rnaseq2utr_args ";
-            }
-            $cmdString .=  "1> $otherfilesDir/rnaseq2utr_".$_.".stdout "
-                        .  "2> $errorfilesDir/rnaseq2utr_".$_.".err";
-            print LOG "\n$cmdString\n" if ( $v > 3 );
-            system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
-                . " at line " . __LINE__ . "\nFailed to execute: $cmdString!\n" );
-            # filter utrs from the current strand!
-            open(MERGEDUTRS, ">", $utrs_file) or die ("ERROR in file " 
-                . __FILE__ . " at line " . __LINE__ . "\nFailed to open file "
-                . $utrs_file . " for writing!\n");
-            open(ONESTRANDUTRS, "<", "$otherfilesDir/utrs_".$_.".gff") or
-                die("ERROR in file " . __FILE__ . " at line " . __LINE__ 
-                . "\nFailed to open file " . "$otherfilesDir/utrs_".$_.".gff" 
-                . " for reading!\n");
-            while(<ONESTRANDUTRS>){
-                my @line = split(/\t/);
-                if( ($line[3] < $line[4]) && ($line[6] eq $this_strand) ) {
-                    print MERGEDUTRS $_;
-                }
-            }
-            close(ONESTRANDUTRS) or die ("ERROR in file " 
-                . __FILE__ . " at line " . __LINE__ . "\nFailed to close file "
-                . "$otherfilesDir/utrs_".$_.".gff" . "!\n");
-            close(MERGEDUTRS) or die ("ERROR in file " 
-                . __FILE__ . " at line " . __LINE__ . "\nFailed to close file "
-                . $utrs_file . "!\n");
+    my %txInUtrGb1;
+    my $txLocus;;
+    while( <TRAINUTRGB1> ) {
+        if ( $_ =~ m/LOCUS\s+(\S+)\s/ ) {
+            $txLocus = $1;
+        }elsif ( $_ =~ m/\/gene=\"(\S+)\"/ ) {
+            $txInUtrGb1{$1} = $txLocus;
         }
     }
+    close (TRAINUTRGB1) or die(
+        "ERROR in file " . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/utr.gb!\n" );
 
-    # create genbank file with genes that have two utrs
-    if (!uptodate( [ "$otherfilesDir/utrs.gff",    $augustus_file ],
-            [ "$otherfilesDir/bothutr.lst", "$otherfilesDir/bothutr.test.gb" ] ) ) {
-        print LOG "\# " . (localtime) . ": Creating gb file for UTR training\n"
-            if ( $v > 3 );
-
-        # extract subset of genes, where we have both UTRs
-        open( UTR, "<", "$otherfilesDir/utrs.gff" ) or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCan not open file $otherfilesDir/utrs.gff!\n" );
-        my %both;
-        while (<UTR>) {
-            my @t = split(/\t/);
-            $t[8]=~m/transcript_id \"(\S+)\"/;
-            my $txid = $1;
-            if($t[2] =~ m/UTR/){
-                $both{$txid}{$t[2]} = $_;
+    # find those genes in gtf that ended up in gb file
+    open(GENES, "<", "$otherfilesDir/gushr.gtf") or die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $otherfilesDir/gsuhr.gtf!\n" );
+    open(GENESINGB, ">", "$otherfilesDir/genes_in_gb.gtf") or die(
+        "ERROR in file " . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $otherfilesDir/genes_in_gb.gtf!\n" );
+    while(<GENES>){
+        if($_=~m/transcript_id \"(\S+)\"/){
+            if(defined($txInUtrGb1{$1})){
+                print GENESINGB $_;
             }
         }
-        close(UTR) or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/utrs.gff!\n" );
+    }
+    close(GENESINGB) or die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/genes_in_gb.gtf!\n" );
+    close(GENES) or die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/genes.lst!\n" );
 
-        open( BOTH, ">", "$otherfilesDir/bothutr.lst" ) or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCan not open file $otherfilesDir/bothutr.lst!\n" );
-        foreach(keys %both){
-            if(defined($both{$_}{"3'-UTR"}) && defined($both{$_}{"5'-UTR"})){
-                print BOTH $_."\n";
-            }
-        }
-        close(BOTH) or die( "ERROR in file " . __FILE__ . " at line "
-            . __LINE__
-            . "\nCould not close file $otherfilesDir/bothutr.lst!\n" );
-        $cmdString = "";
-        if ($nice) {
-            $cmdString .= "nice ";
-        }
-        $cmdString .= "cat $otherfilesDir/utrs.gff "
-                   .  "$augustus_file | "
-                   .  "grep -P \"(CDS|5'-UTR|3'-UTR)\" | "
-                   .  "sort -n -k 4,4 | "
-                   .  "sort -s -k 10,10 | sort -s -k 1,1 >"
-                   .  "> $otherfilesDir/genes.gtf "
-                   .  "2> $errorfilesDir/cat_utrs_augustus_noUtrs.err";
-        print LOG "\n$cmdString\n" if ( $v > 3 );
-        system($cmdString) == 0 or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__
-            . "\nFailed not execute $cmdString!\n" );
+    #convert those training genes to protein fasta file
+    gtf2fasta ($genome, "$otherfilesDir/genes_in_gb.gtf",
+        "$otherfilesDir/utr_genes_in_gb.fa", $ttable);
 
-        $string = find(
-            "gff2gbSmallDNA.pl",    $AUGUSTUS_BIN_PATH,
+    # blast good training genes to exclude redundant sequences
+    $string = find("aa2nonred.pl",       $AUGUSTUS_BIN_PATH,
             $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-        );
-        $perlCmdString = "";
-        if ($nice) {
-            $perlCmdString .= "nice ";
+            );
+    $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    if(defined($DIAMOND_PATH) and not(defined($blast_path))){
+        $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
+                        .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
+                       .  "--DIAMOND_PATH=$DIAMOND_PATH --cores=$CPU "
+                       .  "--diamond 1> $otherfilesDir/utr.aa2nonred.stdout "
+                       .  "2> $errorfilesDir/utr.aa2nonred.stderr";
+        print CITE $pubs{'diamond'}; $pubs{'diamond'} = "";
+    }else{
+        $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
+                       .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
+                       .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU 1> "
+                       .  "$otherfilesDir/utr.aa2nonred.stdout "
+                       .  "2> $errorfilesDir/utr.aa2nonred.stderr";
+        print CITE $pubs{'blast1'}; $pubs{'blast1'} = "";
+        print CITE $pubs{'blast2'}; $pubs{'blast2'} = "";
+    }
+    print LOG "\# "
+        . (localtime)
+        . ": DIAMOND/BLAST training gene structures (with UTRs) against "
+        . "themselves:\n" if ($v > 3);
+    print LOG "$perlCmdString\n" if ($v > 3);
+    system("$perlCmdString") == 0
+        or die( "ERROR in file " . __FILE__
+        . " at line " . __LINE__
+        . "\nFailed to execute: $perlCmdString!\n" );
+
+    # parse output of blast
+    my %nonRed;
+    open (BLASTOUT, "<", "$otherfilesDir/utr_genes_in_gb.nr.fa") or
+         die( "ERROR in file "
+         . __FILE__ . " at line " . __LINE__
+         . "\nCould not open file $otherfilesDir/utr_genes_in_gb.nr.fa!\n" );
+    while ( <BLASTOUT> ) {
+        chomp;
+        if($_ =~ m/^\>(\S+)/){
+            $nonRed{$1} = 1;
         }
-        $perlCmdString .= "perl $string $otherfilesDir/genes.gtf $genome "
-                       .  "$flanking_DNA $otherfilesDir/utr.gb "
-                       .  "--good=$otherfilesDir/bothutr.lst "
-                       .  "1> $otherfilesDir/gff2gbSmallDNA.utr.stdout "
-                       . "2> $errorfilesDir/gff2gbSmallDNA.utr.stderr";
-        print LOG "\n$perlCmdString\n" if ( $v > 3 );
-        system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
+    }
+    close (BLASTOUT) or  die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/utr_genes_in_gb.nr.fa!\n" );
+
+    open ( NONREDLOCI, ">", "$otherfilesDir/utr.nonred.loci.lst") or
+           die( "ERROR in file "
+           . __FILE__ . " at line " . __LINE__
+           . "\nCould not open file $otherfilesDir/utr.nonred.loci.lst!\n" );
+    foreach ( keys %nonRed ) {
+        print NONREDLOCI $txInUtrGb1{$_}."\n";
+    }
+    close (NONREDLOCI) or  die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/utr.nonred.loci.lst!\n" );
+
+    # filter utr.gb file for nonredundant loci
+    $string = find(
+        "filterGenesIn.pl",       $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+    $perlCmdString = "";
+    if ($nice) {
+        $perlCmdString .= "nice ";
+    }
+    $perlCmdString .= "perl $string $otherfilesDir/utr.nonred.loci.lst "
+                   .   "$otherfilesDir/utr.gb 1> $otherfilesDir/utr.nr.gb "
+                   .   "2> $errorfilesDir/utr.filterGenesIn.stderr";
+    print LOG "\# " . (localtime)
+        . ": Filtering nonredundant loci into $otherfilesDir/utr.nr.gb:\n"
+        if ($v > 3);
+    print LOG "$perlCmdString\n" if ($v > 3);
+    system("$perlCmdString") == 0
+        or die( "ERROR in file " . __FILE__
+        . " at line " . __LINE__
+        . "\nFailed not execute $perlCmdString!\n" );
+
+    # count how many genes are still in utr.nr.gb
+    if($v > 3) {
+        open (TRAINUTRGB2, "<", "$otherfilesDir/utr.nr.gb") or
+            die( "ERROR in file " . __FILE__ . " at line " . __LINE__
+            . "\nCould not open file $otherfilesDir/utr.nr.gb!\n" );
+        my $nLociUtrGb2 = 0;
+        while ( <TRAINUTRGB2> ) {
+            if($_ =~ m/LOCUS/) {
+                $nLociUtrGb2++;
+            }
+        }
+        close (TRAINUTRGB2) or  die( "ERROR in file " . __FILE__
             . " at line " . __LINE__
-            . "\nFailed to execute: $perlCmdString!\n" );
-
-        # assign LOCI locations to txIDs
-        open (TRAINUTRGB1, "<", "$otherfilesDir/utr.gb") or die(
-            "ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "\nCould not open file $otherfilesDir/utr.gb!\n" );
-
-        my %txInUtrGb1;
-        my $txLocus;;
-        while( <TRAINUTRGB1> ) {
-            if ( $_ =~ m/LOCUS\s+(\S+)\s/ ) {
-                $txLocus = $1;
-            }elsif ( $_ =~ m/\/gene=\"(\S+)\"/ ) {
-                $txInUtrGb1{$1} = $txLocus;
-            }
-        }
-        close (TRAINUTRGB1) or die(
-            "ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/utr.gb!\n" );
-
-        # find those genes in gtf that ended up in gb file
-        open(GENES, "<", "$otherfilesDir/genes.gtf") or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCould not open file $otherfilesDir/genes.lst!\n" );
-        open(GENESINGB, ">", "$otherfilesDir/genes_in_gb.gtf") or die(
-            "ERROR in file " . __FILE__ . " at line " . __LINE__
-            . "\nCould not open file $otherfilesDir/genes_in_gb.gtf!\n" );
-        while(<GENES>){
-            if($_=~m/transcript_id \"(\S+)\"/){
-                if(defined($txInUtrGb1{$1})){
-                    print GENESINGB $_;
-                }
-            }
-        }
-        close(GENESINGB) or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/genes_in_gb.gtf!\n" );
-        close(GENES) or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/genes.lst!\n" );
-
-        # convert those training genes to protein fasta file
-        gtf2fasta ($genome, "$otherfilesDir/genes_in_gb.gtf",
-            "$otherfilesDir/utr_genes_in_gb.fa", $ttable);
-
-        # blast good training genes to exclude redundant sequences
-        $string = find(
-            "aa2nonred.pl",       $AUGUSTUS_BIN_PATH,
-            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-        );
-        $perlCmdString = "";
-        if ($nice) {
-            $perlCmdString .= "nice ";
-        }
-        if(defined($DIAMOND_PATH) and not(defined($blast_path))){
-            $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
-                           .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
-                           .  "--DIAMOND_PATH=$DIAMOND_PATH --cores=$CPU "
-                           .  "--diamond 1> $otherfilesDir/utr.aa2nonred.stdout "
-                           .  "2> $errorfilesDir/utr.aa2nonred.stderr";
-            print CITE $pubs{'diamond'}; $pubs{'diamond'} = "";
-        }else{
-            $perlCmdString .= "perl $string $otherfilesDir/utr_genes_in_gb.fa "
-                           .  "$otherfilesDir/utr_genes_in_gb.nr.fa "
-                           .  "--BLAST_PATH=$BLAST_PATH --cores=$CPU 1> "
-                           .  "$otherfilesDir/utr.aa2nonred.stdout "
-                           .  "2> $errorfilesDir/utr.aa2nonred.stderr";
-            print CITE $pubs{'blast1'}; $pubs{'blast1'} = "";
-            print CITE $pubs{'blast2'}; $pubs{'blast2'} = "";
-        }
+            . "\nCould not close file $otherfilesDir/utr.nr.gb!\n" );
         print LOG "\# "
-            . (localtime)
-            . ": DIAMOND/BLAST training gene structures (with UTRs) against "
-            . "themselves:\n" if ($v > 3);
-        print LOG "$perlCmdString\n" if ($v > 3);
-        system("$perlCmdString") == 0
-            or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__
-            . "\nFailed to execute: $perlCmdString!\n" );
+                . (localtime)
+                . ": $otherfilesDir/utr.nr.gb file contains $nLociUtrGb2 genes.\n";
+    }
 
-        # parse output of blast
-        my %nonRed;
-        open (BLASTOUT, "<", "$otherfilesDir/utr_genes_in_gb.nr.fa") or
-             die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCould not open file $otherfilesDir/utr_genes_in_gb.nr.fa!\n" );
-        while ( <BLASTOUT> ) {
-            chomp;
-            if($_ =~ m/^\>(\S+)/){
-                $nonRed{$1} = 1;
-            }
-        }
-        close (BLASTOUT) or  die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/utr_genes_in_gb.nr.fa!\n" );
+    # move nonredundant file utr.nr.gb to utr.gb
+    $cmdString = "mv $otherfilesDir/utr.nr.gb $otherfilesDir/utr.gb";
+    print LOG  "\# " . (localtime) . ": Moving utr.nr.gb to utr.gb file:\n"
+        if($v>3);
+    print LOG $cmdString."\n";
+    system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
+        . " at line " . __LINE__
+        . "\nFailed to execute: $cmdString!\n" );
 
-        open ( NONREDLOCI, ">", "$otherfilesDir/utr.nonred.loci.lst") or
-            die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCould not open file $otherfilesDir/utr.nonred.loci.lst!\n" );
-        foreach ( keys %nonRed ) {
-            print NONREDLOCI $txInUtrGb1{$_}."\n";
-        }
-        close (NONREDLOCI) or  die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/utr.nonred.loci.lst!\n" );
+    # create an utr.onlytrain.gb if more than 200 UTR training genes
 
-        # filter utr.gb file for nonredundant loci
-        $string = find(
-            "filterGenesIn.pl",       $AUGUSTUS_BIN_PATH,
-            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-        );
-        $perlCmdString = "";
-        if ($nice) {
-            $perlCmdString .= "nice ";
-        }
-        $perlCmdString .= "perl $string $otherfilesDir/utr.nonred.loci.lst "
-                       .  "$otherfilesDir/utr.gb 1> $otherfilesDir/utr.nr.gb "
-                       .  "2> $errorfilesDir/utr.filterGenesIn.stderr";
-        print LOG "\# " . (localtime)
-            . ": Filtering nonredundant loci into $otherfilesDir/utr.nr.gb:\n"
-            if ($v > 3);
-        print LOG "$perlCmdString\n" if ($v > 3);
-        system("$perlCmdString") == 0
-            or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__
-            . "\nFailed not execute $perlCmdString!\n" );
+    my $loci = 0;
+    my $testSetSize = 0;
+    my $onlyTrainSize = 0;
 
-        # count how many genes are still in utr.nr.gb
-        if($v > 3) {
-            open (TRAINUTRGB2, "<", "$otherfilesDir/utr.nr.gb") or
-                die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                . "\nCould not open file $otherfilesDir/utr.nr.gb!\n" );
-            my $nLociUtrGb2 = 0;
-            while ( <TRAINUTRGB2> ) {
-                if($_ =~ m/LOCUS/) {
-                    $nLociUtrGb2++;
-                }
-            }
-            close (TRAINUTRGB2) or  die( "ERROR in file " . __FILE__
-                . " at line " . __LINE__
-                . "\nCould not close file $otherfilesDir/utr.nr.gb!\n" );
-            print LOG "\# "
-                    . (localtime)
-                    . ": $otherfilesDir/utr.nr.gb file contains $nLociUtrGb2 genes.\n";
-        }
-
-        # move nonredundant file utr.nr.gb to utr.gb
-        $cmdString = "mv $otherfilesDir/utr.nr.gb $otherfilesDir/utr.gb";
-        print LOG  "\# " . (localtime) . ": Moving utr.nr.gb to utr.gb file:\n"
-            if($v>3);
-        print LOG $cmdString."\n";
-        system("$cmdString") == 0 or die( "ERROR in file " . __FILE__
-            . " at line " . __LINE__
-            . "\nFailed to execute: $cmdString!\n" );
-
-        # create an utr.onlytrain.gb if more than 200 UTR training genes
-        open(UTRGB, "<", "$otherfilesDir/utr.gb") or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCould not open file $otherfilesDir/utr.gb!\n" );
-        while(<UTRGB>){
-            if($_ =~ m/LOCUS/){
+    open(UTRGB, "<", "$otherfilesDir/utr.gb") or die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $otherfilesDir/utr.gb!\n" );
+    while(<UTRGB>){
+        if($_ =~ m/LOCUS/){
                 $loci++
-            }
         }
-        close(UTRGB) or die( "ERROR in file "
-            . __FILE__ . " at line " . __LINE__
-            . "\nCould not close file $otherfilesDir/utr.gb!\n" );
-        if($loci < 50){
-            die("ERROR in file " . __FILE__ . " at line " . __LINE__
+    }
+    close(UTRGB) or die( "ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/utr.gb!\n" );
+    if($loci < 50){
+        die("ERROR in file " . __FILE__ . " at line " . __LINE__
             . "\nNumber of UTR training loci is smaller than 50, aborting "
             . "UTR training! If this is the only error message, the "
             . "AUGUSTUS parameters for your species were optimized ok, "
             . "but you are lacking UTR parameters. Do not attempt to "
             . "predict genes with UTRs for this species using the current "
             . "parameter set!\n");
-        }elsif( ($loci >= 50) && ($loci <= 1000) ){
-            $testSetSize = floor($loci * 0.2);
-            if(($loci - $testSetSize) > 200){
-                $onlyTrainSize = 200;
-            }
-        }elsif($loci > 1000){
-            $testSetSize = 200;
+    }elsif( ($loci >= 50) && ($loci <= 1000) ){
+        $testSetSize = floor($loci * 0.2);
+        if(($loci - $testSetSize) > 200){
             $onlyTrainSize = 200;
         }
+    }elsif($loci > 1000){
+        $testSetSize = 200;
+        $onlyTrainSize = 200;
+    }
 
-        # create hold out test set
-        $string = find(
-            "randomSplit.pl",       $AUGUSTUS_BIN_PATH,
-            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-        );
+    # create hold out test set
+    $string = find("randomSplit.pl",       $AUGUSTUS_BIN_PATH,
+            $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
+    print LOG "Found script $string.\n" if ( $v > 3 );
+    $perlCmdString = "perl $string $otherfilesDir/utr.gb $testSetSize "
+                    . "1> $otherfilesDir/randomSplit_utr1.log "
+                    . "2> $errorfilesDir/randomSplit_utr1.err";
+    print LOG "\n$perlCmdString\n" if ( $v > 3 );
+    system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
+        . " at line " . __LINE__
+        . "\nFailed to execute: $perlCmdString!\n" );
+
+    # create onlytrain if applicable
+    if($onlyTrainSize > 0){
+        $string = find("randomSplit.pl",       $AUGUSTUS_BIN_PATH,
+                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH);
         print LOG "Found script $string.\n" if ( $v > 3 );
-        $perlCmdString = "perl $string $otherfilesDir/utr.gb $testSetSize "
-                       . "1> $otherfilesDir/randomSplit_utr1.log "
-                       . "2> $errorfilesDir/randomSplit_utr1.err";
+        $perlCmdString = "perl $string $otherfilesDir/utr.gb.train "
+                       . "$onlyTrainSize "
+                       . "1> $otherfilesDir/randomSplit_utr2.log "
+                       . "2> $errorfilesDir/randomSplit_utr2.err";
         print LOG "\n$perlCmdString\n" if ( $v > 3 );
         system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
             . " at line " . __LINE__
             . "\nFailed to execute: $perlCmdString!\n" );
-
-        # create onlytrain if applicable
-        if($onlyTrainSize > 0){
-             $string = find(
-                "randomSplit.pl",       $AUGUSTUS_BIN_PATH,
-                $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-                );
-            print LOG "Found script $string.\n" if ( $v > 3 );
-            $perlCmdString = "perl $string $otherfilesDir/utr.gb.train "
-                           . "$onlyTrainSize "
-                           . "1> $otherfilesDir/randomSplit_utr2.log "
-                           . "2> $errorfilesDir/randomSplit_utr2.err";
-            print LOG "\n$perlCmdString\n" if ( $v > 3 );
-            system("$perlCmdString") == 0 or die( "ERROR in file " . __FILE__
-                . " at line " . __LINE__
-                . "\nFailed to execute: $perlCmdString!\n" );
-        }
-
-        # run AUGUSTUS on UTR test set before UTR training
-        if( !uptodate( ["$otherfilesDir/utr.gb.test"],
-            ["$otherfilesDir/fourthtest.out"] ) || $overwrite ) {
-            $augpath = "$AUGUSTUS_BIN_PATH/augustus";
-            $errorfile  = "$errorfilesDir/fourthtest.stderr";
-                $stdoutfile = "$otherfilesDir/fourthtest.stdout";
-                $cmdString = "";
-            if ($nice) {
-                $cmdString .= "nice ";
-            }
-            $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/utr.gb.test >$stdoutfile 2>$errorfile";
-            print LOG "\# "
-                . (localtime)
-                . ": Fourth AUGUSTUS accuracy test (no UTR parameters on UTR test set)\n" if ($v > 3);
-            print LOG "$cmdString\n" if ($v > 3);
-            system("$cmdString") == 0
-                or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-                    . "\nFailed to execute: $cmdString\n");
-            $target_4 = accuracy_calculator($stdoutfile);
-            print LOG "\# ". (localtime) . ": The accuracy before UTR training "
-                . "training is $target_4\n" if ($v > 3);
-        }
-
-        # changing UTR parameters in species config file to "on"
-        print LOG "\# "
-            . (localtime)
-            . ": Setting value of \"UTR\" in "
-            . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg "
-            . "to \"true\"\n"
-            if ( $v > 3 );
-        setParInConfig(
-            $AUGUSTUS_CONFIG_PATH
-            . "/species/$species/$species\_parameters.cfg",
-            "UTR", "on"
-        );
-        setParInConfig(
-            $AUGUSTUS_CONFIG_PATH
-            . "/species/$species/$species\_parameters.cfg",
-            "print_utr", "on"
-        );
     }
+
+    # run AUGUSTUS on UTR test set before UTR training
+    $augpath = "$AUGUSTUS_BIN_PATH/augustus";
+    $errorfile  = "$errorfilesDir/fourthtest.stderr";
+    $stdoutfile = "$otherfilesDir/fourthtest.stdout";
+    $cmdString = "";
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    $cmdString .= "$augpath --species=$species "
+               .  "--AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH $otherfilesDir/utr.gb.test "
+               .  ">$stdoutfile 2>$errorfile";
+    print LOG "\# "
+        . (localtime)
+        . ": Fourth AUGUSTUS accuracy test (no UTR parameters on UTR test set)\n" if ($v > 3);
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+        . "\nFailed to execute: $cmdString\n");
+    $target_4 = accuracy_calculator($stdoutfile);
+    print LOG "\# ". (localtime) . ": The accuracy before UTR training "
+        . "training is $target_4\n" if ($v > 3);
+
+    # changing UTR parameters in species config file to "on"
+    print LOG "\# "
+        . (localtime)
+        . ": Setting value of \"UTR\" in "
+        . "$AUGUSTUS_CONFIG_PATH/species/$species/$species\_parameters.cfg "
+        . "to \"true\"\n"
+    if ( $v > 3 );
+    setParInConfig($AUGUSTUS_CONFIG_PATH
+        . "/species/$species/$species\_parameters.cfg",
+        "UTR", "on");
+    setParInConfig($AUGUSTUS_CONFIG_PATH
+        . "/species/$species/$species\_parameters.cfg",
+        "print_utr", "on");
 
 
     if ( !uptodate( [ "utr.gb"], ["optimize.utr.out"] ) ) {
@@ -10663,9 +10704,7 @@ sub train_utr {
             }
         }
     }
-    else {
-        print "Skipping UTR parameter optimization. Already up to date.\n";
-    }
+
 }
 
 ####################### bam2wig ################################################
@@ -11276,10 +11315,11 @@ sub gtf2gff3 {
         if($nice){
             $perlCmdString .= "nice ";
         }
-        $perlCmdString .= "cat $gtf | perl -ne 'if(m/\\tAUGUSTUS\\t/) {"
+        $perlCmdString .= "cat $gtf | perl -ne 'if(m/\\tAUGUSTUS\\t/ or "
+                       .  "m/\\tAnnotationFinalizer\\t/ or m/\\tGUSHR\\t/) {"
                        .  "print \$_;}' | perl $string --gff3 --out=$gff3 "
-                       .   ">> $otherfilesDir/gtf2gff3.log "
-                       .   "2>> $errorfilesDir/gtf2gff3.err";
+                       .  ">> $otherfilesDir/gtf2gff3.log "
+                       .  "2>> $errorfilesDir/gtf2gff3.err";
         print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
