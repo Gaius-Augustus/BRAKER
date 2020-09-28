@@ -571,7 +571,7 @@ BRAKER will try to locate the Exonerate executable by using an environment varia
 
 #### GUSHR
 
-This tool is only available if you want either add UTRs (from RNA-Seq data) to predicted genes or if you want to train UTR parameters for AUGUSTUS and predict genes with UTRs. In any case, GUSHR requires the input of RNA-Seq data.
+This tool is only required if you want either add UTRs (from RNA-Seq data) to predicted genes or if you want to train UTR parameters for AUGUSTUS and predict genes with UTRs. In any case, GUSHR requires the input of RNA-Seq data.
 
 GUSHR is available for download at https://github.com/Gaius-Augustus/GUSHR. Obtain it by typing:
 
@@ -580,7 +580,7 @@ GUSHR is available for download at https://github.com/Gaius-Augustus/GUSHR. Obta
 
 ```
 
-GUSHR executes a GeMoMa jar file, and this jar file requires Java 1.8. On Ubuntu, you can install Java 1.8 with the following command:
+GUSHR executes a GeMoMa jar file <sup name="a19">[R19, ](#f19)</sup> <sup name="a20">[R20, ](#f20)</sup> <sup name="a21">[R21](#f21)</sup>, and this jar file requires Java 1.8. On Ubuntu, you can install Java 1.8 with the following command:
 
 ```
 sudo apt-get install openjdk-8-jdk
@@ -1362,4 +1362,10 @@ Oxford University Press: 2078--9.[↩](#a6)
 <b id="f17">[R17]</b> Bruna, T., Lomsadze, A., & Borodovsky, M. 2020. GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026. doi: <https://doi.org/10.1093/nargab/lqaa026>.[↩](#a17)
 
 <b id="f18">[R18]</b> Kriventseva, E. V., Kuznetsov, D., Tegenfeldt, F., Manni, M., Dias, R., Simão, F. A., and Zdobnov, E. M. 2019. OrthoDB v10: sampling the diversity of animal, plant, fungal, protist, bacterial and viral genomes for evolutionary and functional annotations of orthologs. Nucleic Acids Research, 47(D1), D807-D811.[↩](#a18)
+
+<b id="f19">[R19]</b> Keilwagen, J., Hartung, F., Grau, J. (2019) GeMoMa: Homology-based gene prediction utilizing intron position conservation and RNA-seq data. Methods Mol Biol. 1962:161-177, doi: 10.1007/978-1-4939-9173-0_9.[↩](#a19)
+
+<b id="f20">[R20]</b>  Keilwagen, J., Wenk, M., Erickson, J.L., Schattat, M.H., Grau, J., Hartung F. (2016) Using intron position conservation for homology-based gene prediction. Nucleic Acids Research, 44(9):e89.[↩](#a20)
+
+<b id="f21">[R21]</b>  Keilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.[↩](#a21)
 
