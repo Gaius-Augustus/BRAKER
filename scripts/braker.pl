@@ -1111,6 +1111,11 @@ if(defined($annot_pseudo)){
     $annot_pseudo = rel2abs($annot_pseudo);
 }
 
+# convert possible relative path to provided AUGUSTUS file to absolute path
+if( defined( $AUGUSTUS_hints_preds )) {
+    $AUGUSTUS_hints_preds = rel2abs($AUGUSTUS_hints_preds);
+}
+
 # open log file
 $prtStr = "\# "
         . (localtime)
@@ -1215,31 +1220,16 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
     # up with those processes using the same species directory!
     new_species();
 } else {
-    # if no training will be executed, check whether species parameter files exist
-    my $specPath
-        = "$AUGUSTUS_CONFIG_PATH/species/$species/$species" . "_";
-    my @confFiles = (
-        "exon_probs.pbl",   "igenic_probs.pbl",
-        "intron_probs.pbl",
-        "parameters.cfg",   "weightmatrix.txt"
-    );
+    if( defined($AUGUSTUS_hints_preds) && $addUTR eq "off") {  
+        # if no training will be executed, check whether species parameter files exist
+        my $specPath
+            = "$AUGUSTUS_CONFIG_PATH/species/$species/$species" . "_";
+        my @confFiles = (
+            "exon_probs.pbl",   "igenic_probs.pbl",
+            "intron_probs.pbl",
+            "parameters.cfg",   "weightmatrix.txt"
+        );
 
-    foreach (@confFiles) {
-        if ( not( -e "$specPath" . "$_" ) ) {
-            $prtStr
-                = "\# "
-                . (localtime)
-                . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                . "Config file $specPath"
-                . "$_ for species $species "
-                . "does not exist!\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
-            exit(1);
-        }
-    }
-    if ( $UTR eq "on" && !$AUGUSTUS_hints_preds && !$skipAllTraining ) {
-        @confFiles = ( "metapars.utr.cfg", "utr_probs.pbl" );
         foreach (@confFiles) {
             if ( not( -e "$specPath" . "$_" ) ) {
                 $prtStr
@@ -1254,29 +1244,46 @@ if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
                 exit(1);
             }
         }
-    }elsif( $UTR eq "on" && not(defined($skipAllTraining))) {
-        if( not ( -e $specPath . "metapars.utr.cfg" ) ) {
-            $prtStr = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Config file $specPath"
-                    . "metapars.utr.cfg for species $species "
-                    . "does not exist!\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
-            exit(1);
-        }
-    }elsif( $UTR eq "on" && $skipAllTraining==1 ) {
-        if( not ( -e $specPath . "utr_probs.pbl" ) ) {
-            $prtStr = "\# "
-                    . (localtime)
-                    . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-                    . "Config file $specPath"
-                    . "utr_probs.pbl for species $species "
-                    . "does not exist!\n";
-            print LOG $prtStr;
-            print STDERR $prtStr;
-            exit(1);
+        if ( $UTR eq "on" && !$AUGUSTUS_hints_preds && !$skipAllTraining ) {
+            @confFiles = ( "metapars.utr.cfg", "utr_probs.pbl" );
+            foreach (@confFiles) {
+                if ( not( -e "$specPath" . "$_" ) ) {
+                    $prtStr
+                        = "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Config file $specPath"
+                        . "$_ for species $species "
+                        . "does not exist!\n";
+                    print LOG $prtStr;
+                    print STDERR $prtStr;
+                    exit(1);
+                }
+            }
+        }elsif( $UTR eq "on" && not(defined($skipAllTraining))) {
+            if( not ( -e $specPath . "metapars.utr.cfg" ) ) {
+                $prtStr = "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Config file $specPath"
+                        . "metapars.utr.cfg for species $species "
+                        . "does not exist!\n";
+                print LOG $prtStr;
+                print STDERR $prtStr;
+                exit(1);
+            }
+        }elsif( $UTR eq "on" && $skipAllTraining==1 ) {
+            if( not ( -e $specPath . "utr_probs.pbl" ) ) {
+                $prtStr = "\# "
+                        . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                        . "Config file $specPath"
+                        . "utr_probs.pbl for species $species "
+                        . "does not exist!\n";
+                print LOG $prtStr;
+                print STDERR $prtStr;
+                exit(1);
+            }
         }
     }
 }
@@ -4239,7 +4246,9 @@ sub check_options {
         $skipGeneMarkEP = 1;
         $skipGeneMarkETP = 1;
         $skipGeneMarkES = 1;
-        $UTR = "on";
+        if ( not ($addUTR eq "on") ) {
+            $UTR = "on";
+        }
         if( defined($hintsfile) ) {
             $prtStr = "\# " . (localtime)
                     . ": ERROR: in file " . __FILE__ ." at line "
@@ -4397,7 +4406,7 @@ sub check_options {
         print STDERR $logString;
         exit(1);
     }
-    
+
     if( $addUTR eq "on"  && $UTR eq "on") {
         $prtStr
             = "\# "
@@ -10285,24 +10294,26 @@ sub add_utr_to_augustus{
 sub train_utr {
     print LOG "\# " . (localtime) . ": Training AUGUSTUS UTR parameters\n"
          if ( $v > 2 );
-    # copy species parameter files, revert later if UTR model does not improve
-    # predictions
-    print LOG "\# " . (localtime)
-        . ": Create backup of current species parameters:\n" if ( $v > 3 );
-    for ( ( "$species" . "_exon_probs.pbl",
-            "$species" . "_igenic_probs.pbl",
-            "$species" . "_intron_probs.pbl" ) ) {
-        print LOG "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ "
-            . "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR\n" if ( $v > 3 );
-        copy( "$AUGUSTUS_CONFIG_PATH/species/$species/$_",
-              "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR" )
-            or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
-                . "\nCopy of $AUGUSTUS_CONFIG_PATH/species/$species/$_ to "
-                . "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR failed!\n" );
+    if($addUTR eq "off"){
+        # copy species parameter files, revert later if UTR model does not improve
+        # predictions
+        print LOG "\# " . (localtime)
+            . ": Create backup of current species parameters:\n" if ( $v > 3 );
+        for ( ( "$species" . "_exon_probs.pbl",
+                "$species" . "_igenic_probs.pbl",
+                "$species" . "_intron_probs.pbl" ) ) {
+            print LOG "cp $AUGUSTUS_CONFIG_PATH/species/$species/$_ "
+                . "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR\n" if ( $v > 3 );
+            copy( "$AUGUSTUS_CONFIG_PATH/species/$species/$_",
+                  "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR" )
+                or die( "ERROR in file " . __FILE__ . " at line " . __LINE__
+                    . "\nCopy of $AUGUSTUS_CONFIG_PATH/species/$species/$_ to "
+                    . "$AUGUSTUS_CONFIG_PATH/species/$species/$_.noUTR failed!\n" );
+        }
+        chdir($otherfilesDir) or die( "ERROR in file " . __FILE__ . " at line "
+                . __LINE__
+                . "\nCould not change into directory $otherfilesDir!\n" );
     }
-    chdir($otherfilesDir) or die( "ERROR in file " . __FILE__ . " at line "
-            . __LINE__
-            . "\nCould not change into directory $otherfilesDir!\n" );
     
     my $augustus_file;
     if( defined($AUGUSTUS_hints_preds) ) {
@@ -11304,10 +11315,11 @@ sub gtf2gff3 {
         if($nice){
             $perlCmdString .= "nice ";
         }
-        $perlCmdString .= "cat $gtf | perl -ne 'if(m/\\tAUGUSTUS\\t/) {"
+        $perlCmdString .= "cat $gtf | perl -ne 'if(m/\\tAUGUSTUS\\t/ or "
+                       .  "m/\\tAnnotationFinalizer\\t/ or m/\\tGUSHR\\t/) {"
                        .  "print \$_;}' | perl $string --gff3 --out=$gff3 "
-                       .   ">> $otherfilesDir/gtf2gff3.log "
-                       .   "2>> $errorfilesDir/gtf2gff3.err";
+                       .  ">> $otherfilesDir/gtf2gff3.log "
+                       .  "2>> $errorfilesDir/gtf2gff3.err";
         print LOG "$perlCmdString\n" if ($v > 3);
         system("$perlCmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
