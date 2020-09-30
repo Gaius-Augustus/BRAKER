@@ -11316,7 +11316,8 @@ sub gtf2gff3 {
             $perlCmdString .= "nice ";
         }
         $perlCmdString .= "cat $gtf | perl -ne 'if(m/\\tAUGUSTUS\\t/ or "
-                       .  "m/\\tAnnotationFinalizer\\t/ or m/\\tGUSHR\\t/) {"
+                       .  "m/\\tAnnotationFinalizer\\t/ or m/\\tGUSHR\\t/ or "
+                       .  "m/\\tGeneMark\.hmm\\t/) {"
                        .  "print \$_;}' | perl $string --gff3 --out=$gff3 "
                        .  ">> $otherfilesDir/gtf2gff3.log "
                        .  "2>> $errorfilesDir/gtf2gff3.err";
