@@ -969,12 +969,12 @@ In case you have trouble accessing that file, there's also a copy available from
     wget http://bioinf.uni-greifswald.de/augustus/datasets/RNAseq.bam
 
 
-The example data set was not compiled in order to achieve optimal prediction accuracy, but in order to test pipeline components.
+The example data set was not compiled in order to achieve optimal prediction accuracy, but in order to quickly test pipeline components. The small subset of the genome used in these test examples is not long enough for BRAKER training to work well.
 
 Data description
 ----------------
 
-Data corresponds to the last 1,000,000 nucleotides of _Arabidopsis thaliana_'s chromosome Chr5.
+Data corresponds to the last 1,000,000 nucleotides of _Arabidopsis thaliana_'s chromosome Chr5, split into 8 artificial contigs.
 
 RNA-Seq alignments were obtained by [VARUS](https://github.com/Gaius-Augustus/VARUS).
 
