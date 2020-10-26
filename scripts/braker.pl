@@ -759,11 +759,12 @@ if($nocleanup){
 }
 
 # Define publications to be cited ##############################################
-# braker1, braker-whole, aug-cdna, aug-hmm, diamond, blast1, blast2, gm-es, 
-# gm-et, gm-ep, gm-fungus, samtools, bamtools, gth, exonerate, spaln, spaln2,
-# makehub
+# braker1, braker2, braker-whole, aug-cdna, aug-hmm, diamond, blast1, blast2,
+# gm-es, gm-et, gm-ep, gm-fungus, samtools, bamtools, gth, exonerate, spaln,
+# spaln2, makehub
 my %pubs;
 $pubs{'braker1'} = "\nHoff, K. J., Lange, S., Lomsadze, A., Borodovsky, M., & Stanke, M. (2016). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5), 767-769.\n";
+$pubs{'braker2'} = "\nBruna, T., Hoff, K.J., Lomsadze, A., Stanke, M., & Borodovsky, M. (2020). BRAKER2: Automatic Eukaryotic Genome Annotation with GeneMark-EP+ and AUGUSTUS Supported by a Protein Database, bioRxiv.\n";
 $pubs{'braker-whole'} = "\nHoff, K. J., Lomsadze, A., Borodovsky, M., & Stanke, M. (2019). Whole-genome annotation with BRAKER. In Gene Prediction (pp. 65-95). Humana, New York, NY.\n";
 $pubs{'aug-cdna'} = "\nStanke, M., Diekhans, M., Baertsch, R., & Haussler, D. (2008). Using native and syntenically mapped cDNA alignments to improve de novo gene finding. Bioinformatics, 24(5), 637-644.\n";
 $pubs{'aug-hmm'} = "\nStanke, M., Schöffmann, O., Morgenstern, B., & Waack, S. (2006). Gene prediction in eukaryotes with a generalized hidden Markov model that uses hints from external sources. BMC Bioinformatics, 7(1), 62.\n";
@@ -1136,6 +1137,7 @@ open( CITE, ">", "$otherfilesDir/what-to-cite.txt") or die("ERROR in file " . __
 print CITE "When publishing results of this BRAKER run, please cite the following sources:\n";
 print CITE "------------------------------------------------------------------------------\n";
 print CITE $pubs{'braker1'}; $pubs{'braker1'} = "";
+print CITE $pubs{'braker2'}; $pubs{'braker2'} = "";
 print CITE $pubs{'braker-whole'}; $pubs{'braker-whole'} = "";
 
 # Separate $genemark_hintsfile is needed because the format of hints for GeneMark and
