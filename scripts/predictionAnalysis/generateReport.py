@@ -118,8 +118,13 @@ def histogram(data, report, title, xlabel, zScore,
                                     bins=bins, align='left', color=color)
 
     if upper_outliers:
-        n_upper_outliers = (data > upper).sum()
-        patches[-1].set_height(patches[-1].get_height() + n_upper_outliers)
+        outliersSum = (data > upper).sum()
+        lastColumn = patches[-1].get_height() + outliersSum
+
+        if plt.ylim()[1] < lastColumn + lastColumn / 20:
+            plt.ylim(0, lastColumn + lastColumn / 20)
+
+        patches[-1].set_height(lastColumn)
         patches[-1].set_facecolor('m')
         patches[-1].set_label('Range of upper outliers: (' + str(int(upper))
                               + ', ' + str(data.max()) + ')')
