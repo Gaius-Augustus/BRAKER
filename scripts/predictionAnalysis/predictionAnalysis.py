@@ -322,3 +322,5 @@ class Transcript():
         if last:
             output.write("\t".join(last.row) + ' supported "' +
                          str(last.support) + '";\n')
+
+        output.write("###\n")
