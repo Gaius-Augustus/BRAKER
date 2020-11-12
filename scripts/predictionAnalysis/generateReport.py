@@ -17,6 +17,9 @@ import matplotlib.ticker as ticker
 import numpy as np
 import predictionAnalysis as analysis
 from matplotlib.backends.backend_pdf import PdfPages
+import tempfile
+import os
+import subprocess
 
 
 def printBasicStatistics(prediction, report):
@@ -177,13 +180,20 @@ def main():
     args = parseCmd()
     report = PdfPages(args.output)
 
-    prediction = analysis.PredictionAnalysis(args.prediction, args.hints)
+    longestIsoforms = tempfile.NamedTemporaryFile(prefix="longest",
+                                                  delete=False).name
+    subprocess.call(os.path.dirname(os.path.realpath(__file__)) +
+                    "/printLongestIsoforms.py " + args.prediction +
+                    " > " + longestIsoforms, shell=True)
+
+    prediction = analysis.PredictionAnalysis(longestIsoforms, args.hints)
     printBasicStatistics(prediction, report)
     printGeneHistogram(prediction, report)
     printExonHistograms(prediction, report)
     printExonsPerGene(prediction, report)
     printIntronHistogram(prediction, report)
 
+    os.remove(longestIsoforms)
     report.close()
 
 
