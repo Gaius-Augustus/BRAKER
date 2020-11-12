@@ -4,6 +4,8 @@
 # Copyright 2020, Georgia Institute of Technology, USA
 #
 # Collect various statistics about the prediction in gtf format
+#
+# TODO: Correctly handle UTR introns
 # ==============================================================
 
 import csv
@@ -146,6 +148,24 @@ class PredictionAnalysis():
         return self.getTranscriptCount() - \
             self.getAnySupportedTranscriptCount()
 
+    def saveSupportedSubsets(self, fullFile, anyFile, noFile):
+        fullOutput = open(fullFile, "w")
+        anyOutput = open(anyFile, "w")
+        noOutput = open(noFile, "w")
+
+        for transcript in self.transcripts.values():
+            if transcript.fullSupport():
+                transcript.print(fullOutput)
+
+            if transcript.anySupport:
+                transcript.print(anyOutput)
+            else:
+                transcript.print(noOutput)
+
+        fullOutput.close()
+        anyOutput.close()
+        noOutput.close()
+
 
 class Feature():
     def __init__(self, row):
@@ -266,7 +286,7 @@ class Transcript():
                 else:
                     exon.type = "unknown"
 
-    def print(self):
+    def print(self, output):
         first = self.start
         last = self. stop
         if self.exons[0].strand == "-":
@@ -274,18 +294,19 @@ class Transcript():
             last = self. start
 
         if first:
-            print("\t".join(first.row) + ' supported "' +
-                  str(first.support) + '";')
+            output.write("\t".join(first.row) + ' supported "' +
+                         str(first.support) + '";\n')
 
         self.exons.sort()
         for exon in self.exons:
-            print("\t".join(exon.row) + ' cds_type "' + exon.type + '";')
+            output.write("\t".join(exon.row) + ' cds_type "' + exon.type +
+                         '";\n')
 
         self.introns.sort()
         for intron in self.introns:
-            print("\t".join(intron.row) + ' supported "' +
-                  str(intron.support) + '";')
+            output.write("\t".join(intron.row) + ' supported "' +
+                         str(intron.support) + '";\n')
 
         if last:
-            print("\t".join(last.row) + ' supported "' +
-                  str(last.support) + '";')
+            output.write("\t".join(last.row) + ' supported "' +
+                         str(last.support) + '";\n')
