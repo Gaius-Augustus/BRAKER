@@ -11,6 +11,7 @@
 import csv
 import re
 import collections
+import sys
 
 
 def extractFeatureGtf(row, feature):
@@ -36,13 +37,23 @@ class PredictionAnalysis():
         self.transcripts = collections.OrderedDict()
         self.prediction = prediction
 
+        i = 1
         for row in csv.reader(open(prediction), delimiter='\t'):
+            if len(row) == 0:
+                continue
+            elif row[0][0] == "#":
+                continue
+            elif len(row) != 9:
+                sys.exit("Error while processing line " + str(i) + " in " +
+                         prediction)
+
             transcriptID = extractFeatureGtf(row, "transcript_id")
             if not transcriptID:
                 continue
             if transcriptID not in self.transcripts:
                 self.transcripts[transcriptID] = Transcript(self)
             self.transcripts[transcriptID].addFeature(row)
+            i += 1
 
         self.collectOverallStatistics()
 
