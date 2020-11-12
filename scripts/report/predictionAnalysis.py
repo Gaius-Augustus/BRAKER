@@ -10,6 +10,7 @@
 
 import csv
 import re
+import collections
 
 
 def extractFeatureGtf(row, feature):
@@ -32,7 +33,7 @@ class PredictionAnalysis():
         self.loadPrediction(prediction)
 
     def loadPrediction(self, prediction):
-        self.transcripts = {}
+        self.transcripts = collections.OrderedDict()
         self.prediction = prediction
 
         for row in csv.reader(open(prediction), delimiter='\t'):
