@@ -182,9 +182,13 @@ def main():
 
     longestIsoforms = tempfile.NamedTemporaryFile(prefix="longest",
                                                   delete=False).name
-    subprocess.call(os.path.dirname(os.path.realpath(__file__)) +
-                    "/printLongestIsoforms.py " + args.prediction +
-                    " > " + longestIsoforms, shell=True)
+    returnVal = subprocess.call(os.path.dirname(os.path.realpath(__file__)) +
+                                "/printLongestIsoforms.py " + args.prediction +
+                                " > " + longestIsoforms, shell=True)
+    if returnVal != 0:
+        os.remove(longestIsoforms)
+        sys.exit("Error: Something went wrong during the selection of " +
+                 "longest coding isoforms.")
 
     prediction = analysis.PredictionAnalysis(longestIsoforms, args.hints)
     printBasicStatistics(prediction, report)
