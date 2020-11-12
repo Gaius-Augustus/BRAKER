@@ -74,7 +74,11 @@ def getBounds(data, zScore):
 def histogram(data, report, title, xlabel, zScore,
               minimum=-1, maximum=-1, bins=-1):
     data = np.asarray(data)
-    upper = getBounds(data, zScore)
+
+    if maximum == -1:
+        upper = getBounds(data, zScore)
+    else:
+        upper = maximum
 
     if upper > data.max():
         upper = data.max()
