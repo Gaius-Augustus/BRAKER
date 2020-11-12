@@ -88,19 +88,27 @@ def histogram(data, report, title, xlabel, zScore,
 
     if bins == -1:
         bins = 'auto'
+        histData = data
     elif bins == "single":
-        bins = range(1, int(upper))
-        plt.xticks(bins)
+        upper = int(upper)
+
+        # The two lines below deal with the inclusivity of the last boundary
+        # (https://matplotlib.org/3.3.2/api/_as_gen/matplotlib.pyplot.hist.html)
+        bins = range(1, upper + 2)
+        histData = data[data != upper + 1]
+
+        plt.xticks(bins[:-1])
         color = "forestgreen"
     else:
         sys.error("Error: Unexpected bins argument: " + bins)
 
+    # Note that range has no effect if "bins" is a sequence
     if minimum != -1:
-        n, bins, patches = plt.hist(data, range=(minimum, maximum), bins=bins,
-                                    align='left')
+        n, bins, patches = plt.hist(histData, range=(minimum, maximum),
+                                    bins=bins, align='left')
     else:
-        n, bins, patches = plt.hist(data, range=(data.min(), upper), bins=bins,
-                                    align='left', color=color)
+        n, bins, patches = plt.hist(histData, range=(data.min(), upper),
+                                    bins=bins, align='left', color=color)
 
     if upper_outliers:
         n_upper_outliers = (data > upper).sum()
