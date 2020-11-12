@@ -197,7 +197,7 @@ class Transcript():
     def addIntron(self, row):
         intron = Feature(row)
         if intron.signature in self.predictionAnalysis.intronHints:
-            self.support = True
+            intron.support = True
             self.anySupport = True
         else:
             self.fullIntronSupport = False
@@ -205,17 +205,15 @@ class Transcript():
 
     def addStart(self, row):
         self.start = Feature(row)
-        start = Feature(row)
-        if start.signature in self.predictionAnalysis.startHints:
+        if self.start.signature in self.predictionAnalysis.startHints:
             self.anySupport = True
-            self.support = True
+            self.start.support = True
 
     def addStop(self, row):
         self.stop = Feature(row)
-        stop = Feature(row)
-        if stop.signature in self.predictionAnalysis.stopHints:
+        if self.stop.signature in self.predictionAnalysis.stopHints:
             self.anySupport = True
-            self.support = True
+            self.stop.support = True
 
     def isComplete(self):
         return self.start and self.stop
@@ -276,7 +274,8 @@ class Transcript():
             last = self. start
 
         if first:
-            print("\t".join(first.row))
+            print("\t".join(first.row) + ' supported "' +
+                  str(first.support) + '";')
 
         self.exons.sort()
         for exon in self.exons:
@@ -284,7 +283,9 @@ class Transcript():
 
         self.introns.sort()
         for intron in self.introns:
-            print("\t".join(intron.row))
+            print("\t".join(intron.row) + ' supported "' +
+                  str(intron.support) + '";')
 
         if last:
-            print("\t".join(last.row))
+            print("\t".join(last.row) + ' supported "' +
+                  str(last.support) + '";')
