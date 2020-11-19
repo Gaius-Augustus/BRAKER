@@ -98,39 +98,39 @@ $genetic_code{1} = {
     'GGT' => 'G'  # Glycine
 };
 
-$genetic_code{6} = $genetic_code{1};
+$genetic_code{6} = { %{$genetic_code{1}} };
 $genetic_code{6}{'TAA'} = 'Q'; # Glutamine
 $genetic_code{6}{'TAG'} = 'Q';  # Glutamine
 
-$genetic_code{10} = $genetic_code{1};
+$genetic_code{10} = { %{$genetic_code{1}} };
 $genetic_code{10}{'TGA'} = 'C'; # Cysteine
 
-$genetic_code{12} = $genetic_code{1};
+$genetic_code{12} = { %{$genetic_code{1}} };
 $genetic_code{12}{'CTG'} = 'S'; # Serine
 
-$genetic_code{25} = $genetic_code{1};
+$genetic_code{25} = { %{$genetic_code{1}} };
 $genetic_code{25}{'TGA'} = 'G'; # Glycine
 
-$genetic_code{26} = $genetic_code{1};
+$genetic_code{26} = { %{$genetic_code{1}} };
 $genetic_code{26}{'CTG'} = 'A'; # Alanine
 
-$genetic_code{27} = $genetic_code{1};
+$genetic_code{27} = { %{$genetic_code{1}} };
 $genetic_code{27}{'TAG'} = 'Q'; # Glutamine
 $genetic_code{27}{'TAA'} = 'Q';  # Glutamine
 # cannot differentiate between TGA Stop or Tryptophane, make stop codon always
 
-$genetic_code{28} = $genetic_code{1};
+$genetic_code{28} = { %{$genetic_code{1}} };
 # cannot differentiate between alternative translation of stop codons, keep table 1
 
-$genetic_code{29} = $genetic_code{1};
+$genetic_code{29} = { %{$genetic_code{1}} };
 $genetic_code{29}{'TAA'} = 'Y'; # Tyrosine
 $genetic_code{29}{'TAG'} = 'Y';  # Tyrosine
 
-$genetic_code{30} = $genetic_code{1};
+$genetic_code{30} = { %{$genetic_code{1}} };
 $genetic_code{30}{'TAA'} = 'E'; # Glutamic Acid
 $genetic_code{30}{'TAG'} = 'E';  # Glutamic Acid
 
-$genetic_code{31} = $genetic_code{1};
+$genetic_code{31} = { %{$genetic_code{1}} };
 $genetic_code{31}{'TGA'} = 'W'; # Tryptophane
 # cannot differentiale alternative translation of other codons, keep table 1
 
