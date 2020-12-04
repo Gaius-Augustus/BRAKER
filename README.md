@@ -1005,8 +1005,7 @@ Testing BRAKER with RNA-Seq data
 
 The following command will run the pipeline according to Figure [3](#fig2):
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking 
-        --gm_max_intergenic 10000 --cores N
+    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --cores N
 
 This test is implemented in `test1.sh`, expected runtime is ~20 minutes.
 
@@ -1016,8 +1015,7 @@ Testing BRAKER with proteins of any evolutionary distance
 The following command will run the pipeline according to Figure [4](#fig3):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --softmasking
-        --gm_max_intergenic 10000 --cores N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --softmasking --cores N
 
 
 This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
@@ -1028,8 +1026,7 @@ Testing BRAKER with proteins of any evolutionary distance and RNA-Seq
 The following command will run a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam \
-        --gm_max_intergenic 10000 --etpmode --softmasking --cores N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --etpmode --softmasking --cores N
 
 
 This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
@@ -1064,7 +1061,7 @@ The following command will run the pipeline according to Figure [7](#fig6):
 
 
     braker.pl --genome genome.fa --prot_seq proteins.fa --prg gth \
-        --gm_max_intergenic 10000 --bam RNAseq.bam --softmasking --cores N
+        --bam RNAseq.bam --softmasking --cores N
 
 
 This test is implemented in `test5.sh`, expected runtime is ~20 minutes.
@@ -1074,9 +1071,8 @@ Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq and pro
 
 The following command will run the pipeline according to Figure [8](#fig7):
 
-    braker.pl --genome genome.fa --prot_seq prot.fa --prg gth \
-        --bam RNAseq.bam --gth2traingenes --softmasking \
-        --gm_max_intergenic 10000 --cores N
+    braker.pl --genome genome.fa --prot_seq prot.fa --prg gth --bam RNAseq.bam \
+        --gth2traingenes --softmasking --cores N
 
 This test is implemented in `test6.sh`, expected runtime is ~20 minutes.
 
@@ -1097,8 +1093,7 @@ Testing BRAKER with genome sequence
 
 The following command will run the pipeline with no extrinsic evidence:
 
-    braker.pl --genome=genome.fa --esmode --softmasking \
-        --gm_max_intergenic 10000 --cores N
+    braker.pl --genome=genome.fa --esmode --softmasking --cores N
 
 This test is implemented in `test8.sh`, expected runtime is ~20 minutes.
 
