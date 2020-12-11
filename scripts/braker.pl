@@ -3168,7 +3168,7 @@ sub set_JAVA_PATH {
     if(not ($javav[0] =~ m/1\.8/ )){
         $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
             ." at line ". __LINE__ ."\n"
-            . "You have installa java version $javav[0]. GUSHR requires version 1.8!\n"
+            . "You have installed java version $javav[0]. GUSHR requires version 1.8!\n"
             . "You can switch between java versions on your system with:\n"
             . "sudo update-alternatives --config java\n";
         $logString .= $prtStr;
