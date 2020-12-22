@@ -260,6 +260,7 @@ conda install -c bioconda perl-threaded
 conda install -c bioconda perl-logger-simple
 conda install -c bioconda perl-list-util
 conda install -c bioconda perl-list-moreutils
+conda install -c bioconda perl-math-utils
 conda install -c bioconda cdbtools
 ```
 
