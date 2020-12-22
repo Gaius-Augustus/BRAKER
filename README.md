@@ -1015,7 +1015,7 @@ Testing BRAKER with proteins of any evolutionary distance
 The following command will run the pipeline according to Figure [4](#fig3):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --softmasking --cores N
+    braker.pl --genome genome.fa --epmode --prot_seq proteins.fa --softmasking --cores N
 
 
 This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
