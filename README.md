@@ -257,7 +257,7 @@ conda install -c bioconda perl-file-homedir
 conda install -c bioconda perl-file-which # skip if you are not comparing to reference annotation
 conda install -c bioconda perl-mce
 conda install -c bioconda perl-threaded 
-cpanm Logger::Simple
+conda install -c bioconda perl-logger-simple
 ```
 
 Subsequently install BRAKER and other software "as usual" while being in your conda environment. **Note:** There is a bioconda braker package, and a bioconda augustus package. They work. But they are usually lagging behind the development code of both tools on github. We therefore recommend manual installation and usage of lastest sources.
