@@ -10166,7 +10166,19 @@ sub evaluate {
             }
             print ACC "\n";
             if( $i == 1 ){
-                print ACC "Gene_F1"; 
+                print ACC "Gene_F1";
+                my $a = 1;
+                my $b = 1;
+                foreach(@gene_sens){
+                    if($_ == 0){
+                        $a = 0;
+                    }
+                }
+                foreach(@gene_spec){
+                    if($_ == 0){
+                        $b = 0;
+                    }
+                }
                 if( ($a+$b)  > 0) {
                     my @f1_gene = pairwise { (2*$a*$b)/($a+$b)} @gene_sens, @gene_spec;                        
                     foreach(@f1_gene){
@@ -10179,6 +10191,18 @@ sub evaluate {
                 print ACC "\n";
             }elsif( $i == 3 ){
                 print ACC "Transcript_F1"; 
+                my $a = 1;
+                my $b = 1;
+                foreach(@trans_sens){
+                    if($_ == 0){
+                        $a = 0;
+                    }
+                }
+                foreach(@trans_spec){
+                    if($_ == 0){
+                        $b = 0;
+                    }
+                }
                 if( ($a+$b)  > 0) {                
                     my @f1_trans = pairwise { (2*$a*$b)/($a+$b)} @trans_sens, @trans_spec;
                     foreach(@f1_trans){
@@ -10191,6 +10215,18 @@ sub evaluate {
                 print ACC "\n";
             }elsif( $i == 5 ){
                 print ACC "Exon_F1";
+                my $a = 1;
+                my $b = 1;
+                foreach(@exon_sens){
+                    if($_ == 0){
+                        $a = 0;
+                    }
+                }
+                foreach(@exon_spec){
+                    if($_ == 0){
+                        $b = 0;
+                    }
+                }
                 if( ($a+$b)  > 0) {   
                     my @f1_exon = pairwise { (2*$a*$b)/($a+$b)} @exon_sens, @exon_spec;
                     foreach(@f1_exon){
