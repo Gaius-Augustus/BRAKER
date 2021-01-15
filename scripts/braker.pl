@@ -400,7 +400,7 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 --overwrite                         Overwrite existing files (except for
                                     species parameter files) Beware, currently
                                     not implemented properly!
---extrinsicCfgFiles=file1,file2,... Depending on the mode in which braker.pl
+-- CfgFiles=file1,file2,... Depending on the mode in which braker.pl
                                     is executed, it may require one ore several
                                     extrinsicCfgFiles. Don't use this option
                                     unless you know what you are doing!
@@ -10165,82 +10165,69 @@ sub evaluate {
                 }
             }
             print ACC "\n";
-            if( $i == 1 ){
-                print ACC "Gene_F1";
-                my $a = 1;
-                my $b = 1;
-                foreach(@gene_sens){
-                    if($_ == 0){
-                        $a = 0;
+            my @gene_sens;
+            my @gene_spec;
+            my @trans_sens;
+            my @trans_spec;
+            my @exon_sens;
+            my @exon_spec;
+            for( my $i = 0; $i < 6; $i ++){
+                if( $i == 0 ){ print ACC "Gene_Sensitivity" }
+                elsif( $i == 1 ){ print ACC "Gene_Specificity" }
+                elsif( $i == 2 ){ print ACC "Transcript_Sensitivity" }
+                elsif( $i == 3 ){ print ACC "Transcript_Specificity" }
+                elsif( $i == 4 ){ print ACC "Exon_Sensitivity" }
+                elsif( $i == 5 ){ print ACC "Exon_Specificity" }
+                foreach(@accKeys){
+                    chomp(${$accuracy{$_}}[$i]);
+                    print ACC "\t".${$accuracy{$_}}[$i];
+                    if($i == 0){
+                        push(@gene_sens, ${$accuracy{$_}}[$i]);
+                    }elsif($i == 1){
+                        push(@gene_spec, ${$accuracy{$_}}[$i]);
+                    }elsif($i == 2){
+                        push(@trans_sens, ${$accuracy{$_}}[$i]);
+                    }elsif($i == 3){
+                        push(@trans_spec, ${$accuracy{$_}}[$i]);
+                    }elsif($i == 4){
+                        push(@exon_sens, ${$accuracy{$_}}[$i]);
+                    }elsif($i == 5){
+                        push(@exon_spec, ${$accuracy{$_}}[$i]);
                     }
-                }
-                foreach(@gene_spec){
-                    if($_ == 0){
-                        $b = 0;
-                    }
-                }
-                if( ($a+$b)  > 0) {
-                    my @f1_gene = pairwise { (2*$a*$b)/($a+$b)} @gene_sens, @gene_spec;                        
-                    foreach(@f1_gene){
-                        print ACC "\t";
-                        printf ACC "%.2f", $_;
-                    }
-                } else {
-                    print ACC "\tNA";
                 }
                 print ACC "\n";
-            }elsif( $i == 3 ){
-                print ACC "Transcript_F1"; 
-                my $a = 1;
-                my $b = 1;
-                foreach(@trans_sens){
-                    if($_ == 0){
-                        $a = 0;
+                if( $i == 1 ){
+                    print ACC "Gene_F1\t";
+                    if(($gene_sens[0] != 0) && ($gene_spec[0] != 0)){
+                        my $f1_gene = 2*$gene_sens[0]*$gene_spec[0]/($gene_sens[0]+$gene_spec[0]);
+                        printf ACC "%.2f", $f1_gene;
+                    }else{
+                        print ACC "NA";
                     }
+                    print ACC "\n";
+                }elsif( $i == 3 ){
+                    print ACC "Transcript_F1\t";
+                    if(($trans_sens[0] != 0) && ($trans_spec[0] != 0)){
+                        my $f1_trans = 2*$trans_sens[0]*$trans_spec[0]/($trans_sens[0]+$trans_spec[0]);
+                        printf ACC "%.2f", $f1_trans;
+                    }else{
+                        print ACC "NA";
+                    }
+                    print ACC "\n";
+                }elsif( $i == 5){
+                    print ACC "Exon_F1\t";
+                    if(($exon_sens[0] != 0) && ($exon_spec[0] != 0)){
+                        my $f1_exon = 2*$exon_sens[0]*$exon_spec[0]/($exon_sens[0]+$exon_spec[0]);
+                        printf ACC "%.2f", $f1_exon;
+                    }else{
+                        print ACC "NA";
+                    }
+                    print ACC "\n";
                 }
-                foreach(@trans_spec){
-                    if($_ == 0){
-                        $b = 0;
-                    }
-                }
-                if( ($a+$b)  > 0) {                
-                    my @f1_trans = pairwise { (2*$a*$b)/($a+$b)} @trans_sens, @trans_spec;
-                    foreach(@f1_trans){
-                        print ACC "\t";
-                        printf ACC "%.2f", $_;
-                    }
-                } else {
-                    print ACC "\tNA";
-                }
-                print ACC "\n";
-            }elsif( $i == 5 ){
-                print ACC "Exon_F1";
-                my $a = 1;
-                my $b = 1;
-                foreach(@exon_sens){
-                    if($_ == 0){
-                        $a = 0;
-                    }
-                }
-                foreach(@exon_spec){
-                    if($_ == 0){
-                        $b = 0;
-                    }
-                }
-                if( ($a+$b)  > 0) {   
-                    my @f1_exon = pairwise { (2*$a*$b)/($a+$b)} @exon_sens, @exon_spec;
-                    foreach(@f1_exon){
-                        print ACC "\t";
-                        printf ACC "%.2f", $_;
-                    }
-                } else {
-                    print ACC "\tNA";
-                }   
-                print ACC "\n";
             }
         }
         close(ACC) or die ("ERROR in file " . __FILE__ . " at line "
-            . __LINE__ ."\nCould not close file $otherfilesDir/eval.summary");
+                . __LINE__ ."\nCould not close file $otherfilesDir/eval.summary");
     }
     print LOG "\# "
         . (localtime)
