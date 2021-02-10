@@ -1285,7 +1285,7 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
     
 -   If BRAKER used RNA-Seq alignments for generating a training gene set, cite GeneMark-ET:
 
-   -   Lomsadze, A., Paul D.B., and Mark B. (2014) Integration of Mapped Rna-Seq Reads into Automatic Training of Eukaryotic Gene Finding Algorithm. Nucleic Acids Research 42(15): e119--e119
+    -   Lomsadze, A., Paul D.B., and Mark B. (2014) Integration of Mapped Rna-Seq Reads into Automatic Training of Eukaryotic Gene Finding Algorithm. Nucleic Acids Research 42(15): e119--e119
 
 -   If BRAKER was executed with proteins of closely related species, cite GenomeThreader:
 
