@@ -1282,6 +1282,10 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
     -   Li, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., Marth, G., Abecasis, G., Durbin, R.; 1000 Genome Project Data Processing Subgroup (2009). The Sequence Alignment/Map format and SAMtools. Bioinformatics, 25(16):2078-9.
 
     -   Barnett, D.W., Garrison, E.K., Quinlan, A.R., Strömberg, M.P. and Marth G.T. (2011). BamTools: a C++ API and toolkit for analyzing and managing BAM files. Bioinformatics, 27(12):1691-2
+    
+-   If BRAKER used RNA-Seq alignments for generating a training gene set, cite GeneMark-ET:
+
+   -   Lomsadze, A., Paul D.B., and Mark B. (2014) Integration of Mapped Rna-Seq Reads into Automatic Training of Eukaryotic Gene Finding Algorithm. Nucleic Acids Research 42(15): e119--e119
 
 -   If BRAKER was executed with proteins of closely related species, cite GenomeThreader:
 
