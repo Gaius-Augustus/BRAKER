@@ -526,7 +526,7 @@ my $GENEMARK_PATH;
 my $GMET_path;           # GeneMark-ET path
 my $PROTHINT_PATH;
 my $prothint_path;
-my $PROTHINT_REQUIRED = "prothint.py 2.5.0";   # Version of ProtHint required for this BRAKER version
+my $PROTHINT_REQUIRED = "prothint.py 2.6.0";   # Version of ProtHint required for this BRAKER version
 my $genome;              # name of sequence file
 my %scaffSizes;          # length of scaffolds
 my $gff3 = 0;            # create output file in GFF3 format

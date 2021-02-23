@@ -181,7 +181,7 @@ At the time of release, this BRAKER version was tested with:
 
 -   SAMTOOLS 1.7-4-g93586ed<sup name="a6">[R6](#f6)</sup>
 
--   ProtHint 2.5.0
+-   ProtHint 2.6.0
 
 -   GenomeThreader 1.7.0<sup name="a7">[R7](#f7)</sup>
 
