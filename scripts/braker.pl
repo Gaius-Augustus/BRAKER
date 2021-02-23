@@ -3607,7 +3607,7 @@ sub check_upfront {
     my $pmodule;
     my @module_list = (
         "YAML",           "Hash::Merge",
-        "Logger::Simple", "Parallel::ForkManager",
+        "MCE::Mutex", "Parallel::ForkManager",
         "Scalar::Util::Numeric", "Getopt::Long",
         "File::Compare", "File::Path", "Module::Load::Conditional",
         "Scalar::Util::Numeric", "POSIX", "List::Util",
@@ -3618,7 +3618,6 @@ sub check_upfront {
     );
 
     if($EPmode or $ETPmode){
-      push(@module_list, "MCE::Mutex");
       push(@module_list, "threads");
     }
 

@@ -213,7 +213,7 @@ installed:
 
 -   `List::Util`
 
--   `Logger::Simple`
+-   `MCE::Mutex`
 
 -   `Module::Load::Conditional`
 
@@ -228,8 +228,6 @@ installed:
 -   `Math::Utils`
 
 For ProtHint, used when protein input is supplied,  also install:
-
--   `MCE::Mutex`
 
 -   `threads`
 
@@ -256,8 +254,7 @@ conda install -c anaconda biopython
 conda install -c bioconda perl-file-homedir
 conda install -c bioconda perl-file-which # skip if you are not comparing to reference annotation
 conda install -c bioconda perl-mce
-conda install -c bioconda perl-threaded 
-conda install -c bioconda perl-logger-simple
+conda install -c bioconda perl-threaded
 conda install -c bioconda perl-list-util
 conda install -c bioconda perl-list-moreutils
 conda install -c bioconda perl-math-utils
@@ -479,7 +476,6 @@ or by getting the latest release from https://github.com/gatech-genemark/ProtHin
 ProtHint has software requirements of its own. In addition to the Perl modules required by BRAKER, it needs
 
 ```
-MCE::Mutex
 threads
 ```
 
