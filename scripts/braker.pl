@@ -4015,7 +4015,7 @@ sub check_upfront {
 
     if (defined($PROTHINT_PATH)) {
         # Check that ProtHint is running and it is the correct version
-        if (system("$PROTHINT_PATH/prothint.py --version") != 0) {
+        if (system("$PROTHINT_PATH/prothint.py --version >/dev/null") != 0) {
             $prtStr
                 = "\# "
                 . (localtime)
