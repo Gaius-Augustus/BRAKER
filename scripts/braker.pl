@@ -304,7 +304,11 @@ EXPERT OPTIONS
                                     gtf file. Instead, you may provide such a
                                     file from another location. If geneMarkGtf
                                     option is set, skipGeneMark-ES/ET/EP/ETP is
-                                    automatically also set.
+                                    automatically also set. Note that gene and
+                                    transcript ids in the final output may not
+                                    match the ids in the input genemark.gtf
+                                    because BRAKER internally re-assigns these
+                                    ids.
 --rounds                            The number of optimization rounds used in
                                     optimize_augustus.pl (default 5)
 --skipAllTraining                   Skip GeneMark-EX (training and
@@ -3851,6 +3855,10 @@ sub check_upfront {
         "filterGenemark.pl",    $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
+    find(
+        "sortGeneMark.py",    $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
     if($lambda){
         find(
         "downsample_traingenes.pl",    $AUGUSTUS_BIN_PATH,
@@ -4235,6 +4243,17 @@ sub check_options {
                 . "optimizing AUGUSTUS parameter in such a way that "
                 . "each bucket will contain at least 200 training genes. We "
                 . "usually use 8 cores for 8-fold cross validation.\n"
+                . "#*********\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+    }
+
+if( defined($geneMarkGtf) ) {
+        $prtStr = "#*********\n"
+                . "# WARNING: gene and transcript ids in the final output may "
+                . "not match the ids in the input genemark.gtf (specified "
+                . "with the --geneMarkGtf option) because BRAKER internally "
+                . "re-assigns these ids.\n"
                 . "#*********\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
@@ -6919,6 +6938,8 @@ sub filter_genemark {
                 }
             }
 
+            sortGeneMark("$genemarkDir/genemark.gtf");
+
             print LOG "\# "
                 . (localtime)
                 . ": filtering GeneMark genes by intron hints\n" if ($v > 3);
@@ -6987,6 +7008,7 @@ sub filter_genemark {
         if (!uptodate([ "$genemarkDir/genemark.gtf"],
             [ "$genemarkDir/genemark.f.good.gtf"]) || $overwrite ) 
         {
+            sortGeneMark("$genemarkDir/genemark.gtf");
 
             open( ESPRED, "<", "$genemarkDir/genemark.gtf" ) or 
                 clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -9985,6 +10007,43 @@ sub make_gtf {
         print LOG "\# " . (localtime) . ": Skip making gtf file from $AUG_pred "
             . "because $gtf_file is up to date.\n" if ($v > 3);
     }
+}
+
+####################### sortGeneMark ###############################################
+# * call sortGeneMark.py to make BRAKER runs insensitive to the order in which
+#   GeneMark reports predictions
+# * note that the function exits with "clean_abort" upon failure
+################################################################################
+
+sub sortGeneMark {
+    my $gtf = shift;
+    print LOG "\# "
+        . (localtime)
+        . ": sorting GeneMark predictions in $gtf\n" if ($v > 3);
+
+    my $cmdString = "";
+    my $script = find(
+        "sortGeneMark.py",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    $cmdString .= "$PYTHON3_PATH/python3 $script $gtf "
+               .  "> $gtf.sorted "
+               .  "2> $errorfilesDir/sortGeneMark.err";
+    print LOG "$cmdString\n" if ( $v > 3 );
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString\n");
+
+    $cmdString = "mv $gtf.sorted $gtf";
+    print LOG "$cmdString\n" if ( $v > 3 );
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString\n");
 }
 
 ####################### evaluate ###############################################
