@@ -304,7 +304,11 @@ EXPERT OPTIONS
                                     gtf file. Instead, you may provide such a
                                     file from another location. If geneMarkGtf
                                     option is set, skipGeneMark-ES/ET/EP/ETP is
-                                    automatically also set.
+                                    automatically also set. Note that gene and
+                                    transcript ids in the final output may not
+                                    match the ids in the input genemark.gtf
+                                    because BRAKER internally re-assigns these
+                                    ids.
 --rounds                            The number of optimization rounds used in
                                     optimize_augustus.pl (default 5)
 --skipAllTraining                   Skip GeneMark-EX (training and
@@ -4239,6 +4243,17 @@ sub check_options {
                 . "optimizing AUGUSTUS parameter in such a way that "
                 . "each bucket will contain at least 200 training genes. We "
                 . "usually use 8 cores for 8-fold cross validation.\n"
+                . "#*********\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+    }
+
+if( defined($geneMarkGtf) ) {
+        $prtStr = "#*********\n"
+                . "# WARNING: gene and transcript ids in the final output may "
+                . "not match the ids in the input genemark.gtf (specified "
+                . "with the --geneMarkGtf option) because BRAKER internally "
+                . "re-assigns these ids.\n"
                 . "#*********\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
