@@ -397,7 +397,7 @@ export AUGUSTUS_SCRIPTS_PATH=/usr/bin/augustus_scripts
 
 ##### Modification of $PATH
 
-Adding adding directories of AUGUSTUS binaries and scripts to your `$PATH` variable enables your system to locate these tools,
+Adding directories of AUGUSTUS binaries and scripts to your `$PATH` variable enables your system to locate these tools,
 automatically. It is not a requirement for running BRAKER to do this, because BRAKER will try to guess them from the location of another
 environment variable (`$AUGUSTUS_CONFIG_PATH`), or both directories can be supplied as command line arguments to `braker.pl`, but we recommend to add them to your `$PATH` variable. For your current bash session, type:
 
