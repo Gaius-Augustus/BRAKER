@@ -6124,6 +6124,7 @@ sub join_mult_hints {
             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
             "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
+        return;
     }else{
         print LOG "\# " . (localtime) . ": Joining hints that are identical "
             . "(& from the same source) into multiplicity hints (input file "
