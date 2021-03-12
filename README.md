@@ -173,7 +173,7 @@ Supported software versions
 
 At the time of release, this BRAKER version was tested with:
 
--   AUGUSTUS 3.3.4 <sup name="g2">[F2](#g2)</sup>
+-   AUGUSTUS 3.4.0 <sup name="g2">[F2](#g2)</sup>
 
 -   GeneMark-ES/ET/EP 4.64_lic
 
@@ -359,7 +359,7 @@ You can check whether GeneMark-EX is installed properly by running the `check_in
 
 #### AUGUSTUS
 
-Download AUGUSTUS from its master branch at <https://github.com/Gaius-Augustus/Augustus>. Unpack AUGUSTUS and install AUGUSTUS according to AUGUSTUS `README.TXT`. ***Do not use outdated AUGUSTUS versions from other sources, e.g. Debian package or Bioconda package! BRAKER highly depends in particular on an up-to-date Augustus/scripts directory, and other sources are often lagging behind. Currently, the latest release of AUGUSTUS (v3.3.3) is not compatible with BRAKER, please obtain AUGUSTUS by `git clone git@github.com:Gaius-Augustus/Augustus.git`***
+Download AUGUSTUS from its master branch at <https://github.com/Gaius-Augustus/Augustus>. Unpack AUGUSTUS and install AUGUSTUS according to AUGUSTUS `README.TXT`. ***Do not use outdated AUGUSTUS versions from other sources, e.g. Debian package or Bioconda package! BRAKER highly depends in particular on an up-to-date Augustus/scripts directory, and other sources are often lagging behind.***
 
 You should compile AUGUSTUS on your own system in order to avoid problems with versions of libraries used by AUGUSTUS. Compilation instructions are provided in the AUGUSTUS `README.TXT` file (`Augustus/README.txt`).
 
