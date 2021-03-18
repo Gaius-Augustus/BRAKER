@@ -1527,7 +1527,9 @@ close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
 sub make_paths_absolute {
 
     # make genome path absolute
-    $genome    = rel2abs($genome);
+    if (defined($genome)) {
+        $genome = rel2abs($genome);
+    }
 
     # make bam paths absolute
     if (@bam) {
