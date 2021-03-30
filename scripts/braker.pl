@@ -474,7 +474,7 @@ ENDUSAGE
 # Declartion of global variables ###############################################
 
 my $v = 4; # determines what is printed to log
-my $version = "2.1.5";
+my $version = "2.1.6";
 my $rootDir;
 my $logString = "";          # stores log messages produced before opening log file
 $logString .= "\#**********************************************************************************\n";
