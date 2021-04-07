@@ -12,6 +12,7 @@ import csv
 import re
 import collections
 import sys
+import copy
 
 
 def extractFeatureGtf(row, feature):
@@ -55,6 +56,8 @@ class PredictionAnalysis():
             self.transcripts[transcriptID].addFeature(row)
             i += 1
 
+        for transcript in self.transcripts.values():
+            transcript.inferIntrons()
         self.collectOverallStatistics()
 
     def loadHints(self, hints):
@@ -178,6 +181,12 @@ class PredictionAnalysis():
         anyOutput.close()
         noOutput.close()
 
+    def printAll(self, outFile):
+        output = open(outFile, "w")
+        for transcript in self.transcripts.values():
+            transcript.print(output)
+        output.close()
+
 
 class Feature():
     def __init__(self, row):
@@ -213,8 +222,6 @@ class Transcript():
     def addFeature(self, row):
         if row[2] == "CDS":
             self.addExon(row)
-        elif row[2] == "intron":
-            self.addIntron(row)
         elif row[2] == "start_codon":
             self.addStart(row)
         elif row[2] == "stop_codon":
@@ -264,6 +271,16 @@ class Transcript():
 
         return False
 
+    def inferIntrons(self):
+        self.exons.sort()
+
+        for i in range(len(self.exons) - 1):
+            row = copy.deepcopy(self.exons[i].row)
+            row[2] = "intron"
+            row[3] = str(int(row[4]) + 1)
+            row[4] = str(int(self.exons[i + 1].row[3]) - 1)
+            self.addIntron(row)
+
     def categorizeExons(self):
         self.exonsCategorized = True
 
@@ -300,10 +317,10 @@ class Transcript():
 
     def print(self, output):
         first = self.start
-        last = self. stop
+        last = self.stop
         if self.exons[0].strand == "-":
             first = self.stop
-            last = self. start
+            last = self.start
 
         if first:
             output.write("\t".join(first.row) + ' supported "' +
