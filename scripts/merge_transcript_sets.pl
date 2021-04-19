@@ -112,7 +112,7 @@ foreach(@ARGV){
     # always keep the first occuring transcript structure, only add from other gene sets if it has not been in the set, yet
     # this might discard alternative UTR splicing isoforms at present
     while (my ($key, $value) = each (%txid_to_struct_local)){
-        print "key is $key and value is $value\n";
+        # print "key is $key and value is $value\n";
         if(not(defined($uniq_struct_to_txid{$value}))){
             $uniq_struct_to_txid{$value} = $key;
         }
