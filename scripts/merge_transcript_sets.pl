@@ -83,14 +83,15 @@ foreach(@ARGV){
             my $txid;
             if($line =~ m/transcript_id/){
                 $line =~ m/transcript_id "([^"]+)";/;
+
                 $txid = $1;
                 push(@{$txid_to_elements{$txid}}, $line);
                 foreach(@store_for_txid){
-                    push(@{$txid_to_elements{$txid}}, $_)
+                    push(@{$txid_to_elements{$txid}}, $_);
                 }
                 @store_for_txid = ();
             }else{
-                $line =~ s/\t([\t]+)$/\tfile_${file_counter}_$1/;
+                $line =~ s/\t([^\t]+)$/\tfile_${file_counter}_$1/;
                 push(@store_for_txid, $line);
             }
             # currently, UTR features are ignored
@@ -111,9 +112,8 @@ foreach(@ARGV){
     # always keep the first occuring transcript structure, only add from other gene sets if it has not been in the set, yet
     # this might discard alternative UTR splicing isoforms at present
     while (my ($key, $value) = each (%txid_to_struct_local)){
-        #print "key is $key and value is $value\n";
+        print "key is $key and value is $value\n";
         if(not(defined($uniq_struct_to_txid{$value}))){
-            #print "adding transcript\n";
             $uniq_struct_to_txid{$value} = $key;
         }
     }
