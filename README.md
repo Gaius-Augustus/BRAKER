@@ -173,15 +173,15 @@ Supported software versions
 
 At the time of release, this BRAKER version was tested with:
 
--   AUGUSTUS 3.3.4 <sup name="g2">[F2](#g2)</sup>
+-   AUGUSTUS 3.4.0 <sup name="g2">[F2](#g2)</sup>
 
--   GeneMark-ES/ET/EP 4.59_lic
+-   GeneMark-ES/ET/EP 4.64_lic
 
 -   BAMTOOLS 2.5.1<sup name="a5">[R5](#f5)</sup>
 
 -   SAMTOOLS 1.7-4-g93586ed<sup name="a6">[R6](#f6)</sup>
 
--   ProtHint 2.5.0
+-   ProtHint 2.6.0
 
 -   GenomeThreader 1.7.0<sup name="a7">[R7](#f7)</sup>
 
@@ -213,7 +213,7 @@ installed:
 
 -   `List::Util`
 
--   `Logger::Simple`
+-   `MCE::Mutex`
 
 -   `Module::Load::Conditional`
 
@@ -228,8 +228,6 @@ installed:
 -   `Math::Utils`
 
 For ProtHint, used when protein input is supplied,  also install:
-
--   `MCE::Mutex`
 
 -   `threads`
 
@@ -256,8 +254,7 @@ conda install -c anaconda biopython
 conda install -c bioconda perl-file-homedir
 conda install -c bioconda perl-file-which # skip if you are not comparing to reference annotation
 conda install -c bioconda perl-mce
-conda install -c bioconda perl-threaded 
-conda install -c bioconda perl-logger-simple
+conda install -c bioconda perl-threaded
 conda install -c bioconda perl-list-util
 conda install -c bioconda perl-list-moreutils
 conda install -c bioconda perl-math-utils
@@ -362,7 +359,7 @@ You can check whether GeneMark-EX is installed properly by running the `check_in
 
 #### AUGUSTUS
 
-Download AUGUSTUS from its master branch at <https://github.com/Gaius-Augustus/Augustus>. Unpack AUGUSTUS and install AUGUSTUS according to AUGUSTUS `README.TXT`. ***Do not use outdated AUGUSTUS versions from other sources, e.g. Debian package or Bioconda package! BRAKER highly depends in particular on an up-to-date Augustus/scripts directory, and other sources are often lagging behind. Currently, the latest release of AUGUSTUS (v3.3.3) is not compatible with BRAKER, please obtain AUGUSTUS by `git clone git@github.com:Gaius-Augustus/Augustus.git`***
+Download AUGUSTUS from its master branch at <https://github.com/Gaius-Augustus/Augustus>. Unpack AUGUSTUS and install AUGUSTUS according to AUGUSTUS `README.TXT`. ***Do not use outdated AUGUSTUS versions from other sources, e.g. Debian package or Bioconda package! BRAKER highly depends in particular on an up-to-date Augustus/scripts directory, and other sources are often lagging behind.***
 
 You should compile AUGUSTUS on your own system in order to avoid problems with versions of libraries used by AUGUSTUS. Compilation instructions are provided in the AUGUSTUS `README.TXT` file (`Augustus/README.txt`).
 
@@ -400,7 +397,7 @@ export AUGUSTUS_SCRIPTS_PATH=/usr/bin/augustus_scripts
 
 ##### Modification of $PATH
 
-Adding adding directories of AUGUSTUS binaries and scripts to your `$PATH` variable enables your system to locate these tools,
+Adding directories of AUGUSTUS binaries and scripts to your `$PATH` variable enables your system to locate these tools,
 automatically. It is not a requirement for running BRAKER to do this, because BRAKER will try to guess them from the location of another
 environment variable (`$AUGUSTUS_CONFIG_PATH`), or both directories can be supplied as command line arguments to `braker.pl`, but we recommend to add them to your `$PATH` variable. For your current bash session, type:
 
@@ -479,7 +476,6 @@ or by getting the latest release from https://github.com/gatech-genemark/ProtHin
 ProtHint has software requirements of its own. In addition to the Perl modules required by BRAKER, it needs
 
 ```
-MCE::Mutex
 threads
 ```
 
@@ -1282,6 +1278,10 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
     -   Li, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., Marth, G., Abecasis, G., Durbin, R.; 1000 Genome Project Data Processing Subgroup (2009). The Sequence Alignment/Map format and SAMtools. Bioinformatics, 25(16):2078-9.
 
     -   Barnett, D.W., Garrison, E.K., Quinlan, A.R., Strömberg, M.P. and Marth G.T. (2011). BamTools: a C++ API and toolkit for analyzing and managing BAM files. Bioinformatics, 27(12):1691-2
+    
+-   If BRAKER used RNA-Seq alignments for generating a training gene set, cite GeneMark-ET:
+
+    -   Lomsadze, A., Paul D.B., and Mark B. (2014) Integration of Mapped Rna-Seq Reads into Automatic Training of Eukaryotic Gene Finding Algorithm. Nucleic Acids Research 42(15): e119--e119
 
 -   If BRAKER was executed with proteins of closely related species, cite GenomeThreader:
 
@@ -1310,7 +1310,7 @@ Footnotes
 
 <b id="g1">[F1]</b> EX = ES/ET/EP/ETP, all available for download under the name *GeneMark-ES/ET/EP* [↩](#g1)
 
-<b id="g2">[F2]</b> Please use the latest version from the master branch of AUGUSTUS distributed by the original developers, it is available from github at <https://github.com/Gaius-Augustus/Augustus>. Problems have been reported from users that tried to run BRAKER with AUGUSTUS releases maintained by third parties, i.e. Bioconda. Currently, the latest release of AUGUSTUS (v3.3.3) is not compatible with BRAKER, please obtain AUGUSTUS by `git clone git@github.com:Gaius-Augustus/Augustus.git`. [↩](#g2)
+<b id="g2">[F2]</b> Please use the latest version from the master branch of AUGUSTUS distributed by the original developers, it is available from github at <https://github.com/Gaius-Augustus/Augustus>. Problems have been reported from users that tried to run BRAKER with AUGUSTUS releases maintained by third parties, i.e. Bioconda. [↩](#g2)
 
 <b id="g3">[F3]</b> Not tested in this release, we recommend using GenomeThreader, instead  [↩](#g3)
 

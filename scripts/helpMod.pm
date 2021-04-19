@@ -278,7 +278,7 @@ sub find {
         ;    # second searching path of $script
     my $path_3 = abs_path("$AUGUSTUS_CONFIG_PATH/../scripts")
         ;    # third searching path of $script
-    my $path_4 = dirname( rel2abs($0) );
+    my $path_4 = dirname( rel2abs(__FILE__) );
 
     # paths can be redundant, remove redundancies:
     my @unique;

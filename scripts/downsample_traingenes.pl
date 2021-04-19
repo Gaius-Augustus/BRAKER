@@ -126,7 +126,8 @@ my $min_single_exon_genes = 20;
 my $single_exon_gene_counter = 0;
 my %intronNumPrinted;
 
-while (my ($txid, $intronNum) = each %nIntrons ) {
+foreach my $txid (sort(keys %nIntrons)) {
+    my $intronNum = $nIntrons{$txid};
     if( $intronNum == 0 ) {
 	$single_exon_gene_counter++;
     }

@@ -304,7 +304,11 @@ EXPERT OPTIONS
                                     gtf file. Instead, you may provide such a
                                     file from another location. If geneMarkGtf
                                     option is set, skipGeneMark-ES/ET/EP/ETP is
-                                    automatically also set.
+                                    automatically also set. Note that gene and
+                                    transcript ids in the final output may not
+                                    match the ids in the input genemark.gtf
+                                    because BRAKER internally re-assigns these
+                                    ids.
 --rounds                            The number of optimization rounds used in
                                     optimize_augustus.pl (default 5)
 --skipAllTraining                   Skip GeneMark-EX (training and
@@ -470,7 +474,7 @@ ENDUSAGE
 # Declartion of global variables ###############################################
 
 my $v = 4; # determines what is printed to log
-my $version = "2.1.5";
+my $version = "2.1.6";
 my $rootDir;
 my $logString = "";          # stores log messages produced before opening log file
 $logString .= "\#**********************************************************************************\n";
@@ -526,7 +530,7 @@ my $GENEMARK_PATH;
 my $GMET_path;           # GeneMark-ET path
 my $PROTHINT_PATH;
 my $prothint_path;
-my $PROTHINT_REQUIRED = "prothint.py 2.5.0";   # Version of ProtHint required for this BRAKER version
+my $PROTHINT_REQUIRED = "prothint.py 2.6.0";   # Version of ProtHint required for this BRAKER version
 my $genome;              # name of sequence file
 my %scaffSizes;          # length of scaffolds
 my $gff3 = 0;            # create output file in GFF3 format
@@ -764,7 +768,7 @@ if($nocleanup){
 # spaln2, makehub
 my %pubs;
 $pubs{'braker1'} = "\nHoff, K. J., Lange, S., Lomsadze, A., Borodovsky, M., & Stanke, M. (2016). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5), 767-769.\n";
-$pubs{'braker2'} = "\nBruna, T., Hoff, K.J., Lomsadze, A., Stanke, M., & Borodovsky, M. (2020). BRAKER2: Automatic Eukaryotic Genome Annotation with GeneMark-EP+ and AUGUSTUS Supported by a Protein Database, bioRxiv.\n";
+$pubs{'braker2'} = "\nBruna, T., Hoff, K.J., Lomsadze, A., Stanke, M., & Borodovsky, M. (2021). BRAKER2: Automatic Eukaryotic Genome Annotation with GeneMark-EP+ and AUGUSTUS Supported by a Protein Database. NAR Genomics and Bioinformatics 3(1), lqaa108.\n";
 $pubs{'braker-whole'} = "\nHoff, K. J., Lomsadze, A., Borodovsky, M., & Stanke, M. (2019). Whole-genome annotation with BRAKER. In Gene Prediction (pp. 65-95). Humana, New York, NY.\n";
 $pubs{'aug-cdna'} = "\nStanke, M., Diekhans, M., Baertsch, R., & Haussler, D. (2008). Using native and syntenically mapped cDNA alignments to improve de novo gene finding. Bioinformatics, 24(5), 637-644.\n";
 $pubs{'aug-hmm'} = "\nStanke, M., Schöffmann, O., Morgenstern, B., & Waack, S. (2006). Gene prediction in eukaryotes with a generalized hidden Markov model that uses hints from external sources. BMC Bioinformatics, 7(1), 62.\n";
@@ -1523,7 +1527,9 @@ close(LOG) or die("ERROR in file " . __FILE__ ." at line ". __LINE__
 sub make_paths_absolute {
 
     # make genome path absolute
-    $genome    = rel2abs($genome);
+    if (defined($genome)) {
+        $genome = rel2abs($genome);
+    }
 
     # make bam paths absolute
     if (@bam) {
@@ -3607,7 +3613,7 @@ sub check_upfront {
     my $pmodule;
     my @module_list = (
         "YAML",           "Hash::Merge",
-        "Logger::Simple", "Parallel::ForkManager",
+        "MCE::Mutex", "Parallel::ForkManager",
         "Scalar::Util::Numeric", "Getopt::Long",
         "File::Compare", "File::Path", "Module::Load::Conditional",
         "Scalar::Util::Numeric", "POSIX", "List::Util",
@@ -3618,7 +3624,6 @@ sub check_upfront {
     );
 
     if($EPmode or $ETPmode){
-      push(@module_list, "MCE::Mutex");
       push(@module_list, "threads");
     }
 
@@ -3852,6 +3857,10 @@ sub check_upfront {
         "filterGenemark.pl",    $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
+    find(
+        "sortGeneMark.py",    $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
     if($lambda){
         find(
         "downsample_traingenes.pl",    $AUGUSTUS_BIN_PATH,
@@ -4016,7 +4025,7 @@ sub check_upfront {
 
     if (defined($PROTHINT_PATH)) {
         # Check that ProtHint is running and it is the correct version
-        if (system("$PROTHINT_PATH/prothint.py --version") != 0) {
+        if (system("$PROTHINT_PATH/prothint.py --version >/dev/null") != 0) {
             $prtStr
                 = "\# "
                 . (localtime)
@@ -4236,6 +4245,17 @@ sub check_options {
                 . "optimizing AUGUSTUS parameter in such a way that "
                 . "each bucket will contain at least 200 training genes. We "
                 . "usually use 8 cores for 8-fold cross validation.\n"
+                . "#*********\n";
+        print STDOUT $prtStr;
+        $logString .= $prtStr;
+    }
+
+if( defined($geneMarkGtf) ) {
+        $prtStr = "#*********\n"
+                . "# WARNING: gene and transcript ids in the final output may "
+                . "not match the ids in the input genemark.gtf (specified "
+                . "with the --geneMarkGtf option) because BRAKER internally "
+                . "re-assigns these ids.\n"
                 . "#*********\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
@@ -6106,6 +6126,7 @@ sub join_mult_hints {
             "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
             "ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString\n");
+        return;
     }else{
         print LOG "\# " . (localtime) . ": Joining hints that are identical "
             . "(& from the same source) into multiplicity hints (input file "
@@ -6920,6 +6941,8 @@ sub filter_genemark {
                 }
             }
 
+            sortGeneMark("$genemarkDir/genemark.gtf");
+
             print LOG "\# "
                 . (localtime)
                 . ": filtering GeneMark genes by intron hints\n" if ($v > 3);
@@ -6988,6 +7011,7 @@ sub filter_genemark {
         if (!uptodate([ "$genemarkDir/genemark.gtf"],
             [ "$genemarkDir/genemark.f.good.gtf"]) || $overwrite ) 
         {
+            sortGeneMark("$genemarkDir/genemark.gtf");
 
             open( ESPRED, "<", "$genemarkDir/genemark.gtf" ) or 
                 clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -9986,6 +10010,43 @@ sub make_gtf {
         print LOG "\# " . (localtime) . ": Skip making gtf file from $AUG_pred "
             . "because $gtf_file is up to date.\n" if ($v > 3);
     }
+}
+
+####################### sortGeneMark ###############################################
+# * call sortGeneMark.py to make BRAKER runs insensitive to the order in which
+#   GeneMark reports predictions
+# * note that the function exits with "clean_abort" upon failure
+################################################################################
+
+sub sortGeneMark {
+    my $gtf = shift;
+    print LOG "\# "
+        . (localtime)
+        . ": sorting GeneMark predictions in $gtf\n" if ($v > 3);
+
+    my $cmdString = "";
+    my $script = find(
+        "sortGeneMark.py",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    if ($nice) {
+        $cmdString .= "nice ";
+    }
+    $cmdString .= "$PYTHON3_PATH/python3 $script $gtf "
+               .  "> $gtf.sorted "
+               .  "2> $errorfilesDir/sortGeneMark.err";
+    print LOG "$cmdString\n" if ( $v > 3 );
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString\n");
+
+    $cmdString = "mv $gtf.sorted $gtf";
+    print LOG "$cmdString\n" if ( $v > 3 );
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to execute: $cmdString\n");
 }
 
 ####################### evaluate ###############################################
