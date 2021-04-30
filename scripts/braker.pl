@@ -7360,31 +7360,7 @@ sub training_augustus {
             }
         } else {
             # all genes in train.gtf are "good" genes
-            open(TRAINGTF, "<", $traingtf) or clean_abort(
-                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nCould not open file $traingtf!\n" );
-            my %goodHash;
-            while(<TRAINGTF>){
-                $_ =~ m/transcript_id\s\"([^"]+)\"/;
-                $goodHash{$1} = 1;
-            }
-            close(TRAINGTF) or clean_abort(
-                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nCould not close file $traingtf!\n" );
-            open(GOODLST, ">", $goodLstFile) or clean_abort(
-                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nCould not open file $goodLstFile!\n" );
-            foreach my $key (keys %goodHash){
-                print GOODLST $key."\n";
-            }
-            close(GOODLST) or clean_abort(
-                "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
-                "ERROR in file " . __FILE__ ." at line ". __LINE__
-                . "\nCould not close file $goodLstFile!\n" );
-
+            $goodLstFile = $trainGenesGtf;
         }
 
         if ( $gth2traingenes ) {
