@@ -746,7 +746,7 @@ GetOptions(
     'skip_fixing_broken_genes!'    => \$skip_fixing_broken_genes,
     'gc_probability=s'             => \$gc_prob,
     'gm_max_intergenic=s'          => \$gm_max_intergenic
-);
+) or die("Error in command line arguments\n");
 
 if ($help) {
     print $usage;
