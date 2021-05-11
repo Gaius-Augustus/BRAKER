@@ -5629,7 +5629,7 @@ sub make_rnaseq_hints {
                 $perlCmdString .= "nice ";
             }
             $perlCmdString
-                .= "perl $string $genome $hintsfile_temp --score 1>>$hintsfile 2>$errorfile"; # must append because otherwise ProtHint contents are overwritten
+                .= "perl $string $genome $hintsfile_temp --score 1 --allowed=$splice_sites >>$hintsfile 2>$errorfile"; # must append because otherwise ProtHint contents are overwritten
             print LOG "\# "
                 . (localtime)
                 . ": filter introns, find strand and change score to \'mult\' entry\n" if ($v > 3);
@@ -6065,7 +6065,7 @@ sub add_other_hints {
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
-            $perlCmdString .= "perl $string $genome $replacedHintsFile --score 1> $filteredHintsFile 2>$errorfile";
+            $perlCmdString .= "perl $string $genome $replacedHintsFile --score 1 --allowed=$splice_sites > $filteredHintsFile 2>$errorfile";
             print LOG "\# "
                 . (localtime)
                 . ": filter introns, find strand and change score to \'mult\' "
