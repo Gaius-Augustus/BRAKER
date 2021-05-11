@@ -5350,9 +5350,14 @@ sub run_prothint {
     if ($nice) {
         $cmdString .= "nice ";
     }
+    my $nonCanonicalFlag = "";
+    if ($nonCanonicalSpliceDetected) {
+        $nonCanonicalFlag = " --nonCanonicalSpliceSites "
+    }
+
     $cmdString = "$PROTHINT_PATH/prothint.py --threads=$CPU --geneMarkGtf "
-                    . "$genemarkesDir/genemark.gtf $otherfilesDir/genome.fa "
-                    . "$otherfilesDir/proteins.fa";
+                    . "$genemarkesDir/genemark.gtf $nonCanonicalFlag "
+                    . "$otherfilesDir/genome.fa $otherfilesDir/proteins.fa";
     print LOG "\# " . (localtime) . ": starting prothint.py\n" if ($v > 3);
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
@@ -5409,10 +5414,14 @@ sub run_prothint_iter2 {
     if ($nice) {
         $cmdString .= "nice ";
     }
+    my $nonCanonicalFlag = "";
+    if ($nonCanonicalSpliceDetected) {
+        $nonCanonicalFlag = " --nonCanonicalSpliceSites "
+    }
 
     $cmdString = "$PROTHINT_PATH/prothint.py --threads=$CPU --geneSeeds "
                . "$otherfilesDir/augustus.hints_iter1.gtf --prevGeneSeeds "
-               . "$otherfilesDir/GeneMark-ES/genemark.gtf "
+               . "$otherfilesDir/GeneMark-ES/genemark.gtf $nonCanonicalFlag "
                . "--prevSpalnGff $otherfilesDir/Spaln/spaln_iter1.gff "
                . "$otherfilesDir/genome.fa $otherfilesDir/proteins.fa";
     print LOG "\# " . (localtime) . ": starting prothint.py\n" if ($v > 3);
