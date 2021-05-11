@@ -395,12 +395,15 @@ EXPERT OPTIONS
 
 DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
 
---splice_sites=patterns             list of splice site patterns for UTR
-                                    prediction; default: GTAG, extend like this:
-                                    --splice_sites=GTAG,ATAC,...
-                                    this option only affects UTR training
-                                    example generation, not gene prediction
-                                    by AUGUSTUS
+--splice_sites=patterns             List of splice site patterns predicted by
+                                    BRAKER. Default = GTAG,GCAG,ATAC.
+                                    If specified, hints to introns with
+                                    non-canonical splice sites (other than
+                                    GTAG,GCAG,ATAC) are automatically generated
+                                    from RNA-Seq BAM files and from proteins by
+                                    ProtHint. Introns with splice sites other
+                                    than GTAG or GCAG are only predicted when
+                                    supported by hints.
 --overwrite                         Overwrite existing files (except for
                                     species parameter files) Beware, currently
                                     not implemented properly!
@@ -642,8 +645,6 @@ my $foundRNASeq = 0; # stores whether any external RNA-Seq input was found
 my $foundProt = 0; # stores whether any external protein input was found
 my $foundProteinHint = 0; # stores whether hintsfile contains src=P
 my $lambda = 2; # labmda of poisson distribution for downsampling of training genes
-my @splice_cmd_line;
-my @splice;
 my $AUGUSTUS_hints_preds; # for UTR training only (updating existing runs)
 my $cleanup = 1; # enable file and directory cleanup after successful run
 # list of forbidden words for species name
@@ -656,6 +657,9 @@ my $ttable = 1; # translation table to be used
 my $gc_prob = 0.001;
 my $gm_max_intergenic;
 my $skip_fixing_broken_genes; # skip execution of fix_in_frame_stop_codon_genes.py
+my @splice_cmd_line;
+my $splice_sites="gtag,gcag,atac";
+my $nonCanonicalSpliceDetected = 0;
 @forbidden_words = (
     "system",    "exec",  "passthru", "run",    "fork",   "qx",
     "backticks", "chmod", "chown",    "chroot", "unlink", "do",
@@ -4293,39 +4297,50 @@ if( defined($geneMarkGtf) ) {
         }
     }
 
-    # if UTR is on, check whether splice site patterns are given
-    if( $UTR eq "on") {
-        if( @splice_cmd_line ){
-            my $gtag_ever_seen = 0;
-            foreach(@splice_cmd_line){
-                if($_ =~ m/gtag/i){
-                    $gtag_ever_seen = 1;
-                }
-                if(length($_) > 4 or ($_=~m/[^ATCGatcg]/) ){
-                    $prtStr = "\# " . (localtime)
-                            . ": ERROR: in file " . __FILE__ ." at line "
-                            . __LINE__ . "\n" . "--splice_pattern invalid; "
-                            . "each pattern must consist of exactly 4 "
-                            . "nucleotides of the set [ATCGatcg]!\n";
-                    $logString .= $prtStr;
-                    print STDERR $logString;
-                    exit(1);
-                }else{
-                    push(@splice, uc($_));
-                }
-            }
-            if($gtag_ever_seen == 0){
-                $prtStr = "#*********\n"
-                        . "# WARNING: in file " . __FILE__ ." at line "
-                        . __LINE__ . "\n" . " Splice site pattern ATAG was "
-                        . "not in the list of splice site patterns. This "
-                        . "is probably a mistake?\n"
-                        . "#*********\n";
+    if(@splice_cmd_line) {
+        @splice_cmd_line = split(/,/,join(',',@splice_cmd_line));
+        $splice_sites = "";
+
+        my $gtag_ever_seen = 0;
+
+        foreach(@splice_cmd_line){
+
+            if( $_ !~ m/^[ATCGatcg]{4}$/ ) {
+                $prtStr = "\# " . (localtime)
+                        . ": ERROR: in file " . __FILE__ ." at line "
+                        . __LINE__ . "\n" . "splice pattern invalid; "
+                        . "each pattern must consist of exactly 4 "
+                        . "nucleotides of the set [ATCGatcg]!\n";
                 $logString .= $prtStr;
-                print STDOUT $prtStr;
+                print STDERR $logString;
+                exit(1);
             }
-        }else{
-            @splice = ("GTAG");
+
+            if ($_ =~ m/gtag/i) {
+                $gtag_ever_seen = 1;
+            }
+
+            if ($_ !~ m/gtag/i && $_ !~ m/gcag/i && $_ !~ m/atac/i) {
+                $nonCanonicalSpliceDetected = 1;
+            }
+
+            $splice_sites .= lc "$_,"
+
+        }
+
+        chop($splice_sites);
+
+        if($gtag_ever_seen == 0){
+            $prtStr = "#*********\n"
+                    . "# WARNING: in file " . __FILE__ ." at line "
+                    . __LINE__ . "\n" . " Splice site pattern GTAG was "
+                    . "not in the list of splice site patterns. This "
+                    . "is probably a mistake? BRAKER will still predict "
+                    . "a number of GT-AG introns since their predictions "
+                    . "cannot be easily disabled in many components\n"
+                    . "#*********\n";
+            $logString .= $prtStr;
+            print STDOUT $prtStr;
         }
     }
 
