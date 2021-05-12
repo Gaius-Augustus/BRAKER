@@ -9039,7 +9039,7 @@ sub make_hints_jobs{
         $perlCmdString .= "perl $string --sequences=$otherfilesDir/aug_$hintId.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir "
                        .  "--joblist=$otherfilesDir/$hintId.job.lst --jobprefix=aug_".$hintId."_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
                        .  "--extrinsicCfgFile=$cfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on "
-                       .  "--allow_hinted_splicesites=gcag,atac ";
+                       .  "--allow_hinted_splicesites=$splice_sites ";
         if ( defined($optCfgFile) ) {
             $perlCmdString .= " --optCfgFile=$optCfgFile";
         }
@@ -9329,7 +9329,7 @@ sub run_augustus_single_core_hints {
         $cmdString .= "nice ";
     }
     $cmdString .= "$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH --extrinsicCfgFile=$cfgFile --alternatives-from-evidence=$alternatives_from_evidence "
-               .  "--hintsfile=$thisHintsfile --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac";
+               .  "--hintsfile=$thisHintsfile --UTR=$localUTR --exonnames=on --codingseq=on --allow_hinted_splicesites=$splice_sites";
     if ( defined($optCfgFile) ) {
         $cmdString .= " --optCfgFile=$optCfgFile";
     }
