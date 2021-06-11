@@ -255,12 +255,10 @@ conda install -c bioconda perl-class-data-inheritable
 conda install -c bioconda perl-exception-class
 conda install -c bioconda perl-test-pod
 conda install -c anaconda biopython
-conda install -c bioconda perl-file-homedir
 conda install -c bioconda perl-file-which # skip if you are not comparing to reference annotation
 conda install -c bioconda perl-mce
 conda install -c bioconda perl-threaded
 conda install -c bioconda perl-list-util
-conda install -c bioconda perl-list-moreutils
 conda install -c bioconda perl-math-utils
 conda install -c bioconda cdbtools
 ```
