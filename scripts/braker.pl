@@ -19,7 +19,6 @@
 
 use Getopt::Long;
 use File::Compare;
-use File::HomeDir;
 use File::Copy;
 use File::Path qw(make_path rmtree);
 use Module::Load::Conditional qw(can_load check_install requires);
@@ -30,7 +29,6 @@ use Parallel::ForkManager;
 use FindBin;
 use lib "$FindBin::RealBin/.";
 use File::Which;                    # exports which()
-use List::MoreUtils qw( pairwise );
 use File::Which qw(which where);    # exports which() and where()
 
 use Cwd;
@@ -3619,7 +3617,7 @@ sub check_upfront {
         "Scalar::Util::Numeric", "POSIX", "List::Util",
         "FindBin", "File::Which", "Cwd", "File::Spec::Functions",
         "File::Basename", "File::Copy", "Term::ANSIColor",
-        "strict", "warnings", "File::HomeDir", "List::MoreUtils",
+        "strict", "warnings",
         "Math::Utils"
     );
 
