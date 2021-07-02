@@ -8,14 +8,14 @@
 # Call:
 # cat tsebra.gtf | rename_tsebra_transcripts.pl prefix > fixed.gtf
 
-my $stem = $ARGV[0]; # stem of gids
+my $stem = $ARGV[0]."_g"; # stem of gids
 my %gi = ();
 
 my $g = 0;
 my $t = 0;
 my $printall = 0;
 while(<STDIN>){
-#    $_ =~ s/\r//g;
+    $_ =~ s/\r//g;
     $line = $_;
     if($_ =~ m/transcript_id \"([^"]+)\"; gene_id \"([^"]+)\"/){
 	$ctxid = $1;
@@ -39,10 +39,10 @@ while(<STDIN>){
 	$t++;
     }
     if($printall == 1){
-	$line =~ s/transcript_id \"[^"]+\"; gene_id \"[^"]+\";/transcript_id \"derm_g$g\.t$t\"; gene_id \"derm_g$g\";/;
+	$line =~ s/transcript_id \"[^"]+\"; gene_id \"[^"]+\";/transcript_id \"$stem$g\.t$t\"; gene_id \"$stem$g\";/;
     }else{
 	@b = split(/\t/, $line);
-	$line = "$b[0]\t$b[1]\t$b[2]\t$b[3]\t$b[4]\t$b[5]\t$b[6]\t$b[7]\ttranscript_id \"derm_g$g\.t$t\";\n";
+	$line = "$b[0]\t$b[1]\t$b[2]\t$b[3]\t$b[4]\t$b[5]\t$b[6]\t$b[7]\ttranscript_id \"$stem$g\.t$t\";\n";
     }
     print $line;
 }
