@@ -101,7 +101,7 @@ DESCRIPTION
 
 Example:
 
-filterGenemark.pl [OPTIONS] --genemark=genemark.gtf --introns=introns.gff
+filterGenemark.pl [OPTIONS] --genemark=genemark.gtf --hints=hints.gff
 
 ENDUSAGE
 

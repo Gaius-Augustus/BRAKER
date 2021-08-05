@@ -34,6 +34,10 @@ Funding
 
 The development of BRAKER was supported by the National Institutes of Health (NIH) [GM128145 to M.B. and M.S.].
 
+Related Software
+================
+The Transcript Selector for BRAKER (TSEBRA) is available at https://github.com/Gaius-Augustus/TSEBRA .
+
 Contents
 ========
 
@@ -251,12 +255,10 @@ conda install -c bioconda perl-class-data-inheritable
 conda install -c bioconda perl-exception-class
 conda install -c bioconda perl-test-pod
 conda install -c anaconda biopython
-conda install -c bioconda perl-file-homedir
 conda install -c bioconda perl-file-which # skip if you are not comparing to reference annotation
 conda install -c bioconda perl-mce
 conda install -c bioconda perl-threaded
 conda install -c bioconda perl-list-util
-conda install -c bioconda perl-list-moreutils
 conda install -c bioconda perl-math-utils
 conda install -c bioconda cdbtools
 ```
@@ -331,11 +333,11 @@ BRAKER calls upon various bioinformatics software tools that are not part of BRA
 
 Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/GeneMark/license_download.cgi> (the GeneMark-ES/ET/EP) option. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
 
-If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl`, automatically. Otherwise, BRAKER can find GeneMark-EX executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark-EX/gmes_petap/`).
+If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl`, automatically. Otherwise, BRAKER can find GeneMark-EX executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark-EX/`).
 
 In order to set the environment variable for your current Bash session, type:
 
-    export GENEMARK_PATH=/your_path_to_GeneMark-ET/gmes_petap/
+    export GENEMARK_PATH=/your_path_to_GeneMark-EX/
 
 Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.<sup name="g5">[F5](#g5)</sup>
 
@@ -762,6 +764,10 @@ Supported features in column 3 are intron, CDSpart, start, stop.
 
 ### BRAKER with RNA-Seq and protein data
 
+Even though BRAKER supports the combination of RNA-Seq and protein data within the BRAKER pipeline, we strongly recommend to run BRAKER twice (1x with RNA-Seq only, 1x with protein data only) and subsequently combine the results of both runs with TSEBRA, the Transcript Selector for BRAKER (https://github.com/Gaius-Augustus/TSEBRA). You find more information on TSEBRA at https://www.biorxiv.org/content/10.1101/2021.06.07.447316v1
+
+In the following, we describe that it is possible to combine both data sources with BRAKER, alone, for the sake of completeness.
+
 The native mode for running BRAKER with RNA-Seq and protein data is `--etpmode`. This will call GeneMark-ETP (which is currently only available as a premature version by using current state GeneMark-ES/ET/EP/EP+, improvements are to be expected, soon), which will use RNA-Seq and protein hints for training GeneMark-ETP. Hints that are supported by both sources and proteins hints of particularly high quality are enforced in gene prediction with GeneMark-ETP. Subsequently, AUGUSTUS is trained on GeneMark-ETP predictions and genes with hints are predicted by AUGUSTUS. To call the pipeline in this mode, run:
 
 ```
@@ -826,6 +832,7 @@ Run BRAKER in EP-mode, i.e. with proteins of any evolutionary distance as proces
 ### --etpmode
 
 Run BRAKER in ETP-mode, i.e. with proteins of any evolutionary distance processed by ProtHint, and with RNA-Seq data. Should to be provided with `prot_seq=orthodb.fa` and `--bam=rnaseq.bam`. Alternatively, the RNA-Seq and protein hints can be provided as processed hints with the `--hints` opiton.
+Please consider using TSEBRA (https://github.com/Gaius-Augustus/TSEBRA) instead of BRAKER in ETP-mode.
 
 ### --ab\_initio
 
@@ -1023,6 +1030,8 @@ This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
 Testing BRAKER with proteins of any evolutionary distance and RNA-Seq
 ---------------------------------------------------------------------
 
+Please consider using TSEBRA instead of running BRAKER with both RNA-Seq and protein data: https://github.com/Gaius-Augustus/TSEBRA
+
 The following command will run a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4):
 
 
@@ -1057,6 +1066,8 @@ This test is implemented in `test4.sh`, expected runtime is ~7 minutes. The fast
 Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq supported training)
 --------------------------------------------------------------------------------------------
 
+Please consider using TSBERA instead of running BRAKER with proteins and RNA-Seq data at the same time: https://github.com/Gaius-Augustus/TSEBRA
+
 The following command will run the pipeline according to Figure [7](#fig6):
 
 
@@ -1068,6 +1079,8 @@ This test is implemented in `test5.sh`, expected runtime is ~20 minutes.
 
 Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq and protein supported training)
 -------------------------------------------------------------------------------------------------------
+
+Please consider using TSBERA instead of running BRAKER with proteins and RNA-Seq data at the same time: https://github.com/Gaius-Augustus/TSEBRA
 
 The following command will run the pipeline according to Figure [8](#fig7):
 

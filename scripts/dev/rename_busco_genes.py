@@ -11,7 +11,7 @@ from os.path import isfile, join
 
 __author__ = "Katharina J. Hoff"
 __copyright__ = "Copyright 2020. All rights reserved."
-__license__ = "Artistic Licsense"
+__license__ = "Artistic License"
 __version__ = "1.0.0"
 __credits__= "Anica Hoppe"
 __email__ = "katharina.hoff@uni-greifswald.de"
