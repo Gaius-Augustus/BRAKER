@@ -568,7 +568,7 @@ my $species;                # species name
 my $soft_mask = 0;          # soft-masked flag
 my $standard  = 0;          # index for standard malus/ bonus value
                             # (currently 0.1 and 1e1)
-my $chunksize = 1252500;          # chunksize for running AUGUSTUS in parallel
+my $chunksize = 2500000;          # chunksize for running AUGUSTUS in parallel
 my $stdoutfile;    # stores current standard output
 my $string;        # string for storing script path
 my $augustus_args; # string that stores command line arguments to be passed to
@@ -9039,7 +9039,7 @@ sub make_hints_jobs{
         if ($nice) {
             $perlCmdString .= "nice ";
         }
-        $perlCmdString .= "perl $string --sequences=$otherfilesDir/aug_$hintId.lst --wrap=\"#!/bin/bash\" --overlap=5000 --chunksize=$chunksize --outputdir=$augustus_dir "
+        $perlCmdString .= "perl $string --sequences=$otherfilesDir/aug_$hintId.lst --wrap=\"#!/bin/bash\" --overlap=500000 --chunksize=$chunksize --outputdir=$augustus_dir "
                        .  "--joblist=$otherfilesDir/$hintId.job.lst --jobprefix=aug_".$hintId."_ --partitionHints --command \"$augpath --species=$species --AUGUSTUS_CONFIG_PATH=$AUGUSTUS_CONFIG_PATH "
                        .  "--extrinsicCfgFile=$cfgFile --alternatives-from-evidence=$alternatives_from_evidence --UTR=$localUTR --exonnames=on --codingseq=on "
                        .  "--allow_hinted_splicesites=gcag,atac ";
