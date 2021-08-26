@@ -109,13 +109,16 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"genome.fa.cidx", "getAnnoFastaFromJoingenes.augustus.hints_tmp.stdout", "getAnnoFastaFromJoingenes.augustus.ab_initio_tmp.stdout",
 	"augustus.ab_initio.tmp.gtf", "augustus.ab_initio.gff", "augustus.hints.gff", "augustus.hints.tmp.gtf",
 	"getAnnoFastaFromJoingenes.augustus.hints_hints.stdout", "getAnnoFastaFromJoingenes.augustus.ab_initio_.stdout",
-	"getAnnoFastaFromJoingenes.augustus.hints_.stdout", "startAlign.stdout");
+	"getAnnoFastaFromJoingenes.augustus.hints_.stdout", "startAlign.stdout", "augustus.hints_iter1.aa", "augustus.hints_iter1.codingseq",
+	"augustus.hints_iter1.gff", "augustus.tmp1.gff", "augustus.tmp2.gff", "cmd.log", "etrain.bad.lst", "gene_stat.yaml",
+	"good_genes.lst", "hintsfile_iter1.gff", "nonred.loci.lst", "nuc.fasta", "prevHints.gff", "proteins.fa", "seed_proteins.faa",
+        "train.f.gb", "traingenes.good.gtf", "traingenes.good.nr.fa", "uniqueSeeds.gtf");
 
 my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneMark-ES/run",
 	"GeneMark-ET/data", "GeneMark-ET/info", "GeneMark-ET/output", "GeneMark-ET/run",
 	"GeneMark-EP/data", "GeneMark-EP/info", "GeneMark-EP/output", "GeneMark-EP/run",
 	"GeneMark-ETP/data", "GeneMark-ETP/info", "GeneMark-ETP/output", "GeneMark-ETP/run",
-	"genome_split");
+	"genome_split", "Spaln", "augustus_tmp", "augustus_files_hints", "diamond");
 
 foreach(@files){
 	if(-e $wdir."/".$_){
