@@ -140,7 +140,7 @@ gmst2globalCoords.py -t cupcake.collapsed.gff -p gmst.out -o gmst.global.gtf -g 
 The result of this step is located at ```$wdir/long_read_protocol/gmst.global.gtf``` .
 
 
-##### TSEBRA
+#### TSEBRA
 In the final step, the long-read version of TSEBRA is used to combine the three gene sets using all extrinsic evidence.
 
 Create a working directory:
