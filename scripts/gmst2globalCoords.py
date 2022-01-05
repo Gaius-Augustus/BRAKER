@@ -56,12 +56,14 @@ tx = {}
 try:
     with open(args.transcripts, 'r') as file_handle:
         for line in file_handle:
-            if re.match(
-                    r'(\S+)\s+\S+\s+exon\s+(\d+)\s+(\d+)\s+\S+\s+(\S)\s+(\S)\s+gene_id\s+"(\S+)";\stranscript_id\s"(\S+)";',
-                    line):
-                seq, start, stop, strand, frame, gene, tx_id = re.match(
-                    r'(\S+)\s+\S+\s+exon\s+(\d+)\s+(\d+)\s+\S+\s+(\S)\s+(\S)\s+gene_id\s+"(\S+)";\stranscript_id\s"(\S+)";',
-                    line).groups()
+            match = re.match(r'(\S+)\s+\S+\s+exon\s+(\d+)\s+(\d+)\s+\S+\s+(\S)\s+(\S)\s+(.*)',
+                    line)
+            if match:
+                seq, start, stop, strand, frame, attributes = match.groups()
+                if not ('gene_id' in attributes or 'transcript_id' in attributes):
+                    continue
+                gene, = re.match(r'.*gene_id\s+"(\S+)";.*', attributes).groups()
+                tx_id, = re.match(r'.*transcript_id\s+"(\S+)";.*', attributes).groups()
                 if gene not in tx:  # add new gene
                     tx[gene] = {'seq': seq}
                 if tx_id not in tx[gene]:  # add new transcript
