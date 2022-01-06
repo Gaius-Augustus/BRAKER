@@ -1,6 +1,6 @@
 # Long-Read Integretion Using GeneMarkS-T and TSEBRA
 ## Introduction
-Following instruction are a prelimary protocol for producing a BRAKER<sup name="a1">[1,](#ref1)</sup><sup name="a2">[2](#ref2)</sup> gene set that integrates extrinsic evidence from <ins>long-read RNA-Seq</ins>, short-read RNA-seq and proteins into a single prediction.
+Following instruction are a prelimary protocol for producing a BRAKER<sup name="a1">[1](#ref1)</sup><sup name="a2">[2](#ref2)</sup> gene set that integrates extrinsic evidence from <ins>long-read RNA-Seq</ins>, short-read RNA-seq and proteins into a single prediction.
 
 ## Installation
 
@@ -60,7 +60,7 @@ You have to install Cupcake as it is described [here](https://github.com/Magdoll
 Make sure that ```collapse_isoforms_by_sam.py``` is executable.
 
 #### AUGUSTUS scripts
-AUGUSTUS<sup name="a6">[6,](#ref6)</sup><sup name="a7">[7](#ref7)</sup> should already be downloaded for the BRAKER installation. Make sure that the scripts at ```AUGUSTUS/scripts``` are executable (i.e. ```stringtie2fa.py```) and available in your ```$PATH``` variable, e.g:
+AUGUSTUS<sup name="a6">[6](#ref6)</sup><sup name="a7">[7](#ref7)</sup> should already be downloaded for the BRAKER installation. Make sure that the scripts at ```AUGUSTUS/scripts``` are executable (i.e. ```stringtie2fa.py```) and available in your ```$PATH``` variable, e.g:
 ```
 export PATH="/your/path/to/AUGUSTUS/scripts:$PATH"
 ```
@@ -100,7 +100,7 @@ or pass them manually to BRAKER by adding them in the command line below. See th
 
 Run BRAKER using the proteins to execute the BRAKER2 protocol:
 ```
-braker.pl --genome=genome.fa --softmasking --cpu=$threads --epmode --prot_seq==proteins.fa  --workingdir=$wdir/braker2/ 2> $wdir/braker2.log
+braker.pl --genome=genome.fa --softmasking --cpu=$threads --epmode --prot_seq=proteins.fa  --workingdir=$wdir/braker2/ 2> $wdir/braker2.log
 ```
 The important results from this run are the BRAKER2 gene set ```augustus.hints.gtf``` and the hints generated from the protein database ```hintsfile.gff```. Make sure that they are available at ```$wdir/braker2/``` .
 
