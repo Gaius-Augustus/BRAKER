@@ -5024,7 +5024,7 @@ sub check_fasta_headers {
                     }
                 }
                 if ( $_
-                    !~ m/[AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx]/
+                    !~ m/[AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjOoUuXx]/
                     )
                 {
                     if ( $prot == 0 ) {
@@ -5032,7 +5032,7 @@ sub check_fasta_headers {
                             . (localtime)
                             . ": Assuming that this is not a protein fasta "
                             . "file because other characters than "
-                            . "AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjXx "
+                            . "AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjOoUuXx "
                             . "were contained. If this is supposed to be "
                             . "DNA fasta file, please ignore this "
                             . "message.\n" if ($v > 3);
