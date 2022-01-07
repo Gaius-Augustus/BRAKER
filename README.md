@@ -9,6 +9,13 @@ Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifsw
 
 Tomas Bruna, Georgia Tech, U.S.A., bruna.tomas@gatech.edu
 
+---
+**BRAKER and TSEBRA at PAG XXIX**
+
+:sparkles: Lars Gabriel will give a talk about PacBio ccs integration into gene prediction with BRAKER and TSEBRA at PAG on Sunday, Jan 9 2022 4:25 PM. The workflow for PacBio data integration is documented at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/long_reads/long_read_protocol.md
+
+---
+
 Authors of BRAKER
 =================
 
@@ -60,6 +67,7 @@ Contents
         -   [BRAKER with proteins of any evolutionary distance](#braker-with-proteins-of-any-evolutionary-distance)
         -   [BRAKER with proteins of short evolutionary distance](#braker-with-proteins-of-short-evolutionary-distance)
         -   [BRAKER with RNA-Seq and protein data](#braker-with-rna-seq-and-protein-data)
+        -   [BRAKER with short and long read RNA-Seq and protein data](#braker-with-short-and-long-read-RNA-Seq-and-protein-data)
     -   [Description of selected BRAKER command line options](#description-of-selected-braker-command-line-options)
         -   [--ab_initio](#--ab_initio)
         -   [--augustus_args=--some\_arg=bla](#--augustus_args--some_argbla)
@@ -821,6 +829,10 @@ to the BRAKER call that is described in section [BRAKER with RNA-Seq data](#brak
        --bam=file1.bam,file2.bam --prot_seq=proteins.fa \
        --prg=gth --gth2traingenes
 ```
+
+#### BRAKER with short and long read RNA-Seq and protein data
+
+A preliminary protocol for integration of assembled subreads from PacBio ccs sequencing in combination with short read Illumina RNA-Seq and protein database is described at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/long_reads/long_read_protocol.md
 
 Description of selected BRAKER command line options
 ----------------------------------------------------
