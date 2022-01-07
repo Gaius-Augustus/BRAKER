@@ -231,6 +231,8 @@ installed:
 
 -   `Math::Utils`
 
+-   `File::HomeDir`
+
 For ProtHint, used when protein input is supplied,  also install:
 
 -   `threads`
