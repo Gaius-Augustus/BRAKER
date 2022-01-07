@@ -1,4 +1,4 @@
-# Long-Read Integretion Using BRAKER, GeneMarkS-T and TSEBRA
+# Long-Read Integration Using BRAKER, GeneMarkS-T and TSEBRA
 
 ## Introduction
 
