@@ -12,7 +12,7 @@ Tomas Bruna, Georgia Tech, U.S.A., bruna.tomas@gatech.edu
 ---
 **BRAKER and TSEBRA at PAG XXIX**
 
-:sparkles: Lars Gabriel will give a talk about PacBio ccs integration into gene prediction with BRAKER and TSEBRA at PAG on Sunday, Jan 9 2022 4:25 PM. The workflow for PacBio data integration is documented at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/long_reads/long_read_protocol.md
+:sparkles: Lars Gabriel gave a talk about PacBio ccs integration into gene prediction with BRAKER and TSEBRA at PAG on Sunday, Jan 9 2022 4:25 PM. The workflow for PacBio data integration is documented at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/long_reads/long_read_protocol.md, slides are available at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/slides/slides_PAG2022.pdf
 
 ---
 
