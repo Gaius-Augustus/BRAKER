@@ -52,7 +52,7 @@ Switch to 'long_reads' branch:
 
 ```
 cd TSEBRA/
-git checkout long-reads
+git checkout long_reads
 ```
 
 Export ```TSEBRA/bin``` to your ```$PATH``` variable, e.g:
