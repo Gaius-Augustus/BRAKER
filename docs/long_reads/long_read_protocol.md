@@ -24,7 +24,7 @@ Switch to the 'long_reads' branch:
 
 ```
 cd BRAKER/
-git checkout long-reads
+git checkout long_reads
 ```
 
 Follow the installation instructions of the README.md in the BRAKER repository.
