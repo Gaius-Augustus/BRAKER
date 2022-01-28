@@ -8077,7 +8077,7 @@ sub training_augustus {
                 }
                 $perlCmdString .= "perl $string ";
                 if ($nice) {
-                    $perlCmdString .= "--nice "
+                    $perlCmdString .= "--nice=1 "
                 }
                 $perlCmdString  .= "--aug_exec_dir=$AUGUSTUS_BIN_PATH --rounds=$rounds "
                                  . "--species=$species "
