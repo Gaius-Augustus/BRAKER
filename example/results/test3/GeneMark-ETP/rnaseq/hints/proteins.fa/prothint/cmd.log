@@ -1,3 +1,0 @@
-Called from: /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/rnaseq/hints/proteins.fa/prothint
-Cmd: /home/gabriell/programs/ETP/bin/gmes/ProtHint/bin/prothint.py --geneSeeds /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/rnaseq/gmst/genome_gmst.gtf /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/data/genome.softmasked.fasta /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/data/proteins.fa --longGene 30000000 --longProtein 15000000
-

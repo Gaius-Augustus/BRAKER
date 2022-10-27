@@ -86,7 +86,7 @@ Contents
     -   [Data description](#data-description)
     -   [Testing BRAKER with RNA-Seq data](#testing-braker-with-rna-seq-data)
     -   [Testing BRAKER with proteins of any evolutionary distance](#testing-braker-with-proteins-of-any-evolutionary-distance)
-    -   [Testing BRAKER with proteins of any evolutionary distance and RNA-Seq](#testing-braker-with-proteins-of-any-evolutionary-distance-and-rna-seq)
+    -   [Testing BRAKER with proteins and RNA-Seq](#testing-braker-with-proteins-and-rna-seq)
     -   [Testing BRAKER with pre-trained parameters](#testing-braker-with-pre-trained-parameters)
     -   [Testing BRAKER with genome sequence](#testing-braker-with-genome-sequence)
 -   [Starting BRAKER on the basis of previously existing BRAKER runs](#starting-braker-on-the-basis-of-previously-existing-braker-runs)

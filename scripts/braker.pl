@@ -578,8 +578,7 @@ my $workDir;        # in the working directory results and temporary files are
 my $filterOutShort; # filterOutShort option (see help)
 my $augustusHintsPreds; # already existing AUGUSTUS hints prediction without UTR
 my $makehub; # flag for creating track data hub
-#! temporary variable, until we can implement etp+
-my $etpplus_dir;
+my $etpplus_dir; # directory of old GeneMark-ETP+ run (used to restart)
 # Hint type from input hintsfile will be checked
 # a) GeneMark-ET (requires intron hints) and
 # b) selection of exrinsic.cfg file is affected by hint types
@@ -643,7 +642,7 @@ my $traingtf;
 my @rna_seq_libs_ids; # IDs of all RNA-seq libraries for ET/ETPmode
 my $genome_size; # genome size in bp
 
-#!
+#! currently not used
 my @gc_range = (0.32, 0.73); # minimum and maximum gc range
 
 @forbidden_words = (
