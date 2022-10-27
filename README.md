@@ -87,9 +87,6 @@ Contents
     -   [Testing BRAKER with RNA-Seq data](#testing-braker-with-rna-seq-data)
     -   [Testing BRAKER with proteins of any evolutionary distance](#testing-braker-with-proteins-of-any-evolutionary-distance)
     -   [Testing BRAKER with proteins of any evolutionary distance and RNA-Seq](#testing-braker-with-proteins-of-any-evolutionary-distance-and-rna-seq)
-    -   [Testing BRAKER with proteins of close homology](#testing-braker-with-proteins-of-close-homology)
-    -   [Testing BRAKER with proteins of close homology and RNA-Seq data (RNA-Seq supported training)](#testing-braker-with-proteins-of-close-homology-and-rna-seq-data-rna-seq-supported-training)
-    -   [Testing BRAKER with proteins of close homoogy and RNA-Seq data (RNA-Seq and protein supported training)](#testing-braker-with-proteins-of-close-homoogy-and-rna-seq-data-rna-seq-and-protein-supported-training)
     -   [Testing BRAKER with pre-trained parameters](#testing-braker-with-pre-trained-parameters)
     -   [Testing BRAKER with genome sequence](#testing-braker-with-genome-sequence)
 -   [Starting BRAKER on the basis of previously existing BRAKER runs](#starting-braker-on-the-basis-of-previously-existing-braker-runs)
@@ -1039,15 +1036,6 @@ The following command will run a pipeline that first trains GeneMark-ETP with pr
 
 This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
 
-
-You can add UTRs from RNA-Seq data (no AUGUSTUS training) to results of a BRAKER run in ETPmode the following way:
-
-    braker.pl --genome=../genome.fa --addUTR=on --softmasking \
-        --bam=../RNAseq.bam --workingdir=$wd \
-        --AUGUSTUS_hints_preds=augustus.hints.gtf --cores=8 \
-        --skipAllTraining --species=somespecies
-
-This is implemented in `test3_add_utrs.sh`, expected runtime is ~1 minute.
 
 Testing BRAKER with pre-trained parameters
 ------------------------------------------
