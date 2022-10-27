@@ -1,0 +1,321 @@
+#**********************************************************************************
+#                               BRAKER CONFIGURATION                               
+#**********************************************************************************
+# BRAKER CALL: /home/gabriell/programs/../braker3/BRAKER/scripts/braker.pl --genome=/home/gabriell/braker3/BRAKER/example//genome.fa --prot_seq=/home/gabriell/braker3/BRAKER/example//proteins.fa --bam=/home/gabriell/braker3/BRAKER/example//RNAseq.bam --etpmode --softmasking --workingdir=/home/gabriell/braker3/BRAKER/example//tests/test3 --cores 8 --TSEBRA_PATH=/home/gabriell/braker3/TSEBRA_new/TSEBRA/bin/
+# Tue Oct 25 13:31:33 2022: braker.pl version 3.0.0
+# Tue Oct 25 13:31:33 2022: Creating directory /home/gabriell/braker3/BRAKER/example/tests/test3.
+# Tue Oct 25 13:31:33 2022: Configuring of BRAKER for using external tools...
+# Tue Oct 25 13:31:33 2022: Trying to set $AUGUSTUS_CONFIG_PATH...
+# Tue Oct 25 13:31:33 2022: Found environment variable $AUGUSTUS_CONFIG_PATH.
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/programs/Augustus/config/ as potential path for $AUGUSTUS_CONFIG_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $AUGUSTUS_CONFIG_PATH to /home/gabriell/programs/Augustus/config/!
+# Tue Oct 25 13:31:33 2022: Trying to set $AUGUSTUS_BIN_PATH...
+# Tue Oct 25 13:31:33 2022: Did not find environment variable $AUGUSTUS_BIN_PATH.
+# Tue Oct 25 13:31:33 2022: Trying to guess AUGUSTUS_BIN_PATH from location of augustus executable that is available in your $PATH
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/programs/Augustus/bin as potential path for $AUGUSTUS_BIN_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $AUGUSTUS_BIN_PATH to /home/gabriell/programs/Augustus/bin!
+# Tue Oct 25 13:31:33 2022: Trying to set $AUGUSTUS_SCRIPTS_PATH...
+# Tue Oct 25 13:31:33 2022: Did not find environment variable $AUGUSTUS_SCRIPTS_PATH.
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/programs/Augustus/config//../scripts as potential path for $AUGUSTUS_SCRIPTS_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $AUGUSTUS_SCRIPTS_PATH to /home/gabriell/programs/Augustus/config//../scripts!
+# Tue Oct 25 13:31:33 2022: Trying to set $PYTHON3_PATH...
+# Tue Oct 25 13:31:33 2022: Did not find environment variable $PYTHON3_PATH.
+# Tue Oct 25 13:31:33 2022: Trying to guess PYTHON3_PATH from location of python3 executable that is available in your $PATH
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/anaconda3/bin as potential path for $PYTHON3_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $PYTHON3_PATH to /home/gabriell/anaconda3/bin!
+# Tue Oct 25 13:31:33 2022: Trying to set $GENEMARK_PATH...
+# Tue Oct 25 13:31:33 2022: Found environment variable $GENEMARK_PATH.
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/programs/gmes_linux_64/ as potential path for $GENEMARK_PATH.
+#*********
+# WARNING: Couldn't find etp_release.pl in /home/gabriell/programs/gmes_linux_64/. Will not set $GENEMARK_PATH to /home/gabriell/programs/gmes_linux_64/!
+#*********
+# Tue Oct 25 13:31:33 2022: Trying to guess GENEMARK_PATH from location of etp_release.pl executable that is available in your $PATH
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/programs/ETP/bin as potential path for $GENEMARK_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $GENEMARK_PATH to /home/gabriell/programs/ETP/bin!
+# Tue Oct 25 13:31:33 2022: Trying to set $BAMTOOLS_PATH...
+# Tue Oct 25 13:31:33 2022: Did not find environment variable $BAMTOOLS_PATH.
+# Tue Oct 25 13:31:33 2022: Trying to guess BAMTOOLS_PATH from location of bamtools executable that is available in your $PATH
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/anaconda3/bin as potential path for $BAMTOOLS_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $BAMTOOLS_PATH to /home/gabriell/anaconda3/bin!
+# Tue Oct 25 13:31:33 2022: Trying to set $SAMTOOLS_PATH...
+# Tue Oct 25 13:31:33 2022: Did not find environment variable $SAMTOOLS_PATH.
+# Tue Oct 25 13:31:33 2022: Trying to guess SAMTOOLS_PATH from location of samtools executable that is available in your $PATH
+# Tue Oct 25 13:31:33 2022: Checking /usr/bin as potential path for $SAMTOOLS_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $SAMTOOLS_PATH to /usr/bin!
+# Tue Oct 25 13:31:33 2022: Trying to set $DIAMOND_PATH...
+# Tue Oct 25 13:31:33 2022: Found environment variable $DIAMOND_PATH.
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/programs/diamond as potential path for $DIAMOND_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $DIAMOND_PATH to /home/gabriell/programs/diamond!
+# Tue Oct 25 13:31:33 2022: Trying to set $PROTHINT_PATH...
+# Tue Oct 25 13:31:33 2022: Did not find environment variable $PROTHINT_PATH.
+# Tue Oct 25 13:31:33 2022: Trying to guess PROTHINT_PATH from location of prothint.py executable that is available in your $PATH
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/programs/ProtHint/bin as potential path for $PROTHINT_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $PROTHINT_PATH to /home/gabriell/programs/ProtHint/bin!
+# Tue Oct 25 13:31:33 2022: Trying to set $TSEBRA_PATH...
+# Tue Oct 25 13:31:33 2022: Found command line argument $TSEBRA_PATH.
+# Tue Oct 25 13:31:33 2022: Checking /home/gabriell/braker3/TSEBRA_new/TSEBRA/bin as potential path for $TSEBRA_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $TSEBRA_PATH to /home/gabriell/braker3/TSEBRA_new/TSEBRA/bin!
+# Tue Oct 25 13:31:33 2022: Trying to set $CDBTOOLS_PATH...
+# Tue Oct 25 13:31:33 2022: Did not find environment variable $CDBTOOLS_PATH.
+# Tue Oct 25 13:31:33 2022: Trying to guess CDBTOOLS_PATH from location of cdbfasta executable that is available in your $PATH
+# Tue Oct 25 13:31:33 2022: Checking /usr/bin as potential path for $CDBTOOLS_PATH.
+# Tue Oct 25 13:31:33 2022: Success! Setting $CDBTOOLS_PATH to /usr/bin!
+#*********
+# IMPORTANT INFORMATION: no species for identifying the AUGUSTUS  parameter set that will arise from this BRAKER run was set. BRAKER will create an AUGUSTUS parameter set with name Sp_31. This parameter set can be used for future BRAKER/AUGUSTUS prediction runs for the same species. It is usually not necessary to retrain AUGUSTUS with novel extrinsic data if a high quality parameter set already exists.
+#*********
+#**********************************************************************************
+#                               CREATING DIRECTORY STRUCTURE                       
+#**********************************************************************************
+# Tue Oct 25 13:31:33 2022: creating file that contains citations for this BRAKER run at /home/gabriell/braker3/BRAKER/example/tests/test3/what-to-cite.txt...
+# Tue Oct 25 13:31:33 2022: create working directory /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP.
+mkdir /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP
+# Tue Oct 25 13:31:33 2022: create working directory /home/gabriell/braker3/BRAKER/example/tests/test3/species
+mkdir /home/gabriell/braker3/BRAKER/example/tests/test3/species
+# Tue Oct 25 13:31:33 2022: create working directory /home/gabriell/braker3/BRAKER/example/tests/test3/errors
+mkdir /home/gabriell/braker3/BRAKER/example/tests/test3/errors
+# Tue Oct 25 13:31:33 2022: changing into working directory /home/gabriell/braker3/BRAKER/example/tests/test3
+cd /home/gabriell/braker3/BRAKER/example/tests/test3
+# Tue Oct 25 13:31:33 2022: getting GC content of the genome
+/home/gabriell/braker3/BRAKER/scripts/get_gc_content.py --sequences /home/gabriell/braker3/BRAKER/example/genome.fa --print_sequence_length 1> /home/gabriell/braker3/BRAKER/example/tests/test3/gc_content.out 2> /home/gabriell/braker3/BRAKER/example/tests/test3/errors/gc_content.stderr
+# Tue Oct 25 13:31:33 2022: Creating parameter template files for AUGUSTUS with new_species.pl
+# Tue Oct 25 13:31:33 2022: new_species.pl will create parameter files for species Sp_31 in /home/gabriell/programs/Augustus/config//species/Sp_31
+perl /home/gabriell/programs/Augustus/scripts/new_species.pl --species=Sp_31 --AUGUSTUS_CONFIG_PATH=/home/gabriell/programs/Augustus/config/ 1> /dev/null 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/new_species.stderr
+# Tue Oct 25 13:31:33 2022: check_fasta_headers(): Checking fasta headers of file /home/gabriell/braker3/BRAKER/example/genome.fa
+# Tue Oct 25 13:31:34 2022: check_fasta_headers(): Checking fasta headers of file /home/gabriell/braker3/BRAKER/example/proteins.fa
+# Tue Oct 25 13:31:34 2022: Assuming that this is not a DNA fasta file because other characters than A, T, G, C, N, a, t, g, c, n were contained. If this is supposed to be a DNA fasta file, check the content of your file! If this is supposed to be a protein fasta file, please ignore this message!
+# Tue Oct 25 13:31:34 2022: Assuming that this is not a protein fasta file because other characters than AaRrNnDdCcEeQqGgHhIiLlKkMmFfPpSsTtWwYyVvBbZzJjOoUuXx were contained. If this is supposed to be DNA fasta file, please ignore this message.
+#**********************************************************************************
+#                               PROCESSING HINTS                                   
+#**********************************************************************************
+#**********************************************************************************
+#                              RUNNING GENEMARK-EX                                 
+#**********************************************************************************
+# Tue Oct 25 13:31:34 2022: Preparing genemark_evidence file hints from manual hints...
+# Tue Oct 25 13:31:34 2022: Running GeneMark-ETP+
+# Tue Oct 25 13:31:34 2022: changing into GeneMark-ETP directory /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP
+cd /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP
+# Tue Oct 25 13:31:34 2022: sorting RNA-Seq BAM files
+samtools sort /home/gabriell/braker3/BRAKER/example/RNAseq.bam -o /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/etp_data/RNAseq.bam 1> /home/gabriell/braker3/BRAKER/example/tests/test3/errors/samtools.sort.RNAseq.stdout 2> /home/gabriell/braker3/BRAKER/example/tests/test3/errors/samtools.sort.RNAseq.stderr
+# Tue Oct 25 13:31:45 2022: Running etp_release.pl
+perl /home/gabriell/programs/ETP/bin/etp_release.pl --cfg /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/etp_config.yaml --workdir /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP --bam /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/etp_data/ --cores 8 --softmask  1>/home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/GeneMark-ETP.stderr
+# Tue Oct 25 13:36:54 2022: change to working directory /home/gabriell/braker3/BRAKER/example/tests/test3
+cd /home/gabriell/braker3/BRAKER/example/tests/test3
+# Tue Oct 25 13:36:54 2022: Getting hints for AUGUSTUS from GeneMark-ETP+
+python3 /home/gabriell/braker3/BRAKER/scripts/get_etp_hints.py --genemark_scripts /home/gabriell/programs/ETP/bin --out /home/gabriell/braker3/BRAKER/example/tests/test3/hintsfile.gff --etp_wdir /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP 1> /home/gabriell/braker3/BRAKER/example/tests/test3/errors/get_etp_hints.stdout 2> /home/gabriell/braker3/BRAKER/example/tests/test3/errors/get_etp_hints.stderr
+# Tue Oct 25 13:36:54 2022: Checking for hints of src=C and with grp tags that should not be joined according to multiplicity
+# Tue Oct 25 13:36:54 2022: Joining hints that are identical (& from the same source) into multiplicity hints (input file /home/gabriell/braker3/BRAKER/example/tests/test3/tmp_merge_hints.gff)
+# Tue Oct 25 13:36:54 2022: sort hints of type all
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/tmp_merge_hints.gff | sort -n -k 4,4 | sort -s -n -k 5,5 | sort -s -n -k 3,3 | sort -s -k 1,1 >/home/gabriell/braker3/BRAKER/example/tests/test3/hints.all.temp.sort.gff
+# Tue Oct 25 13:36:54 2022: join multiple hints
+perl /home/gabriell/programs/Augustus/scripts/join_mult_hints.pl </home/gabriell/braker3/BRAKER/example/tests/test3/hints.all.temp.sort.gff >/home/gabriell/braker3/BRAKER/example/tests/test3/tmp_merge_hints.gff 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/join_mult_hints.all.stderr
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/tmp_merge_hints.gff /home/gabriell/braker3/BRAKER/example/tests/test3/tmp_no_merge_hints.gff > /home/gabriell/braker3/BRAKER/example/tests/test3/hintsfile.gff
+# Tue Oct 25 13:36:54 2022: GeneMark-ETP+ run finished.
+# Tue Oct 25 13:36:54 2022: link GeneMark-ETP+ output to /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/genemark.gtf
+ln -s /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/proteins.fa/genemark.gtf /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/genemark.gtf
+# Tue Oct 25 13:36:54 2022: link GeneMark-ETP+ training genes to /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/training.gtf
+ln -s /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/proteins.fa/model/training.gtf /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/training.gtf
+# Tue Oct 25 13:36:54 2022: sorting GeneMark predictions in /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/training.gtf
+/home/gabriell/anaconda3/bin/python3 /home/gabriell/braker3/BRAKER/scripts/sortGeneMark.py /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/training.gtf > /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/training.gtf.sorted 2> /home/gabriell/braker3/BRAKER/example/tests/test3/errors/sortGeneMark.err
+mv /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/training.gtf.sorted /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/training.gtf
+#**********************************************************************************
+#                               TRAIN AUGUSTUS                                     
+#**********************************************************************************
+# Tue Oct 25 13:36:54 2022: training AUGUSTUS
+# Tue Oct 25 13:36:54 2022: creating softlink from /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/proteins.fa/model/training.gtf to /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.gtf.
+ln -s /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/proteins.fa/model/training.gtf /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.gtf
+# Tue Oct 25 13:36:54 2022: Converting gtf file /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.gtf to genbank file
+# Tue Oct 25 13:36:54 2022: Computing flanking region size for AUGUSTUS training genes
+# Tue Oct 25 13:36:54 2022: create genbank file /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb
+perl /home/gabriell/programs/Augustus/scripts/gff2gbSmallDNA.pl /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.gtf /home/gabriell/braker3/BRAKER/example/tests/test3/genome.fa 922 /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/traingenes.gtf_gff2gbSmallDNA.stderr
+#*********
+# INFORMATION: the size of flanking region used in this BRAKER run is 922. You might need this value if you later add a UTR training on top of an already existing BRAKER run.
+#*********
+# Tue Oct 25 13:36:54 2022: Genbank format file /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb contains 114 genes.
+# Tue Oct 25 13:36:54 2022: Filtering train.gb for "good" mRNAs:
+perl /home/gabriell/programs/Augustus/scripts/filterGenesIn_mRNAname.pl /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.gtf /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb > /home/gabriell/braker3/BRAKER/example/tests/test3/train.f.gb 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/filterGenesIn_mRNAname.stderr
+# Tue Oct 25 13:36:54 2022: Genbank format file /home/gabriell/braker3/BRAKER/example/tests/test3/train.f.gb contains 114 genes.
+# Tue Oct 25 13:36:54 2022: Running etraining to catch gene structure inconsistencies:
+/home/gabriell/programs/Augustus/bin/etraining --species=Sp_31 --AUGUSTUS_CONFIG_PATH=/home/gabriell/programs/Augustus/config/ /home/gabriell/braker3/BRAKER/example/tests/test3/train.f.gb 1> /home/gabriell/braker3/BRAKER/example/tests/test3/gbFilterEtraining.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/gbFilterEtraining.stderr
+# Tue Oct 25 13:36:54 2022: Filtering /home/gabriell/braker3/BRAKER/example/tests/test3/train.f.gb file to remove inconsistent gene structures...
+perl /home/gabriell/programs/Augustus/scripts/filterGenes.pl /home/gabriell/braker3/BRAKER/example/tests/test3/etrain.bad.lst /home/gabriell/braker3/BRAKER/example/tests/test3/train.f.gb 1> /home/gabriell/braker3/BRAKER/example/tests/test3/train.ff.gb 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/etrainFilterGenes.stderr
+# Tue Oct 25 13:36:54 2022: Genbank format file /home/gabriell/braker3/BRAKER/example/tests/test3/train.ff.gb contains 114 genes.
+# Tue Oct 25 13:36:55 2022: BLAST or DIAMOND training gene structures against themselves:
+perl /home/gabriell/programs/Augustus/scripts/aa2nonred.pl /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.good.fa /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.good.nr.fa --DIAMOND_PATH=/home/gabriell/programs/diamond --cores=8 --diamond 1> /home/gabriell/braker3/BRAKER/example/tests/test3/aa2nonred.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/aa2nonred.stderr
+# Tue Oct 25 13:36:55 2022: Filtering nonredundant loci into /home/gabriell/braker3/BRAKER/example/tests/test3/train.fff.gb:
+perl /home/gabriell/programs/Augustus/scripts/filterGenesIn.pl /home/gabriell/braker3/BRAKER/example/tests/test3/nonred.loci.lst /home/gabriell/braker3/BRAKER/example/tests/test3/train.ff.gb 1> /home/gabriell/braker3/BRAKER/example/tests/test3/train.fff.gb 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/filterGenesIn.stderr
+# Tue Oct 25 13:36:55 2022: Genbank format file /home/gabriell/braker3/BRAKER/example/tests/test3/train.fff.gb contains 114 genes.
+# Tue Oct 25 13:36:55 2022: Moving /home/gabriell/braker3/BRAKER/example/tests/test3/train.fff.gb to /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb:
+mv /home/gabriell/braker3/BRAKER/example/tests/test3/train.fff.gb /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb
+# Tue Oct 25 13:36:55 2022: Splitting genbank file into train and test file
+#*********
+# WARNING: Number of reliable training genes is low (114). Recommended are at least 600 genes
+#*********
+perl /home/gabriell/programs/Augustus/scripts/randomSplit.pl /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb 38 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/randomSplit.stderr
+# Tue Oct 25 13:36:55 2022: /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.test will be used for measuring AUGUSTUS accuracy after training
+# Tue Oct 25 13:36:55 2022: Genbank format file /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.test contains 38 genes.
+# Tue Oct 25 13:36:55 2022: Genbank format file /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train contains 76 genes.
+perl /home/gabriell/programs/Augustus/scripts/randomSplit.pl /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train 38 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/randomSplit.stderr
+# Tue Oct 25 13:36:55 2022: Genbank format file /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train.train contains 38 genes.
+# Tue Oct 25 13:36:55 2022: Genbank format file /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train.test contains 38 genes.
+# Tue Oct 25 13:36:55 2022: /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train.test will be used or measuring AUGUSTUS accuracy during training with optimize_augustus.pl
+ /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train.train will be used for running etraining in optimize_augustus.pl (together with train.gb.train.test)
+ /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train will be used for running etraining (outside of optimize_augustus.pl)
+# Tue Oct 25 13:36:55 2022: Setting value of "stopCodonExcludedFromCDS" in /home/gabriell/programs/Augustus/config//species/Sp_31/Sp_31_parameters.cfg to "true"
+# Tue Oct 25 13:36:55 2022: first etraining
+/home/gabriell/programs/Augustus/bin/etraining --species=Sp_31 --AUGUSTUS_CONFIG_PATH=/home/gabriell/programs/Augustus/config/ /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train 1>/home/gabriell/braker3/BRAKER/example/tests/test3/firstetraining.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/firstetraining.stderr
+grep -c "exon doesn't end in stop codon" /home/gabriell/braker3/BRAKER/example/tests/test3/errors/firstetraining.stderr
+# Tue Oct 25 13:36:55 2022: Error rate of missing stop codon is 0.934210526315789
+# Tue Oct 25 13:36:55 2022: The appropriate value for "stopCodonExcludedFromCDS" seems to be "false".
+# Tue Oct 25 13:36:55 2022: Setting value of "stopCodonExcludedFromCDS" in /home/gabriell/programs/Augustus/config//species/Sp_31/Sp_31_parameters.cfg to "false"
+# Tue Oct 25 13:36:55 2022: Running etraining again
+/home/gabriell/programs/Augustus/bin/etraining --species=Sp_31 --AUGUSTUS_CONFIG_PATH=/home/gabriell/programs/Augustus/config/ /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train 1>/home/gabriell/braker3/BRAKER/example/tests/test3/firstetraining.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/firstetraining.stderr
+# Tue Oct 25 13:36:55 2022: Adjusting stop-codon frequencies in species_parameters.cfg according to /home/gabriell/braker3/BRAKER/example/tests/test3/firstetraining.stdout
+# Tue Oct 25 13:36:55 2022: Setting frequency of stop codons to tag=0.197, taa=0.329, tga=0.474.
+# Tue Oct 25 13:36:55 2022: First AUGUSTUS accuracy test
+/home/gabriell/programs/Augustus/bin/augustus --species=Sp_31 --AUGUSTUS_CONFIG_PATH=/home/gabriell/programs/Augustus/config/ /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.test 1>/home/gabriell/braker3/BRAKER/example/tests/test3/firsttest.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/firsttest.stderr
+# Tue Oct 25 13:36:59 2022: Computing accuracy of AUGUSTUS prediction (in test file derived from predictions on training data set stored in /home/gabriell/braker3/BRAKER/example/tests/test3/firsttest.stdout)
+# Tue Oct 25 13:36:59 2022: The accuracy after initial training (no optimize_augustus.pl, no CRF) is 0.646666666666667
+# Tue Oct 25 13:36:59 2022: optimizing AUGUSTUS parameters
+perl /home/gabriell/programs/Augustus/scripts/optimize_augustus.pl --aug_exec_dir=/home/gabriell/programs/Augustus/bin --rounds=5 --species=Sp_31 --kfold=8 --AUGUSTUS_CONFIG_PATH=/home/gabriell/programs/Augustus/config/ --onlytrain=/home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train.train --cpus=8 /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train.test 1>/home/gabriell/braker3/BRAKER/example/tests/test3/optimize_augustus.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/optimize_augustus.stderr
+# Tue Oct 25 13:43:22 2022:  parameter optimization finished.
+# Tue Oct 25 13:43:22 2022: Second etraining
+/home/gabriell/programs/Augustus/bin/etraining --species=Sp_31 --AUGUSTUS_CONFIG_PATH=/home/gabriell/programs/Augustus/config/ /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train 1>/home/gabriell/braker3/BRAKER/example/tests/test3/secondetraining.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/secondetraining.stderr
+# Tue Oct 25 13:43:23 2022: Second AUGUSTUS accuracy test
+/home/gabriell/programs/Augustus/bin/augustus --species=Sp_31 --AUGUSTUS_CONFIG_PATH=/home/gabriell/programs/Augustus/config/ /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.test >/home/gabriell/braker3/BRAKER/example/tests/test3/secondtest.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/secondtest.stderr
+# Tue Oct 25 13:43:27 2022: Computing accuracy of AUGUSTUS prediction (in test file derived from predictions on training data set stored in /home/gabriell/braker3/BRAKER/example/tests/test3/secondtest.stdout)
+# Tue Oct 25 13:43:27 2022: The accuracy after training (after optimize_augustus.pl, no CRF) is 0.828666666666667
+# Tue Oct 25 13:43:27 2022: Copying optimized parameters to working directory /home/gabriell/braker3/BRAKER/example/tests/test3/species
+cp -r /home/gabriell/programs/Augustus/config//species/Sp_31 /home/gabriell/braker3/BRAKER/example/tests/test3/species
+#**********************************************************************************
+#                               PREDICTING GENES WITH AUGUSTUS (NO UTRS)           
+#**********************************************************************************
+# Tue Oct 25 13:43:27 2022: RUNNING AUGUSTUS
+# Tue Oct 25 13:43:27 2022: Preparing genome for running AUGUSTUS in parallel
+# Tue Oct 25 13:43:27 2022: Creating directory for storing AUGUSTUS files (hints, temporarily) /home/gabriell/braker3/BRAKER/example/tests/test3/genome_split.
+# Tue Oct 25 13:43:27 2022: splitting genome file in smaller parts for parallel execution of AUGUSTUS prediction
+perl /home/gabriell/programs/Augustus/scripts/splitMfasta.pl /home/gabriell/braker3/BRAKER/example/tests/test3/genome.fa --outputpath=/home/gabriell/braker3/BRAKER/example/tests/test3/genome_split 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/splitMfasta.stderr
+cd /home/gabriell/braker3/BRAKER/example/tests/test3/genome_split; for f in genome.split.*; do NAME=`grep ">" $f`; mv $f ${NAME#>}.fa; done; cd ..
+# Tue Oct 25 13:43:27 2022: Split genome file in 8 parts, finished.
+# Tue Oct 25 13:43:27 2022: copy extrinsic file /home/gabriell/braker3/BRAKER/scripts/cfg/etp.cfg to working directory
+cp /home/gabriell/braker3/BRAKER/scripts/cfg/etp.cfg /home/gabriell/braker3/BRAKER/example/tests/test3/species/Sp_31/ex1.cfg
+# Tue Oct 25 13:43:27 2022: Making AUGUSTUS jobs with hintsfile /home/gabriell/braker3/BRAKER/example/tests/test3/hintsfile.gff, cfgFile /home/gabriell/braker3/BRAKER/scripts/cfg/etp.cfg, UTR status off, and hintId hints
+# Tue Oct 25 13:43:27 2022: Creating directory for storing AUGUSTUS files (hints, temporarily) /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp.
+# Tue Oct 25 13:43:27 2022: creating /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints.lst for AUGUSTUS jobs
+# Tue Oct 25 13:43:27 2022: creating AUGUSTUS jobs (with hints)
+cd /home/gabriell/braker3/BRAKER/example/tests/test3
+perl /home/gabriell/programs/Augustus/scripts/createAugustusJoblist.pl --sequences=/home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints.lst --wrap="#!/bin/bash" --overlap=500000 --chunksize=2500000 --outputdir=/home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp --joblist=/home/gabriell/braker3/BRAKER/example/tests/test3/hints.job.lst --jobprefix=aug_hints_ --partitionHints --command "/home/gabriell/programs/Augustus/bin/augustus --species=Sp_31 --AUGUSTUS_CONFIG_PATH=/home/gabriell/programs/Augustus/config/ --extrinsicCfgFile=/home/gabriell/braker3/BRAKER/scripts/cfg/etp.cfg --alternatives-from-evidence=true --UTR=off --exonnames=on --codingseq=on --allow_hinted_splicesites=gcag,atac  --softmasking=1" 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/createAugustusJoblist_hints.stderr
+cd ..
+# Tue Oct 25 13:43:27 2022: Running AUGUSTUS jobs from /home/gabriell/braker3/BRAKER/example/tests/test3/hints.job.lst
+# Tue Oct 25 13:43:27 2022: Running AUGUSTUS job 1
+/home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_1
+# Tue Oct 25 13:43:27 2022: Running AUGUSTUS job 2
+/home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_2
+# Tue Oct 25 13:43:27 2022: Running AUGUSTUS job 3
+/home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_3
+# Tue Oct 25 13:43:27 2022: Running AUGUSTUS job 4
+/home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_4
+# Tue Oct 25 13:43:27 2022: Running AUGUSTUS job 5
+/home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_5
+# Tue Oct 25 13:43:27 2022: Running AUGUSTUS job 6
+/home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_6
+# Tue Oct 25 13:43:27 2022: Running AUGUSTUS job 7
+/home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_7
+# Tue Oct 25 13:43:27 2022: Running AUGUSTUS job 8
+/home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_8
+# Tue Oct 25 13:43:48 2022: Joining AUGUSTUS predictions in directory /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp
+# Tue Oct 25 13:43:48 2022: Concatenating AUGUSTUS output files in /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp/5.001.X1.fa.1..125040.gff >> /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp/3.001.X5.fa.1..125100.gff >> /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp/4.001.X6.fa.1..125100.gff >> /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp/1.001.X3.fa.1..125100.gff >> /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp/2.001.X2.fa.1..125100.gff >> /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp/8.001.X7.fa.1..125100.gff >> /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp/7.001.X8.fa.1..124361.gff >> /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp/6.001.X4.fa.1..125100.gff >> /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff
+perl /home/gabriell/programs/Augustus/scripts/join_aug_pred.pl < /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff > /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.gff
+# Tue Oct 25 13:43:48 2022: Deleting /home/gabriell/braker3/BRAKER/example/tests/test3/augustus_tmp
+# Tue Oct 25 13:43:48 2022: Deleting /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.tmp1.gff
+# Tue Oct 25 13:43:48 2022: deleting files from AUGUSTUS parallelization
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_1
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_5
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_2
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_7
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_4
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_8
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_3
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints_6
+# Tue Oct 25 13:43:48 2022: Making a gtf file from /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.gff
+cat /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.gff | perl -ne 'if(m/\tAUGUSTUS\t/) {print $_;}' | perl /home/gabriell/programs/Augustus/scripts/gtf2gff.pl --printExon --out=/home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.tmp.gtf 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/gtf2gff.augustus.hints.gtf.stderr
+# Tue Oct 25 13:43:48 2022: Making a fasta file with protein sequences of /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.gtf
+/home/gabriell/anaconda3/bin/python3 /home/gabriell/programs/Augustus/scripts/getAnnoFastaFromJoingenes.py -g /home/gabriell/braker3/BRAKER/example/tests/test3/genome.fa -f /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.gtf -o /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints 1> /home/gabriell/braker3/BRAKER/example/tests/test3/getAnnoFastaFromJoingenes.augustus.hints_tmp.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/getAnnoFastaFromJoingenes.augustus.hints_tmp.stderr
+# Tue Oct 25 13:43:49 2022: Making a fasta file with protein sequences of /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.gtf
+/home/gabriell/anaconda3/bin/python3 /home/gabriell/programs/Augustus/scripts/getAnnoFastaFromJoingenes.py -g /home/gabriell/braker3/BRAKER/example/tests/test3/genome.fa -f /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.gtf -o /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints 1> /home/gabriell/braker3/BRAKER/example/tests/test3/getAnnoFastaFromJoingenes.augustus.hints_hints.stdout 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/getAnnoFastaFromJoingenes.augustus.hints_hints.stderr
+# Tue Oct 25 13:43:49 2022: AUGUSTUS prediction complete
+# Tue Oct 25 13:43:49 2022: Trying to create merged gene set from GeneMark-EX and AUGUSTUS predictions (braker.gtf/braker.utr.gtf)...
+# Tue Oct 25 13:43:49 2022: Trying to create combined gene set with TSEBRA...
+/home/gabriell/braker3/TSEBRA_new/TSEBRA/bin/tsebra.py --gtf /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.gtf,/home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/genemark.gtf --keep_gtf /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/training.gtf --hintfiles /home/gabriell/braker3/BRAKER/example/tests/test3/hintsfile.gff --cfg /home/gabriell/braker3/TSEBRA_new/TSEBRA/bin/../config/braker3.cfg --out /home/gabriell/braker3/BRAKER/example/tests/test3/braker.gtf -q 2>/home/gabriell/braker3/BRAKER/example/tests/test3/errors/tsebra.stderr
+# Tue Oct 25 13:43:49 2022: deleting empty files
+# Tue Oct 25 13:43:49 2022: find /home/gabriell/braker3/BRAKER/example/tests/test3 -empty
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/firsttest.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/getAnnoFastaFromJoingenes.augustus.hints_hints.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/filterGenesIn_mRNAname.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/etrainFilterGenes.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/getAnnoFastaFromJoingenes.augustus.hints_tmp.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/gtf2gff.augustus.hints.gtf.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/get_etp_hints.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/find_python3_biopython.err
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/secondetraining.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/randomSplit.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/gbFilterEtraining.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/tsebra.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/join_mult_hints.all.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/traingenes.gtf_gff2gbSmallDNA.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/filterGenesIn.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/firstetraining.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/sortGeneMark.err
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/createAugustusJoblist_hints.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/find_python3_re.err
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/new_species.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/gc_content.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/samtools.sort.RNAseq.stdout
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/optimize_augustus.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/get_etp_hints.stdout
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/secondtest.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/errors/splitMfasta.stderr
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/getAnnoFastaFromJoingenes.augustus.hints_hints.stdout
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/getAnnoFastaFromJoingenes.augustus.hints_tmp.stdout
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/etrain.bad.lst
+# Tue Oct 25 13:43:49 2022: deleting job lst files (if existing)
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/train.ff.gb
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.good.fa
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/firstetraining.stdout
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/gbFilterEtraining.stdout
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.good.nr.fa
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/train.f.gb
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/secondetraining.stdout
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.tmp.gtf
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.test
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.good.gtf
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/hints.job.lst
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aug_hints.lst
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/nonred.loci.lst
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/traingenes.gtf
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/aa2nonred.stdout
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/tmp_merge_hints.gff
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/tmp_no_merge_hints.gff
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train.test
+rm /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb.train.train
+perl /home/gabriell/braker3/BRAKER/scripts/braker_cleanup.pl --wdir=/home/gabriell/braker3/BRAKER/example/tests/test3
+Deleting file /home/gabriell/braker3/BRAKER/example/tests/test3/firsttest.stdout
+Deleting file /home/gabriell/braker3/BRAKER/example/tests/test3/genome.fa
+Deleting file /home/gabriell/braker3/BRAKER/example/tests/test3/optimize_augustus.stdout
+Deleting file /home/gabriell/braker3/BRAKER/example/tests/test3/secondtest.stdout
+Deleting file /home/gabriell/braker3/BRAKER/example/tests/test3/train.gb
+Deleting file /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP.stdout
+Deleting file /home/gabriell/braker3/BRAKER/example/tests/test3/augustus.hints.gff
+Deleting file /home/gabriell/braker3/BRAKER/example/tests/test3/proteins.fa
+Deleting directory /home/gabriell/braker3/BRAKER/example/tests/test3/GeneMark-ETP/data
+#**********************************************************************************
+#                               BRAKER RUN FINISHED                                
+#**********************************************************************************

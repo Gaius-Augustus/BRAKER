@@ -1,0 +1,7 @@
+gene 27_t transcr. 1 in sequence X1_119301-121191: coding length not a multiple of 3. Skipping...
+gene 61_t transcr. 1 in sequence X2_121043-125100: Terminal exon doesn't end in stop codon. Variable stopCodonExcludedFromCDS set right?
+gene 128_t transcr. 1 in sequence X4_121733-125100: Initial exon does not begin with start codon but with gta
+gene 161_t transcr. 1 in sequence X5_123062-125100: Terminal exon doesn't end in stop codon. Variable stopCodonExcludedFromCDS set right?
+gene 162_t transcr. 1 in sequence X6_1-1543: Initial exon does not begin with start codon but with gac
+gene 189_t transcr. 1 in sequence X6_121111-125100: Terminal exon doesn't end in stop codon. Variable stopCodonExcludedFromCDS set right?
+gene 190_t transcr. 1 in sequence X7_1-1728: Initial exon does not begin with start codon but with gaa

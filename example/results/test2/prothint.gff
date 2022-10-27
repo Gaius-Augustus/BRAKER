@@ -35,7 +35,7 @@ X1	ProtHint	Intron	25785	26086	24	+	.	al_score=0.401622; splice_sites=gt_ag; top
 X1	ProtHint	Intron	26129	26602	20	+	.	al_score=0.261596; splice_sites=gt_ag; topProt=TRUE;
 X1	ProtHint	stop_codon	26708	26710	24	+	0	al_score=0.454545; topProt=TRUE;
 X1	ProtHint	start_codon	28504	28506	9	+	0	al_score=0.441322; topProt=TRUE; CDS_overlap=0;
-X1	ProtHint	Intron	28567	28702	12	+	.	al_score=0.341505; splice_sites=gt_ag; topProt=TRUE;
+X1	ProtHint	Intron	28567	28702	11	+	.	al_score=0.341505; splice_sites=gt_ag; topProt=TRUE;
 X1	ProtHint	start_codon	28781	28783	1	+	0	al_score=0.471074; CDS_overlap=9;
 X1	ProtHint	Intron	28836	28925	6	+	.	al_score=0.248616; splice_sites=gt_ag; topProt=TRUE;
 X1	ProtHint	Intron	29004	29279	22	+	.	al_score=0.466731; splice_sites=gt_ag; topProt=TRUE;
@@ -368,6 +368,7 @@ X2	ProtHint	Intron	124403	124481	25	+	.	al_score=0.428048; splice_sites=gt_ag; t
 X2	ProtHint	Intron	124642	124730	25	+	.	al_score=0.502947; splice_sites=gt_ag; topProt=TRUE;
 X2	ProtHint	Intron	124763	124849	25	+	.	al_score=0.512354; splice_sites=gt_ag; topProt=TRUE;
 X2	ProtHint	Intron	124916	124994	25	+	.	al_score=0.44854; splice_sites=gt_ag; topProt=TRUE;
+X3	ProtHint	stop_codon	141	143	21	+	0	al_score=0.373554; topProt=TRUE;
 X3	ProtHint	stop_codon	670	672	21	-	0	al_score=0.28595; topProt=TRUE;
 X3	ProtHint	Intron	735	842	1	-	.	al_score=0.302059; splice_sites=gt_ag;
 X3	ProtHint	Intron	762	842	14	-	.	al_score=0.302005; splice_sites=gt_ag;
@@ -444,8 +445,8 @@ X3	ProtHint	start_codon	50221	50223	5	-	0	al_score=0.300826; CDS_overlap=0;
 X3	ProtHint	start_codon	56185	56187	24	+	0	al_score=0.424793; topProt=TRUE; CDS_overlap=0;
 X3	ProtHint	Intron	58784	58891	25	+	.	al_score=0.493305; splice_sites=gt_ag; topProt=TRUE;
 X3	ProtHint	stop_codon	59302	59304	7	+	0	al_score=0.419835; topProt=TRUE;
-X3	ProtHint	start_codon	66678	66680	1	+	0	al_score=0.190083; CDS_overlap=0;
-X3	ProtHint	start_codon	66731	66733	8	+	0	al_score=0.219835; topProt=TRUE; CDS_overlap=1;
+X3	ProtHint	start_codon	66678	66680	1	+	0	al_score=0.190083; topProt=TRUE; CDS_overlap=0;
+X3	ProtHint	start_codon	66731	66733	7	+	0	al_score=0.219835; CDS_overlap=1;
 X3	ProtHint	Intron	69333	69419	25	+	.	al_score=0.506595; splice_sites=gt_ag; topProt=TRUE;
 X3	ProtHint	stop_codon	69797	69799	7	+	0	al_score=0.418182; topProt=TRUE;
 X3	ProtHint	start_codon	70708	70710	23	+	0	al_score=0.380165; topProt=TRUE; CDS_overlap=0;

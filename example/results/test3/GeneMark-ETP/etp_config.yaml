@@ -1,0 +1,7 @@
+---
+RepeatMasker_path: ''
+annot_path: ''
+genome_path: /home/gabriell/braker3/BRAKER/example/tests/test3/genome.fa
+protdb_path: /home/gabriell/braker3/BRAKER/example/tests/test3/proteins.fa
+rnaseq_sets: [RNAseq]
+species: Sp_31

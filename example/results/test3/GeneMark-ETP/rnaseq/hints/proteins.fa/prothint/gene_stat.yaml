@@ -1,0 +1,1487 @@
+---
+X1: 125040
+X2: 125100
+X3: 125100
+X4: 125100
+X5: 125100
+X6: 125100
+X7: 125100
+X8: 124361
+---
+MSTRG.1:
+  L: 2363
+  R: 2816
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.10:
+  L: 55956
+  R: 56496
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.100:
+  L: 85820
+  R: 86350
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.101:
+  L: 86704
+  R: 87936
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.102:
+  L: 94457
+  R: 96137
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.103:
+  L: 97087
+  R: 97845
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.104:
+  L: 98202
+  R: 100178
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.105:
+  L: 100462
+  R: 102271
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.106:
+  L: 102907
+  R: 104862
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.107:
+  L: 105940
+  R: 108693
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.108:
+  L: 111963
+  R: 113132
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.109:
+  L: 115473
+  R: 117460
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.11:
+  L: 70124
+  R: 72305
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.110:
+  L: 118309
+  R: 119635
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.111:
+  L: 123474
+  R: 123954
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.112:
+  L: 593
+  R: 1678
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.113:
+  L: 9945
+  R: 11361
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.114:
+  L: 11434
+  R: 12709
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.115:
+  L: 13050
+  R: 13954
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.116:
+  L: 14061
+  R: 14463
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.117:
+  L: 20367
+  R: 21468
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.118:
+  L: 28873
+  R: 29711
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.119:
+  L: 34488
+  R: 35669
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.12:
+  L: 76863
+  R: 77084
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.120:
+  L: 37804
+  R: 39692
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.121:
+  L: 40222
+  R: 41488
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.122:
+  L: 42670
+  R: 43312
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.123:
+  L: 44068
+  R: 45618
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.124:
+  L: 46052
+  R: 49145
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.125:
+  L: 58960
+  R: 60683
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.126:
+  L: 63070
+  R: 64996
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.127:
+  L: 66145
+  R: 68461
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.128:
+  L: 71582
+  R: 71923
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.129:
+  L: 74175
+  R: 75655
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.13:
+  L: 83530
+  R: 85248
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.130:
+  L: 77980
+  R: 79734
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.131:
+  L: 80812
+  R: 83469
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.132:
+  L: 83911
+  R: 85321
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.133:
+  L: 88527
+  R: 90821
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.134:
+  L: 92882
+  R: 94283
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.135:
+  L: 98414
+  R: 98971
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.136:
+  L: 115099
+  R: 115521
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.137:
+  L: 118447
+  R: 119042
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.138:
+  L: 124028
+  R: 124373
+  seq_id: X5
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.139:
+  L: 216
+  R: 557
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.14:
+  L: 85800
+  R: 87005
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.140:
+  L: 2263
+  R: 3070
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.141:
+  L: 14311
+  R: 15630
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.142:
+  L: 16889
+  R: 19640
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.143:
+  L: 24214
+  R: 25659
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.144:
+  L: 38074
+  R: 39604
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.145:
+  L: 40973
+  R: 42942
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.146:
+  L: 46173
+  R: 46734
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.147:
+  L: 48659
+  R: 49218
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.148:
+  L: 49345
+  R: 49956
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.149:
+  L: 50891
+  R: 51856
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.15:
+  L: 103198
+  R: 104550
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.150:
+  L: 52835
+  R: 56283
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.151:
+  L: 62707
+  R: 63004
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.152:
+  L: 70555
+  R: 71154
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.153:
+  L: 72009
+  R: 75509
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.154:
+  L: 88156
+  R: 90121
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.155:
+  L: 95024
+  R: 96893
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.156:
+  L: 97059
+  R: 97999
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.157:
+  L: 100292
+  R: 101632
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.159:
+  L: 109756
+  R: 111791
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.16:
+  L: 105000
+  R: 107483
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.160:
+  L: 113990
+  R: 116816
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.161:
+  L: 117397
+  R: 118674
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.162:
+  L: 119423
+  R: 119739
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.163:
+  L: 122022
+  R: 124429
+  seq_id: X6
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.164:
+  L: 16
+  R: 1154
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.165:
+  L: 27704
+  R: 31049
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.166:
+  L: 40235
+  R: 40864
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.167:
+  L: 42079
+  R: 42468
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.168:
+  L: 53711
+  R: 54886
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.169:
+  L: 55140
+  R: 55534
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.17:
+  L: 107915
+  R: 109049
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.170:
+  L: 55999
+  R: 56554
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.171:
+  L: 56753
+  R: 59063
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.172:
+  L: 59372
+  R: 60297
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.173:
+  L: 65558
+  R: 67608
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.174:
+  L: 67992
+  R: 69172
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.176:
+  L: 73810
+  R: 74609
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.177:
+  L: 75108
+  R: 75722
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.178:
+  L: 76243
+  R: 77641
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.179:
+  L: 88017
+  R: 90286
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.18:
+  L: 110718
+  R: 112568
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.180:
+  L: 94235
+  R: 95918
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.181:
+  L: 97468
+  R: 98140
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.182:
+  L: 98413
+  R: 102057
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.183:
+  L: 105636
+  R: 107219
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.184:
+  L: 110272
+  R: 111624
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.185:
+  L: 114207
+  R: 115985
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.186:
+  L: 116389
+  R: 119085
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.187:
+  L: 122378
+  R: 123633
+  seq_id: X7
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.188:
+  L: 2968
+  R: 3885
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.189:
+  L: 6127
+  R: 9833
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.19:
+  L: 114313
+  R: 115918
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.190:
+  L: 10603
+  R: 12439
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.191:
+  L: 15869
+  R: 16309
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.192:
+  L: 21051
+  R: 23324
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.193:
+  L: 26526
+  R: 28393
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.194:
+  L: 30015
+  R: 32242
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.195:
+  L: 33613
+  R: 35942
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.197:
+  L: 43755
+  R: 45159
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.198:
+  L: 53435
+  R: 54274
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.199:
+  L: 61806
+  R: 63765
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.2:
+  L: 6914
+  R: 10613
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.20:
+  L: 116758
+  R: 118074
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.200:
+  L: 76162
+  R: 79071
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.201:
+  L: 79914
+  R: 81355
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.202:
+  L: 83227
+  R: 83553
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.203:
+  L: 84082
+  R: 85982
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.204:
+  L: 86829
+  R: 87269
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.205:
+  L: 88201
+  R: 89701
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.206:
+  L: 90119
+  R: 91029
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.207:
+  L: 91176
+  R: 92737
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.208:
+  L: 93112
+  R: 94373
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.209:
+  L: 99438
+  R: 100772
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.21:
+  L: 118197
+  R: 118836
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.210:
+  L: 102363
+  R: 104339
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.211:
+  L: 104702
+  R: 105932
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.212:
+  L: 106932
+  R: 108215
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.214:
+  L: 110083
+  R: 111644
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.215:
+  L: 111723
+  R: 112195
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.216:
+  L: 113750
+  R: 114582
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.217:
+  L: 116394
+  R: 118165
+  seq_id: X8
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.22:
+  L: 119765
+  R: 120217
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.23:
+  L: 1916
+  R: 3676
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.24:
+  L: 19558
+  R: 20025
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.25:
+  L: 22700
+  R: 25811
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.26:
+  L: 28342
+  R: 28734
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.27:
+  L: 30877
+  R: 32521
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.28:
+  L: 35638
+  R: 36477
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.29:
+  L: 42201
+  R: 42642
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.3:
+  L: 11976
+  R: 14629
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.31:
+  L: 48005
+  R: 49777
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.32:
+  L: 51474
+  R: 51676
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.33:
+  L: 51773
+  R: 53049
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.34:
+  L: 53171
+  R: 56355
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.35:
+  L: 57265
+  R: 59535
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.36:
+  L: 61290
+  R: 63550
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.37:
+  L: 63857
+  R: 66527
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.38:
+  L: 67434
+  R: 68370
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.39:
+  L: 71891
+  R: 74363
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.4:
+  L: 25389
+  R: 26704
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.40:
+  L: 76286
+  R: 76893
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.41:
+  L: 77462
+  R: 79762
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.42:
+  L: 90303
+  R: 91248
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.43:
+  L: 91428
+  R: 92285
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.44:
+  L: 95623
+  R: 97571
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.45:
+  L: 107218
+  R: 107382
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.46:
+  L: 118622
+  R: 118801
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.47:
+  L: 121416
+  R: 125066
+  seq_id: X2
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.48:
+  L: 670
+  R: 2616
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.49:
+  L: 11496
+  R: 13263
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.5:
+  L: 30126
+  R: 30972
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.50:
+  L: 13947
+  R: 15554
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.51:
+  L: 19803
+  R: 20604
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.52:
+  L: 28822
+  R: 30493
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.53:
+  L: 35831
+  R: 38063
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.54:
+  L: 40836
+  R: 43845
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.55:
+  L: 44397
+  R: 46303
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.56:
+  L: 46531
+  R: 47146
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.57:
+  L: 47611
+  R: 50268
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.58:
+  L: 56185
+  R: 59304
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.59:
+  L: 68882
+  R: 69703
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.6:
+  L: 34320
+  R: 36978
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.60:
+  L: 70708
+  R: 72069
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.61:
+  L: 73439
+  R: 74649
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.62:
+  L: 76263
+  R: 77251
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.63:
+  L: 78571
+  R: 82306
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.64:
+  L: 82648
+  R: 85250
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.65:
+  L: 85946
+  R: 89969
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.66:
+  L: 90777
+  R: 92944
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.67:
+  L: 97394
+  R: 98729
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.68:
+  L: 112192
+  R: 113503
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.69:
+  L: 118456
+  R: 120395
+  seq_id: X3
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.7:
+  L: 44377
+  R: 44790
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.70:
+  L: 852
+  R: 1314
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.71:
+  L: 2354
+  R: 2853
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.72:
+  L: 4960
+  R: 6980
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.73:
+  L: 7587
+  R: 10503
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.74:
+  L: 10851
+  R: 12600
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.75:
+  L: 19628
+  R: 21899
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.76:
+  L: 22033
+  R: 24457
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.77:
+  L: 26089
+  R: 28420
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.78:
+  L: 29549
+  R: 34219
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.79:
+  L: 34672
+  R: 36456
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.8:
+  L: 44910
+  R: 45405
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.80:
+  L: 36846
+  R: 37172
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.81:
+  L: 39083
+  R: 39666
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.82:
+  L: 44214
+  R: 45580
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.83:
+  L: 47123
+  R: 48349
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.84:
+  L: 49536
+  R: 50012
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.85:
+  L: 54392
+  R: 59147
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.86:
+  L: 59816
+  R: 60398
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.87:
+  L: 61592
+  R: 63687
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.89:
+  L: 66684
+  R: 68493
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.9:
+  L: 45573
+  R: 46576
+  seq_id: X1
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.90:
+  L: 68674
+  R: 70377
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.91:
+  L: 71182
+  R: 72292
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.92:
+  L: 72836
+  R: 73165
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.93:
+  L: 73307
+  R: 74143
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.94:
+  L: 75090
+  R: 76214
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.95:
+  L: 76898
+  R: 79031
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.96:
+  L: 79504
+  R: 80001
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.97:
+  L: 80775
+  R: 82908
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: '-'
+MSTRG.98:
+  L: 83800
+  R: 84331
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
+MSTRG.99:
+  L: 84680
+  R: 85735
+  seq_id: X4
+  start: -1
+  stop: -1
+  strand: +
