@@ -90,9 +90,6 @@ def main():
 
 def draw_seq_content(content_dic):
     draw_size = min([config['draw_size']-3] + [len(c) for c in content_dic.values()])
-    # print(draw_size)
-    #range(0,100,100/(draw_size-3))
-
     percentiles = {}
     min_axis = 101.0
     max_axis = -1.0
@@ -104,8 +101,6 @@ def draw_seq_content(content_dic):
                 /(iter_range[i]-iter_range[i-1]))
         min_axis = min([min_axis] + percentiles[seq])
         max_axis = max([max_axis] + percentiles[seq])
-        # print(max_axis, max(percentiles[seq]))
-
     min_axis = int(min_axis*100)/100
     max_axis = int(max_axis*100)/100
     step_size = (max_axis-min_axis)/(config['draw_height']-1)
@@ -113,7 +108,6 @@ def draw_seq_content(content_dic):
         iter_array = np.linspace(max_axis, min_axis, config['draw_height'])
     else:
         iter_array =[i*step_size+min_axis for i in range(config['draw_height']-1,-1,-1)]
-    # print(min_axis, max_axis, iter_array)
     for seq in content_dic:
         print(f'GC-content distribution for {seq}')
         for k, i in enumerate(iter_array):
@@ -140,7 +134,6 @@ def print_gc_range(content_dic):
     for p in config['percentiles']:
         gc_range.append(get_percentile(all_slices, p))
         print(f'{p}-percentile:{config["delimiter"]}{gc_range[-1]}')
-    # print(config["delimiter"].join(list(map(str, gc_range))))
 
 def get_percentile(array, q):
     if numpy_imported:
@@ -161,12 +154,6 @@ def set_config(args):
             p = int(p)
             check_percentile_range(p)
             config['percentiles'].append(p)
-    #if not args.lower_percentile == None:
-        #check_percentile_range(args.lower_percentile)
-        #config['lower_percentile'] = args.lower_percentile
-    #if not args.upper_percentile == None:
-        #check_percentile_range(args.upper_percentile)
-        #config['upper_percentile'] = args.upper_percentile
     if args.window_size:
         config['window_size'] = args.window_size
     if args.print_sequence_length:
@@ -207,12 +194,6 @@ def parseCmd():
         help='List of percentiles that are printed to stdout.' \
             'A value k of a percentile has to be 0<=k<=100 and the values are '\
             'separated by a comma. (default: 5,95)')
-    #parser.add_argument('--lower_percentile', type=float,
-        #help='Sets the value k of the k-th percentile that is used as lower bound '\
-            #'of the output range with 0<=k<=100. (default: 5)')
-    #parser.add_argument('--upper_percentile', type=float,
-        #help='Sets the value k of the k-th percentile that is used as upper bound '\
-            #'of the output range with 0<=k<=100. (default: 95)')
     parser.add_argument('--print_sequence_length', action='store_true',
         help='Prints the total number of nucleotides in any sequence. (default False)')
     parser.add_argument('--draw_gc_content', action='store_true',

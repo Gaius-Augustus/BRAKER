@@ -50,15 +50,6 @@ def main():
         + f'>> {args.out}'
     sp.call(cmd, shell=True)
 
-#     # getting intron hints from training genes
-#     hints = []
-#     for line in csv_read(f'{args.etp_wdir}/training.gtf'):
-#         if line[2] == 'intron':
-#             t_id = line[8].split('transcript_id "')[1].split('\";')[0]
-#             line[8] = f'grp={t_id};src=T;pri=4;'
-#             hints.append(line)
-#     csv_write(hints, args.out, style='a+')
-
 def csv_write(tab, path, style='w+'):
     with open(path, style) as f:
         writer = csv.writer(f, delimiter='\t')
