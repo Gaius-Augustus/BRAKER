@@ -320,7 +320,7 @@ EXPERT OPTIONS
                                     codons. If you enable this flag, these files
                                     will not be produced and python3 and
                                     the required modules will not be necessary
-                                    for running braker.pl.
+                                    for running brkaker.pl.
 --skip_fixing_broken_genes          If you do not have python3, you can choose
                                     to skip the fixing of stop codon including
                                     genes (not recommended).

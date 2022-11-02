@@ -146,18 +146,18 @@ Figure 2: BRAKER pipeline A: training GeneMark-ES on genome data, only; *ab init
 Figure 3: BRAKER pipeline B: training GeneMark-ET supported by RNA-Seq spliced alignment information, prediction with AUGUSTUS with that same spliced alignment information.
 
 
-
 -   Genome file and database of proteins that may be of **unknown** evolutionary distance to the target species (see Figure [4](#fig3)); this approach is particularly suitable if no RNA-Seq data is available. This method will work better with proteins from species that are rather close to the target species, but accuracy will drop only very little if the reference proteins are more distant from the target species. **Important:** This approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database. BRAKER has been tested with OrthoDB <sup name="a19">[R19](#f19)</sup>, successfully. The ProtHint <sup name="a18">[R18](#f18)</sup> protein mapping pipeline for generating required hints for BRAKER is available for download at <https://github.com/gatech-genemark/ProtHint>, the instructions on how to prepare the OrthoDB input proteins are documented at https://github.com/gatech-genemark/ProtHint#protein-database-preparation. You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction.
 
 ![braker2-main-c\[fig3\]](docs/figs/braker2_ep.png)
 
 Figure 4: BRAKER pipeline C: training GeneMark-EP+ on protein spliced alignment, start and stop information, prediction with AUGUSTUS with that same information, in addition chained CDSpart hints. Proteins used here can be of any evolutionary distance to the target organism.
 
--   Genome and RNA-Seq file from the same species, and proteins that may be of **unknown** evolutionary distance to the target species (see figure [5](#fig4)); **important:** this approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database, e.g. OrthoDB is suitable. (You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction.)
+-   Genome file and RNA-Seq set(s) from the same species, and proteins that may be of **unknown** evolutionary distance to the target species (see figure [5](#fig4)); **important:** this approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database, e.g. OrthoDB is suitable. (You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction.)
 
 ![braker3-main-a\[fig4\]](docs/figs/braker3_etp.png)
 
-Figure 5: BRAKER pipeline D: training GeneMark-ETP+ supported by RNA-Seq alignment information and information from proteins (proteins can be of any evolutionary distance).
+Figure 5: BRAKER pipeline D: If necessary, download and alignment of RNA-Seq sets for the target species. Training of GeneMark-ETP+ supported by the RNA-Seq alignments and a large protein database (proteins can be of any evolutionary distance). Subsequently, AUGUSTUS training and prediction using the same extrinsic information together with the GeneMark-ETP+ results. The final prediction is the TSEBRA combination of the AUGUSTUS and GeneMark-ETP+ results.
+
 
 Installation
 ============
@@ -366,7 +366,7 @@ perl change_path_in_perl_scripts.pl "/usr/bin/env perl"
 
 You can check whether GeneMark-ES/ET/EP is installed properly by running the `check_install.bash` and/or executing examples in `GeneMark-E-tests` directory.
 
-ToDo: Add section about the installation of ETP+, when it is available.
+ToDo: Add section about installation of GeneMark-ETP+, when it is available.
 
 #### AUGUSTUS
 
@@ -377,7 +377,6 @@ You should compile AUGUSTUS on your own system in order to avoid problems with v
 AUGUSTUS consists of `augustus`, the gene prediction tool, additional C++ tools located in `Augustus/auxprogs` and Perl scripts located in `Augustus/scripts`. Perl scripts must be executable (see instructions in section [BRAKER components](#executability).
 
 The C++ tool `bam2hints` is an essential component of BRAKER when run with RNA-Seq. Sources are located in `Augustus/auxprogs/bam2hints`. Make sure that you compile `bam2hints` on your system (it should be automatically compiled when AUGUSTUS is compiled, but in case of problems with `bam2hints`, please read troubleshooting instructions in `Augustus/auxprogs/bam2hints/README`).
-
 
 Since BRAKER is a pipeline that trains AUGUSTUS, i.e. writes species specific parameter files, BRAKER needs writing access to the configuration directory of AUGUSTUS that contains such files (`Augustus/config/`). If you install AUGUSTUS globally on your system, the `config` folder will typically not be writable by all users. Either make the directory where `config` resides recursively writable to users of AUGUSTUS, or copy the `config/` folder (recursively) to a location where users have writing permission.
 
@@ -649,14 +648,14 @@ BRAKER will try to locate the make_hub.py script by using an environment variabl
 
 If you want BRAKER to download RNA-Seq libraries from NCBI's SRA, the [SRA Toolkit](https://github.com/ncbi/sra-tools/wiki) is required. You can get a precompiled version of the SRA Toolkit from <http://daehwankimlab.github.io/hisat2/download/#version-hisat2-221>.
 
-BRAKER will try to find executable binaries from the SRA Toolkit (fastq-dump, prefetch) by using an environment variable `$SRATOOLS_PATH`. Alternatively, this can be supplied as command line argument (`--SRATOOLS_PATH=/your/path/to/SRAToolkit/`). BRAKER can also try to guess the location of the SRA Toolkit on your system, if the executables are in your `$PATH` variable.
+BRAKER will try to find executable binaries from the SRA Toolkit (fastq-dump, prefetch) by using an environment variable `$SRATOOLS_PATH`. Alternatively, this can be supplied as command line argument (`--SRATOOLS_PATH=/your/path/to/SRAToolkit/`). BRAKER can also try to guess the location of the SRA Toolkit on your system if the executables are in your `$PATH` variable.
 
 #### HISAT2
 
 If you want to use unaligned RNA-Seq reads, the [HISAT2](http://daehwankimlab.github.io/hisat2) software is required to map them to the genome.
 A precompiled version of HISAT2 can be downloaded from <http://daehwankimlab.github.io/hisat2/download/#version-hisat2-221>.
 
-BRAKER will try to find executable HISAT2 binaries (hisat2, hisat2-build) by using an environment variable `$HISAT2_PATH`. Alternatively, this can be supplied as command line argument (`--HISAT2_PATH=/your/path/to/HISAT2/`). BRAKER can also try to guess the location of HISAT2 on your system, if the executables are in your `$PATH` variable.
+BRAKER will try to find executable HISAT2 binaries (hisat2, hisat2-build) by using an environment variable `$HISAT2_PATH`. Alternatively, this can be supplied as command line argument (`--HISAT2_PATH=/your/path/to/HISAT2/`). BRAKER can also try to guess the location of HISAT2 on your system if the executables are in your `$PATH` variable.
 
 
 
