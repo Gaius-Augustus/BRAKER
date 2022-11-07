@@ -20,6 +20,7 @@ use File::Path;
 use File::Spec::Functions qw(rel2abs);
 use strict;
 use warnings;
+use File::Copy;
 
 my $usage = <<'ENDUSAGE';
 
@@ -114,7 +115,7 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"getAnnoFastaFromJoingenes.augustus.hints_.stdout", "startAlign.stdout", "augustus.hints_iter1.aa", "augustus.hints_iter1.codingseq",
 	"augustus.hints_iter1.gff", "augustus.hints_iter1.gtf", "augustus.tmp1.gff", "augustus.tmp2.gff", "cmd.log", "etrain.bad.lst", "gene_stat.yaml",
 	"good_genes.lst", "hintsfile_iter1.gff", "nonred.loci.lst", "nuc.fasta", "prevHints.gff", "proteins.fa", "seed_proteins.faa",
-        "train.f.gb", "traingenes.good.gtf", "traingenes.good.nr.fa", "uniqueSeeds.gtf", "braker.gtf_temp");
+        "train.f.gb", "traingenes.good.gtf", "traingenes.good.nr.fa", "uniqueSeeds.gtf", "braker.gtf_temp", "genemark_hintsfile.gff", "gc_content.out");
 
 my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneMark-ES/run",
 	"GeneMark-ET/data", "GeneMark-ET/info", "GeneMark-ET/output", "GeneMark-ET/run",
@@ -148,3 +149,16 @@ while(-d $wdir."/align_gth".$gth_index){
 	$gth_index = $gth_index + 1;
 }
 
+# move augustus.* output files into a subdirectory
+opendir my $dir, "$wdir" or die "Cannot open directory: $wdir!";
+@files = readdir $dir;
+closedir $dir;
+
+mkdir("$wdir/Augustus", 0700) or die("Failed to create directory Augustus!\n");
+
+foreach(@files){
+	print $_."\n";
+	if($_ =~ m/augustus\./){
+		move($wdir."/".$_, $wdir."/Augustus/".$_) or die("Failed to move file $wdir/$_ to $wdir/Augustus/$_!\n");
+	}
+}

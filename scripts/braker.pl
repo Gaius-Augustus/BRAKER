@@ -2351,8 +2351,7 @@ sub determineRunMode {
     }
 
     if ( $foundRNASeq && $foundProt ) {
-        $prtStr .= "#*********\n"
-                . "# WARNING: "
+        $prtStr .= "# " . (localtime) . ":"
                 . "Both protein and RNA-Seq libraries in input detected. "
                 . "BRAKER will be executed in ETP mode (--etpmode).\n"
                 . "#*********\n";
@@ -2362,7 +2361,7 @@ sub determineRunMode {
     } elsif ($foundProt) {
         $prtStr = "\# "
                 . (localtime)
-                . ": REMARK: Protein input detected, BRAKER will be executed "
+                . ": Only Protein input detected, BRAKER will be executed "
                 . "in the EP mode (--epmode).\n";
         $logString .= $prtStr;
         $EPmode = 1;
