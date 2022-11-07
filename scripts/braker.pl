@@ -2570,10 +2570,6 @@ sub check_upfront {
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     find(
-        "startAlign.pl",        $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    find(
         "align2hints.pl",       $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
