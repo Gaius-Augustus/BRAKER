@@ -157,7 +157,6 @@ closedir $dir;
 mkdir("$wdir/Augustus", 0700) or die("Failed to create directory Augustus!\n");
 
 foreach(@files){
-	print $_."\n";
 	if($_ =~ m/augustus\./){
 		move($wdir."/".$_, $wdir."/Augustus/".$_) or die("Failed to move file $wdir/$_ to $wdir/Augustus/$_!\n");
 	}
