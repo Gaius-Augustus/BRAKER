@@ -112,9 +112,9 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"augustus.ab_initio.tmp.gtf", "augustus.ab_initio.gff", "augustus.hints.gff", "augustus.hints.tmp.gtf",
 	"getAnnoFastaFromJoingenes.augustus.hints_hints.stdout", "getAnnoFastaFromJoingenes.augustus.ab_initio_.stdout",
 	"getAnnoFastaFromJoingenes.augustus.hints_.stdout", "startAlign.stdout", "augustus.hints_iter1.aa", "augustus.hints_iter1.codingseq",
-	"augustus.hints_iter1.gff", "augustus.tmp1.gff", "augustus.tmp2.gff", "cmd.log", "etrain.bad.lst", "gene_stat.yaml",
+	"augustus.hints_iter1.gff", "augustus.hints_iter1.gtf", "augustus.tmp1.gff", "augustus.tmp2.gff", "cmd.log", "etrain.bad.lst", "gene_stat.yaml",
 	"good_genes.lst", "hintsfile_iter1.gff", "nonred.loci.lst", "nuc.fasta", "prevHints.gff", "proteins.fa", "seed_proteins.faa",
-        "train.f.gb", "traingenes.good.gtf", "traingenes.good.nr.fa", "uniqueSeeds.gtf");
+        "train.f.gb", "traingenes.good.gtf", "traingenes.good.nr.fa", "uniqueSeeds.gtf", "braker.gtf_temp");
 
 my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneMark-ES/run",
 	"GeneMark-ET/data", "GeneMark-ET/info", "GeneMark-ET/output", "GeneMark-ET/run",
