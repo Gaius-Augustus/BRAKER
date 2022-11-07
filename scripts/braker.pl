@@ -9817,7 +9817,11 @@ sub make_hub {
             . " -e " . $email . " -l " . "hub_" . substr($species, 0, 3)
             . " -L " . $species . " -X " . $otherfilesDir . " -P ";
     if ($annot) {
-        $cmdStr .= "-a $annot";
+        $cmdStr .= "-a $annot ";
+    }
+
+    if ($CPU > 1) {
+        $cmdStr .= "-c $CPU";
     }
     $cmdStr .= " > $otherfilesDir/makehub.log 2> $errorfilesDir/makehub.err";
     print LOG $cmdStr . "\n"  if ($v > 3);
