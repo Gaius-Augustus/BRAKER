@@ -2,6 +2,7 @@
 
 # Katharina J. Hoff
 # Parse ProtHint prothint.gff (file for GeneMark-EX) to produce two classes of hints for AUGUSTUS
+# Edit by Tomas Bruna: keep the al_score information in the output
 
 use Getopt::Long;
 use List::Util sum;
@@ -89,7 +90,7 @@ for (my $i = 0; $i < scalar(@normalized_mults); $i++){
 	$t[2] =~ s/Intron/intron/;
 	$t[2] =~ s/start_codon/start/;
 	$t[2] =~ s/stop_codon/stop/;
-	print OUT $t[0]."\t".$t[1]."\t".$t[2]."\t".$t[3]."\t".$t[4]."\t".$class_label."\t".$t[6]."\t".$t[7]."\tsrc=P;mult=$t[5];pri=4;\n";
+	print OUT $t[0]."\t".$t[1]."\t".$t[2]."\t".$t[3]."\t".$t[4]."\t".$class_label."\t".$t[6]."\t".$t[7]."\tsrc=P;mult=$t[5];pri=4;al_score=$al_score;\n";
 }
 
 close(OUT) or die("ERROR: in file " . __FILE__ ." at line "
