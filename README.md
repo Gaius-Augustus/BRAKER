@@ -81,7 +81,7 @@ Contents
 -   [Example data](#example-data)
     -   [Data description](#data-description)
     -   [Testing BRAKER with RNA-Seq data](#testing-braker-with-rna-seq-data)
-    -   [Testing BRAKER with proteins of any evolutionary distance](#testing-braker-with-proteins-of-any-evolutionary-distance)
+    -   [Testing BRAKER with proteins](#testing-braker-with-proteins)
     -   [Testing BRAKER with proteins and RNA-Seq](#testing-braker-with-proteins-and-rna-seq)
     -   [Testing BRAKER with pre-trained parameters](#testing-braker-with-pre-trained-parameters)
     -   [Testing BRAKER with genome sequence](#testing-braker-with-genome-sequence)
@@ -173,7 +173,7 @@ At the time of release, this BRAKER version was tested with:
 
 -   ProtHint 2.6.0
 
--   Spaln 2.3.3d <sup name="a8">[R8, ](#f8)</sup><sup name="a9">[R9, ](#f9)</sup><sup name="a10">[R10, ](#f10)</sup><sup name="g3">[F3](#g3)</sup>
+-   Spaln 2.3.3d <sup name="a8">[R8, ](#f8)</sup><sup name="a9">[R9, ](#f9)</sup><sup name="a10">[R10](#f10)</sup>
 
 -   NCBI BLAST+ 2.2.31+ <sup name="a12">[R12, ](#f12)</sup><sup name="a13">[R13](#f13)</sup>
 
@@ -342,7 +342,7 @@ In order to set the environment variable for your current Bash session, type:
 
     export GENEMARK_PATH=/your_path_to_GeneMark-EX/
 
-Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.<sup name="g5">[F5](#g5)</sup>
+Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.
 
 **Important:** GeneMark-EX will only run if a valid key file resides in your home directory. The key file will expire after 200 days, which means that you have to download a new GeneMark-EX release and a new key file after 200 days. The key file is downloaded as ```gm_key.gz```. Unpack the key file and move it to a hidden file **in your home directory** as follows:
 
@@ -816,14 +816,6 @@ Description of selected BRAKER command line options
 
 Please run `braker.pl --help` to obtain a full list of options.
 
-### --epmode
-
-Run BRAKER in EP-mode, i.e. with proteins of any evolutionary distance as processed by ProtHint within BRAKER. This mode is turned on by default when only protein input is detected. Should be provided with either `--prot_seq=orthodb.fa` or protein hints `--hints=prothint_augustus.gff`.
-
-### --etpmode
-
-Run BRAKER in ETPmode, i.e. with proteins of any evolutionary distance, and with RNA-Seq data. Proteins should be provided with `prot_seq=orthodb.fa`, and RNA-Seq with `--rnaseq_sets_ids` together with `--rnaseq_sets_dir`, and/or`--bam=rnaseq.bam`.
-
 ### --ab\_initio
 
 Compute AUGUSTUS *ab initio* predictions in addition to AUGUSTUS predictions with hints (additional output files: `augustus.ab_initio.*`. This may be useful for estimating the quality of training gene parameters when inspecting predictions in a Browser.
@@ -905,6 +897,7 @@ Output of BRAKER
 BRAKER produces several important output files in the working directory.
 
 - braker.gtf: Final gene set of BRAKER. This file may contain different contents depending on how you called BRAKER
+
     * in ETPmode: Final gene set of BRAKER consisting of genes predicted by AUGUSTUS and GeneMark-ETP+ that were combined and filtered by TSEBRA.
 
     * otherwise: Union of augustus.hints.gtf and reliable GeneMark-EX predictions (genes fully supported by external evidence). In `--esmode`, this is the union of augustus.ab_initio.gtf and all GeneMark-ES genes. Thus, this set is generally more sensitive (more genes correctly predicted) and can be less specific (more false-positive predictions can be present). This output is not necessarily better than augustus.hints.gtf, and it is not recommended to use it if BRAKER was run in ESmode.
@@ -1184,6 +1177,10 @@ Common problems
 
     Update AUGUSTUS and BRAKER from github with `git clone https://github.com/Gaius-Augustus/Augustus.git` and `git clone https://github.com/Gaius-Augustus/BRAKER.git`. The Anaconda installation is great, but it relies on releases of AUGUSTUS and BRAKER - which are often lagging behind. Please use the current GitHub code, instead.
 
+-   *Why and where is the GenomeThreader support gone?*
+
+     BRAKER is a joint project between teams from University of Greifswald and Georgia Tech. While the group of Mark Bordovsky from Georgia Tech contributes GeneMark expertise, the group of Mario Stanke from University of Greifswald contributes AUGUSTUS expertise. Using GenomeThreader to build training genes for AUGUSTUS in BRAKER circumvents execution of GeneMark. Thus, the GenomeThreader mode is strictly speaking not part of the BRAKER project. The previous functionality of BRAKER with GenomeThreader has been moved to GALBA at <https://github.com/Gaius-Augustus/GALBA>. Note that GALBA has also undergone extension for using Miniprot instead of GenomeThreader.
+
 
 Citing BRAKER and software called by BRAKER
 =============================================
@@ -1220,7 +1217,7 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Ter-Hovhannisyan, V., Lomsadze, A., Chernoff, Y.O. and Borodovsky, M. (2008). Gene prediction in novel fungal genomes using an ab initio algorithm with unsupervised training. Genome research, pages gr--081612, 2008.
 
--  If BRAKER was run with proteins (--epmode or --etpmode), please cite all tools that are used by the ProtHint pipeline to generate hints:
+-  If BRAKER was run with proteins, please cite all tools that are used by the ProtHint pipeline to generate hints:
 
     -   Bruna, T., Lomsadze, A., & Borodovsky, M. (2020). GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026.
 
@@ -1289,11 +1286,7 @@ Footnotes
 
 <b id="g2">[F2]</b> Please use the latest version from the master branch of AUGUSTUS distributed by the original developers, it is available from github at <https://github.com/Gaius-Augustus/Augustus>. Problems have been reported from users that tried to run BRAKER with AUGUSTUS releases maintained by third parties, i.e. Bioconda. [↩](#g2)
 
-<b id="g3">[F3]</b> Not tested in this release, we recommend using GenomeThreader, instead  [↩](#g3)
-
 <b id="g4">[F4]</b> install with `sudo apt-get install cpanminus` [↩](#g4)
-
-<b id="g5">[F5]</b> GeneMark-EX is not a mandatory tool if AUGUSTUS is to be trained from GenomeThreader aligments with the option `--trainFromGth`. [↩](#g5)
 
 <b id="g6">[F6]</b> The binary may e.g. reside in bamtools/build/src/toolkit [↩](#g6)
 
