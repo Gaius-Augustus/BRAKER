@@ -1,4 +1,6 @@
 # ----------------------------------------------------------------------
+# | renamed --cores to --threads   | braker.pl (Hoff)     | 7.11.2022  |
+# | integration of GeneMark-ETP    | braker.pl (Gabriel)  | 7.11.2022  |
 # | integration of GeneMark-EP/EP+ | braker.pl (Hoff)     | 28.2.2020  |
 # | switched from eval to GaTech   | braker.pl (Hoff)     |            |
 # | scripts for evaluation         |                      |            |
