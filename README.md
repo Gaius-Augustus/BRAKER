@@ -69,7 +69,6 @@ Contents
         -   [--augustus_args=--some\_arg=bla](#--augustus_args--some_argbla)
         -   [--threads=INT](#--threadsint)
         -   [--fungus](#--fungus)
-        -   [--softmasking](#--softmasking)
         -   [--useexisting](#--useexisting)
         -   [--crf](#--crf)
         -   [--lambda=int](#--lambdaint)
@@ -116,7 +115,7 @@ Keys to successful gene prediction
 
 -   Use simple scaffold names in the genome file (e.g. ```>contig1``` will work better than ```>contig1my custom species namesome putative function /more/information/  and lots of special characters %&!*(){}```). Make the scaffold names in all your fasta files simple before running any alignment program.
 
--   In order to predict genes accurately in a novel genome, the genome should be masked for repeats. This will avoid the prediction of false positive gene structures in repetitive and low complexitiy regions. Repeat masking is also essential for mapping RNA-Seq data to a genome with some tools (other RNA-Seq mappers, such as HISAT2, ignore masking information). In case of GeneMark-EX and AUGUSTUS, softmasking (i.e. putting repeat regions into lower case letters and all other regions into upper case letters) leads to better results than hardmasking (i.e. replacing letters in repetitive regions by the letter `N` for unknown nucleotide). If the genome is masked, use the `--softmasking` flag of `braker.pl`.
+-   In order to predict genes accurately in a novel genome, the genome should be masked for repeats. This will avoid the prediction of false positive gene structures in repetitive and low complexitiy regions. Repeat masking is also essential for mapping RNA-Seq data to a genome with some tools (other RNA-Seq mappers, such as HISAT2, ignore masking information). In case of GeneMark-EX and AUGUSTUS, softmasking (i.e. putting repeat regions into lower case letters and all other regions into upper case letters) leads to better results than hardmasking (i.e. replacing letters in repetitive regions by the letter `N` for unknown nucleotide).
 
 -   Many genomes have gene structures that will be predicted accurately with standard parameters of GeneMark-EX and AUGUSTUS within BRAKER. However, some genomes have clade-specific features, i.e. special branch point model in fungi, or non-standard splice-site patterns. Please read the options section \[options\] in order to determine whether any of the custom options may improve gene prediction accuracy in the genome of your target species.
 
@@ -509,7 +508,7 @@ These software tools are only mandatory if you run BRAKER with RNA-Seq **and** p
 
 #### BEDTools
 
-The software package [bedtools](https://bedtools.readthedocs.io/en/latest/) is required by GeneMark-ETP+ if you want to run BRAKER in `--etpmode`. You can download bedtools from <https://github.com/arq5x/bedtools2/releases>. Here, you can either download a precompiled version `bedtools.static.binary`, e.g.
+The software package [bedtools](https://bedtools.readthedocs.io/en/latest/) is required by GeneMark-ETP+ if you want to run BRAKER with both RNA-Seq and protein data. You can download bedtools from <https://github.com/arq5x/bedtools2/releases>. Here, you can either download a precompiled version `bedtools.static.binary`, e.g.
 ```
 wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary
 mv bedtools.static.binary bedtools
@@ -663,7 +662,7 @@ Running BRAKER
 Different BRAKER pipeline modes
 --------------------------------
 
-In the following, we describe “typical” BRAKER calls for different input data types. In general, we recommend that you run BRAKER on genomic sequences that have been softmasked for Repeats. If your genome has been softmasked, include the `--softmasking` flag in your BRAKER call!
+In the following, we describe “typical” BRAKER calls for different input data types. In general, we recommend that you run BRAKER on genomic sequences that have been softmasked for Repeats. BRAKER should only be applied to genomes that have been softmasked for repeats!
 
 ### BRAKER with RNA-Seq data
 
@@ -727,7 +726,7 @@ Figure 9: BRAKER with proteins of any evolutionary distance. ProtHint protein ma
 
 For running BRAKER in this mode, type:
 
-    braker.pl --genome=genome.fa --prot_seq=proteins.fa --softmasking
+    braker.pl --genome=genome.fa --prot_seq=proteins.fa
 
 We recommend using OrthoDB as basis for `proteins.fa`. The instructions on how to prepare the input OrthoDB proteins are documented here: https://github.com/gatech-genemark/ProtHint#protein-database-preparation.
 
@@ -735,7 +734,7 @@ You can of course add additional protein sequences to that file, or try with a c
 
 Instead of having BRAKER run ProtHint, you can also start BRAKER with hints already produced by ProtHint, by providing ProtHint's `prothint_augustus.gff` output:
 
-    braker.pl --genome=genome.fa --hints=prothint_augustus.gff --softmasking
+    braker.pl --genome=genome.fa --hints=prothint_augustus.gff
 
 The format of `prothint_augustus.gff` in this mode looks like this:
 
@@ -754,7 +753,7 @@ The prediction of all hints with `src=M` will be enforced. Hints with `src=C` ar
 If RNA-Seq (and only RNA-Seq) data is provided to BRAKER as a bam-file, and if the genome is softmasked for repeats, BRAKER can automatically train UTR parameters for AUGUSTUS. After successful training of UTR parameters, BRAKER will automatically predict genes including coverage information form RNA-Seq data. Example call:
 
     braker.pl --species=yourSpecies --genome=genome.fasta \
-       --bam=file.bam --softmasking --UTR=on
+       --bam=file.bam --UTR=on
 
 **Warnings:**
 
@@ -773,20 +772,20 @@ For running BRAKER without UTR parameters, it is not very important whether RNA-
 After alignment of the stranded RNA-Seq libraries, separate the resulting bam file entries into two files: one for plus strand mappings, one for minus strand mappings. Call BRAKER as follows:
 
     braker.pl --species=yourSpecies --genome=genome.fasta \
-       --softmasking --bam=plus.bam,minus.bam --stranded=+,- \
+        --bam=plus.bam,minus.bam --stranded=+,- \
         --UTR=on
 
 You may additionally include bam files from unstranded libraries. Those files will not used for generating UTR training examples, but they will be included in the final gene prediction step as unstranded coverage information, example call:
 
     braker.pl --species=yourSpecies --genome=genome.fasta \
-       --softmasking --bam=plus.bam,minus.bam,unstranded.bam \
+       --bam=plus.bam,minus.bam,unstranded.bam \
        --stranded=+,-,. --UTR=on
 
 **Warning:** This feature is experimental and currently has low priority on our maintenance list!
 
 ### BRAKER with RNA-Seq **and** protein data
 
-The native mode for running BRAKER with RNA-Seq and protein data is `--etpmode`. This will call GeneMark-ETP+, which will use RNA-Seq and protein hints for training GeneMark-ETP+. Subsequently, AUGUSTUS is trained on 'high-confindent' genes (genes with very high extrinsic evidence support) from the GeneMark-ETP+ prediction and a set of genes is predicted by AUGUSTUS. In a last step, the predictions of AUGUSTUS and GeneMark-ETP+ are combined using TSEBRA.
+The native mode for running BRAKER with RNA-Seq and protein data. This will call GeneMark-ETP+, which will use RNA-Seq and protein hints for training GeneMark-ETP+. Subsequently, AUGUSTUS is trained on 'high-confindent' genes (genes with very high extrinsic evidence support) from the GeneMark-ETP+ prediction and a set of genes is predicted by AUGUSTUS. In a last step, the predictions of AUGUSTUS and GeneMark-ETP+ are combined using TSEBRA.
 
 To call the pipeline in this mode, you have to provide it with a protein database using `--prot_seq` (as described in [BRAKER with protein data](#braker-with-protein-data)), and RNA-Seq data either by their SRA ID so that they are downloaded by BRAKER, as unaligned reads in `FASTQ` format, and/or as aligned reads in `bam` format (as described in [BRAKER with RNA-Seq data](#braker-with-rna-seq-data)). You could also specify already processed extrinsic evidence using the `--hints` option. However, this is not recommend for a normal BRAKER run in ETPmode, as these hints won't be used in the GeneMark-ETP+ step. Only use `--hints` when you want to skip the GenMark-ETP+ step!
 
@@ -796,17 +795,14 @@ Examples of how you could run BRAKER in ETPmode:
     braker.pl --genome=genome.fa --prot_seq=orthodb.fa \
         --rnaseq_sets_ids=SRA_ID1,SRA_ID2 \
         --rnaseq_sets_dirs=/path/to/local/RNA-Seq/files/
-        --etpmode --softmasking
 ```
 ```
     braker.pl --genome=genome.fa --prot_seq=orthodb.fa \
         --rnaseq_sets_ids=SRA_ID1,SRA_ID2,SRA_ID3
-        --etpmode --softmasking
 ```
 ```
         braker.pl --genome=genome.fa --prot_seq=orthodb.fa \
             --bam=/path/to/SRA_ID1.bam,/path/to/SRA_ID2.bam
-            --etpmode --softmasking
 ```
 
 ### BRAKER with short and long read RNA-Seq and protein data
@@ -834,9 +830,6 @@ Specifies the maximum number of threads that can be used during computation. BRA
 
 GeneMark-EX option: run algorithm with branch point model. Use this option if you genome is a fungus.
 
-### --softmasking
-
-Softmasking option for soft masked genome files. (Disabled by default.)
 
 ### --useexisting
 
@@ -852,12 +845,12 @@ Change the parameter $\lambda$ of the Poisson distribution that is used for down
 
 ### --UTR=on
 
-Generate UTR training examples for AUGUSTUS from RNA-Seq coverage information, train AUGUSTUS UTR parameters and predict genes with AUGUSTUS and UTRs, including coverage information for RNA-Seq as evidence. This flag only works if --softmasking is also enabled. *This is an experimental feature!*
+Generate UTR training examples for AUGUSTUS from RNA-Seq coverage information, train AUGUSTUS UTR parameters and predict genes with AUGUSTUS and UTRs, including coverage information for RNA-Seq as evidence. *This is an experimental feature!*
 
 If you performed a BRAKER run without --UTR=on, you can add UTR parameter training and gene prediction with UTR parameters (and only RNA-Seq hints) with the following command:
 
 ```
-braker.pl --genome=../genome.fa --addUTR=on --softmasking \
+braker.pl --genome=../genome.fa --addUTR=on \
     --bam=../RNAseq.bam --workingdir=$wd \
     --AUGUSTUS_hints_preds=augustus.hints.gtf \
     --threads=8 --skipAllTraining --species=somespecies
@@ -872,7 +865,7 @@ Add UTRs from RNA-Seq converage information to AUGUSTUS gene predictions using G
 If you performed a BRAKER run without --addUTR=on, you can add UTRs results of a previous BRAKER run with the following command:
 
 ```
-braker.pl --genome=../genome.fa --addUTR=on --softmasking \
+braker.pl --genome=../genome.fa --addUTR=on \
     --bam=../RNAseq.bam --workingdir=$wd \
     --AUGUSTUS_hints_preds=augustus.hints.gtf --threads=8 \
     --skipAllTraining --species=somespecies
@@ -999,7 +992,7 @@ Testing BRAKER with RNA-Seq data
 
 The following command will run the pipeline according to Figure [3](#fig2):
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --threads N
+    braker.pl --genome genome.fa --bam RNAseq.bam --threads N
 
 This test is implemented in `test1.sh`, expected runtime is ~20 minutes.
 
@@ -1009,7 +1002,7 @@ Testing BRAKER with proteins of any evolutionary distance
 The following command will run the pipeline according to Figure [4](#fig3):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --softmasking --threads N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --threads N
 
 
 This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
@@ -1020,7 +1013,7 @@ Testing BRAKER with proteins and RNA-Seq
 The following command will run a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --etpmode --softmasking --threads N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --threads N
 
 
 This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
@@ -1033,7 +1026,7 @@ The training step of all pipelines can be skipped with the option `--skipAllTrai
 
 ```
     braker.pl --genome=genome.fa --bam RNAseq.bam --species=arabidopsis \
-        --skipAllTraining --softmasking --threads N
+        --skipAllTraining --threads N
 ```
 
 This test is implemented in `test4.sh`, expected runtime is ~1 minute.
@@ -1043,7 +1036,7 @@ Testing BRAKER with genome sequence
 
 The following command will run the pipeline with no extrinsic evidence:
 
-    braker.pl --genome=genome.fa --esmode --softmasking --threads N
+    braker.pl --genome=genome.fa --esmode --threads N
 
 This test is implemented in `test5.sh`, expected runtime is ~20 minutes.
 
@@ -1051,7 +1044,7 @@ Testing BRAKER with RNA-Seq data and --UTR=on
 ---------------------------------------------
 The following command will run BRAKER with training UTR parameters from RNA-Seq coverage data:
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --UTR=on --threads N
+    braker.pl --genome genome.fa --bam RNAseq.bam --UTR=on --threads N
 
 This test is implemented in `test6.sh`, expected runtime is ~20 minutes.
 
@@ -1059,7 +1052,7 @@ Testing BRAKER with RNA-Seq data and --addUTR=on
 -------------------------------------------------
 The following command will add UTRs to augustus.hints.gtf from RNA-Seq coverage data:
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --addUTR=on --threads N
+    braker.pl --genome genome.fa --bam RNAseq.bam --addUTR=on --threads N
 
 This test is implemented in `test7.sh`, expected runtime is ~20 minutes.
 
@@ -1253,7 +1246,7 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Kim, D., Paggi, J. M., Park, C., Bennett, C., & Salzberg, S. L. (2019). Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype. Nature biotechnology, 37(8):907-915.    
 
--  If BRAKER was run with RNA-Seq data and proteins (--etpmode), please cite GeneMark-ETP+ and all tools that it uses:
+-  If BRAKER was run with RNA-Seq data and proteins, please cite GeneMark-ETP+ and all tools that it uses:
 
     -   ToDo add reference to ETP+ paper, when it is available
 
