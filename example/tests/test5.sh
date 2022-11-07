@@ -10,4 +10,6 @@ fi
 # It is not recommended to use this option in real BRAKER runs. The speed increase
 # achieved by adjusting this option is negligible on full-sized genomes.
 
-( time braker.pl --genome=../genome.fa --esmode --workingdir=$wd --threads 8 --gm_max_intergenic 10000 ) &> test5.log
+export GENEMARK_PATH=$GENEMARK_PATH/gmes
+
+( time braker.pl --genome=../genome.fa --esmode --workingdir=$wd --threads 8 --gm_max_intergenic 10000 --skipOptimize ) &> test5.log
