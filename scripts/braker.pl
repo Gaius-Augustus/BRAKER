@@ -5,8 +5,8 @@
 # braker.pl                                                                                        #
 # Pipeline for predicting genes with GeneMark-EX* and AUGUSTUS                                     #
 #                                                                                                  #
-# Authors: Katharina Hoff, Simone Lange, Mario Stanke, Alexandre Lomsadze, Tomas Bruna,            #
-#          Mark Borodovsky                                                                         #
+# Authors: Lars Gabriel, Katharina Hoff, Simone Lange, Mario Stanke, Alexandre Lomsadze,           #
+#          Tomas Bruna, Mark Borodovsky                                                            #
 #                                                                                                  #
 # Contact: katharina.hoff@uni-greifswald.de                                                        #
 #                                                                                                  #
@@ -116,12 +116,6 @@ FREQUENTLY USED OPTIONS
 --esmode                            Run GeneMark-ES (genome sequence only) and
                                     train AUGUSTUS on long genes predicted by
                                     GeneMark-ES. Final predictions are ab initio
---epmode                            Run ProtHint to generate protein hints (if
-                                    not already specified with --hints option)
-                                    and use the hints in GeneMark-EP+ to create
-                                    a training set for AUGUSTUS.
---etpmode                           Use RNA-Seq and protein hints in GeneMark-ETP+
-                                    to create a training set for AUGUSTUS. 
 --gff3                              Output in GFF3 format (default is gtf
                                     format)
 --cores                             Specifies the maximum number of cores that
@@ -716,8 +710,6 @@ GetOptions(
     'rounds=s'                     => \$rounds,
     'geneMarkGtf=s'                => \$geneMarkGtf,
     'esmode!'                      => \$ESmode,
-    'epmode!'                      => \$EPmode,
-    'etpmode!'                     => \$ETPmode,
     'AUGUSTUS_ab_initio!'          => \$ab_initio,
     'eval=s'                       => \$annot,
     'eval_pseudo=s'                => \$annot_pseudo,
