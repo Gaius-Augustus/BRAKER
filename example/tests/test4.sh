@@ -13,4 +13,4 @@ fi
 # before running this test.
 # Alternatively, you can replace --bam=../RNASeq.bam by --hints=../RNASeq.hints
 
-( time braker.pl --genome=../genome.fa --bam=../RNAseq.bam --species=arabidopsis --skipAllTraining --softmasking --workingdir=$wd --cores 8 ) &> test4.log
+( time braker.pl --genome=../genome.fa --bam=../RNAseq.bam --species=arabidopsis --skipAllTraining --softmasking --workingdir=$wd --threads 8 ) &> test4.log

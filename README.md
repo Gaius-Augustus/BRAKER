@@ -67,7 +67,7 @@ Contents
     -   [Description of selected BRAKER command line options](#description-of-selected-braker-command-line-options)
         -   [--ab_initio](#--ab_initio)
         -   [--augustus_args=--some\_arg=bla](#--augustus_args--some_argbla)
-        -   [--cores=INT](#--coresint)
+        -   [--threads=INT](#--threadsint)
         -   [--fungus](#--fungus)
         -   [--softmasking](#--softmasking)
         -   [--useexisting](#--useexisting)
@@ -804,7 +804,7 @@ Examples of how you could run BRAKER in ETPmode:
 ```
         braker.pl --genome=genome.fa --prot_seq=orthodb.fa \
             --bam=/path/to/SRA_ID1.bam,/path/to/SRA_ID2.bam
-            --etpmode --softmasking    
+            --etpmode --softmasking
 ```
 
 ### BRAKER with short and long read RNA-Seq and protein data
@@ -824,9 +824,9 @@ Compute AUGUSTUS *ab initio* predictions in addition to AUGUSTUS predictions wit
 
 One or several command line arguments to be passed to AUGUSTUS, if several arguments are given, separate them by whitespace, i.e. `"--first_arg=sth --second_arg=sth"`. This may be be useful if you know that gene prediction in your particular species benefits from a particular AUGUSTUS argument during the prediction step.
 
-### --cores=INT
+### --threads=INT
 
-Specifies the maximum number of cores that can be used during computation. BRAKER has to run some steps on a single core, others can take advantage of multiple cores. If you use more than 8 cores, this will not speed up all parallelized steps, in particular, the time consuming `optimize_augustus.pl` will not use more than 8 cores. However, if you don’t mind some cores being idle, using more than 8 cores will speed up other steps.
+Specifies the maximum number of threads that can be used during computation. BRAKER has to run some steps on a single thread, others can take advantage of multiple threads. If you use more than 8 threads, this will not speed up all parallelized steps, in particular, the time consuming `optimize_augustus.pl` will not use more than 8 threads. However, if you don’t mind some threads being idle, using more than 8 threads will speed up other steps.
 
 ### --fungus
 
@@ -858,7 +858,7 @@ If you performed a BRAKER run without --UTR=on, you can add UTR parameter traini
 braker.pl --genome=../genome.fa --addUTR=on --softmasking \
     --bam=../RNAseq.bam --workingdir=$wd \
     --AUGUSTUS_hints_preds=augustus.hints.gtf \
-    --cores=8 --skipAllTraining --species=somespecies
+    --threads=8 --skipAllTraining --species=somespecies
 ```
 
 Modify `augustus.hints.gtf` to point to the AUGUSTUS predictions with hints from previous BRAKER run; modify flaning_DNA value to the flanking region from the log file of your previous BRAKER run; modify some_new_working_directory to the location where BRAKER should store results of the additional BRAKER run; modify somespecies to the species name used in your previous BRAKER run.
@@ -872,7 +872,7 @@ If you performed a BRAKER run without --addUTR=on, you can add UTRs results of a
 ```
 braker.pl --genome=../genome.fa --addUTR=on --softmasking \
     --bam=../RNAseq.bam --workingdir=$wd \
-    --AUGUSTUS_hints_preds=augustus.hints.gtf --cores=8 \
+    --AUGUSTUS_hints_preds=augustus.hints.gtf --threads=8 \
     --skipAllTraining --species=somespecies
 ```
 
@@ -997,7 +997,7 @@ Testing BRAKER with RNA-Seq data
 
 The following command will run the pipeline according to Figure [3](#fig2):
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --cores N
+    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --threads N
 
 This test is implemented in `test1.sh`, expected runtime is ~20 minutes.
 
@@ -1007,7 +1007,7 @@ Testing BRAKER with proteins of any evolutionary distance
 The following command will run the pipeline according to Figure [4](#fig3):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --softmasking --cores N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --softmasking --threads N
 
 
 This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
@@ -1018,7 +1018,7 @@ Testing BRAKER with proteins and RNA-Seq
 The following command will run a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --etpmode --softmasking --cores N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --etpmode --softmasking --threads N
 
 
 This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
@@ -1031,7 +1031,7 @@ The training step of all pipelines can be skipped with the option `--skipAllTrai
 
 ```
     braker.pl --genome=genome.fa --bam RNAseq.bam --species=arabidopsis \
-        --skipAllTraining --softmasking --cores N
+        --skipAllTraining --softmasking --threads N
 ```
 
 This test is implemented in `test4.sh`, expected runtime is ~1 minute.
@@ -1041,7 +1041,7 @@ Testing BRAKER with genome sequence
 
 The following command will run the pipeline with no extrinsic evidence:
 
-    braker.pl --genome=genome.fa --esmode --softmasking --cores N
+    braker.pl --genome=genome.fa --esmode --softmasking --threads N
 
 This test is implemented in `test5.sh`, expected runtime is ~20 minutes.
 
@@ -1049,7 +1049,7 @@ Testing BRAKER with RNA-Seq data and --UTR=on
 ---------------------------------------------
 The following command will run BRAKER with training UTR parameters from RNA-Seq coverage data:
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --UTR=on --cores N
+    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --UTR=on --threads N
 
 This test is implemented in `test6.sh`, expected runtime is ~20 minutes.
 
@@ -1057,7 +1057,7 @@ Testing BRAKER with RNA-Seq data and --addUTR=on
 -------------------------------------------------
 The following command will add UTRs to augustus.hints.gtf from RNA-Seq coverage data:
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --addUTR=on --cores N
+    braker.pl --genome genome.fa --bam RNAseq.bam --softmasking --addUTR=on --threads N
 
 This test is implemented in `test7.sh`, expected runtime is ~20 minutes.
 

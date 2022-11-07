@@ -118,11 +118,11 @@ FREQUENTLY USED OPTIONS
                                     GeneMark-ES. Final predictions are ab initio
 --gff3                              Output in GFF3 format (default is gtf
                                     format)
---cores                             Specifies the maximum number of cores that
+--threads                           Specifies the maximum number of threads that
                                     can be used during computation. Be aware:
                                     optimize_augustus.pl will use max. 8
-                                    cores; augustus will use max. nContigs in
-                                    --genome=file cores.
+                                    threads; augustus will use max. nContigs in
+                                    --genome=file threads.
 --workingdir=/path/to/wd/           Set path to working directory. In the
                                     working directory results and temporary
                                     files are stored
@@ -673,7 +673,7 @@ GetOptions(
     'BAMTOOLS_PATH=s'              => \$bamtools_path,
     'SRATOOLS_PATH=s'              => \$sratools_path,
     'HISAT2_PATH=s'                => \$hisat2_path,
-    'cores=i'                      => \$CPU,
+    'threads=i'                    => \$CPU,
     'fungus!'                      => \$fungus,
     'extrinsicCfgFiles=s'          => \@extrinsicCfgFiles,
     'GENEMARK_PATH=s'              => \$GM_path,
@@ -1379,8 +1379,8 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
             . "file $genome contains a highly fragmented assembly ("
             . scalar(@nScaffs)." scaffolds). This may lead "
             . "to problems when running AUGUSTUS via braker in parallelized "
-            . "mode. You set --cores=$CPU. You should run braker.pl in linear "
-            . "mode on such genomes, though (--cores=1).\n"
+            . "mode. You set --threads=$CPU. You should run braker.pl in linear "
+            . "mode on such genomes, though (--threads=1).\n"
             . "#*********\n";
     print STDOUT $prtStr;
     print LOG $prtStr;
@@ -1390,7 +1390,7 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
             . "file $genome contains contains $totalScaffSize bases. "
             . "This may lead "
             . "to problems when running AUGUSTUS via braker in parallelized "
-            . "mode. You set --cores=$CPU. There is a variable \$chunksize in "
+            . "mode. You set --threads=$CPU. There is a variable \$chunksize in "
             . "braker.pl. Default value is currently $chunksize. You can adapt "
             . "this to a higher number. The total base content / chunksize * 3 "
             . "should not exceed the number of possible arguments for commands "
@@ -3041,17 +3041,17 @@ sub check_options {
     }
     if( $CPU > 48 ) {
         $prtStr = "#*********\n"
-                . "# WARNING: The number of cores was set "
+                . "# WARNING: The number of threads was set "
                 . "to $CPU, which is greater than 48. GeneMark has in the past "
                 . " been reported to "
-                . "die if you set such a high number of cores. Please "
-                . "be aware that a very large number of cores also may not "
+                . "die if you set such a high number of threads. Please "
+                . "be aware that a very large number of threads also may not "
                 . "be used efficiently by optimize_augustus.pl during "
                 . "cross validation. braker.pl will automatically compute the "
-                . "number of cores that will effectively be used for "
+                . "number of threads that will effectively be used for "
                 . "optimizing AUGUSTUS parameter in such a way that "
                 . "each bucket will contain at least 200 training genes. We "
-                . "usually use 8 cores for 8-fold cross validation.\n"
+                . "usually use 8 threads for 8-fold cross validation.\n"
                 . "#*********\n";
         print STDOUT $prtStr;
         $logString .= $prtStr;
@@ -3251,7 +3251,7 @@ sub check_options {
 
     if ( $cpus_available < $CPU ) {
         $prtStr = "#*********\n"
-                . "# WARNING: Your system does not have $CPU cores available, "
+                . "# WARNING: Your system does not have $CPU threads available, "
                 . "only $cpus_available. Braker will use the $cpus_available "
                 . " available instead of the chosen $CPU.\n"
                 . "#*********\n";
@@ -5948,7 +5948,7 @@ sub training_augustus {
         my $trainGb4 = "$otherfilesDir/train.fff.gb";
         my $goodLstFile = "$otherfilesDir/good_genes.lst";
         my $t_b_t = 0; # to be tested gene set size, used to determine
-                       # stop codon setting and to compute k for cores>8
+                       # stop codon setting and to compute k for threads>8
 
         # set contents of trainGenesGtf file
         if ( not defined($traingtf)) {
