@@ -13,4 +13,6 @@ fi
 # For instructions on how to prepare the proteins.fa input file from OrthoDB,
 # see https://github.com/gatech-genemark/ProtHint#protein-database-preparation
 
-( time braker.pl --genome=../genome.fa --prot_seq=../proteins.fa --softmasking --workingdir=$wd --threads=8 --gm_max_intergenic 10000 ) &> test2.log
+export GENEMARK_PATH=$GENEMARK_PATH/gmes
+
+( time braker.pl --genome=../genome.fa --prot_seq=../proteins.fa --workingdir=$wd --threads=8 --gm_max_intergenic 10000 --skipOptimize ) &> test2.log

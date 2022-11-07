@@ -111,8 +111,8 @@ FREQUENTLY USED OPTIONS
 --AUGUSTUS_ab_initio                output ab initio predictions by AUGUSTUS
                                     in addition to predictions with hints by
                                     AUGUSTUS
---softmasking                       Softmasking option for soft masked genome
-                                    files. (Disabled by default.)
+--softmasking_off                   Turn off softmasking option (enables by 
+                                    default, discouraged to disable!)
 --esmode                            Run GeneMark-ES (genome sequence only) and
                                     train AUGUSTUS on long genes predicted by
                                     GeneMark-ES. Final predictions are ab initio
@@ -143,7 +143,7 @@ FREQUENTLY USED OPTIONS
                                     better than HMM parameters
 --UTR=on                            create UTR training examples from RNA-Seq
                                     coverage data; requires options
-                                    --bam=rnaseq.bam and --softmasking.
+                                    --bam=rnaseq.bam.
                                     Alternatively, if UTR parameters already
                                     exist, training step will be skipped and
                                     those pre-existing parameters are used.
@@ -555,7 +555,8 @@ my $skipIterativePrediction;
 my $skipAllTraining = 0;    # skip all training (including no GeneMark-EX run)
 my $skipGetAnnoFromFasta = 0; # requires python3 & biopython
 my $species;                # species name
-my $soft_mask = 0;          # soft-masked flag
+my $soft_mask = 1;          # soft-masked flag
+my $soft_off = 0; # disable softmasking flag
 my $standard  = 0;          # index for standard malus/ bonus value
                             # (currently 0.1 and 1e1)
 my $chunksize = 2500000;          # chunksize for running AUGUSTUS in parallel
@@ -695,7 +696,7 @@ GetOptions(
     'skipAllTraining!'             => \$skipAllTraining,
     'skipGetAnnoFromFasta!'        => \$skipGetAnnoFromFasta,
     'species=s'                    => \$species,
-    'softmasking!'                 => \$soft_mask,
+    'softmasking_off!'             => \$soft_off,
     'useexisting!'                 => \$useexisting,
     'UTR=s'                        => \$UTR,
     'addUTR=s'                     => \$addUTR,
@@ -744,6 +745,10 @@ if ($help) {
 if ($printVersion) {
     print "braker.pl version $version\n";
     exit(0);
+}
+
+if( $soft_off ) {
+    $soft_mask = 0;
 }
 
 if($nocleanup){

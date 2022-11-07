@@ -17,4 +17,4 @@ fi
 # It is not recommended to use this option in real BRAKER runs. The speed increase
 # achieved by adjusting this option is negligible on full-sized genomes.
 
-( time braker.pl --genome=../genome.fa --bam=../RNAseq.bam --softmasking --workingdir=$wd --threads 8 --gm_max_intergenic 10000 --UTR=on ) &> test6.log
+( time braker.pl --genome=../genome.fa --bam=../RNAseq.bam --workingdir=$wd --threads 8 --gm_max_intergenic 10000 --UTR=on ) &> test6.log
