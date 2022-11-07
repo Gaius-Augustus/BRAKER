@@ -2570,10 +2570,6 @@ sub check_upfront {
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     find(
-        "align2hints.pl",       $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    find(
         "splitMfasta.pl",       $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
@@ -2587,10 +2583,6 @@ sub check_upfront {
     );
     find(
         "fix_joingenes_gtf.pl",       $AUGUSTUS_BIN_PATH,
-        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
-    );
-    find(
-        "merge_transcript_sets.pl", $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
     if(not($skip_fixing_broken_genes)){
