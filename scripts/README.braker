@@ -2,12 +2,12 @@
 %                                                                                                 %
 %           BRAKER2                                                                               %
 %                                                                                                 %
-%           Authors: Katharina J. Hoff, Simone Lange, Alexandre Lomsadze, Mark Borodovsky,        %
-%                    Mario Stanke                                                                 %
+%           Authors: Lars Gabriel, Katharina J. Hoff, Tomas Bruna, Simone Lange,                  %
+%                    Alexandre Lomsadze, Mark Borodovsky, Mario Stanke                            %
 %                                                                                                 %
 %           Contact: katharina.hoff@uni-greifswald.de                                             %
 %                                                                                                 %
-%           Date: August 22nd 2018                                                                %
+%           Date: November 7th 2022                                                               %
 %                                                                                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -30,12 +30,12 @@ information into the prediction.
 In contrast to other available methods that rely on protein homology information, BRAKER2 reaches
 high gene prediction accuracy even in the absence of the annotation of very closely related species 
 and in the absence of RNA-Seq data.
-BRAKER2 can also combine RNA-Seq and protein homology information.
+BRAKER3 can combine RNA-Seq and protein homology information.
 
 
               2. INSTALLATION & FURTHER INFORMATION
               ---------------
 
 Installation instructions and further information on running BRAKER, bug reporting, citing BRAKER
-are provided in docs/userguide.pdf.
+are provided in ../README.md.
 
