@@ -14,6 +14,8 @@ fi
 # test are from ProtHint's second iteration, while in the regular run, GeneMark-EP+
 # uses result from ProtHint's first iteration (see BRAKER2 paper for details).
 
+export GENEMARK_PATH=$GENEMARK_PATH/gmes
+
 if [ ! -d $oldDir ] ; then
   echo "ERROR: Directory (with contents) of old BRAKER run $oldDir does not exist, yet. Please run test2.sh before running test2_restart1.sh!"
 else

@@ -9,6 +9,8 @@ fi
 # It is not recommended to use this option in real BRAKER runs. The speed increase
 # achieved by adjusting this option is negligible on full-sized genomes.
 
+export GENEMARK_PATH=$GENEMARK_PATH/gmes
+
 if [ ! -d $oldDir ] ; then
   echo "ERROR: Directory (with contents) of old BRAKER run $oldDir does not exist, yet. Please run test1.sh before running test1_restart1.sh!"
 else
