@@ -157,6 +157,8 @@ Figure 5: BRAKER pipeline D: If necessary, download and alignment of RNA-Seq set
 Installation
 ============
 
+:warning: **Warning:** If you previously used BRAKER1 and/or BRAKER2, please be aware that the usage changed in several aspects. Also, older GeneMark versions that linger in your `$PATH` variable might lead to unforeseen interferences, causing program failures. Please move all older GeneMark versions out of your `$PATH` (also e.g. the GeneMark in `ProtHint/dependencies`).
+
 Supported software versions
 ---------------------------
 
@@ -891,37 +893,25 @@ Output of BRAKER
 
 BRAKER produces several important output files in the working directory.
 
-- braker.gtf: Final gene set of BRAKER. This file may contain different contents depending on how you called BRAKER
+-   braker.gtf: Final gene set of BRAKER. This file may contain different contents depending on how you called BRAKER
 
-    * in ETPmode: Final gene set of BRAKER consisting of genes predicted by AUGUSTUS and GeneMark-ETP+ that were combined and filtered by TSEBRA.
+       * in ETPmode: Final gene set of BRAKER consisting of genes predicted by AUGUSTUS and GeneMark-ETP+ that were combined and filtered by TSEBRA.
 
-    * otherwise: Union of augustus.hints.gtf and reliable GeneMark-EX predictions (genes fully supported by external evidence). In `--esmode`, this is the union of augustus.ab_initio.gtf and all GeneMark-ES genes. Thus, this set is generally more sensitive (more genes correctly predicted) and can be less specific (more false-positive predictions can be present). This output is not necessarily better than augustus.hints.gtf, and it is not recommended to use it if BRAKER was run in ESmode.
+        * otherwise: Union of augustus.hints.gtf and reliable GeneMark-EX predictions (genes fully supported by external evidence). In `--esmode`, this is the union of augustus.ab_initio.gtf and all GeneMark-ES genes. Thus, this set is generally more sensitive (more genes correctly predicted) and can be less specific (more false-positive predictions can be present). This output is not necessarily better than augustus.hints.gtf, and it is not recommended to use it if BRAKER was run in ESmode.
 
--   augustus.hints.gtf: Genes predicted by AUGUSTUS with hints from given extrinsic evidence. This file will be missing if BRAKER was run with the option `--esmode`. Final output of BRAKER in ETmode and EPmode.
+-   braker.codingseq: Final gene set with coding sequences in FASTA format
 
--   augustus.hints_utr.gtf: This file may contain different contents depending on how you called BRAKER:
+-   braker.aa: Final gene set with protein sequences in FASTA format
 
-    * If you ran BRAKER with --UTR=on, then this file will contain genes predicted by AUGUSTUS with UTR parameters and coverage information from RNA-Seq data in GTF format.
+-   braker.gff3: Final gene set in gff3 format (only produced if the flag `--gff3` was specified to BRAKER.
 
-    * If you ran BRAKER with --addUTR=on, then this file will contain genes predicted by AUGUSTUS without UTR parameters and without coverage information from RNA-Seq data. Instead, AUGUSTUS gene predictions with hints will only be extended by UTRs if RNA-Seq coverage allows it (i.e. no separate AUGUSTUS training or run was performed, UTRs are only added from running GUSHR). Genes in are in GTF format.
-
-This file will only be present if BRAKER was executed with the options `--UTR=on` or `--addUTR=on` and a RNA-Seq BAM file.
-
--   augustus.ab_initio.gtf: Genes predicted by AUGUSTUS in *ab initio* mode in GTF-format. The file will always be present if AUGUSTUS has been run with the option `--esmode`. Otherwise, it will only be present if BRAKER was run with the option `--AUGUSTUS_ab_initio`.
-
--   augustus.ab_initio_utr.gtf: This file may contain gene predictions with UTRs if you ran BRAKER with --UTR=on.
-
-This file will only be present if BRAKER was executed with the options `--UTR=on` or `--addUTR=on` and a RNA-Seq BAM-file, and with the option `--AUGUSTUS_ab_initio`.
+-   Augustus/*: Augustus gene set(s) in as gtf/conding/aa files
 
 -   GeneMark-E*/genemark.gtf: Genes predicted by GeneMark-ES/ET/EP/EP+/ETP+ in GTF-format.
 
 -   hintsfile.gff: The extrinsic evidence data extracted from RNAseq.bam and/or protein data.
 
-AUGUSTUS output files may be present with the following name endings and formats:
-
--   GTF-format is always produced.
-
--   GFF3-format is produced if the flag `--gff3` was specified to BRAKER.
+Output files may be present with the following name endings and formats:
 
 -   Coding sequences in FASTA-format are produced if the flag `--skipGetAnnoFromFasta` was not set.
 
