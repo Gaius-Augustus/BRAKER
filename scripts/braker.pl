@@ -9814,7 +9814,7 @@ sub make_hub {
     print CITE $pubs{'makehub'}; $pubs{'makehub'} = "";
 
     my $cmdStr = $PYTHON3_PATH . "/python3 " . $MAKEHUB_PATH . "/make_hub.py -g " . $genome
-            . " -e " . $email . " -l " . "hub_" . substr($species, 0, 3)
+            . " -e " . $email . " -l " . "hub_" . $species
             . " -L " . $species . " -X " . $otherfilesDir . " -P ";
     if ($annot) {
         $cmdStr .= "-a $annot ";
