@@ -260,6 +260,8 @@ conda install -c bioconda perl-threaded
 conda install -c bioconda perl-list-util
 conda install -c bioconda perl-math-utils
 conda install -c bioconda cdbtools
+conda install -c eumetsat perl-yaml-xs
+conda install -c bioconda perl-data-dumper
 ```
 
 Subsequently install BRAKER and other software "as usual" while being in your conda environment. **Note:** There is a bioconda braker package, and a bioconda augustus package. They work. But they are usually lagging behind the development code of both tools on github. We therefore recommend manual installation and usage of lastest sources.
