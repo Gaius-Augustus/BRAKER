@@ -686,7 +686,7 @@ GetOptions(
     'optCfgFile=s'                 => \$optCfgFile,
     'overwrite!'                   => \$overwrite,
     'SAMTOOLS_PATH=s'              => \$SAMTOOLS_PATH_OP,
-    'skipGeneMark-Es!'             => \$skipGeneMarkES,
+    'skipGeneMark-ES!'             => \$skipGeneMarkES,
     'skipGeneMark-ET!'             => \$skipGeneMarkET,
     'skipGeneMark-EP!'             => \$skipGeneMarkEP,
     'skipGeneMark-ETP!'            => \$skipGeneMarkETP,
@@ -881,9 +881,7 @@ if (@prot_seq_files && !$ESmode) {
     set_PROTHINT_PATH();
 }
 
-if ( $ETPmode == 1 ) {
-    set_TSEBRA_PATH();
-}
+set_TSEBRA_PATH();
 
 if ( $makehub ) {
     set_MAKEHUB_PATH();
