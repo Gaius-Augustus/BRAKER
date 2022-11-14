@@ -446,10 +446,9 @@ To run with RNA-Seq and protein sequences
 
 braker.pl [OPTIONS] --genome=genome.fa --species=speciesname \
     --prot_seq=proteins.fa --rnaseq_sets_ids=id_rnaseq1,id_rnaseq2 \
-    --rnaseq_sets_dir=/path/to/local/rnaseq/files --etpmode
+    --rnaseq_sets_dir=/path/to/local/rnaseq/files 
 braker.pl [OPTIONS] --genome=genome.fa --species=speciesname \
-    --prot_seq=proteins.fa --bam=id_rnaseq1.bam,id_rnaseq2.bam \
-    --etpmode
+    --prot_seq=proteins.fa --bam=id_rnaseq1.bam,id_rnaseq2.bam 
 
 
 ENDUSAGE
@@ -2353,7 +2352,7 @@ sub determineRunMode {
     if ( $foundRNASeq && $foundProt ) {
         $prtStr .= "# " . (localtime) . ":"
                 . "Both protein and RNA-Seq libraries in input detected. "
-                . "BRAKER will be executed in ETP mode (--etpmode).\n"
+                . "BRAKER will be executed in ETP mode.\n"
                 . "#*********\n";
         $ETPmode=1;
         $logString .= $prtStr;
@@ -5413,10 +5412,7 @@ sub GeneMark_ETP {
             }
             $perlCmdString .= "perl $string --cfg $genemarkDir/etp_config.yaml "
                             . "--workdir $genemarkDir --bam $genemarkDir/etp_data/ "
-                            . "--cores $CPU ";
-            if ($soft_mask) {
-                $perlCmdString .= "--softmask "
-            }
+                            . "--cores $CPU --softmask";            
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running etp_release.pl\n"
                 if ($v > 3);
