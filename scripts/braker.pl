@@ -848,10 +848,10 @@ if (@rna_seq_libs_ids) {
 }
 
 # set AUGUSTUS_CONFIG_PATH
-
 set_AUGUSTUS_CONFIG_PATH();
 set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
+fix_AUGUSTUS_CONFIG_PATH();
 set_PYTHON3_PATH();
 
 if($UTR eq "on" || $addUTR eq "on"){
@@ -1841,7 +1841,6 @@ sub set_software_PATH {
 ################################################################################
 
 sub set_AUGUSTUS_CONFIG_PATH {
-
     my @required_files = ();
     my @alt_locations = ();
     my $epath =  which 'augustus';
@@ -1871,7 +1870,8 @@ sub set_AUGUSTUS_CONFIG_PATH {
         . "                installation that resides in a directory that is\n"
         . "                not writable to you as a user.\n";
 
-    @alt_locations = (dirname( abs_path( $epath ) ) . "/../config");
+    @alt_locations = (dirname( abs_path( $epath ) ) . "/../config", 
+                "/usr/share/augustus/config");
 
     # set $AUGUSTUS_CONFIG_PATH
     $AUGUSTUS_CONFIG_PATH = set_software_PATH($augustus_cfg_path, "AUGUSTUS_CONFIG_PATH",
@@ -1882,13 +1882,12 @@ sub set_AUGUSTUS_CONFIG_PATH {
         $prtStr
             = "\# "
             . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+            . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "AUGUSTUS_CONFIG_PATH/species (in this case ";
         $prtStr .= "$AUGUSTUS_CONFIG_PATH/$species) is not writeable.\n";
         $logString .= $prtStr;
         $logString .= $aug_conf_err if ($v > 0);
         print STDERR $logString;
-        exit(1);
     }
 
 }
@@ -1899,7 +1898,8 @@ sub set_AUGUSTUS_CONFIG_PATH {
 
 sub set_AUGUSTUS_BIN_PATH {
     my @required_files = ('augustus');
-    my @alt_locations = ("$AUGUSTUS_CONFIG_PATH/../bin");
+    my @alt_locations = ("$AUGUSTUS_CONFIG_PATH/../bin", 
+                "/usr/share/augustus/bin");
     my $aug_bin_err = "There are 3 alternative ways to set this variable for\n"
             .  "braker.pl:\n"
             . "   a) provide command-line argument \n"
@@ -1926,7 +1926,8 @@ sub set_AUGUSTUS_BIN_PATH {
 
 sub set_AUGUSTUS_SCRIPTS_PATH {
     my @required_files = ();
-    my @alt_locations = ("$AUGUSTUS_CONFIG_PATH/../scripts");
+    my @alt_locations = ("$AUGUSTUS_CONFIG_PATH/../scripts", 
+                "/usr/share/augustus/scripts");
     my $aug_scr_err = "There are 3 alternative ways to set this variable for\n"
             . " braker.pl:\n"
             . "   a) provide command-line argument \n"
@@ -1945,6 +1946,60 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
 
     $AUGUSTUS_SCRIPTS_PATH = set_software_PATH($augustus_scripts_path, "AUGUSTUS_SCRIPTS_PATH",
                     \@required_files, 'exit', \@alt_locations, $aug_scr_err);
+}
+
+####################### fix_AUGUSTUS_CONFIG_PATH ###############################
+# * if AUGUSTUS_CONFIG_PATH is not writable, make a copy of config directory to
+#   ~/.augustus                                                                                                                                                                                             ################################################################################  
+
+sub fix_AUGUSTUS_CONFIG_PATH {
+    if ( not( -w "$AUGUSTUS_CONFIG_PATH/species" ) ) {    
+        # check whether config path is writable                                                                                                                                                             
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": WARNING: BRAKER will copy the\n"
+            . " AUGUSTUS_CONFIG folder into your home directory!\n";
+        $logString .= $prtStr if ($v > 1);
+        $prtStr
+            = "\# "
+            . (localtime)
+            . ": WARNING: \$AUGUSTUS_CONFIG_PATH/species (in this case "
+            . "$AUGUSTUS_CONFIG_PATH/species ) is not writeable.\n";
+        $logString .= $prtStr if ($v > 1);
+        if(not(-d $ENV{'HOME'}."/.augustus/species")) {
+            # copy augustus config path into ${HOME}/.augustus                                                                                                                                              
+            $cmdString = "cp -r $AUGUSTUS_CONFIG_PATH ".$ENV{'HOME'}."/.augustus";
+            $prtStr = "\# "
+                . (localtime)
+                . ": copying unwritable augustus config path to writable location\n";
+            $prtStr .= $cmdString."\n" if ($v > 5);
+            $logString .= $prtStr if ($v > 1);
+            system("$cmdString") == 0
+                or die("ERROR in file " . __FILE__
+                       . " at line ". __LINE__
+                       . "\nFailed to execute $cmdString!\n");
+        }
+        # modify augustus config path to new location                                                                                                                                                        
+        $AUGUSTUS_CONFIG_PATH = $ENV{'HOME'}."/.augustus";
+        $augustus_cfg_path = $AUGUSTUS_CONFIG_PATH;
+	if ( not ( -w "$AUGUSTUS_CONFIG_PATH/species" ) ) {
+	    # in a location where every user has permission, make config path writable
+	    $cmdString = "chmod u+w $AUGUSTUS_CONFIG_PATH/species";
+	    $prtStr = "\# "
+                . (localtime)
+                . ": Making folder $AUGUSTUS_CONFIG_PATH/species writable\n";
+	    $prtStr .= $cmdString."\n" if ($v > 5);
+	    $logString .= $prtStr if ($v > 1);
+            system("$cmdString") == 0
+		or die("ERROR in file " . __FILE__
+                       . " at line ". __LINE__
+                       . "\nFailed to execute $cmdString!\n");
+	}
+	$prtStr = "*** IMPORTANT: Resetting \$AUGUSTUS_CONFIG_PATH="
+	        .$ENV{'HOME'}."/.augustus because GALBA requires a writable location!\n";
+	$logString .= $prtStr;
+    }
 }
 
 ####################### set_BAMTOOLS_PATH ######################################
