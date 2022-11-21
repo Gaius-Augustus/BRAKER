@@ -1997,7 +1997,7 @@ sub fix_AUGUSTUS_CONFIG_PATH {
                        . "\nFailed to execute $cmdString!\n");
 	}
 	$prtStr = "*** IMPORTANT: Resetting \$AUGUSTUS_CONFIG_PATH="
-	        .$ENV{'HOME'}."/.augustus because GALBA requires a writable location!\n";
+	        .$ENV{'HOME'}."/.augustus because BRAKER requires a writable location!\n";
 	$logString .= $prtStr;
     }
 }
