@@ -1724,6 +1724,10 @@ sub set_software_PATH {
 
     # try to get path from command line
     if (defined($software_path)) {
+        if( $software_path =~ m/\~/) {
+            $software_path =~ s/\~/$ENV{HOME}/;
+        }
+
         my $last_char = substr( $software_path, -1 );
         if ( $last_char eq "\/" ) {
             chop($software_path);
@@ -1872,6 +1876,7 @@ sub set_AUGUSTUS_CONFIG_PATH {
 
     @alt_locations = (dirname( abs_path( $epath ) ) . "/../config", 
                 "/usr/share/augustus/config");
+
 
     # set $AUGUSTUS_CONFIG_PATH
     $AUGUSTUS_CONFIG_PATH = set_software_PATH($augustus_cfg_path, "AUGUSTUS_CONFIG_PATH",
