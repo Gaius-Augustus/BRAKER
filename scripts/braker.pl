@@ -2286,7 +2286,7 @@ sub set_JAVA_PATH {
     $JAVA_PATH = set_software_PATH($java_path, "JAVA_PATH",
                     \@required_files, 'exit');
 
-    $cmdString = "java -version 2>&1 | awk -F[\\\"\\\.] -v OFS=. 'NR==1{print \$2,\$3}'";
+    $cmdString = "java -version 2>&1 | grep \"openjdk version\" | awk -F[\"\.] -v OFS=. '{print \$2,\$3}'";
     my @javav = `$cmdString` or die("Failed to execute: $cmdString");
     if(not ($javav[0] =~ m/1\.8/ )){
         $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
