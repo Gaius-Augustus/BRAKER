@@ -10,10 +10,9 @@ Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifsw
 Tomas Bruna, Georgia Tech, U.S.A., bruna.tomas@gatech.edu
 
 ---
-**BRAKER and TSEBRA at PAG XXIX**
+**BRAKER-TSEBRA Workshop Materials (December 2022)**
 
-:sparkles: Lars Gabriel gave a talk about PacBio ccs integration into gene prediction with BRAKER and TSEBRA at PAG on Sunday, Jan 9 2022 4:25 PM. The workflow for PacBio data integration is documented at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/long_reads/long_read_protocol.md, slides are available at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/slides/slides_PAG2022.pdf
-
+You find materials on how to use BRAKER and related software at https://github.com/KatharinaHoff/BRAKER-TSEBRA-Workshop .
 ---
 
 Authors of BRAKER
