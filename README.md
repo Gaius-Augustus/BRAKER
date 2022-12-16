@@ -10,9 +10,11 @@ Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifsw
 Tomas Bruna, Georgia Tech, U.S.A., bruna.tomas@gatech.edu
 
 ---
+
 **BRAKER-TSEBRA Workshop Materials (December 2022)**
 
 You find materials on how to use BRAKER and related software at https://github.com/KatharinaHoff/BRAKER-TSEBRA-Workshop .
+
 ---
 
 Authors of BRAKER
