@@ -5,6 +5,8 @@
 <u>Contacts for Github Repository of BRAKER at
 https://github.com/Gaius-Augustus/BRAKER:</u>
 
+Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
+
 Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624
 
 Mark Borodovsky, Georgia Tech, U.S.A., borodovsky@gatech.edu
