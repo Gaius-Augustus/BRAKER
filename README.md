@@ -2,8 +2,14 @@
 
 # BRAKER User Guide
 
-<u>Contacts for Github Repository of BRAKER at
-https://github.com/Gaius-Augustus/BRAKER:</u>
+---
+**NOTE**
+
+Everything about **BRAKER3** presented at **PAG 30 in January 2023** can be found at https://github.com/Gaius-Augustus/BRAKER/tree/braker3 !
+
+---
+
+<u>Contacts for Github Repository of BRAKER at https://github.com/Gaius-Augustus/BRAKER:</u>
 
 Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624
 
