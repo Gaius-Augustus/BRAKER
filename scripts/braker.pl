@@ -1891,7 +1891,7 @@ sub set_AUGUSTUS_CONFIG_PATH {
             . (localtime)
             . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
             . "AUGUSTUS_CONFIG_PATH/species (in this case ";
-        $prtStr .= "$AUGUSTUS_CONFIG_PATH/$species) is not writeable. BRAKER will "
+        $prtStr .= "$AUGUSTUS_CONFIG_PATH/species) is not writeable. BRAKER will "
          . "try to copy the AUGUSTUS config directory to a writeable location.\n";
         $logString .= $prtStr;
         print STDERR $logString;
