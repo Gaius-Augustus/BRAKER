@@ -65,7 +65,7 @@ Contents
         -   [BRAKER with RNA-Seq data](#braker-with-rna-seq-data)
         -   [BRAKER with protein data](#braker-with-protein-data)
         -   [BRAKER with RNA-Seq and protein data](#braker-with-rna-seq-and-protein-data)
-        -   [BRAKER with short and long read RNA-Seq and protein data](#braker-with-short-and-long-read-RNA-Seq-and-protein-data)
+        -   [BRAKER with short and long read RNA-Seq and protein data](#braker-with-short-and-long-read-rna-seq-and-protein-data)
     -   [Description of selected BRAKER command line options](#description-of-selected-braker-command-line-options)
         -   [--ab_initio](#--ab_initio)
         -   [--augustus_args=--some\_arg=bla](#--augustus_args--some_argbla)
@@ -248,15 +248,20 @@ If you do not have root permissions on the Linux machine, try setting up an **An
 wget https://repo.anaconda.com/archive/Anaconda3-2018.12-Linux-x86_64.sh
 bash bin/Anaconda3-2018.12-Linux-x86_64.sh # do not install VS (needs root privileges)
 conda install -c anaconda perl
+conda install -c anaconda biopython
 conda install -c bioconda perl-app-cpanminus
+conda install -c bioconda perl-file-spec
 conda install -c bioconda perl-hash-merge
+conda install -c bioconda perl-list-util
+conda install -c bioconda perl-module-load-conditional
+conda install -c bioconda perl-posix
+conda install -c bioconda perl-file-homedir
 conda install -c bioconda perl-parallel-forkmanager
 conda install -c bioconda perl-scalar-util-numeric
 conda install -c bioconda perl-yaml
 conda install -c bioconda perl-class-data-inheritable
 conda install -c bioconda perl-exception-class
 conda install -c bioconda perl-test-pod
-conda install -c anaconda biopython
 conda install -c bioconda perl-file-which # skip if you are not comparing to reference annotation
 conda install -c bioconda perl-mce
 conda install -c bioconda perl-threaded
@@ -658,7 +663,13 @@ A precompiled version of HISAT2 can be downloaded from <http://daehwankimlab.git
 
 BRAKER will try to find executable HISAT2 binaries (hisat2, hisat2-build) by using an environment variable `$HISAT2_PATH`. Alternatively, this can be supplied as command line argument (`--HISAT2_PATH=/your/path/to/HISAT2/`). BRAKER can also try to guess the location of HISAT2 on your system if the executables are in your `$PATH` variable.
 
+System dependencies
+-------------------
+BRAKER (braker.pl) uses getconf to see how many threads can be run on your system. On Ubuntu, you can install it with:
 
+```
+sudo apt-get install libc-bin
+```
 
 Running BRAKER
 ===============
@@ -988,7 +999,7 @@ The following command will run the pipeline according to Figure [3](#fig2):
 
 This test is implemented in `test1.sh`, expected runtime is ~20 minutes.
 
-Testing BRAKER with proteins of any evolutionary distance
+Testing BRAKER with proteins
 ---------------------------------------------------------
 
 The following command will run the pipeline according to Figure [4](#fig3):
@@ -1002,14 +1013,19 @@ This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
 Testing BRAKER with proteins and RNA-Seq
 ---------------------------------------------------------------------
 
-The following command will run a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4):
+The following command will run a pipeline that first trains GeneMark-ETP with protein and RNA-Seq hints and subsequently trains AUGUSTUS on the basis of GeneMark-ETP predictions. AUGUSTUS predictions are also performed with hints from both sources, see Figure [5](#fig4).
 
+Run with local RNA-Seq file:
 
     braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --threads N
 
-
 This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
 
+Download RNA-Seq library from Sequence Read Archive (~1gb):
+
+    braker.pl --genome genome.fa --prot_seq proteins.fa --rnaseq_sets_ids ERR5767212 --threads N
+
+This test is implemented in `test3_4.sh`, expected runtime is ~35 minutes.
 
 Testing BRAKER with pre-trained parameters
 ------------------------------------------
