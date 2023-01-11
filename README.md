@@ -28,9 +28,9 @@ Lars Gabriel<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>
 
 <b id="aff5">[e]</b> Moscow Institute of Physics and Technology, Moscow Region 141701, Dolgoprudny, Russia
 
-![braker2-team-2\[fig10\]](docs/figs/mario.png)![braker2-team-1\[fig11\]](docs/figs/alex-katharina-tomas.png)![braker2-team-3\[fig12\]](docs/figs/mark.png)
+![braker2-team-2\[fig10\]](docs/figs/mario.png)![braker2-team-1\[fig11\]](docs/figs/alex-katharina-tomas.png)![braker2-team-3\[fig12\]](docs/figs/lars.jpg)![braker2-team-4\[fig13\]](docs/figs/mark.png)
 
-Figure 1: Current BRAKER authors, from left to right: Mario Stanke, Alexandre Lomsadze, Katharina J. Hoff, Tomas Bruna, and Mark Borodovsky. Lars Gabriel not shown, yet.
+Figure 1: Current BRAKER authors, from left to right: Mario Stanke, Alexandre Lomsadze, Katharina J. Hoff, Tomas Bruna, Lars Gabriel, and Mark Borodovsky.
 
 Funding
 =======
