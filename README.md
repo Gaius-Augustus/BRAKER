@@ -5,6 +5,8 @@
 <u>Contacts for Github Repository of BRAKER at
 https://github.com/Gaius-Augustus/BRAKER:</u>
 
+Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
+
 Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624
 
 Mark Borodovsky, Georgia Tech, U.S.A., borodovsky@gatech.edu
@@ -1130,10 +1132,6 @@ Common problems
 
     Please check the headers of the genome FASTA file. If the headers are long and contain whitespaces, some RNA-Seq alignment tools will truncate sequence names in the BAM file. This leads to an error with BRAKER. Solution: shorten/simplify FASTA headers in the genome file before running the RNA-Seq alignment and BRAKER.
 
--   *There are duplicate Loci in the `train.gb` file (after using GenomeThreader)!*
-
-    This issue arises if outdated versions of AUGUSTUS and BRAKER are used. Solution: Please update AUGUSTUS and BRAKER from github (<https://github.com/Gaius-Augustus/Augustus>, <https://github.com/Gaius-Augustus/BRAKER>).
-
 -   *GeneMark fails!*
 
     (a) GeneMark requires a valid hidden key file in your home directory (`~/.gm_key`). The file expires after 200 days. Please check whether you have a valid key file before reporting an issue about this. Also, BRAKER may issue a WARNING that GeneMark is likely going to fail due to limited extrinsic evidence. If you see that warning, please don't open an issue but try a different approach towards annotating your genome. For example, you can add more evidence data, you can try the protein mapping pipeline approach, you can try running `--esmode` without extrinsic evidence, ...
@@ -1279,7 +1277,7 @@ Footnotes
 References
 ==========
 
-<b id="f0">[R0]</b> Tomas Bruna, Katharina J. Hoff, Alexandre Lomsadze, Mario Stanke and Mark Borodvsky. 2021. “BRAKER2: automatic eukaryotic genome annotation with GeneMark-EP+ and AUGUSTUS supported by a protein database." *NAR Genomics and Bioinformatics* 3(1):lqaa108.[↩](#a0)
+<b id="f0">[R0]</b> Bruna, Tomas, Hoff, Katharina J., Lomsadze, Alexandre, Stanke, Mario, and Borodovsky, Mark. 2021. “BRAKER2: automatic eukaryotic genome annotation with GeneMark-EP+ and AUGUSTUS supported by a protein database." *NAR Genomics and Bioinformatics* 3(1):lqaa108.[↩](#a0)
 
 <b id="f1">[R1]</b> Hoff, Katharina J, Simone Lange, Alexandre Lomsadze, Mark Borodovsky, and Mario Stanke. 2015. “BRAKER1: Unsupervised Rna-Seq-Based Genome Annotation with Genemark-et and Augustus.” *Bioinformatics* 32 (5). Oxford University Press: 767--69.[↩](#a1)
 
