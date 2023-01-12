@@ -155,6 +155,40 @@ Figure 4: BRAKER pipeline C: training GeneMark-EP+ on protein spliced alignment,
 
 Figure 5: BRAKER pipeline D: If necessary, download and alignment of RNA-Seq sets for the target species. Training of GeneMark-ETP+ supported by the RNA-Seq alignments and a large protein database (proteins can be of any evolutionary distance). Subsequently, AUGUSTUS training and prediction using the same extrinsic information together with the GeneMark-ETP+ results. The final prediction is the TSEBRA combination of the AUGUSTUS and GeneMark-ETP+ results.
 
+Container
+=========
+
+We are aware that the "manual" installation of BRAKER3 and all its dependencies is tedious and really challenging without root permissions. Therefore, we provide a Docker container that has been developed to be run with Singularity. All information on this container can be found at https://hub.docker.com/r/teambraker/braker3
+
+This container has currently two shortcomings: (a) GeneMark-ETP is not in the container and needs to be installed into your home directory on the host (when using Singularity, otherwise, you have to install it into the Docker container), (b) as RNA-Seq input, we have only tested bam-files, not fastq files or SRA IDs. We will improve this in the future.
+
+In short, build it as follows:
+
+```
+singularity build braker3.sif docker://teambraker/braker3:latest
+```
+
+Execute with:
+
+```
+singularity exec braker3.sif print_braker3_setup.py
+singularity exec braker3.sif braker.pl
+```
+
+Test with:
+
+```
+singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test1.sh
+singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test2.sh
+singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test3.sh
+export ETP=/your/path/to/GeneMark-ETP/bin # may need to modify
+export BRAKER_SIF=/your/path/to/braker3.sif # may need to modify
+bash test1.sh
+bash test2.sh
+bash test3.sh
+```
+Good luck ;-)
+
 
 Installation
 ============
