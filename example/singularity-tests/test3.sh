@@ -74,6 +74,7 @@ if [ -d $wd ]; then
 fi
 
 singularity exec -B ${PWD}:${PWD} ${BRAKER_SIF} braker.pl --genome=/opt/BRAKER/example/genome.fa --prot_seq=/opt/BRAKER/example/proteins.fa --bam=/opt/BRAKER/example/RNAseq.bam --softmasking --workingdir=${wd} \
-	    --GENEMARK_PATH=${ETP} --PROTHINT_PATH=${ETP}/gmes/ProtHint/bin \
-	    --threads 8 \ # you might want to adjust that to the available threads; BRAKER does not scale well on more than 8 threads; it can be run on more, though
-	    --gm_max_intergenic 10000 --skipOptimize # you definitely want to delete these options in a real run, they have only been introduced to decrease runtime, lead to poor accuracy results!
+	    --GENEMARK_PATH=${ETP} --PROTHINT_PATH=${ETP}/gmes/ProtHint/bin --threads 8 --gm_max_intergenic 10000 --skipOptimize
+
+	    # Important: the options --gm_max_intergenic 10000 --skipOptimize should never be applied to a real life run!!!                                   
+            # They were only introduced to speed up the test. Please delete them from the script if you use it for real data analysis. 
