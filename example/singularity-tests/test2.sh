@@ -45,7 +45,7 @@ if [[ -z "${BRAKER_SIF}" ]]; then
     echo ""
     echo "After building, export the BRAKER_SIF environment variable on the host as follows:"
     echo ""
-    echo "export BRAKER_SIF=$PWD/braker3.sif"
+    echo "export BRAKER_SIF=\$PWD/braker3.sif"
     echo ""
     echo "You will have to modify the export statement if braker3.sif does not reside in \$PWD."
     echo ""
@@ -60,7 +60,7 @@ then
     echo "On some HPC systems you can load it with \"module load singularity\"."
     echo "If that fails, please install singularity."
     echo "Possibly you misunderstood how to run this script. Before running it, please copy it to the directory where you want to execute it by e.g.:"
-    echo "singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test2.sh ."
+    echo "singularity exec -B \$PWD:\$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test2.sh ."
     echo "Then execute on the host with \"bash test2.sh\"".
     exit 1
 fi
