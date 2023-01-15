@@ -378,7 +378,13 @@ BRAKER calls upon various bioinformatics software tools that are not part of BRA
 
 #### GeneMark-EX
 
+**For BRAKER run with only RNA-Seq (BRAKER1) or protein (BRAKER2) data:**
+
 Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/GeneMark/license_download.cgi> (the GeneMark-ES/ET/EP) option. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
+
+**For BRAKER run with RNA-Seq and prtein data (BRAKER3):**
+
+Download GeneMark-ETP<sup name="g1">[F1](#g1)</sup> from <https://topaz.gatech.edu/GeneMark/etp.for_braker.tar.gz>. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
 
 If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl`, automatically. Otherwise, BRAKER can find GeneMark-EX executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark-EX/`).
 
