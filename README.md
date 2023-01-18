@@ -386,11 +386,11 @@ Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/
 
 Download GeneMark-ETP<sup name="g1">[F1](#g1)</sup> from <https://github.com/gatech-genemark/GeneMark-ETP> or <https://topaz.gatech.edu/GeneMark/etp.for_braker.tar.gz>. Unpack and install GeneMark-ETP as described in GeneMark-ETP’s `README` file.
 
-If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl`, automatically. Otherwise, BRAKER can find GeneMark-EX executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark-EX/`).
+If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl` or `gmetp.pl` automatically. Otherwise, BRAKER can find GeneMark-EX executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark-EX_executables/`).
 
 In order to set the environment variable for your current Bash session, type:
 
-    export GENEMARK_PATH=/your_path_to_GeneMark-EX/
+    export GENEMARK_PATH=/your_path_to_GeneMark-EX_executables/
 
 Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.
 
