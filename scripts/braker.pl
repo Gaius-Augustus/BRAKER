@@ -86,11 +86,11 @@ INPUT FILE OPTIONS
                                     intron hints from RNA-Seq).
                                     In ETP mode, this option can be used together
                                     with --geneMarkGtf and --traingenes to provide
-                                    BRAKER with results of a previous GeneMark-ETP+
-                                    run, so that the GeneMark-ETP+ step can be
+                                    BRAKER with results of a previous GeneMark-ETP
+                                    run, so that the GeneMark-ETP step can be
                                     skipped. In this case, specify the hintsfile of
                                     a previous BRAKER run here, or generate a
-                                    hintsfile from the GeneMark-ETP+ working
+                                    hintsfile from the GeneMark-ETP working
                                     directory with the script get_etp_hints.py.
 --rnaseq_sets_ids=SRR1111,SRR1115   IDs of RNA-Seq sets that are either in
                                     one of the directories specified with
@@ -268,10 +268,10 @@ EXPERT OPTIONS
                                     ids.
                                     In ETP mode, this option hast to be used together
                                     with --traingenes and --hints to provide BRAKER
-                                    with results of a previous GeneMark-ETP+ run.
+                                    with results of a previous GeneMark-ETP run.
 --gmetp_results_dir                 Location of results from a previous
-                                    GeneMark-ETP+ run, which will be used to
-                                    skip the GeneMark-ETP+ step. This option
+                                    GeneMark-ETP run, which will be used to
+                                    skip the GeneMark-ETP step. This option
                                     can be used instead of --geneMarkGtf,
                                     --traingenes, and --hints to skip GeneMark.
 --rounds                            The number of optimization rounds used in
@@ -420,8 +420,8 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     genes generated with GeneMark.
                                     In ETP mode, this option can be used together
                                     with --geneMarkGtf and --hints to provide BRAKER
-                                    with results of a previous GeneMark-ETP+ run, so
-                                    that the GeneMark-ETP+ step can be skipped.
+                                    with results of a previous GeneMark-ETP run, so
+                                    that the GeneMark-ETP step can be skipped.
                                     In this case, use training.gtf from that run as
                                     argument.
 
@@ -577,7 +577,7 @@ my $workDir;        # in the working directory results and temporary files are
 my $filterOutShort; # filterOutShort option (see help)
 my $augustusHintsPreds; # already existing AUGUSTUS hints prediction without UTR
 my $makehub; # flag for creating track data hub
-my $etpplus_dir; # directory of old GeneMark-ETP+ run (used to restart)
+my $etpplus_dir; # directory of old GeneMark-ETP run (used to restart)
 # Hint type from input hintsfile will be checked
 # a) GeneMark-ET (requires intron hints) and
 # b) selection of exrinsic.cfg file is affected by hint types
@@ -2041,7 +2041,7 @@ sub set_HISAT2_PATH {
 
 
 ####################### set_GENEMARK_PATH ######################################
-# * set path to gmes_petap.pl (or to etp_release.pl in ETPmode)
+# * set path to gmes_petap.pl (or to gmetp.pl in ETPmode)
 # * be aware that GeneMark requires a valid license key file, usually placed
 #   home directory as invisible file .gm_key
 # * and set \$GENEMARK_PATH as their parent directory
@@ -2052,14 +2052,14 @@ sub set_GENEMARK_PATH {
     my @alt_locations = ();
 
     if ($ETPmode) {
-        @required_files = ("etp_release.pl", "gmst/gmst.pl",
+        @required_files = ("gmetp.pl", "gmst/gmst.pl",
             "gmes/gmes_petap.pl", "GeneMarkSTFiltering/filter.py");
     } else {
         @required_files = ("gmes_petap.pl");
     }
 
     $GENEMARK_PATH = set_software_PATH($GM_path, "GENEMARK_PATH",
-        \@required_files, 'exit');
+        \@required_files, 'exit', \@alt_locations,);
 
 }
 
@@ -2072,7 +2072,7 @@ sub set_SAMTOOLS_PATH {
     my @required_files = ('samtools');
     my $exit = '';
 
-    # samtools is required for GeneMark-ETP+
+    # samtools is required for GeneMark-ETP
     if ($ETPmode) {
         $exit = 'exit'
     }
@@ -2749,7 +2749,7 @@ sub check_upfront {
         }
     }
 
-    # check if required tools for GeneMark-ETP+ are executable
+    # check if required tools for GeneMark-ETP are executable
     if ($ETPmode && not (defined($etpplus_dir)
         || defined($geneMarkGtf))) {
         my $epath;
@@ -2759,7 +2759,7 @@ sub check_upfront {
             if (not (-x $epath)) {
                 $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
                     ." at line ". __LINE__ ."\n"
-                    . "$_ is required by GeneMark-ETP+ but it is not "
+                    . "$_ is required by GeneMark-ETP but it is not "
                     . "an executable file in your \$PATH!\n";
                 $logString .= $prtStr;
                 print STDERR $logString;
@@ -4995,7 +4995,7 @@ sub create_evidence_gff {
             . "\nCould not close file $otherfilesDir/hintsfile.gff!\n");
     }
 
-    # 2) Create genemark_evidence.gff file for GeneMark (skip for ETP+)
+    # 2) Create genemark_evidence.gff file for GeneMark (skip for ETP)
     if ($ETPmode == 0) {
         open ( HINTS, "<", $otherfilesDir."/hintsfile.gff" ) or clean_abort(
                 "$AUGUSTUS_CONFIG_PATH/species/$species", $useexisting,
@@ -5342,12 +5342,12 @@ sub GeneMark_EP {
 }
 
 ####################### GeneMark_ETP ###########################################
-# * execute GeneMark-ET with protein and RNA-Seq intron hints for training
+# * execute GeneMark-ETP with protein and RNA-Seq intron hints for training
 # * use introns represented in both sources as evidence for prediction
 ################################################################################
 
 sub GeneMark_ETP {
-    print LOG "\# " . (localtime) . ": Running GeneMark-ETP+\n" if ($v > 2);
+    print LOG "\# " . (localtime) . ": Running GeneMark-ETP\n" if ($v > 2);
     print CITE $pubs{'gm-et'}; $pubs{'gm-et'} = "";
     print CITE $pubs{'gm-ep'}; $pubs{'gm-ep'} = "";
     print CITE $pubs{'gm-es'}; $pubs{'gm-es'} = "";
@@ -5363,11 +5363,11 @@ sub GeneMark_ETP {
         if (! @bam) {
             clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
-                . __LINE__ ."\nFailed to find RNA-Seq data for GeneMark-ETP+.\n");
+                . __LINE__ ."\nFailed to find RNA-Seq data for GeneMark-ETP.\n");
         } elsif (! @prot_seq_files) {
             clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
-                . __LINE__ ."\nFailed to find protein data for GeneMark-ETP+.\n");
+                . __LINE__ ."\nFailed to find protein data for GeneMark-ETP.\n");
         }
         if (!uptodate( [ $genome, $traingtf ],
             ["$genemarkDir/genemark.gtf", $hintsfile] ) || $overwrite ) {
@@ -5389,7 +5389,7 @@ sub GeneMark_ETP {
                     . __LINE__ ."\nFailed to create directory $genemarkDir/etp_data.\n");
             }
 
-            # prepare RNA-Seq libraries as local files for ETP+
+            # prepare RNA-Seq libraries as local files for ETP
             my ($lib, $file_suffix);
             print LOG "\# "
                 . (localtime)
@@ -5439,7 +5439,7 @@ sub GeneMark_ETP {
                 . __LINE__ ."\nfailed to close file $protein_file!\n");
 
 
-            # create YAML config file for ETP+
+            # create YAML config file for ETP
             my $c = join(',', @rna_seq_libs_ids);
             my %etp_config = (
                 RepeatMasker_path => '',
@@ -5462,8 +5462,8 @@ sub GeneMark_ETP {
               or die("ERROR in file " . __FILE__ ." at line ". __LINE__
                   . "\nfailed to execute: $perlCmdString!\n");
 
-            # run ETP+
-            $string        = "$GENEMARK_PATH/etp_release.pl";
+            # run ETP
+            $string        = "$GENEMARK_PATH/gmetp.pl";
             $errorfile     = "$errorfilesDir/GeneMark-ETP.stderr";
             $stdoutfile    = "$errorfilesDir/GeneMark-ETP.stdout";
             $perlCmdString = "";
@@ -5475,7 +5475,7 @@ sub GeneMark_ETP {
                             . "--workdir $genemarkDir --bam $genemarkDir/etp_data/ "
                             . "--cores $CPU --softmask";            
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
-            print LOG "\# " . (localtime) . ": Running etp_release.pl\n"
+            print LOG "\# " . (localtime) . ": Running gmetp.pl\n"
                 if ($v > 3);
             print LOG "$perlCmdString\n" if ($v > 3);
             system("$perlCmdString") == 0
@@ -5502,7 +5502,7 @@ sub GeneMark_ETP {
             get_etp_hints_for_Augustus();
             print LOG "\# "
              . (localtime)
-             . ": GeneMark-ETP+ run finished.\n" if ($v > 3);
+             . ": GeneMark-ETP run finished.\n" if ($v > 3);
         }else {
             print LOG "\# " . (localtime) . ": skipping GeneMark-ETP because "
                 . "$genemarkDir/genemark.gtf and $traingtf are up to date.\n"
@@ -5513,11 +5513,11 @@ sub GeneMark_ETP {
         get_etp_hints_for_Augustus();
     }
 
-    # link GeneMark-ETP+ prediciton to the geneMarkDir
+    # link GeneMark-ETP prediciton to the geneMarkDir
     $cmdString = "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
     print LOG "\# "
       . (localtime)
-      . ": link GeneMark-ETP+ output to $genemarkDir/genemark.gtf\n" if ($v > 3);
+      . ": link GeneMark-ETP output to $genemarkDir/genemark.gtf\n" if ($v > 3);
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
       or die("ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -5526,7 +5526,7 @@ sub GeneMark_ETP {
     $cmdString = "ln -s $traingtf $genemarkDir/training.gtf";
     print LOG "\# "
     . (localtime)
-    . ": link GeneMark-ETP+ training genes to $genemarkDir/training.gtf\n" if ($v > 3);
+    . ": link GeneMark-ETP training genes to $genemarkDir/training.gtf\n" if ($v > 3);
     print LOG "$cmdString\n" if ($v > 3);
     system("$cmdString") == 0
     or die("ERROR in file " . __FILE__ ." at line ". __LINE__
@@ -5536,7 +5536,7 @@ sub GeneMark_ETP {
 }
 
 ####################### get_etp_hints_for_Augustus #############################
-# * Create hintsfile from the hints of GeneMark-ETP+ run
+# * Create hintsfile from the hints of GeneMark-ETP run
 ################################################################################
 sub get_etp_hints_for_Augustus {
     # get hints for AUGUSTUS
@@ -5561,7 +5561,7 @@ sub get_etp_hints_for_Augustus {
 
     print LOG "\# "
         . (localtime)
-        . ": Getting hints for AUGUSTUS from GeneMark-ETP+\n" if ($v > 1);
+        . ": Getting hints for AUGUSTUS from GeneMark-ETP\n" if ($v > 1);
     print LOG "$cmdString\n" if ($v > 1);
     system("$cmdString") == 0
         or die("ERROR in file " . __FILE__ ." at line ". __LINE__
