@@ -17,22 +17,14 @@ if [[ -z "${ETP}" ]]; then
     echo "After installation (get instructions with \"singularity exec braker3.sif print_braker3_setup.py\")"
     echo "export the ETP environment variable as follows:"
     echo ""
-    echo "export ETP=\${HOME}/ETP_folder/bin"
-    echo ""
-    echo "(You will have to modify the folder name to where the etp_release.pl script sits,"
-    echo "that might not be \${HOME}/ETP_folder on your system.)"
+    echo "export ETP=\${HOME}/GeneMark-ETP/bin""
     echo ""
     exit 1      
 else
-    if [ ! -f "${ETP}/etp_release.pl" ]; then
-        echo "Could not find ${ETP}/etp_release.pl. GeneMark-ETP has not been installed, correctly."
+    if [ ! -f "${ETP}/gmetp.pl" ]; then
+        echo "Could not find ${ETP}/gmetp.pl. GeneMark-ETP has not been installed, correctly."
         echo "Get help with \"singularity exec braker3.sif print_braker3_setup.p\""
         exit 1
-    fi
-    if [ ! -f "${HOME}/.gm_key" ]; then
-        echo "GeneMark-ETP key not found at ${HOME}/.gm_key ."
-        echo "It is not impossible that things are ok. However, most likely, something is wrong."
-        echo "Get helo with \"singularity exec braker3.sif print_braker3_setup.p\" if needed."
     fi
 fi
 
