@@ -382,7 +382,7 @@ BRAKER calls upon various bioinformatics software tools that are not part of BRA
 
 Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/GeneMark/license_download.cgi> (the GeneMark-ES/ET/EP) option. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
 
-*For BRAKER run with RNA-Seq and prtein data (BRAKER3):*
+*For BRAKER run with RNA-Seq and protein data (BRAKER3):*
 
 Download GeneMark-ETP<sup name="g1">[F1](#g1)</sup> from <https://github.com/gatech-genemark/GeneMark-ETP> or <https://topaz.gatech.edu/GeneMark/etp.for_braker.tar.gz>. Unpack and install GeneMark-ETP as described in GeneMark-ETP’s `README` file.
 
