@@ -106,7 +106,7 @@ BRAKER2 is an extension of BRAKER1 which allows for **fully automated training**
 
 In contrast to other available methods that rely on protein homology information, BRAKER2 reaches high gene prediction accuracy even in the absence of the annotation of very closely related species and in the absence of RNA-Seq data.
 
-BRAKER3 is the latest pipeline in the BRAKER suite. It enables the usage of RNA-seq **and** protein data in a fully automated pipeline to train and predict highly reliable genes with GeneMark-ETP+ and AUGUSTUS. The result of the pipeline is the combined gene set of both gene prediction tools, which only contains genes with very high support from extrinsic evidence.
+BRAKER3 is the latest pipeline in the BRAKER suite. It enables the usage of RNA-seq **and** protein data in a fully automated pipeline to train and predict highly reliable genes with GeneMark-ETP and AUGUSTUS. The result of the pipeline is the combined gene set of both gene prediction tools, which only contains genes with very high support from extrinsic evidence.
 
 In this user guide, we will refer to BRAKER1, BRAKER2, and BRAKER3 simply as **BRAKER** because they are executed by the same script (```braker.pl```).
 
@@ -153,7 +153,7 @@ Figure 4: BRAKER pipeline C: training GeneMark-EP+ on protein spliced alignment,
 
 ![braker3-main-a\[fig4\]](docs/figs/braker3_etp.png)
 
-Figure 5: BRAKER pipeline D: If necessary, download and alignment of RNA-Seq sets for the target species. Training of GeneMark-ETP+ supported by the RNA-Seq alignments and a large protein database (proteins can be of any evolutionary distance). Subsequently, AUGUSTUS training and prediction using the same extrinsic information together with the GeneMark-ETP+ results. The final prediction is the TSEBRA combination of the AUGUSTUS and GeneMark-ETP+ results.
+Figure 5: BRAKER pipeline D: If necessary, download and alignment of RNA-Seq sets for the target species. Training of GeneMark-ETP supported by the RNA-Seq alignments and a large protein database (proteins can be of any evolutionary distance). Subsequently, AUGUSTUS training and prediction using the same extrinsic information together with the GeneMark-ETP results. The final prediction is the TSEBRA combination of the AUGUSTUS and GeneMark-ETP results.
 
 Container
 =========
@@ -266,7 +266,7 @@ For ProtHint, used when protein input is supplied, also install:
 
 -   `threads`
 
-For GeneMark-ETP+, used when protein and RNA-Seq is supplied:
+For GeneMark-ETP, used when protein and RNA-Seq is supplied:
 
 -   `YAML::XS`
 -   `Data::Dumper`
@@ -412,7 +412,7 @@ perl change_path_in_perl_scripts.pl "/usr/bin/env perl"
 
 You can check whether GeneMark-ES/ET/EP is installed properly by running the `check_install.bash` and/or executing examples in `GeneMark-E-tests` directory.
 
-ToDo: Add section about installation of GeneMark-ETP+, when it is available.
+ToDo: Add section about installation of GeneMark-ETP, when it is available.
 
 #### AUGUSTUS
 
@@ -543,7 +543,7 @@ If already in your `$PATH` variable, BRAKER will find prothint.py, automatically
 
 ### Mandatory tools for BRAKER3
 
-Following tools are required by GeneMark-ETP+ and it will try to locate them in your `$PATH` variable. So make sure to add their location to your `$PATH`, e.g.:
+Following tools are required by GeneMark-ETP and it will try to locate them in your `$PATH` variable. So make sure to add their location to your `$PATH`, e.g.:
 ```
 export PATH=$PATH:/your/path/to/Tool
 ```
@@ -553,11 +553,11 @@ These software tools are only mandatory if you run BRAKER with RNA-Seq **and** p
 
 #### StringTie2
 
-[StringTie2](https://github.com/skovaka/stringtie2) is used by GeneMark-ETP+ to assemble aligned RNA-Seq alignments. A precompiled version of StringTie2 can be downloaded from <https://ccb.jhu.edu/software/stringtie/#install>.
+[StringTie2](https://github.com/skovaka/stringtie2) is used by GeneMark-ETP to assemble aligned RNA-Seq alignments. A precompiled version of StringTie2 can be downloaded from <https://ccb.jhu.edu/software/stringtie/#install>.
 
 #### BEDTools
 
-The software package [bedtools](https://bedtools.readthedocs.io/en/latest/) is required by GeneMark-ETP+ if you want to run BRAKER with both RNA-Seq and protein data. You can download bedtools from <https://github.com/arq5x/bedtools2/releases>. Here, you can either download a precompiled version `bedtools.static.binary`, e.g.
+The software package [bedtools](https://bedtools.readthedocs.io/en/latest/) is required by GeneMark-ETP if you want to run BRAKER with both RNA-Seq and protein data. You can download bedtools from <https://github.com/arq5x/bedtools2/releases>. Here, you can either download a precompiled version `bedtools.static.binary`, e.g.
 ```
 wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary
 mv bedtools.static.binary bedtools
@@ -574,7 +574,7 @@ See <https://bedtools.readthedocs.io/en/latest/content/installation.html> for mo
 
 #### GffRead
 
-[GffRead](https://github.com/gpertea/gffread) is a utility software required by GeneMark-ETP+. It can be downloaded from <https://github.com/gpertea/gffread/releases/download/v0.12.7/gffread-0.12.7.Linux_x86_64.tar.gz> and installed with `make`, e.g.
+[GffRead](https://github.com/gpertea/gffread) is a utility software required by GeneMark-ETP. It can be downloaded from <https://github.com/gpertea/gffread/releases/download/v0.12.7/gffread-0.12.7.Linux_x86_64.tar.gz> and installed with `make`, e.g.
 ```
 wget https://github.com/gpertea/gffread/releases/download/v0.12.7/gffread-0.12.7.Linux_x86_64.tar.gz
 tar xzf gffread-0.12.7.Linux_x86_64.tar.gz
@@ -586,7 +586,7 @@ make
 
 #### Samtools
 
-Samtools is not required for running BRAKER without GeneMark-ETP+ if all your files are formatted, correctly (i.e. all sequences should have short and unique
+Samtools is not required for running BRAKER without GeneMark-ETP if all your files are formatted, correctly (i.e. all sequences should have short and unique
 fasta names). If you are not sure whether all your files are fomatted correctly, it might be helpful to have Samtools installed because BRAKER can automatically fix certain format issues by using Samtools.
 
 As a prerequisite for Samtools, download and install `htslib` (e.g. `git clone https://github.com/samtools/htslib.git`, follow the `htslib` documentation for installation).
@@ -769,7 +769,7 @@ can either extract RNA-Seq spliced alignment information from `bam` files, or it
     ```
     The source `b2h` in the second column and the source tag `src=E` in the last column are essential for BRAKER to determine whether a hint has been generated from RNA-Seq data.
 
-It is also possible to provide RNA-Seq sets in different ways for the same BRAKER run, any combination of above options is possible. It is not recommended to provide RNA-Seq data with `--hints` if you run BRAKER in ETPmode (RNA-Seq *and* protein data), because GeneMark-ETP+ won't use these hints!  
+It is also possible to provide RNA-Seq sets in different ways for the same BRAKER run, any combination of above options is possible. It is not recommended to provide RNA-Seq data with `--hints` if you run BRAKER in ETPmode (RNA-Seq *and* protein data), because GeneMark-ETP won't use these hints!  
 
 ### BRAKER with protein data
 
@@ -840,9 +840,9 @@ You may additionally include bam files from unstranded libraries. Those files wi
 
 ### BRAKER with RNA-Seq **and** protein data
 
-The native mode for running BRAKER with RNA-Seq and protein data. This will call GeneMark-ETP+, which will use RNA-Seq and protein hints for training GeneMark-ETP+. Subsequently, AUGUSTUS is trained on 'high-confindent' genes (genes with very high extrinsic evidence support) from the GeneMark-ETP+ prediction and a set of genes is predicted by AUGUSTUS. In a last step, the predictions of AUGUSTUS and GeneMark-ETP+ are combined using TSEBRA.
+The native mode for running BRAKER with RNA-Seq and protein data. This will call GeneMark-ETP, which will use RNA-Seq and protein hints for training GeneMark-ETP. Subsequently, AUGUSTUS is trained on 'high-confindent' genes (genes with very high extrinsic evidence support) from the GeneMark-ETP prediction and a set of genes is predicted by AUGUSTUS. In a last step, the predictions of AUGUSTUS and GeneMark-ETP are combined using TSEBRA.
 
-To call the pipeline in this mode, you have to provide it with a protein database using `--prot_seq` (as described in [BRAKER with protein data](#braker-with-protein-data)), and RNA-Seq data either by their SRA ID so that they are downloaded by BRAKER, as unaligned reads in `FASTQ` format, and/or as aligned reads in `bam` format (as described in [BRAKER with RNA-Seq data](#braker-with-rna-seq-data)). You could also specify already processed extrinsic evidence using the `--hints` option. However, this is not recommend for a normal BRAKER run in ETPmode, as these hints won't be used in the GeneMark-ETP+ step. Only use `--hints` when you want to skip the GenMark-ETP+ step!
+To call the pipeline in this mode, you have to provide it with a protein database using `--prot_seq` (as described in [BRAKER with protein data](#braker-with-protein-data)), and RNA-Seq data either by their SRA ID so that they are downloaded by BRAKER, as unaligned reads in `FASTQ` format, and/or as aligned reads in `bam` format (as described in [BRAKER with RNA-Seq data](#braker-with-rna-seq-data)). You could also specify already processed extrinsic evidence using the `--hints` option. However, this is not recommend for a normal BRAKER run in ETPmode, as these hints won't be used in the GeneMark-ETP step. Only use `--hints` when you want to skip the GenMark-ETP step!
 
 Examples of how you could run BRAKER in ETPmode:
 
@@ -948,7 +948,7 @@ BRAKER produces several important output files in the working directory.
 
 -   braker.gtf: Final gene set of BRAKER. This file may contain different contents depending on how you called BRAKER
 
-       * in ETPmode: Final gene set of BRAKER consisting of genes predicted by AUGUSTUS and GeneMark-ETP+ that were combined and filtered by TSEBRA.
+       * in ETPmode: Final gene set of BRAKER consisting of genes predicted by AUGUSTUS and GeneMark-ETP that were combined and filtered by TSEBRA.
 
         * otherwise: Union of augustus.hints.gtf and reliable GeneMark-EX predictions (genes fully supported by external evidence). In `--esmode`, this is the union of augustus.ab_initio.gtf and all GeneMark-ES genes. Thus, this set is generally more sensitive (more genes correctly predicted) and can be less specific (more false-positive predictions can be present). This output is not necessarily better than augustus.hints.gtf, and it is not recommended to use it if BRAKER was run in ESmode.
 
@@ -960,7 +960,7 @@ BRAKER produces several important output files in the working directory.
 
 -   Augustus/*: Augustus gene set(s) in as gtf/conding/aa files
 
--   GeneMark-E*/genemark.gtf: Genes predicted by GeneMark-ES/ET/EP/EP+/ETP+ in GTF-format.
+-   GeneMark-E*/genemark.gtf: Genes predicted by GeneMark-ES/ET/EP/EP+/ETP in GTF-format.
 
 -   hintsfile.gff: The extrinsic evidence data extracted from RNAseq.bam and/or protein data.
 
@@ -1159,11 +1159,11 @@ There are a number of other files that might be of interest, depending on where 
 
 -   `braker/yourSpecies/spaln/*err` - errors reported by spaln
 
--   `braker/yourSpecies/errors/GeneMark-{ET,EP,ETP}.stderr` - errors reported by GeneMark-ET/EP+/ETP+
+-   `braker/yourSpecies/errors/GeneMark-{ET,EP,ETP}.stderr` - errors reported by GeneMark-ET/EP+/ETP
 
--   `braker/yourSpecies/errors/GeneMark-{ET,EP,ETP).stdout` - may give clues about the point at which errors in GeneMark-ET/EP+/ETP+ occured
+-   `braker/yourSpecies/errors/GeneMark-{ET,EP,ETP).stdout` - may give clues about the point at which errors in GeneMark-ET/EP+/ETP occured
 
--   `braker/yourSpecies/GeneMark-{ET,EP,ETP}/genemark.gtf` - is this file empty? If yes, something went wrong during executing GeneMark-ET/EP+/ETP+
+-   `braker/yourSpecies/GeneMark-{ET,EP,ETP}/genemark.gtf` - is this file empty? If yes, something went wrong during executing GeneMark-ET/EP+/ETP
 
 -   `braker/yourSpecies/GeneMark-{ET,EP}/genemark.f.good.gtf` - is this file empty? If yes, something went wrong during filtering GeneMark-ET/EP+ genes for training AUGUSTUS
 
@@ -1290,9 +1290,9 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Kim, D., Paggi, J. M., Park, C., Bennett, C., & Salzberg, S. L. (2019). Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype. Nature biotechnology, 37(8):907-915.    
 
--  If BRAKER was run with RNA-Seq data and proteins, please cite GeneMark-ETP+ and all tools that it uses:
+-  If BRAKER was run with RNA-Seq data and proteins, please cite GeneMark-ETP and all tools that it uses:
 
-    -   ToDo add reference to ETP+ paper, when it is available
+    -   ToDo add reference to ETP paper, when it is available
 
     -   Kovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.
 
