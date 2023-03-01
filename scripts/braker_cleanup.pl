@@ -124,7 +124,7 @@ my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneM
     "GeneMark-ETP/rnaseq/stringtie/", "GeneMark-ETP/arx", "GeneMark-ETP/proteins.fa/hc/regions/",
 	"GeneMark-ETP/proteins.fa/nonhc/prothint","GeneMark-ETP/rnaseq/hints/proteins.fa/prothint/Spaln",
     "GeneMark-ETP/proteins.fa/nonhc/for_prothint", "GeneMark-ETP/proteins.fa/nonhc/pred_m",
-    "GeneMark-ETP/proteins.fa/nonhc/regions", "GeneMark-ETP/proteins.fa/nonhc/hc", 
+    "GeneMark-ETP/proteins.fa/nonhc/regions", "GeneMark-ETP/proteins.fa/etr", "GeneMark-ETP/proteins.fa/nonhc/hc", 
     "GeneMark-ETP/rnaseq/hints/proteins.fa/prothint/diamond", "rnaseq/", "GeneMark-ETP/data",
     "genome_split", "Spaln", "augustus_tmp", "augustus_files_hints", "diamond");
 

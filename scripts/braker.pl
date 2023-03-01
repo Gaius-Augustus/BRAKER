@@ -834,7 +834,6 @@ determineRunMode();
 # * else use environment variable if present
 # * else try to guess (might fail)
 
-
 $prtStr
     = "\# "
     . (localtime)
@@ -914,8 +913,6 @@ check_upfront();
 check_options();
 
 # Starting braker pipeline #####################################################
-
-
 
 $logString .= "\#**********************************************************************************\n";
 $logString .= "\#                               CREATING DIRECTORY STRUCTURE                       \n";
@@ -1404,7 +1401,7 @@ if ( (scalar(@nScaffs) > 30000) && ($CPU > 1) ) {
     print LOG $prtStr;
 }
 
-if ($ESmode==0){
+if ($ESmode==0 && $ETPmode==0 && !@rnaseq_sra_ids && !%rnaseq_libs){
     print LOG "\#**********************************************************************************\n"
             . "\#                               PROCESSING HINTS                                   \n"
             . "\#**********************************************************************************\n";
@@ -1667,7 +1664,7 @@ sub check_software_PATH{
                 last;
             }
         }
-    }else {
+    } else {
         $prtStr
             = "#*********\n"
             . "# WARNING: $software_path is not a directory. Will not "
@@ -1753,7 +1750,7 @@ sub set_software_PATH {
         $software_path = check_software_PATH($ENV{$env_name},
                 $env_name, $required_files);
 
-    }elsif (not(defined($software_path))) {
+    } elsif (not(defined($software_path))) {
         $prtStr
             = "\# "
             . (localtime)
@@ -1796,7 +1793,7 @@ sub set_software_PATH {
 
         if (defined($alternative_error)) {
             $logString .= $alternative_error if ($v > 1);
-        }else {
+        } else {
             push (@$required_files, @$alt_locations);
             $prtStr = "There are 3 alternative ways to set $env_name for\n"
             . "braker.pl:\n"
@@ -1956,7 +1953,8 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
 
 ####################### fix_AUGUSTUS_CONFIG_PATH ###############################
 # * if AUGUSTUS_CONFIG_PATH is not writable, make a copy of config directory to
-#   ~/.augustus                                                                                                                                                                                             ################################################################################  
+#   ~/.augustus                                              
+################################################################################  
 
 sub fix_AUGUSTUS_CONFIG_PATH {
     if ( not( -w "$AUGUSTUS_CONFIG_PATH/species" ) ) {    
@@ -2055,12 +2053,16 @@ sub set_GENEMARK_PATH {
         @required_files = ("gmetp.pl", "gmst/gmst.pl",
             "gmes/gmes_petap.pl", "GeneMarkSTFiltering/filter.py");
     } else {
-        @required_files = ("gmes_petap.pl");
+        @required_files = ("gmes_petap.pl");        
+        if (defined($ENV{"GENEMARK_PATH"})) {
+            push @alt_locations, $ENV{"GENEMARK_PATH"}."/gmes/";
+        }
+        if (defined($GM_path)) {
+            push @alt_locations, $GM_path."/gmes/";
+        }
     }
-
     $GENEMARK_PATH = set_software_PATH($GM_path, "GENEMARK_PATH",
-        \@required_files, 'exit', \@alt_locations,);
-
+        \@required_files, 'exit', \@alt_locations);
 }
 
 ####################### set_SAMTOOLS_PATH ######################################
@@ -2412,8 +2414,8 @@ sub determineRunMode {
 
     if ( $foundRNASeq && $foundProt ) {
         $prtStr .= "# " . (localtime) . ":"
-                . "Both protein and RNA-Seq libraries in input detected. "
-                . "BRAKER will be executed in ETP mode.\n"
+                . "Both protein and RNA-Seq data in input detected. "
+                . "BRAKER will be executed in ETP mode (BRAKER3).\n"
                 . "#*********\n";
         $ETPmode=1;
         $logString .= $prtStr;
@@ -2422,9 +2424,22 @@ sub determineRunMode {
         $prtStr = "\# "
                 . (localtime)
                 . ": Only Protein input detected, BRAKER will be executed "
-                . "in the EP mode (--epmode).\n";
+                . "in EP mode (BRAKER2).\n";
         $logString .= $prtStr;
         $EPmode = 1;
+    } elsif (!$foundProt && !$foundRNASeq) {
+        $prtStr = "\# "
+                . (localtime)
+                . ": No protein nor RNA-Seq data in input detected"
+                . "BRAKER will be executed in ES mode (ab initio).\n";
+        $logString .= $prtStr;
+        $ESmode = 1;
+    } else {
+        $prtStr = "\# "
+                . (localtime)
+                . ": Only RNA-Seq input detected, BRAKER will be executed "
+                . "in ET mode (BRAKER1).\n";
+        $logString .= $prtStr;    
     }
 }
 
@@ -3184,39 +3199,6 @@ sub check_options {
         }else{
             @splice = ("GTAG");
         }
-    }
-
-    if ( $EPmode == 1 && $ETPmode == 1 ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "--epmode and --etpmode cannot be set simultaneously!\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
-    }
-
-    if ( $EPmode == 1 && $ESmode == 1 ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "--epmode and --esmode cannot be set simultaneously!\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
-    }
-
-    if ( $ETPmode && $ESmode == 1 ) {
-        $prtStr
-            = "\# "
-            . (localtime)
-            . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "--etpmode and --esmode cannot be set simultaneously!\n";
-        $logString .= $prtStr;
-        print STDERR $logString;
-        exit(1);
     }
 
     if (   $alternatives_from_evidence ne "true"
@@ -4250,7 +4232,6 @@ sub run_prothint_iter2 {
 
     print LOG "\# " . (localtime)
         . ": Generating hints with ProtHint iteration 2 finished.\n" if ($v > 2);
-
 }
 
 ####################### move_aug_preds #########################################
@@ -5360,7 +5341,7 @@ sub GeneMark_ETP {
     my $protein_file = $otherfilesDir."/proteins.fa";
 
     if ( !$skipGeneMarkETP and not (defined( $etpplus_dir ))) {
-        if (! @bam) {
+        if (!@bam) {
             clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nFailed to find RNA-Seq data for GeneMark-ETP.\n");
@@ -5438,7 +5419,6 @@ sub GeneMark_ETP {
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nfailed to close file $protein_file!\n");
 
-
             # create YAML config file for ETP
             my $c = join(',', @rna_seq_libs_ids);
             my %etp_config = (
@@ -5471,9 +5451,11 @@ sub GeneMark_ETP {
             if ($nice) {
                 $perlCmdString .= "nice ";
             }
+            
             $perlCmdString .= "$perl $string --cfg $genemarkDir/etp_config.yaml "
                             . "--workdir $genemarkDir --bam $genemarkDir/etp_data/ "
-                            . "--cores $CPU --softmask";            
+                            . "--cores $CPU --softmask ";  
+ 
             $perlCmdString .= " 1>$stdoutfile 2>$errorfile";
             print LOG "\# " . (localtime) . ": Running gmetp.pl\n"
                 if ($v > 3);
@@ -5496,14 +5478,14 @@ sub GeneMark_ETP {
 
             # setting hc genes as trainings genes and sort them
             $traingtf = "$genemarkDir/proteins.fa/model/training.gtf";
-            $geneMarkGtf = "$genemarkDir/proteins.fa/genemark.gtf";
+            $geneMarkGtf = "$genemarkDir/genemark.gtf";
 
             # get hints for AUGUSTUS
             get_etp_hints_for_Augustus();
             print LOG "\# "
              . (localtime)
              . ": GeneMark-ETP run finished.\n" if ($v > 3);
-        }else {
+        } else {
             print LOG "\# " . (localtime) . ": skipping GeneMark-ETP because "
                 . "$genemarkDir/genemark.gtf and $traingtf are up to date.\n"
                 if ($v > 3);
@@ -5512,16 +5494,6 @@ sub GeneMark_ETP {
     if (defined($etpplus_dir)) {
         get_etp_hints_for_Augustus();
     }
-
-    # link GeneMark-ETP prediciton to the geneMarkDir
-    $cmdString = "ln -s $geneMarkGtf $genemarkDir/genemark.gtf";
-    print LOG "\# "
-      . (localtime)
-      . ": link GeneMark-ETP output to $genemarkDir/genemark.gtf\n" if ($v > 3);
-    print LOG "$cmdString\n" if ($v > 3);
-    system("$cmdString") == 0
-      or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-          . "\nfailed to execute: $cmdString!\n");
 
     $cmdString = "ln -s $traingtf $genemarkDir/training.gtf";
     print LOG "\# "
@@ -5569,7 +5541,6 @@ sub get_etp_hints_for_Augustus {
 
     join_mult_hints($hintsfile, "all");
 }
-
 
 ####################### filter_genemark ########################################
 # * GeneMark predictions contain (mostly) pure ab initio gene models
@@ -5692,7 +5663,6 @@ sub filter_genemark {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nFailed to execute: $perlCmdString\n");
-
 
             my $minTrainGenes = 4000;
             print LOG "\# "
@@ -5867,10 +5837,7 @@ sub get_gc_content {
     "\# " . (localtime)
     . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
     . "Could not close file $otherfilesDir/gc_content.out!\n");
-
-
 }
-
 
 ####################### new_species ############################################
 # * create a new species parameter folder in AUGUSTUS_CONFIG_PATH/species
