@@ -1,34 +1,16 @@
-#!/bin/bash                                                                                                                                                   
+#!/bin/bash
 
-# Author: Katharina J. hoff                                                                                                                                   
-# Contact: katharina.hoff@uni-greifswald.de                                                                                                                   
-# Date: Jan 12th 2023                                                                                                                                         
+# Author: Katharina J. hoff
 
-# Copy this script into the folder where you want to execute it, e.g.:                                                                                        
-# singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test2.sh .                                                               
-# Then run "bash test2.sh".                                                                                                                                   
+# Contact: katharina.hoff@uni-greifswald.de
 
-# Check wheter ETP is installed                                                                                                                               
+# Date: Jan 12th 2023
 
-if [[ -z "${ETP}" ]]; then
-    echo ""
-    echo "Variable ETP is undefined."
-    echo "You need to install GeneMark-ETP in the host home directory before running the BRAKER container."
-    echo "After installation (get instructions with \"singularity exec braker3.sif print_braker3_setup.py\")"
-    echo "export the ETP environment variable as follows:"
-    echo ""
-    echo "export ETP=\${HOME}/GeneMark-ETP/bin"
-    echo ""
-    exit 1
-else
-    if [ ! -f "${ETP}/gmetp.pl" ]; then
-        echo "Could not find ${ETP}/gmetp.pl. GeneMark-ETP has not been installed, correctly."
-        echo "Get help with \"singularity exec braker3.sif print_braker3_setup.p\""
-        exit 1
-    fi
-fi
+# Copy this script into the folder where you want to execute it, e.g.:
+# singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test2.sh .
+# Then run "bash test2.sh".
 
-# Check whether braker3.sif is available                                                                                                                      
+# Check whether braker3.sif is available
 
 if [[ -z "${BRAKER_SIF}" ]]; then
     echo ""
@@ -44,7 +26,7 @@ if [[ -z "${BRAKER_SIF}" ]]; then
     exit 1
 fi
 
-# Check whether singularity exists                                                                                                                            
+# Check whether singularity exists
 
 if ! command -v singularity &> /dev/null
 then
@@ -57,7 +39,7 @@ then
     exit 1
 fi
 
-# remove output directory if it already exists                                             
+# remove output directory if it already exists
 
 wd=test2
 
@@ -65,8 +47,8 @@ if [ -d $wd ]; then
     rm -r $wd
 fi
 
-singularity exec -B ${PWD}:${PWD} ${BRAKER_SIF} braker.pl --genome=/opt/BRAKER/example/genome.fa --prot_seq=/opt/BRAKER/example/proteins.fa --softmasking --workingdir=${wd} --threads 8 --GENEMARK_PATH=${ETP}/gmes --PROTHINT_PATH=${ETP}/gmes/ProtHint/bin --gm_max_intergenic 10000 --skipOptimize
-            # Important: the options --gm_max_intergenic 10000 --skipOptimize should never be applied to a real life run!!!                                   
-            # They were only introduced to speed up the test. Please delete them from the script if you use it for real data analysis.   
+singularity exec -B ${PWD}:${PWD} ${BRAKER_SIF} braker.pl --genome=/opt/BRAKER/example/genome.fa --prot_seq=/opt/BRAKER/example/proteins.fa --softmasking --workingdir=${wd} --threads 8 --gm_max_intergenic 10000 --skipOptimize
+            # Important: the options --gm_max_intergenic 10000 --skipOptimize should never be applied to a real life run!!!
+            # They were only introduced to speed up the test. Please delete them from the script if you use it for real data analysis.
 
 
