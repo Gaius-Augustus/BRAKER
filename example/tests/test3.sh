@@ -20,4 +20,4 @@ fi
 # For instructions on how to prepare the proteins.fa input file from OrthoDB,
 # see https://github.com/gatech-genemark/ProtHint#protein-database-preparation
 
-( time braker.pl --genome=../genome.fa --prot_seq=../proteins.fa --bam=../RNAseq.bam --workingdir=$wd --threads 8 --skipOptimize --makehub --email katharina.hoff@uni-greifswald.de ) &> test3.log
+( time braker.pl --genome=../genome.fa --prot_seq=../proteins.fa --bam=../RNAseq.bam --workingdir=$wd --threads 8 --skipOptimize ) &> test3.log
