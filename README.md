@@ -384,7 +384,7 @@ Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/
 
 *For BRAKER run with RNA-Seq and protein data (BRAKER3):*
 
-Download GeneMark-ETP<sup name="g1">[F1](#g1)</sup> from <https://github.com/gatech-genemark/GeneMark-ETP> or <https://topaz.gatech.edu/GeneMark/etp.for_braker.tar.gz>. Unpack and install GeneMark-ETP as described in GeneMark-ETP’s `README` file.
+Download GeneMark-ETP<sup name="g1">[F1](#g1)</sup> from <http://github.com/gatech-genemark/GeneMark-ETP> or <https://topaz.gatech.edu/GeneMark/etp.for_braker.tar.gz>. Unpack and install GeneMark-ETP as described in GeneMark-ETP’s `README` file.
 
 If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl` or `gmetp.pl` automatically. Otherwise, BRAKER can find GeneMark-EX executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark-EX_executables/`).
 
