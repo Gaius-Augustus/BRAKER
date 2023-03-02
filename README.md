@@ -158,7 +158,9 @@ Container
 
 We are aware that the "manual" installation of BRAKER3 and all its dependencies is tedious and really challenging without root permissions. Therefore, we provide a Docker container that has been developed to be run with Singularity. All information on this container can be found at https://hub.docker.com/r/teambraker/braker3
 
-This container has currently two shortcomings: (a) GeneMark-ETP is not in the container and needs to be installed into your home directory on the host (when using Singularity, otherwise, you have to install it into the Docker container), (b) as RNA-Seq input, we have only tested bam-files, not fastq files or SRA IDs. We will improve this in the future.
+Be aware that you need to install a valid license key in your home directory in order to use GeneMark-ETP in the container. (The software itself is contained.)
+
+This container has currently the following shortcoming: as RNA-Seq input, we have only tested bam-files, not fastq files or SRA IDs. We might improve this in the future.
 
 In short, build it as follows:
 
@@ -179,7 +181,6 @@ Test with:
 singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test1.sh
 singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test2.sh
 singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test3.sh
-export ETP=/your/path/to/GeneMark-ETP/bin # may need to modify
 export BRAKER_SIF=/your/path/to/braker3.sif # may need to modify
 bash test1.sh
 bash test2.sh
