@@ -1,11 +1,12 @@
 # BRAKER User Guide
 
+News
+====
 :dancers: We hope that we finally bugfixed BRAKER3... try pulling the latest container from Dockerhub! GeneMark-ETP is inside, now.
 
-=================
-
-<u>Contacts for Github Repository of BRAKER at
-https://github.com/Gaius-Augustus/BRAKER:</u>
+Contacts for Github Repository of BRAKER at
+https://github.com/Gaius-Augustus/BRAKER:
+===================================
 
 Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
 
