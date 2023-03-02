@@ -1,7 +1,7 @@
 # Distributed under the terms of the Modified BSD License.
 ARG OWNER=jupyter
 ARG BASE_CONTAINER=$OWNER/minimal-notebook
-FROM $BASE_CONTAINER
+FROM $BASE_CONTAINER as base
 
 # Fix: https://github.com/hadolint/hadolint/wiki/DL4006
 # Fix: https://github.com/koalaman/shellcheck/wiki/SC3014
@@ -46,43 +46,41 @@ RUN cd /opt && \
 ENV PATH=${PATH}:/opt/cdbfasta
 
 # hisat2
-RUN cd /opt && \ 
-    git clone https://github.com/DaehwanKimLab/hisat2.git && \
-    cd hisat2 && \
-    make -j 16
+#RUN cd /opt && \ 
+#    git clone https://github.com/DaehwanKimLab/hisat2.git && \
+#    cd hisat2 && \
+#    make -j 16
 
-ENV PATH=${PATH}:/opt/hisat2
+#ENV PATH=${PATH}:/opt/hisat2
 
 # stringtie2 (ETP+)
-RUN cd /opt && \
-    wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-2.2.1.Linux_x86_64.tar.gz && \
-    tar -xvf stringtie-2.2.1.Linux_x86_64.tar.gz
+#RUN cd /opt && \
+#    wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-2.2.1.Linux_x86_64.tar.gz && \
+#    tar -xvf stringtie-2.2.1.Linux_x86_64.tar.gz
 
-ENV PATH=${PATH}:/opt/stringtie-2.2.1.Linux_x86_64
+#ENV PATH=${PATH}:/opt/stringtie-2.2.1.Linux_x86_64
 
 # gffread (ETP+)
-RUN cd /opt && \
-    git clone https://github.com/gpertea/gffread.git && \
-    cd gffread && \
-    make
+#RUN cd /opt && \
+#    git clone https://github.com/gpertea/gffread.git && \
+#    cd gffread && \
+#    make
 
-ENV PATH=${PATH}:/opt/gffread
+#ENV PATH=${PATH}:/opt/gffread
 
 # diamond
-RUN cd /opt && \
-    mkdir diamond && \
-    cd diamond && \
-    wget http://github.com/bbuchfink/diamond/releases/download/v2.0.15/diamond-linux64.tar.gz && \
-    tar -xf diamond-linux64.tar.gz && \
-    rm diamond-linux64.tar.gz
+#RUN cd /opt && \
+#    mkdir diamond && \
+#    cd diamond && \
+#    wget http://github.com/bbuchfink/diamond/releases/download/v2.0.15/diamond-linux64.tar.gz && \
+#    tar -xf diamond-linux64.tar.gz && \
+#    rm diamond-linux64.tar.gz
 
-ENV PATH=${PATH}:/opt/diamond
+#ENV PATH=${PATH}:/opt/diamond
 
 # tsebra
 RUN cd /opt && \
-    git clone https://github.com/Gaius-Augustus/TSEBRA && \
-    cd TSEBRA && \
-    git checkout braker3
+    git clone https://github.com/Gaius-Augustus/TSEBRA
 
 ENV PATH=${PATH}:/opt/TSEBRA/bin
 
@@ -125,17 +123,17 @@ RUn apt update && \
 
 # bedtools (ETP+)
 
-RUN apt update && \
-    apt install -yq bedtools && \
-    apt clean all
+#RUN apt update && \
+#    apt install -yq bedtools && \
+#    apt clean all
 
 # sratools (ETP+)
 
-RUN cd /opt && \
-    wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz && \
-    tar -xvf sratoolkit.current-ubuntu64.tar.gz
+#RUN cd /opt && \
+#    wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz && \
+#    tar -xvf sratoolkit.current-ubuntu64.tar.gz
 
-ENV PATH=${PATH}:/opt/sratoolkit.3.0.1-ubuntu64/bin/
+#ENV PATH=${PATH}:/opt/sratoolkit.3.0.1-ubuntu64/bin/
 
 # patch Augustus scripts (because Debian package is often outdated, this way we never need to worry)
 RUN cd /usr/share/augustus/scripts && \
@@ -169,42 +167,12 @@ RUN cd /usr/share/augustus/scripts && \
     wget https://raw.githubusercontent.com/Gaius-Augustus/Augustus/master/scripts/createAugustusJoblist.pl && \
     chmod a+x optimize_augustus.pl aa2nonred.pl gff2gbSmallDNA.pl new_species.pl filterGenesIn_mRNAname.pl filterGenes.pl filterGenesIn.pl join_mult_hints.pl randomSplit.pl join_aug_pred.pl getAnnoFastaFromJoingenes.py gtf2gff.pl splitMfasta.pl createAugustusJoblist.pl
 
-# bedtools (ETP+)
+# bamtools (ETP+)
 
 RUN apt update && \
-    apt install -yq bedtools && \
+    apt install -yq bamtools && \
     apt clean all
-
-# include odb10 files for BRAKER3
-
-RUN cd /opt && \
-    mkdir odb && \
-    cd odb && \
-    wget https://v100.orthodb.org/download/odb10_arthropoda_fasta.tar.gz && \
-    tar xvf odb10_arthropoda_fasta.tar.gz && \
-    cat arthropoda/Rawdata/* > arthropoda_odb10.fasta && \
-    rm -rf arthropoda && \
-    wget https://v100.orthodb.org/download/odb10_fungi_fasta.tar.gz && \
-    tar xvf odb10_fungi_fasta.tar.gz && \
-    cat fungi/Rawdata/* > fungi_odb10.fasta && \
-    rm -rf fungi && \
-    wget https://v100.orthodb.org/download/odb10_metazoa_fasta.tar.gz && \
-    tar xvf odb10_metazoa_fasta.tar.gz && \
-    cat metazoa/Rawdata/* > metazoa_odb10.fasta && \
-    rm -rf metazoa && \
-    wget https://v100.orthodb.org/download/odb10_vertebrata_fasta.tar.gz && \
-    tar xvf odb10_vertebrata_fasta.tar.gz && \
-    cat vertebrate/Rawdata/* > vertebrata_odb10.fasta && \
-    rm -rf vertebrate && \
-    wget https://v100.orthodb.org/download/odb10_protozoa_fasta.tar.gz && \
-    tar xvf odb10_protozoa_fasta.tar.gz && \
-    cat protozoa/Rawdata/* > protozoa_odb10.fasta && \
-    rm -rf protozoa && \
-    wget https://v100.orthodb.org/download/odb10_plants_fasta.tar.gz && \
-    tar xvf odb10_plants_fasta.tar.gz && \
-    cat plants/Rawdata/* > plants_odb10.fasta && \
-    rm -rf plants
-
+	
 USER ${NB_UID}
 
 RUN mamba install --quiet -c bioconda -c anaconda --yes \
@@ -220,7 +188,7 @@ USER root
 # braker including RNAseq test file
 
 RUN cd /opt && \
-    git clone    https://github.com/Gaius-Augustus/BRAKER.git && \
+    git clone      https://github.com/Gaius-Augustus/BRAKER.git && \
     cd BRAKER && \
     git checkout braker3  && \
     cd example && \
@@ -228,4 +196,15 @@ RUN cd /opt && \
 
 ENV PATH=${PATH}:/opt/BRAKER/scripts
 
+# include ETP
+RUN cd /opt && \
+    wget  http://topaz.gatech.edu/GeneMark/etp.for_braker.tar.gz && \
+    tar -xzf etp.for_braker.tar.gz && \
+    mv etp.for_braker ETP && \
+    chmod a+x /opt/ETP/bin/*py /opt/ETP/bin/*pl /opt/ETP/tools/*
+
+ENV GENEMARK_PATH=/opt/ETP/bin
+ENV PATH=${PATH}:/opt/ETP/bin:/opt/ETP/tools:/opt/ETP/bin/gmes/ProtHint/bin
+
 USER ${NB_UID}
+
