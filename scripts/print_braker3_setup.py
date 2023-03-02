@@ -12,7 +12,7 @@ print("     https://github.com/gatech-genemark/GeneMark-ETP/blob/main/GeneMark_S
 print("     Only proceed if you agree to the license terms. If you are a commercial user or have ")
 print("     other questions concerning this license, please contact Mark Bordovsky and Alexandre Lomsadze")
 print("     at GeorgiaTech to inquire details (contact details at ")
-print("     http://topaz.gatech.edu/genemark/contact.html\n")
+print("     http://topaz.gatech.edu/genemark/contact.html).")
 print("  2) Download the license key (not the software) for  GeneMark-ES/ET/EP ver 4.71_lic , it's a file ")
 print("     called gm_key_64.gz.")
 print("  3) Unzip the file with:")
