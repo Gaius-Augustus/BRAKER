@@ -17,7 +17,7 @@ package helpMod;
 
 use Exporter 'import';
 
-@EXPORT_OK = qw( find tildeConvert checkFile formatDetector relToAbs setParInConfig addParToConfig 
+@EXPORT_OK = qw( find tildeConvert checkFile formatDetector relToAbs setParInConfig addParToConfig
     uptodate gtf2fasta clean_abort );
 
 use strict;
@@ -498,7 +498,7 @@ sub setParInConfig {
         or die("Could not read config file $configFileName\n");
     my @lines = <CFGFILE>;
     foreach my $line (@lines) {
-        $line =~ s/(\s*$parName +)(\S+?)(\s|\#|$)/$1$value$3/;
+        $line =~ s/(\s*$parName\s+)(\S+?)(\s|\#|$)/$1$value$3/;
     }
     seek( CFGFILE, 0, 0 );
     print CFGFILE @lines or die("Could not write $configFileName");

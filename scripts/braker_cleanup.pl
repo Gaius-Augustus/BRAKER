@@ -20,6 +20,7 @@ use File::Path;
 use File::Spec::Functions qw(rel2abs);
 use strict;
 use warnings;
+use File::Copy;
 
 my $usage = <<'ENDUSAGE';
 
@@ -96,7 +97,9 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"GeneMark-EP/training.fna", "GeneMark-EP/genemark.f.bad.gtf", "GeneMark-EP.stdout",
 	"GeneMark-ETP/genemark.d.gtf", 
 	"GeneMark-ETP/genemark.f.good.gtf", "GeneMark-ETP/genemark.c.gtf", "GeneMark-ETP/genemark.average_gene_length.out",
-	"GeneMark-ETP/gmes.log", "GeneMark-ETP/logfile", "GeneMark-ETP/run.cfg", 
+	"GeneMark-ETP/gmes.log", "GeneMark-ETP/logfile", "GeneMark-ETP/run.cfg", "GeneMark-ETP/proteins.fa/model/set.out",
+    "GeneMark-ETP/proteins.fa/model/parse.es_c", "GeneMark-ETP/proteins.fa/model/non.seq", "GeneMark-ETP/proteins.fa/nonhc/nonhc.fasta",
+    "GeneMark-ETP/rnaseq/hints/proteins.fa/prothint/nuc.fasta", 
 	"GeneMark-ETP/training.fna", "GeneMark-ETP/genemark.f.bad.gtf", "GeneMark-ETP.stdout",
 	"aug_hints.lst", "aa2nonred.stdout", "augustus.hints.tmp.gtf", "bothutr.lst", "fourthtest.stdout", "gbFilterEtraining.stdout",
 	"genes.gtf", "genes_in_gb.gtf", "gff2gbSmallDNA.utr.stdout", "hints.job.lst", "merged.bam", "merged.s.bam", "merged.wig", 
@@ -110,15 +113,20 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"augustus.ab_initio.tmp.gtf", "augustus.ab_initio.gff", "augustus.hints.gff", "augustus.hints.tmp.gtf",
 	"getAnnoFastaFromJoingenes.augustus.hints_hints.stdout", "getAnnoFastaFromJoingenes.augustus.ab_initio_.stdout",
 	"getAnnoFastaFromJoingenes.augustus.hints_.stdout", "startAlign.stdout", "augustus.hints_iter1.aa", "augustus.hints_iter1.codingseq",
-	"augustus.hints_iter1.gff", "augustus.tmp1.gff", "augustus.tmp2.gff", "cmd.log", "etrain.bad.lst", "gene_stat.yaml",
+	"augustus.hints_iter1.gff", "augustus.hints_iter1.gtf", "augustus.tmp1.gff", "augustus.tmp2.gff", "cmd.log", "etrain.bad.lst", "gene_stat.yaml",
 	"good_genes.lst", "hintsfile_iter1.gff", "nonred.loci.lst", "nuc.fasta", "prevHints.gff", "proteins.fa", "seed_proteins.faa",
-        "train.f.gb", "traingenes.good.gtf", "traingenes.good.nr.fa", "uniqueSeeds.gtf");
+        "train.f.gb", "traingenes.good.gtf", "traingenes.good.nr.fa", "uniqueSeeds.gtf", "braker.gtf_temp", "genemark_hintsfile.gff", "gc_content.out", "evidence.gff", "genemark_evidence.gff");
 
 my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneMark-ES/run",
 	"GeneMark-ET/data", "GeneMark-ET/info", "GeneMark-ET/output", "GeneMark-ET/run",
 	"GeneMark-EP/data", "GeneMark-EP/info", "GeneMark-EP/output", "GeneMark-EP/run",
-	"GeneMark-ETP/data", "GeneMark-ETP/info", "GeneMark-ETP/output", "GeneMark-ETP/run",
-	"genome_split", "Spaln", "augustus_tmp", "augustus_files_hints", "diamond");
+	"GeneMark-ETP/etp_data", "GeneMark-ETP/rnaseq/gmst/", "GeneMark-ETP/rnaseq/hisat2/", 
+    "GeneMark-ETP/rnaseq/stringtie/", "GeneMark-ETP/arx", "GeneMark-ETP/proteins.fa/hc/regions/",
+	"GeneMark-ETP/proteins.fa/nonhc/prothint","GeneMark-ETP/rnaseq/hints/proteins.fa/prothint/Spaln",
+    "GeneMark-ETP/proteins.fa/nonhc/for_prothint", "GeneMark-ETP/proteins.fa/nonhc/pred_m",
+    "GeneMark-ETP/proteins.fa/nonhc/regions", "GeneMark-ETP/proteins.fa/etr", "GeneMark-ETP/proteins.fa/nonhc/hc", 
+    "GeneMark-ETP/rnaseq/hints/proteins.fa/prothint/diamond", "rnaseq/", "GeneMark-ETP/data",
+    "genome_split", "Spaln", "augustus_tmp", "augustus_files_hints", "diamond");
 
 foreach(@files){
 	if(-e $wdir."/".$_){
@@ -141,3 +149,15 @@ while(-d $wdir."/align_gth".$gth_index){
 	$gth_index = $gth_index + 1;
 }
 
+# move augustus.* output files into a subdirectory
+opendir my $dir, "$wdir" or die "Cannot open directory: $wdir!";
+@files = readdir $dir;
+closedir $dir;
+
+mkdir("$wdir/Augustus", 0700) or die("Failed to create directory Augustus!\n");
+
+foreach(@files){
+	if($_ =~ m/augustus\./){
+		move($wdir."/".$_, $wdir."/Augustus/".$_) or die("Failed to move file $wdir/$_ to $wdir/Augustus/$_!\n");
+	}
+}
