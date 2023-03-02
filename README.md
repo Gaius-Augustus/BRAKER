@@ -1,5 +1,3 @@
-
-
 # BRAKER User Guide
 
 <u>Contacts for Github Repository of BRAKER at
