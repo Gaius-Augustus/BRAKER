@@ -4,9 +4,8 @@ News
 ====
 :dancers: We hope that we finally bugfixed BRAKER3... try pulling the latest container from Dockerhub! GeneMark-ETP is inside, now.
 
-Contacts for Github Repository of BRAKER at
-https://github.com/Gaius-Augustus/BRAKER:
-===================================
+Contacts for Repository 
+========================
 
 Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
 
@@ -189,8 +188,17 @@ bash test1.sh
 bash test2.sh
 bash test3.sh
 ```
-Good luck ;-)
+Few users want to run their analysis inside Docker (since root permissions are required). However, if that's your goal, you can run and test the container as follows
 
+```
+sudo docker run --user 1000:100 --rm -it teambraker/braker3:latest bash
+bash /opt/BRAKER/example/docker-tests/test1.sh # BRAKER1
+bash /opt/BRAKER/example/docker-tests/test2.sh # BRAKER2
+bash /opt/BRAKER/example/docker-tests/test3.sh # BRAKER3
+```
+:warning: The container does not include Java/GUSHR/anything UTR related because we are currently not maintaining UTR prediction with BRAKER. It's buggy and unstable. Do not use it.
+
+Good luck ;-)
 
 Installation
 ============
