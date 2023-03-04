@@ -51,6 +51,7 @@ Contents
 -   [What is BRAKER?](#what-is-braker)
 -   [Keys to successful gene prediction](#keys-to-successful-gene-prediction)
 -   [Overview of modes for running BRAKER](#overview-of-modes-for-running-braker)
+-   [Container](#container)
 -   [Installation](#installation)
     -   [Supported software versions](#supported-software-versions)
     -   [BRAKER](#braker)
