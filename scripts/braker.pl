@@ -141,16 +141,6 @@ FREQUENTLY USED OPTIONS
                                     accuracy than HMM parameters.
 --keepCrf                           keep CRF parameters even if they are not
                                     better than HMM parameters
---UTR=on                            create UTR training examples from RNA-Seq
-                                    coverage data; requires options
-                                    --bam=rnaseq.bam.
-                                    Alternatively, if UTR parameters already
-                                    exist, training step will be skipped and
-                                    those pre-existing parameters are used.
---addUTR=on                         Adds UTRs from RNA-Seq coverage data to
-                                    augustus.hints.gtf file. Does not perform
-                                    training of AUGUSTUS or gene prediction with
-                                    AUGUSTUS and UTR parameters.
 --makehub                           Create track data hub with make_hub.py
                                     for visualizing BRAKER results with the
                                     UCSC GenomeBrowser
@@ -424,6 +414,20 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     that the GeneMark-ETP step can be skipped.
                                     In this case, use training.gtf from that run as
                                     argument.
+--UTR=on                            create UTR training examples from RNA-Seq
+                                    coverage data; requires options
+                                    --bam=rnaseq.bam.
+                                    Alternatively, if UTR parameters already
+                                    exist, training step will be skipped and
+                                    those pre-existing parameters are used.
+				    DO NOT USE IN CONTAINER!
+				    TRY NOT TO USE AT ALL!
+--addUTR=on                         Adds UTRs from RNA-Seq coverage data to
+                                    augustus.hints.gtf file. Does not perform
+                                    training of AUGUSTUS or gene prediction with
+                                    AUGUSTUS and UTR parameters.
+				    DO NOT USE IN CONTAINER!
+				    TRY NOT TO USE AT ALL!
 
 
 EXAMPLE
