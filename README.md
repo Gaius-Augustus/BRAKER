@@ -1,3 +1,5 @@
+![Docker Pulls](https://img.shields.io/docker/pulls/teambraker/braker3) 
+
 # BRAKER User Guide
 
 News
