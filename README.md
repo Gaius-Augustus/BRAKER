@@ -1,4 +1,5 @@
-![Docker Pulls](https://img.shields.io/docker/pulls/teambraker/braker3) 
+![Docker Pulls](https://img.shields.io/docker/pulls/teambraker/braker3)  ![GitHub all releases](https://img.shields.io/github/downloads/gaius-augustus/braker/total)
+
 
 # BRAKER User Guide
 
