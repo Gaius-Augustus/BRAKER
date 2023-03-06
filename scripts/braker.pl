@@ -5404,7 +5404,7 @@ sub GeneMark_ETP {
                         . __LINE__ ."\nFailed to execute: $cmdString!\n");
             }
 
-            # concatenate protein files
+            # concatenate protein files and remove '.' at the end of sequences
             open(PROT_ALL, ">", $protein_file) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nfailed to open file $protein_file!\n");
@@ -5412,8 +5412,12 @@ sub GeneMark_ETP {
                     open(PROT, "<", $_) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                         $useexisting, "ERROR in file " . __FILE__ ." at line "
                         . __LINE__ ."\nfailed to open file $_!\n");
-                    while(<PROT>){
-                        print PROT_ALL $_;
+                    while(my $line = <PROT>){
+                        # remove dots at end of sequences
+                        if ($line !~ /^>/ && $line =~ /\.$/) {
+                            $line =~ s/\.$//;
+                        }
+                        print PROT_ALL $line;
                     }
                     close(PROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                         $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -7977,7 +7981,7 @@ sub clean_aug_jobs {
             }
         }
     } else {
-        # moving files for AUGUSTUS prallelization to a separate folder
+        # moving files for AUGUSTUS parallelization to a separate folder
         print LOG "\# " . (localtime) . ": moving files from AUGUSTUS "
             . "parallelization to directory "
             . "$otherfilesDir/augustus_files_$hintId\n" if ($v > 3);
@@ -8287,7 +8291,7 @@ sub merge_transcript_sets_with_tsebra {
     my $tsebra_cfg = $_[3];
     my $output = $_[4];
     my $rename = $_[5];
-    #my $localUtr = shift;
+    my $filter_se = $_[6];
 
     print LOG "\# " . (localtime) . ": Trying to create combined gene set "
                                   . "with TSEBRA...\n" if ($v > 3);
@@ -8331,6 +8335,9 @@ sub merge_transcript_sets_with_tsebra {
     $arg_str = join(',', @hintfiles);
     if ( !$arg_str eq "" ){
         $cmdString .= "--hintfiles $arg_str ";
+    }
+    if ( !$filter_se eq "" ){
+        $cmdString .= "--filter_single_exon_genes ";
     }
     $cmdString .= "--cfg $tsebra_cfg --out $output -q 2>$errorfile";
     print LOG "$cmdString\n" if ($v > 3);
@@ -9649,37 +9656,19 @@ sub merge_transcript_sets {
             "$genemarkDir/genemark.gtf");
         @forced_gene_sets = ("$genemarkDir/training.gtf");
         @hintfiles = ($hintsfile);
-        merge_transcript_sets_with_tsebra(
-            \@gene_sets, \@forced_gene_sets, \@hintfiles,
-            "braker3.cfg", "$otherfilesDir/braker$genesetId.gtf", "rename");
 
         # filter TSEBRA output for species with 'large' genomes
         if ($genome_size > 300000000){
-            $cmdString = "mv $otherfilesDir/braker$genesetId.gtf "
-                . "$otherfilesDir/braker$genesetId.unsupported.gtf";
-            print LOG "\# "
-              . (localtime)
-              . ": move TSBERA output $otherfilesDir/braker$genesetId.gtf to "
-                  . "$otherfilesDir/braker$genesetId.unsupported.gtf\n" if ($v > 3);
-            print LOG "$cmdString\n" if ($v > 3);
-            system("$cmdString") == 0
-              or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-                  . "\nfailed to execute: $cmdString!\n");
-
-            $cmdString = "$GENEMARK_PATH/selectSupportedSubsets.py "
-                . "$otherfilesDir/braker$genesetId.unsupported.gtf "
-                . "$hintsfile --fullSupport /dev/null --anySupport "
-                . "$otherfilesDir/braker$genesetId.gtf --noSupport /dev/null "
-                . "1> $otherfilesDir/selectSupportedSubsets.stdout "
-                . "2> $errorfilesDir/selectSupportedSubsets.stderr";
-            print LOG "\# "
-              . (localtime)
-              . ": Filter TSEBRA result:\n" if ($v > 3);
-            print LOG "$cmdString\n" if ($v > 3);
-            system("$cmdString") == 0
-              or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-                  . "\nfailed to execute: $cmdString!\n");
+            merge_transcript_sets_with_tsebra(
+                \@gene_sets, \@forced_gene_sets, \@hintfiles,
+                "braker3.cfg", "$otherfilesDir/braker$genesetId.gtf", "rename",
+                "filter_single_exons");
+        } else {
+            merge_transcript_sets_with_tsebra(
+                \@gene_sets, \@forced_gene_sets, \@hintfiles,
+                "braker3.cfg", "$otherfilesDir/braker$genesetId.gtf", "rename", "");
         }
+        
     } elsif($ESmode == 1) {
         # exists only without utr
         if( (-e "$genemarkDir/genemark.gtf") and
@@ -9788,7 +9777,7 @@ sub gtf2gff3 {
         }
         $perlCmdString .= "cat $gtf | $perl -ne 'if(m/\\tAUGUSTUS\\t/ or "
                        .  "m/\\tAnnotationFinalizer\\t/ or m/\\tGUSHR\\t/ or "
-                       .  "m/\\tGeneMark\.hmm\\t/) {"
+                       .  "m/\\tGeneMark\.hmm\\t/ or m/\\tgmst\\t/) {"
                        .  "print \$_;}' | $perl $string --gff3 --out=$gff3 "
                        .  ">> $otherfilesDir/gtf2gff3.log "
                        .  "2>> $errorfilesDir/gtf2gff3.err";
