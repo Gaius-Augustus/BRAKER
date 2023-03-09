@@ -190,7 +190,6 @@ USER root
 RUN cd /opt && \
     git clone      https://github.com/Gaius-Augustus/BRAKER.git && \
     cd BRAKER && \
-    git checkout braker3  && \
     cd example && \
     wget http://bioinf.uni-greifswald.de/augustus/datasets/RNAseq.bam
 
