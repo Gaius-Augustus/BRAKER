@@ -855,6 +855,10 @@ You may additionally include bam files from unstranded libraries. Those files wi
 
 The native mode for running BRAKER with RNA-Seq and protein data. This will call GeneMark-ETP, which will use RNA-Seq and protein hints for training GeneMark-ETP. Subsequently, AUGUSTUS is trained on 'high-confindent' genes (genes with very high extrinsic evidence support) from the GeneMark-ETP prediction and a set of genes is predicted by AUGUSTUS. In a last step, the predictions of AUGUSTUS and GeneMark-ETP are combined using TSEBRA.
 
+**Alignment of RNA-Seq reads**
+
+GeneMark-ETP utilizes Stringtie2 to assemble RNA-Seq data, which requires that the aligned reads (BAM files) contain the XS (strand) tag for spliced reads. Therefore, if you align your reads with HISAT2, you must enable the --dta option, or if you use STAR, you must use the --outSAMstrandField intronMotif option. TopHat alignments include this tag by default.
+
 To call the pipeline in this mode, you have to provide it with a protein database using `--prot_seq` (as described in [BRAKER with protein data](#braker-with-protein-data)), and RNA-Seq data either by their SRA ID so that they are downloaded by BRAKER, as unaligned reads in `FASTQ` format, and/or as aligned reads in `bam` format (as described in [BRAKER with RNA-Seq data](#braker-with-rna-seq-data)). You could also specify already processed extrinsic evidence using the `--hints` option. However, this is not recommend for a normal BRAKER run in ETPmode, as these hints won't be used in the GeneMark-ETP step. Only use `--hints` when you want to skip the GenMark-ETP step!
 
 Examples of how you could run BRAKER in ETPmode:
