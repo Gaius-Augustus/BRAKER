@@ -11,7 +11,8 @@ Contacts for Repository
 
 Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
 
-Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624, ![Twitter Follow](https://img.shields.io/twitter/follow/katharina_hoff)
+Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624, [![https://twitter.com/katharina_hoff](https://img.shields.io/twitter/follow/katharina_hoff)](https://twitter.com/katharina_hoff)
+
 
 Mark Borodovsky, Georgia Tech, U.S.A., borodovsky@gatech.edu
 
