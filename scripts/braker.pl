@@ -760,7 +760,7 @@ if($nocleanup){
 
 # Define publications to be cited ##############################################
 # braker1, braker2, braker-whole, aug-cdna, aug-hmm, diamond, blast1, blast2,
-# gm-es, gm-et, gm-ep, gm-fungus, samtools, bamtools, spaln,
+# gm-es, gm-et, gm-ep, gm-etp, gm-fungus, samtools, bamtools, spaln,
 # spaln2, makehub, bedtools, sratoolkit, hisat2, stringtie, gffread
 my %pubs;
 $pubs{'braker1'} = "\nHoff, K. J., Lange, S., Lomsadze, A., Borodovsky, M., & Stanke, M. (2016). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5), 767-769.\n";
@@ -774,6 +774,7 @@ $pubs{'blast2'} = "\nCamacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoul
 $pubs{'gm-es'} = "\nLomsadze, A., Ter-Hovhannisyan, V., Chernoff, Y. O., & Borodovsky, M. (2005). Gene identification in novel eukaryotic genomes by self-training algorithm. Nucleic acids research, 33(20), 6494-6506.\n";
 $pubs{'gm-et'} = "\nLomsadze, A., Burns, P. D., & Borodovsky, M. (2014). Integration of mapped RNA-Seq reads into automatic training of eukaryotic gene finding algorithm. Nucleic acids research, 42(15), e119-e119.\n";
 $pubs{'gm-ep'} = "\nBruna, T., Lomsadze, A., & Borodovsky, M. (2020). GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026.\n";
+$pubs{'gm-etp'} = "\nBruna, T., Lomsadze, A., & Borodovsky, M. (2023). GeneMark-ETP: Automatic Gene Finding in Eukaryotic Genomes in Consistence with Extrinsic Data. bioRxiv, 2023-01.\n";
 $pubs{'gm-fungus'} = "\nTer-Hovhannisyan, V., Lomsadze, A., Chernoff, Y. O., & Borodovsky, M. (2008). Gene prediction in novel fungal genomes using an ab initio algorithm with unsupervised training. Genome research, 18(12), 1979-1990.\n";
 $pubs{'samtools'} = "\nLi, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., ... & Durbin, R. (2009). The sequence alignment/map format and SAMtools. Bioinformatics, 25(16), 2078-2079.\n";
 $pubs{'bamtools'} = "\nBarnett, D. W., Garrison, E. K., Quinlan, A. R., Strömberg, M. P., & Marth, G. T. (2011). BamTools: a C++ API and toolkit for analyzing and managing BAM files. Bioinformatics, 27(12), 1691-1692.\n";
@@ -782,11 +783,11 @@ $pubs{'spaln2'} = "\nIwata, H., & Gotoh, O. (2012). Benchmarking spliced alignme
 $pubs{'gemoma1'} = "\nKeilwagen, J., Hartung, F., Grau, J. (2019) GeMoMa: Homology-based gene prediction utilizing intron position conservation and RNA-seq data. Methods Mol Biol. 1962:161-177, doi: 10.1007/978-1-4939-9173-0_9.\n";
 $pubs{'gemoma2'} = "\nKeilwagen, J., Wenk, M., Erickson, J.L., Schattat, M.H., Grau, J., Hartung F. (2016) Using intron position conservation for homology-based gene prediction. Nucleic Acids Research, 44(9):e89.\n";
 $pubs{'gemoma3'} = "\nKeilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.\n";
-$pubs{'bedtools'} = "Quinlan, A. R. (2014). BEDTools: the Swiss‐army tool for genome feature analysis. Current protocols in bioinformatics, 47(1):11-12.\n";
-$pubs{'sratoolkit'} = "SRA Toolkit Development Team (2020). SRA Toolkit. https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software.\n";
-$pubs{'hisat2'} = "Kim, D., Paggi, J. M., Park, C., Bennett, C., & Salzberg, S. L. (2019). Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype. Nature biotechnology, 37(8):907-915.\n";
-$pubs{'stringtie'} = "Kovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.\n";
-$pubs{'gffread'} = "Pertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.\n";
+$pubs{'bedtools'} = "\nQuinlan, A. R. (2014). BEDTools: the Swiss‐army tool for genome feature analysis. Current protocols in bioinformatics, 47(1):11-12.\n";
+$pubs{'sratoolkit'} = "\nSRA Toolkit Development Team (2020). SRA Toolkit. https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software.\n";
+$pubs{'hisat2'} = "\nKim, D., Paggi, J. M., Park, C., Bennett, C., & Salzberg, S. L. (2019). Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype. Nature biotechnology, 37(8):907-915.\n";
+$pubs{'stringtie'} = "\nKovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.\n";
+$pubs{'gffread'} = "\nPertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.\n";
 
 
 # Make paths to input files absolute ###########################################
@@ -5333,9 +5334,7 @@ sub GeneMark_EP {
 
 sub GeneMark_ETP {
     print LOG "\# " . (localtime) . ": Running GeneMark-ETP\n" if ($v > 2);
-    print CITE $pubs{'gm-et'}; $pubs{'gm-et'} = "";
-    print CITE $pubs{'gm-ep'}; $pubs{'gm-ep'} = "";
-    print CITE $pubs{'gm-es'}; $pubs{'gm-es'} = "";
+    print CITE $pubs{'gm-etp'}; $pubs{'gm-etp'} = "";
     print CITE $pubs{'diamond'}; $pubs{'diamond'} = "";
     print CITE $pubs{'spaln'}; $pubs{'spaln'} = "";
     print CITE $pubs{'spaln2'}; $pubs{'spaln2'} = "";
@@ -5474,7 +5473,9 @@ sub GeneMark_ETP {
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n"
                     . "Failed to execute: $perlCmdString\n"
                     . "The most common problem is an expired or not "
-                    . "present file ~/.gm_key!\n");
+                    . "present file ~/.gm_key or that GeneMark-ETP "
+                    . "didn't receive enough evidence from the input data, "
+                    . "in this case, see errors/GeneMark-ETP.stderr!\n");
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n"
@@ -9777,7 +9778,7 @@ sub gtf2gff3 {
         }
         $perlCmdString .= "cat $gtf | $perl -ne 'if(m/\\tAUGUSTUS\\t/ or "
                        .  "m/\\tAnnotationFinalizer\\t/ or m/\\tGUSHR\\t/ or "
-                       .  "m/\\tGeneMark\.hmm\\t/ or m/\\tgmst\\t/) {"
+                       .  "m/\\tGeneMark\.hmm\\t/ or m/\\tGeneMark\.hmm3\\t/ or m/\\tgmst\\t/) {"
                        .  "print \$_;}' | $perl $string --gff3 --out=$gff3 "
                        .  ">> $otherfilesDir/gtf2gff3.log "
                        .  "2>> $errorfilesDir/gtf2gff3.err";
