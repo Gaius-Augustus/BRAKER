@@ -11,7 +11,8 @@ Contacts for Repository
 
 Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
 
-Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624
+Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624, [![https://twitter.com/katharina_hoff](https://img.shields.io/twitter/follow/katharina_hoff)](https://twitter.com/katharina_hoff)
+
 
 Mark Borodovsky, Georgia Tech, U.S.A., borodovsky@gatech.edu
 
@@ -146,7 +147,7 @@ Figure 2: BRAKER pipeline A: training GeneMark-ES on genome data, only; *ab init
 Figure 3: BRAKER pipeline B: training GeneMark-ET supported by RNA-Seq spliced alignment information, prediction with AUGUSTUS with that same spliced alignment information.
 
 
--   Genome file and database of proteins that may be of **unknown** evolutionary distance to the target species (see Figure [4](#fig3)); this approach is particularly suitable if no RNA-Seq data is available. This method will work better with proteins from species that are rather close to the target species, but accuracy will drop only very little if the reference proteins are more distant from the target species. **Important:** This approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database. BRAKER has been tested with OrthoDB <sup name="a19">[R19](#f19)</sup>, successfully. The ProtHint <sup name="a18">[R18](#f18)</sup> protein mapping pipeline for generating required hints for BRAKER is available for download at <https://github.com/gatech-genemark/ProtHint>, the software on how to prepare the OrthoDB input proteins is available athttps://github.com/tomasbruna/orthodb-clades. You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction. We provide per-partitioned OrthoDB v.11 clades for download at https://bioinf.uni-greifswald.de/bioinf/partitioned_odb11/ .
+-   Genome file and database of proteins that may be of **unknown** evolutionary distance to the target species (see Figure [4](#fig3)); this approach is particularly suitable if no RNA-Seq data is available. This method will work better with proteins from species that are rather close to the target species, but accuracy will drop only very little if the reference proteins are more distant from the target species. **Important:** This approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database. BRAKER has been tested with OrthoDB <sup name="a19">[R19](#f19)</sup>, successfully. The ProtHint <sup name="a18">[R18](#f18)</sup> protein mapping pipeline for generating required hints for BRAKER is available for download at <https://github.com/gatech-genemark/ProtHint>, the software on how to prepare the OrthoDB input proteins is available at https://github.com/tomasbruna/orthodb-clades. You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction. We provide per-partitioned OrthoDB v.11 clades for download at https://bioinf.uni-greifswald.de/bioinf/partitioned_odb11/ .
 
 ![braker2-main-c\[fig3\]](docs/figs/braker2_ep.png)
 
