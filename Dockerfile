@@ -45,39 +45,6 @@ RUN cd /opt && \
     
 ENV PATH=${PATH}:/opt/cdbfasta
 
-# hisat2
-#RUN cd /opt && \ 
-#    git clone https://github.com/DaehwanKimLab/hisat2.git && \
-#    cd hisat2 && \
-#    make -j 16
-
-#ENV PATH=${PATH}:/opt/hisat2
-
-# stringtie2 (ETP+)
-#RUN cd /opt && \
-#    wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-2.2.1.Linux_x86_64.tar.gz && \
-#    tar -xvf stringtie-2.2.1.Linux_x86_64.tar.gz
-
-#ENV PATH=${PATH}:/opt/stringtie-2.2.1.Linux_x86_64
-
-# gffread (ETP+)
-#RUN cd /opt && \
-#    git clone https://github.com/gpertea/gffread.git && \
-#    cd gffread && \
-#    make
-
-#ENV PATH=${PATH}:/opt/gffread
-
-# diamond
-#RUN cd /opt && \
-#    mkdir diamond && \
-#    cd diamond && \
-#    wget http://github.com/bbuchfink/diamond/releases/download/v2.0.15/diamond-linux64.tar.gz && \
-#    tar -xf diamond-linux64.tar.gz && \
-#    rm diamond-linux64.tar.gz
-
-#ENV PATH=${PATH}:/opt/diamond
-
 # tsebra
 RUN cd /opt && \
     git clone https://github.com/Gaius-Augustus/TSEBRA
@@ -120,21 +87,6 @@ RUn apt update && \
     apt install -yq libyaml-perl libhash-merge-perl libparallel-forkmanager-perl libscalar-util-numeric-perl libclass-data-inheritable-perl libexception-class-perl libtest-pod-perl libfile-which-perl libmce-perl libthread-queue-perl libmath-utils-perl libscalar-list-utils-perl && \
     apt clean all
     
-
-# bedtools (ETP+)
-
-#RUN apt update && \
-#    apt install -yq bedtools && \
-#    apt clean all
-
-# sratools (ETP+)
-
-#RUN cd /opt && \
-#    wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz && \
-#    tar -xvf sratoolkit.current-ubuntu64.tar.gz
-
-#ENV PATH=${PATH}:/opt/sratoolkit.3.0.1-ubuntu64/bin/
-
 # patch Augustus scripts (because Debian package is often outdated, this way we never need to worry)
 RUN cd /usr/share/augustus/scripts && \
     rm optimize_augustus.pl && \
