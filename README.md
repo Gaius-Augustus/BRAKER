@@ -4,7 +4,8 @@
 
 News
 ====
-:dancers: We hope that we finally bugfixed BRAKER3... try pulling the latest container from Dockerhub! GeneMark-ETP is inside, now.
+
+Join us during one of the BGA23 workshop sessions. Register here: https://bga23.org/sessions/
 
 Contacts for Repository 
 ========================
@@ -216,7 +217,7 @@ At the time of release, this BRAKER version was tested with:
 
 -   AUGUSTUS 3.4.0 <sup name="g2">[F2](#g2)</sup>
 
--   GeneMark-ES/ET/EP 4.64_lic
+-   GeneMark-ETP (source see Dockerfile)
 
 -   BAMTOOLS 2.5.1<sup name="a5">[R5](#f5)</sup>
 
