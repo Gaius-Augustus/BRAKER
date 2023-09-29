@@ -503,7 +503,7 @@ def construct_transcript_tree(tx_dict):
     - tx_dict (dict): Dictionary with transcript IDs as keys and lists of transcript feature lines as values.
     """
     seq_strand_to_transcripts = {}
-    # Pagtf_dict (dict): Dictionary with transcript_id as key and a list of GTF entries as values.)rse gtf_dict to segregate transcript data by sequence name and strand
+    # Parse gtf_dict to segregate transcript data by sequence name and strand
     for transcript_id, transcript_data in tx_dict.items():
         fields = transcript_data.split('\t')
         seq_name = fields[0]
