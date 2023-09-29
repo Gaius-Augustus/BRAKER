@@ -2,6 +2,7 @@
 
 import argparse
 import re
+from intervaltree import IntervalTree, Interval
 
 
 def read_gtf(gtf_file):
@@ -131,6 +132,7 @@ def create_introns_hash(non_gene_dict):
 def find_matching_transcripts(intron_hash1, intron_hash2):
     """
     Find matching transcript IDs based on intron patterns.
+    This only works for multi-exon genes.
     
     Args:
     - intron_hash1 (dict): Dictionary with intron strings as keys and transcript IDs from the first dataset as values.
@@ -167,6 +169,27 @@ def find_matching_transcripts(intron_hash1, intron_hash2):
 
     return matching_transcripts
 
+
+def find_single_exon_genes(non_gene_dict):
+    """
+    Find single exon genes in non_gene_dict.
+    
+    Args:
+    - non_gene_dict (dict): Dictionary with transcript_id as key and a list of 
+    GTF entries as values.
+
+    Returns:
+    dict: List of transcript IDs for single exon genes.
+    """
+    
+    single_exon_genes = {}
+    
+    for transcript_id, entries in non_gene_dict.items():
+        # Check if the transcript has only one exon
+        if len([entry for entry in entries if entry.split('\t')[2] == 'exon']) == 1:
+            single_exon_genes[transcript_id] = True
+
+    return single_exon_genes
 
 def tx_len(non_gene_dict):
     """
@@ -225,12 +248,12 @@ def overlap(exon_start, exon_end, cds_start, cds_end):
     return exon_start <= cds_end and exon_end >= cds_start
 
 
-def merge_features(braker_gtf, stringtie_gtf, selected_transcripts):
-    for braker_tx, stringtie_tx in selected_transcripts.items():
+def merge_features(tsebra_gtf, stringtie_gtf, selected_transcripts):
+    for tsebra_tx, stringtie_tx in selected_transcripts.items():
         # Retrieve features for current transcripts
-        braker_features = braker_gtf[braker_tx]
+        tsebra_features = tsebra_gtf[tsebra_tx]
         stringtie_exons = [f for f in stringtie_gtf[stringtie_tx] if f.split('\t')[2] == 'exon']
-        braker_cds_features = [f for f in braker_features if f.split('\t')[2] == 'CDS']
+        tsebra_cds_features = [f for f in tsebra_features if f.split('\t')[2] == 'CDS']
         
         for exon in stringtie_exons:
             exon_parts = exon.split('\t')
@@ -239,7 +262,7 @@ def merge_features(braker_gtf, stringtie_gtf, selected_transcripts):
             # Flag to determine if current exon should be merged
             merge_exon = True
             
-            for cds in braker_cds_features:
+            for cds in tsebra_cds_features:
                 cds_parts = cds.split('\t')
                 cds_start, cds_end = int(cds_parts[3]), int(cds_parts[4])
                 
@@ -249,28 +272,27 @@ def merge_features(braker_gtf, stringtie_gtf, selected_transcripts):
                         merge_exon = False
                         break
             
-            # Add exon to braker_features if it passed the checks
+            # Add exon to tsebra_features if it passed the checks
             if merge_exon:
-                braker_features.append(exon)
+                tsebra_features.append(exon)
         
-        # Update the braker_gtf dictionary with new features
-        braker_gtf[braker_tx] = braker_features
+        # Update the tsebra_gtf dictionary with new features
+        tsebra_gtf[tsebra_tx] = tsebra_features
 
-    return braker_gtf
+    return tsebra_gtf
 
 
-def compute_utr_features(braker_gtf):
+def compute_utr_features(tsebra_gtf):
     """
-    Compute the UTR features for each transcript in braker_gtf based on strand information.
+    Compute the UTR features for each transcript in tsebra_gtf based on strand information.
 
     Args:
-    - braker_gtf (dict): Dictionary with transcript IDs as keys and lists of GTF feature lines as values.
+    - tsebra_gtf (dict): Dictionary with transcript IDs as keys and lists of GTF feature lines as values.
 
     Returns:
-    dict: Updated braker_gtf dictionary with UTR features added.
+    dict: Updated tsebra_gtf dictionary with UTR features added.
     """
-    
-    for transcript_id, features in braker_gtf.items():
+    for transcript_id, features in tsebra_gtf.items():
         # Sort features by start position
         features.sort(key=lambda x: int(x.split('\t')[3]))
         
@@ -312,11 +334,48 @@ def compute_utr_features(braker_gtf):
                             utr3 = "\t".join(fields[:2] + ["three_prime_UTR"] + fields[3:])
                             utr3 = utr3.replace(str(end), str(cds_start - 1))
                             utr_features.append(utr3)
-
+                
         # Add the computed UTR features to the list of features for this transcript
         features.extend(utr_features)
+        features.sort(key=lambda x: int(x.split('\t')[3]))
 
-    return braker_gtf
+        # Modify StringTie exons to UTR features if needed
+        seen_cds = False
+        for idx, feature in enumerate(features):
+            fields = feature.split('\t')
+            start = int(fields[3])
+            end = int(fields[4])
+            strand = fields[6]
+            featuretype = fields[2]
+            if featuretype == "CDS":
+                seen_cds = True
+            if strand == "+" and not seen_cds:
+                utr_type = "five_prime_UTR"
+            elif strand == "-" and not seen_cds:
+                utr_type = "three_prime_UTR"
+            elif strand == "+" and seen_cds:
+                utr_type = "three_prime_UTR"
+            else:
+                utr_type = "five_prime_UTR"
+            
+            if "StringTie" in fields[1]:  # Assuming this condition identifies StringTie exons
+                # Check if it has the same start as any of its neighbors
+                same_start = False
+                for offset in [-1, 1]:
+                    if idx + offset >= 0 and idx + offset < len(features):
+                        neighbor = features[idx + offset].split('\t')
+                        if int(neighbor[3]) == start:
+                            same_start = True
+                            break
+                
+                if same_start:
+                    # Remove the StringTie feature
+                    features.pop(idx)
+                else:
+                    fields[2] = utr_type
+                    features[idx] = "\t".join(fields)
+
+    return tsebra_gtf
 
 
 def fix_feature_coordinates(gtf_dict, gene_dict, tx_to_gene_dict, tx_dict):
@@ -403,10 +462,153 @@ def print_gtf(gtf_dict, gene_dict, tx_to_gene_dict, tx_dict):
                 fields = feature.split("\t")
                 # build new gtf line
                 print(fields[0] + "\tstringtie2utr\t", "\t".join(fields[2:8]), "\ttranscript_id \"" + tx_id + "\"; gene_id \"" + tx_to_gene_dict[tx_id] + "\";")
-            elif "StringTie" not in feature:
+            else:
+            #elif "StringTie" not in feature:
                 print(feature)
 
+def build_tree(data):
+    """Build an interval tree from data. We will use that to quickly find the overlapping single exon genes/transcript pairs."""
+    tree = IntervalTree()
+    for item in data:
+        start, end, value = item
+        tree.addi(start, end, value)
+    return tree
 
+def construct_transcript_tree(tx_dict):
+    """Contructs a dictionary that has sequence name as first key, then strand as second key, and transcript interval tree as value.
+    Internally, before calling build_tree(data), a data structure for each sequence and strand must be constructed. It looks like this:
+    transcripts = [(50, 550, "tx1"), (580, 950, "tx2")]
+    
+    Args: 
+    - tx_dict (dict): Dictionary with transcript IDs as keys and lists of transcript feature lines as values.
+    """
+    seq_strand_to_transcripts = {}
+    # Pagtf_dict (dict): Dictionary with transcript_id as key and a list of GTF entries as values.)rse gtf_dict to segregate transcript data by sequence name and strand
+    for transcript_id, transcript_data in tx_dict.items():
+        fields = transcript_data.split('\t')
+        seq_name = fields[0]
+        start = int(fields[3])
+        end = int(fields[4])
+        strand = fields[6]
+        # Use setdefault to initialize a nested dictionary
+        seq_strand_dict = seq_strand_to_transcripts.setdefault(seq_name, {})
+        # Use setdefault to initialize a list for the current strand
+        data_list = seq_strand_dict.setdefault(strand, [])
+        data_list.append((start, end, transcript_id))
+    
+    # Build interval trees for each seq_name-strand combination
+    for seq_name, strand_data in seq_strand_to_transcripts.items():
+        for strand, data_list in strand_data.items():
+            seq_strand_to_transcripts[seq_name][strand] = build_tree(data_list)
+
+    return seq_strand_to_transcripts
+
+def construct_gene_tree(tx_dict, single_exons):
+    """Contructs a dictionary that has sequence name as first key, then strand as second key, and transcript interval tree as value.
+    Internally, before calling build_tree(data), a data structure for each sequence and strand must be constructed. It looks like this:
+    transcripts = [(50, 550, "tx1"), (580, 950, "tx2")]
+    
+    Args: 
+    - tx_dict (dict): Dictionary with transcript IDs as keys and lists of transcript feature lines as values.
+    - single_exons (dict): Dictionary with single-exon transcript IDs. We only want to build the tree for single-exon transcripts.
+    """
+    seq_strand_to_genes = {}
+    # Parse tx_dict to segregate gene data by sequence name and strand, but only for single-exon transcripts
+    for transcript_id, line in tx_dict.items():
+        # Check if the transcript_id is in single_exons
+        if transcript_id in single_exons:
+            fields = line.split('\t')
+            seq_name = fields[0]
+            start = int(fields[3])
+            end = int(fields[4])
+            strand = fields[6]
+
+            # Use setdefault to initialize a nested dictionary
+            seq_strand_dict = seq_strand_to_genes.setdefault(seq_name, {})
+            # Use setdefault to initialize a list for the current strand
+            data_list = seq_strand_dict.setdefault(strand, [])
+            data_list.append((start, end, transcript_id))
+    
+    # Build interval trees for each seq_name-strand combination
+    for seq_name, strand_data in seq_strand_to_genes.items():
+        for strand, data_list in strand_data.items():
+            seq_strand_to_genes[seq_name][strand] = build_tree(data_list)
+
+    return seq_strand_to_genes
+
+def find_overlapping_transcripts(gene_tree, transcript_tree):
+    """Find transcripts that overlap with genes."""
+    gene_to_transcripts = {}
+
+    # loop over the sequences in outer dict:
+    for seq_name, strand_data in gene_tree.items():
+        # loop over the strands in the inner dict:
+        for strand, gene_tree in strand_data.items():
+            # loop over the genes in the gene_tree:
+            for gene_interval in gene_tree:
+                overlapping_transcripts = transcript_tree[seq_name][strand].overlap(gene_interval.begin, gene_interval.end)
+                if overlapping_transcripts:
+                    gene_id = gene_interval.data
+                    gene_to_transcripts[gene_id] = [tx.data for tx in overlapping_transcripts]
+                    
+    return gene_to_transcripts
+
+def extract_introns_from_dict(tx_dict, tx_id):
+    """Extract introns directly from stringtie_tx_dict."""
+    introns = []
+    for feature_line in tx_dict[tx_id]:
+        feature_type, start, end = feature_line.split("\t")[2:5]
+        if feature_type == "intron":
+            introns.append((int(start), int(end)))
+    return introns
+
+def check_overlap_compatibility(gene_to_transcripts, tsebra_tx_dict, stringtie_tx_dict):
+    """Check if the overlapping transcripts are compatible with the gene models.
+    In particular, we want to make sure that no stringtie transcript contains an intron within
+    the CDS feature range of the braker transcripts. Only verfy this for those gene/transcript list matches that
+    are in gene_to_transcripts. If an intron breaks the gene/transcript association, the transcript should be removed from the list in gene_to_transcripts.
+    If the list is empty, also the key should be removed.
+
+    Args:
+    - gene_to_transcipts (dict): has transcript IDs from braker as keys and lists of transcript IDs from stringtie as values.
+    - tsebra_tx_dict (dict): Dictionary with transcript IDs as keys and the corresponding transcript line as value.
+    - stringtie_tx_dict (dict): Dictionary with transcript IDs as keys and the corresponding transcript line as value.
+
+    Returns:
+    dict: Updated gene_to_transcripts dictionary.
+    """
+    for tsebra_tx_id, stringtie_tx_ids in list(gene_to_transcripts.items()):  # Using list() to allow dictionary changes during iteration
+        tsebra_tx = tsebra_tx_dict[tsebra_tx_id]
+        for line in tsebra_tx:
+            if re.search(r'\tCDS\t', line):
+                fields = line.split('\t')
+                start = int(fields[3])
+                end = int(fields[4])
+                break # there's only one CDS because it's a single-exon transcript
+        # Assuming the CDS range is at the end of the transcript line in the format start-end
+        tsebra_cds_start, tsebra_cds_end = [start,end]
+        
+        # Store compatible transcripts
+        compatible_tx = []
+        
+        for st_tx_id in stringtie_tx_ids:
+            tx_id = re.search(r'gene_id "[^"]+"; transcript_id "([^"]+)";', st_tx_id).group(1)
+            introns = extract_introns_from_dict(stringtie_tx_dict, tx_id)
+            
+            # Check if any intron overlaps with the CDS range
+            overlap = any(intron_start <= tsebra_cds_end and intron_end >= tsebra_cds_start for intron_start, intron_end in introns)
+            
+            if not overlap:
+                compatible_tx.append(tx_id)
+                
+        # Update the dictionary
+        if compatible_tx:
+            gene_to_transcripts[tsebra_tx_id] = compatible_tx
+        else:
+            del gene_to_transcripts[tsebra_tx_id]
+    
+    return gene_to_transcripts
+    
     
 def main():
     parser = argparse.ArgumentParser(description="Updates BRAKER gene models with UTRs from a StringTie assembly.")
@@ -418,37 +620,57 @@ def main():
     args = parser.parse_args()
 
     # Now you can access the input file paths using args.braker and args.stringtie
-    braker_file = args.braker
+    tsebra_file = args.braker    # Parse tx_dict to segregate gene data by sequence name and strand, but only for single-exon transcripts
     stringtie_file = args.stringtie
 
-    # read the braker_file
-    braker_non_gene_dict, braker_gene_line_dict, braker_tx_to_gene_dict, braker_tx_dict = read_gtf(braker_file)
+    # read the tsebra_file
+    tsebra_none_gene_dict, tsebra_gene_line_dict, tsebra_tx_to_gene_dict, tsebra_tx_dict = read_gtf(tsebra_file)
 
     # read the stringtie_file
-    stringtie_non_gene_dict, stringtie_gene_line_dict, stringie_tx_to_gene_dict, stringtie_tx_dict = read_gtf(stringtie_file)
-    # add intron features to the stringtie_non_gene_dict
-    stringtie_non_gene_dict = add_intron_features(stringtie_non_gene_dict)
+    stringtie_none_gene_dict, stringtie_gene_line_dict, stringtie_tx_to_gene_dict, stringtie_tx_dict = read_gtf(stringtie_file)
 
-    # create introns hash for braker and stringtie_non_gene_dict)
-    braker_introns_hash = create_introns_hash(braker_non_gene_dict)
-    stringtie_introns_hash = create_introns_hash(stringtie_non_gene_dict)
+    # add intron features to the stringtie_none_gene_dict
+    stringtie_none_gene_dict = add_intron_features(stringtie_none_gene_dict)
+
+    # create introns hash for braker and stringtie_none_gene_dict)
+    tsebra_introns_hash = create_introns_hash(tsebra_none_gene_dict)
+    stringtie_introns_hash = create_introns_hash(stringtie_none_gene_dict)
     # find matching transcripts
-    matched_transcripts = find_matching_transcripts(braker_introns_hash, stringtie_introns_hash)
+    matched_transcripts = find_matching_transcripts(tsebra_introns_hash, stringtie_introns_hash)
+
+    # find single exon genes:
+    single_exon_genes = find_single_exon_genes(tsebra_none_gene_dict)
+    
+    # construct transcript trees for single exon overlap identification
+    seq_strand_to_transcripts = construct_transcript_tree(stringtie_tx_dict)
+    # construct gene trees for single exon overlap identification
+    seq_strand_to_genes = construct_gene_tree(tsebra_tx_dict, single_exon_genes)
+    
+    # find overlapping transcripts
+    overlaps = find_overlapping_transcripts(seq_strand_to_genes, seq_strand_to_transcripts)
+    # the overlaps might include matches where stringtie introns break cds, remove these
+    overlaps = check_overlap_compatibility(overlaps, tsebra_none_gene_dict, stringtie_none_gene_dict)
+
+    # merge the single exon matches on top of the multi exon matches
+    matched_transcripts.update(overlaps)
 
     # calculate the length of each transcript
-    tx_lens_stringtie = tx_len(stringtie_non_gene_dict)
+    tx_lens_stringtie = tx_len(stringtie_none_gene_dict)
 
     # select the longest transcript for each key in matched_transcripts
     final_matching_tx = select_longest_tx(matched_transcripts, tx_lens_stringtie)
 
-    # merge features from stringtie_gtf into braker_gtf based on the selected transcripts
-    braker_gtf = merge_features(braker_non_gene_dict, stringtie_non_gene_dict, final_matching_tx)
+    # merge features from stringtie_gtf into tsebra_gtf based on the selected transcripts
+    tsebra_gtf = merge_features(tsebra_none_gene_dict, stringtie_none_gene_dict, final_matching_tx)
     # compute UTR features
-    braker_gtf = compute_utr_features(braker_gtf)
+    tsebra_gtf = compute_utr_features(tsebra_gtf)
     # fix gene and transcript coordinates
-    braker_gene_line_dict, braker_tx_dict = fix_feature_coordinates(braker_gtf, braker_gene_line_dict, braker_tx_to_gene_dict, braker_tx_dict)
-    # print the updated braker_gtf
-    print_gtf(braker_gtf, braker_gene_line_dict, braker_tx_to_gene_dict, braker_tx_dict)
+    tsebra_gene_line_dict, tsebra_tx_dict = fix_feature_coordinates(tsebra_gtf, tsebra_gene_line_dict, tsebra_tx_to_gene_dict, tsebra_tx_dict)
+    # print the updated tsebra_gtf
+    print_gtf(tsebra_gtf, tsebra_gene_line_dict, tsebra_tx_to_gene_dict, tsebra_tx_dict)
+
+
+    print(overlaps)
 
 if __name__ == "__main__":
     main()
