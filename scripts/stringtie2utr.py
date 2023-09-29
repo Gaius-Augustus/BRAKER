@@ -448,11 +448,12 @@ def fix_feature_coordinates(gtf_dict, gene_dict, tx_to_gene_dict, tx_dict):
     return gene_dict, tx_dict
 
 
-def print_gtf(gtf_dict, gene_dict, tx_to_gene_dict, tx_dict):
+def print_gtf(filename, gtf_dict, gene_dict, tx_to_gene_dict, tx_dict):
     """
     Print GTF lines based on gene_dict and gtf_dict.
     
     Args:
+    - filename (str): Path to the output file.
     - gtf_dict (dict): Dictionary with transcript IDs as keys and lists of non-gene feature lines as values.
     - gene_dict (dict): Dictionary with gene IDs extracted from the last column of gene feature lines as keys and the corresponding gene line as value.
     - tx_to_gene_dict (dict): Dictionary with transcript IDs as keys and the corresponding gene ID as value, extracted from the last column of transcript feature lines.
@@ -462,23 +463,28 @@ def print_gtf(gtf_dict, gene_dict, tx_to_gene_dict, tx_dict):
     None: Prints the GTF lines to stdout.
     """
     printed_gene = {}
-    # Iterate over gene_dict entries
-    for tx_id, tx_line in tx_dict.items():
-        gene_id = tx_to_gene_dict[tx_id]
-        if not gene_id in printed_gene:
-            print(gene_dict[tx_to_gene_dict[tx_id]])
-            printed_gene[gene_id] = True
-        print(tx_line)
-        sorted_features = sorted(gtf_dict.get(tx_id, []), key=lambda x: int(x.split('\t')[3]))
-        for feature in sorted_features:
-            # If the feature is a UTR line, remove the exon_number
-            if "UTR" in feature:
-                # split line into fields
-                fields = feature.split("\t")
-                # build new gtf line
-                print(fields[0] + "\tstringtie2utr\t", "\t".join(fields[2:8]), "\ttranscript_id \"" + tx_id + "\"; gene_id \"" + tx_to_gene_dict[tx_id] + "\";")
-            else:
-                print(feature)
+    try:
+        with open(filename, 'w') as f:
+            # Iterate over gene_dict entries
+            for tx_id, tx_line in tx_dict.items():
+                gene_id = tx_to_gene_dict[tx_id]
+                if not gene_id in printed_gene:
+                    f.write(gene_dict[tx_to_gene_dict[tx_id]] + "\n")
+                    printed_gene[gene_id] = True
+                f.write(tx_line + "\n")
+                sorted_features = sorted(gtf_dict.get(tx_id, []), key=lambda x: int(x.split('\t')[3]))
+                for feature in sorted_features:
+                    # If the feature is a UTR line, remove the exon_number
+                    if "UTR" in feature:
+                        # split line into fields
+                        fields = feature.split("\t")
+                        # build new gtf line
+                        f.write(fields[0] + "\tstringtie2utr\t" + "\t".join(fields[2:8]) + "\ttranscript_id \"" + tx_id + "\"; gene_id \"" + tx_to_gene_dict[tx_id] + "\";" + "\n")
+                    else:
+                        f.write(feature + "\n")
+    except IOError:
+        print("Could not write to file: " + filename)
+        exit(1)
 
 def build_tree(data):
     """Build an interval tree from data. We will use that to quickly find the overlapping single exon genes/transcript pairs."""
@@ -625,63 +631,60 @@ def check_overlap_compatibility(gene_to_transcripts, tsebra_tx_dict, stringtie_t
     
     
 def main():
-    parser = argparse.ArgumentParser(description="Updates BRAKER gene models with UTRs from a StringTie assembly.")
+    parser = argparse.ArgumentParser(description="Updates GaiusAugustus gene models with UTRs from a StringTie assembly.")
     
     # Mandatory input arguments
-    parser.add_argument("-b", "--braker", required=True, help="File with BRAKER gene models in GTF format")
+    parser.add_argument("-g", "--genes", required=True, help="File with gene gene models in GTF format, typically the output of Augustus, BRAKER, or TSEBRA.")
     parser.add_argument("-s", "--stringtie", required=True, help="File with StringTie transcript models in GFF format")
+    parser.add_argument("-o", "--output", required=True, help="Output file name, file is in GTF format.")
 
     args = parser.parse_args()
 
-    # Now you can access the input file paths using args.braker and args.stringtie
-    tsebra_file = args.braker    # Parse tx_dict to segregate gene data by sequence name and strand, but only for single-exon transcripts
+    tsebra_file = args.genes 
     stringtie_file = args.stringtie
 
-    # read the tsebra_file
+    # read the tsebra_file with gene models
     tsebra_none_gene_dict, tsebra_gene_line_dict, tsebra_tx_to_gene_dict, tsebra_tx_dict = read_gtf(tsebra_file)
-
     # read the stringtie_file
     stringtie_none_gene_dict, stringtie_gene_line_dict, stringtie_tx_to_gene_dict, stringtie_tx_dict = read_gtf(stringtie_file)
-
     # add intron features to the stringtie_none_gene_dict
     stringtie_none_gene_dict = add_intron_features(stringtie_none_gene_dict)
 
-    # create introns hash for braker and stringtie_none_gene_dict)
+    # in order to match genes and transcripts efficiently, we will take 2 different approaches. For multi-exon genes,
+    # we create intron hashes for matching transcripts. For single-exon genes, we construct interval trees.
+    # first the multi-exon gene matching
     tsebra_introns_hash = create_introns_hash(tsebra_none_gene_dict)
     stringtie_introns_hash = create_introns_hash(stringtie_none_gene_dict)
-    # find matching transcripts
     matched_transcripts = find_matching_transcripts(tsebra_introns_hash, stringtie_introns_hash)
 
-    # find single exon genes:
+    # find single exon genes, these now do not have UTRs yet
     single_exon_genes = find_single_exon_genes(tsebra_none_gene_dict)
     
-    # construct transcript trees for single exon overlap identification
+    # construct transcript trees
     seq_strand_to_transcripts = construct_transcript_tree(stringtie_tx_dict)
-    # construct gene trees for single exon overlap identification
     seq_strand_to_genes = construct_gene_tree(tsebra_tx_dict, single_exon_genes)
-    
-    # find overlapping transcripts
     overlaps = find_overlapping_transcripts(seq_strand_to_genes, seq_strand_to_transcripts)
     # the overlaps might include matches where stringtie introns break cds, remove these
     overlaps = check_overlap_compatibility(overlaps, tsebra_none_gene_dict, stringtie_none_gene_dict)
-
     # merge the single exon matches on top of the multi exon matches
     matched_transcripts.update(overlaps)
 
-    # calculate the length of each transcript
+    # We may now have several alternative RNA-Seq inferred transcripts that match a single predicted transcript
+    # we will select the longest of these. For this calculate the length of each transcript
     tx_lens_stringtie = tx_len(stringtie_none_gene_dict)
-
-    # select the longest transcript for each key in matched_transcripts
     final_matching_tx = select_longest_tx(matched_transcripts, tx_lens_stringtie)
 
-    # merge features from stringtie_gtf into tsebra_gtf based on the selected transcripts
+    # merge features from stringtie_gtf into tsebra_gtf based on the selected transcripts, this is a simple concatenation,
+    # UTR features are not inferred, yet
     tsebra_gtf = merge_features(tsebra_none_gene_dict, stringtie_none_gene_dict, final_matching_tx)
-    # compute UTR features
+    # compute UTR features, remove StringTie exon features
     tsebra_gtf = compute_utr_features(tsebra_gtf)
-    # fix gene and transcript coordinates
+
+    # expanding gene/transcripts by UTRs shifts the coordinates of these features, we need to update the coordinates in the gene and transcript lines
     tsebra_gene_line_dict, tsebra_tx_dict = fix_feature_coordinates(tsebra_gtf, tsebra_gene_line_dict, tsebra_tx_to_gene_dict, tsebra_tx_dict)
+
     # print the updated tsebra_gtf
-    print_gtf(tsebra_gtf, tsebra_gene_line_dict, tsebra_tx_to_gene_dict, tsebra_tx_dict)
+    print_gtf(args.output, tsebra_gtf, tsebra_gene_line_dict, tsebra_tx_to_gene_dict, tsebra_tx_dict)
 
 if __name__ == "__main__":
     main()
