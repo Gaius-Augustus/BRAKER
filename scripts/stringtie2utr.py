@@ -566,10 +566,12 @@ def find_overlapping_transcripts(gene_tree, transcript_tree):
         for strand, gene_tree in strand_data.items():
             # loop over the genes in the gene_tree:
             for gene_interval in gene_tree:
-                overlapping_transcripts = transcript_tree[seq_name][strand].overlap(gene_interval.begin, gene_interval.end)
-                if overlapping_transcripts:
-                    gene_id = gene_interval.data
-                    gene_to_transcripts[gene_id] = [tx.data for tx in overlapping_transcripts]
+                if seq_name in transcript_tree:
+                    if strand in transcript_tree[seq_name]:
+                        overlapping_transcripts = transcript_tree[seq_name][strand].overlap(gene_interval.begin, gene_interval.end)
+                        if overlapping_transcripts:
+                            gene_id = gene_interval.data
+                            gene_to_transcripts[gene_id] = [tx.data for tx in overlapping_transcripts]
                     
     return gene_to_transcripts
 
