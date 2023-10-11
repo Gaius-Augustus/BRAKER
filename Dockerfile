@@ -167,6 +167,16 @@ RUN cd /usr/share/augustus/scripts && \
     wget https://raw.githubusercontent.com/Gaius-Augustus/Augustus/master/scripts/createAugustusJoblist.pl && \
     chmod a+x optimize_augustus.pl aa2nonred.pl gff2gbSmallDNA.pl new_species.pl filterGenesIn_mRNAname.pl filterGenes.pl filterGenesIn.pl join_mult_hints.pl randomSplit.pl join_aug_pred.pl getAnnoFastaFromJoingenes.py gtf2gff.pl splitMfasta.pl createAugustusJoblist.pl
 
+RUN cd /usr/share/augustus/config && \
+    mkdir parameters && \
+    cd parameters && \
+    wget https://raw.githubusercontent.com/Gaius-Augustus/Augustus/master/config/parameters/AUG_CMDLN_PARAMETERS.md && \
+    wget https://raw.githubusercontent.com/Gaius-Augustus/Augustus/master/config/parameters/aug_cmdln_parameters.json && \
+    chmod a+r AUG_CMDLN_PARAMETERS.md aug_cmdln_parameters.json && \
+    cd .. && \
+    chmod a+r parameters && \
+    chmod a+x parameters
+
 # bamtools (ETP+)
 
 RUN apt update && \
@@ -188,9 +198,8 @@ USER root
 # braker including RNAseq test file
 
 RUN cd /opt && \
-    git clone      https://github.com/Gaius-Augustus/BRAKER.git && \
+    git clone   --depth=1         https://github.com/Gaius-Augustus/BRAKER.git && \
     cd BRAKER && \
-    git checkout braker3  && \
     cd example && \
     wget http://bioinf.uni-greifswald.de/augustus/datasets/RNAseq.bam
 
@@ -204,7 +213,7 @@ RUN cd /opt && \
     chmod a+x /opt/ETP/bin/*py /opt/ETP/bin/*pl /opt/ETP/tools/*
 
 ENV GENEMARK_PATH=/opt/ETP/bin
-ENV PATH=${PATH}:/opt/ETP/bin:/opt/ETP/tools:/opt/ETP/bin/gmes/ProtHint/bin
+ENV PATH=${PATH}:/opt/ETP/bin:/opt/ETP/tools:/opt/ETP/bin/gmes/ProtHint/bin:/opt/ETP/bin/gmes
 
 USER ${NB_UID}
 
