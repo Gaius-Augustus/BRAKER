@@ -7031,7 +7031,7 @@ sub fix_ifs_genes{
     }
     $cmdStr .= " > $otherfilesDir/fix_in_frame_stop_codon_genes_".$label.".log "
             ."2> $errorfilesDir/fix_in_frame_stop_codon_genes_".$label.".err";
-    print LOG $cmdStr . "\n"  if ($v > 3);
+    print LOG $cmdStr . "\n"  if ($v > 2);
     system("$cmdStr") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdStr\n");
