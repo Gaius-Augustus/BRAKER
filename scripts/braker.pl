@@ -1085,7 +1085,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
         if (-e "$etpplus_dir/training.gtf") {
             $traingtf = "$etpplus_dir/training.gtf";
         }elsif (-e "$etpplus_dir/proteins.fa/model/training.gtf"){
-            $traingtf = "$etpplus_dir/proteins.fa/training.gtf";
+            $traingtf = "$etpplus_dir/proteins.fa/model/training.gtf";
         }
     }
     if (not(-e $traingtf) || not(-e $geneMarkGtf) ) {
@@ -5514,6 +5514,18 @@ sub GeneMark_ETP {
         . "\nfailed to execute: $cmdString!\n");
 
     sortGeneMark("$genemarkDir/training.gtf");
+
+    if ( ! -e "$genemarkDir/genemark.gtf" )
+    {
+        $cmdString = "ln -sf $geneMarkGtf $genemarkDir/genemark.gtf";
+        print LOG "\# "
+        . (localtime)
+        . ": link GeneMark-ETP genes to $genemarkDir/genemark.gtf\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nfailed to execute: $cmdString!\n");
+    }
 }
 
 ####################### get_etp_hints_for_Augustus #############################
