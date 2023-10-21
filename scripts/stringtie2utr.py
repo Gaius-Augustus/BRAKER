@@ -363,7 +363,7 @@ def compute_utr_features(tsebra_gtf):
             featuretype = fields[2]
             if featuretype == "CDS":
                 seen_cds = True
-            if strand == "+" and not seen_cds:setfacl -R -m u:gabriell:rwx /home/nas-hs/projs/
+            if strand == "+" and not seen_cds:
                 utr_type = "five_prime_UTR"
             elif strand == "-" and not seen_cds:
                 utr_type = "three_prime_UTR"
