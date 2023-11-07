@@ -159,9 +159,8 @@ ENV PATH=${PATH}:/opt/BRAKER/scripts
 
 # include ETP
 RUN cd /opt && \
-    wget  http://topaz.gatech.edu/GeneMark/etp.for_braker.tar.gz && \
-    tar -xzf etp.for_braker.tar.gz && \
-    mv etp.for_braker ETP && \
+    git clone https://github.com/gatech-genemark/GeneMark-ETP.git && \
+    mv GeneMark-ETP ETP && \
     chmod a+x /opt/ETP/bin/*py /opt/ETP/bin/*pl /opt/ETP/tools/*
 
 ENV GENEMARK_PATH=/opt/ETP/bin
