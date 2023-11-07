@@ -2045,8 +2045,6 @@ sub set_HISAT2_PATH {
 
 ####################### set_GENEMARK_PATH ######################################
 # * set path to gmes_petap.pl (or to gmetp.pl in ETPmode)
-# * be aware that GeneMark requires a valid license key file, usually placed
-#   home directory as invisible file .gm_key
 # * and set \$GENEMARK_PATH as their parent directory
 ################################################################################
 
@@ -5144,9 +5142,7 @@ sub GeneMark_ES {
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ ."\nFailed to execute: $perlCmdString\n"
-                    . "The most common problem is an expired or not "
-                    . "present file ~/.gm_key!\n");
+                    . __LINE__ ."\nFailed to execute: $perlCmdString !\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
@@ -5225,9 +5221,7 @@ sub GeneMark_ET {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n"
-                    . "Failed to execute: $perlCmdString\n"
-                    . "The most common problem is an expired or not "
-                    . "present file ~/.gm_key!\n");
+                    . "Failed to execute: $perlCmdString !\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
@@ -5308,9 +5302,7 @@ sub GeneMark_EP {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n"
-                    . "Failed to execute: $perlCmdString\n"
-                    . "The most common problem is an expired or not "
-                    . "present file ~/.gm_key!\n");
+                    . "Failed to execute: $perlCmdString !\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
@@ -5472,8 +5464,7 @@ sub GeneMark_ETP {
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n"
                     . "Failed to execute: $perlCmdString\n"
-                    . "The most common problem is an expired or not "
-                    . "present file ~/.gm_key or that GeneMark-ETP "
+                    . "The most common problem is that GeneMark-ETP "
                     . "didn't receive enough evidence from the input data, "
                     . "in this case, see errors/GeneMark-ETP.stderr!\n");
             print LOG "\# "

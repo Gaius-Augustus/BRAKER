@@ -169,8 +169,6 @@ Container
 
 We are aware that the "manual" installation of BRAKER3 and all its dependencies is tedious and really challenging without root permissions. Therefore, we provide a Docker container that has been developed to be run with Singularity. All information on this container can be found at https://hub.docker.com/r/teambraker/braker3
 
-Be aware that you need to install a valid license key in your home directory in order to use GeneMark-ETP in the container. (The software itself is contained.)
-
 This container has currently the following shortcoming: as RNA-Seq input, we have only tested bam-files, not fastq files or SRA IDs. We might improve this in the future.
 
 In short, build it as follows:
@@ -182,7 +180,6 @@ singularity build braker3.sif docker://teambraker/braker3:latest
 Execute with:
 
 ```
-singularity exec braker3.sif print_braker3_setup.py
 singularity exec braker3.sif braker.pl
 ```
 
@@ -412,14 +409,6 @@ In order to set the environment variable for your current Bash session, type:
     export GENEMARK_PATH=/your_path_to_GeneMark-EX_executables/
 
 Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.
-
-**Important:** GeneMark-EX will only run if a valid key file resides in your home directory. The key file will expire after 200 days, which means that you have to download a new GeneMark-EX release and a new key file after 200 days. The key file is downloaded as ```gm_key.gz```. Unpack the key file and move it to a hidden file **in your home directory** as follows:
-
-```
-cd # change to your home directory
-gunzip gm_key_64.gz
-mv gm_key_64 .gm_key
-```
 
 Perl scripts within GeneMark-EX are configured with default Perl location at `/usr/bin/perl`.
 
@@ -1213,11 +1202,9 @@ Common problems
 
 -   *GeneMark fails!*
 
-    (a) GeneMark requires a valid hidden key file in your home directory (`~/.gm_key`). The file expires after 200 days. Please check whether you have a valid key file before reporting an issue about this. Also, BRAKER may issue a WARNING that GeneMark is likely going to fail due to limited extrinsic evidence. If you see that warning, please don't open an issue but try a different approach towards annotating your genome. For example, you can add more evidence data, you can try the protein mapping pipeline approach, you can try running `--esmode` without extrinsic evidence, ...
+    (a) GeneMark by default only uses contigs longer than 50k for training. If you have a highly fragmented assembly, this might lead to "no data" for training. You can override the default minimal length by setting the BRAKER argument `--min_contig=10000`.
 
-    (b) GeneMark by default only uses contigs longer than 50k for training. If you have a highly fragmented assembly, this might lead to "no data" for training. You can override the default minimal length by setting the BRAKER argument `--min_contig=10000`.
-
-    (c) see "[something] failed to execute" below.
+    (b) see "[something] failed to execute" below.
 
 -   *[something] failed to execute!*
 
