@@ -2845,7 +2845,7 @@ sub find_tsebra_cfg {
 # * priority in descending order: BAM, paired (_1/_2), paired(_R1/_R2), unpaired
 ################################################################################
 sub check_rnaseq_sets{
-    my $fastq_file_extensions = "fastq|fq|fasta|fa";
+    my $fastq_file_extensions = "fastq|fq|fasta|fa|fastq.gz|fq.gz|fasta.gz|fa.gz";
     my @dir_content;
     $logString
         .= "\# "
@@ -2892,7 +2892,7 @@ sub check_rnaseq_sets{
 
         # search for paired or unpaired RNA-Sets in FASTQ format
         # check if there are multiple RNA-Seq sets
-        @candidate_files = grep(/$rna_set(_1|_R1|).($fastq_file_extensions)$/, @dir_content);
+        @candidate_files = grep(/$rna_set(_1|_R1|).($fastq_file_extensions)$/, @dir_content);        
         if ($#candidate_files > 1) {
             $logString .= "\# " . (localtime)
             . " WARNING: Found more than one RNA-Seq Library in FASTQ format for $rna_set."
@@ -2906,10 +2906,8 @@ sub check_rnaseq_sets{
             @candidate_files = grep(/${rna_set}${e}.($fastq_file_extensions)$/, @dir_content);
             if (not ($e eq "")) {
                 foreach my $file (@candidate_files) {
-
                     my $ext1 = $e =~ s/1/2/r;
-                    my ($ext2) = $file =~ /(\.[^.]+)$/;
-                    my @candidate_pairs = grep(/${rna_set}${ext1}${ext2}/, @current_files);
+                    my @candidate_pairs = grep(/${rna_set}${ext1}.($fastq_file_extensions)$/, @current_files);                    
                     if (@candidate_pairs) {
                         @curr_rna_lib = ($file, $candidate_pairs[0]);
                         $logString .= "\# " . (localtime)
@@ -4414,7 +4412,7 @@ sub make_bam_file {
         . (localtime)
         . ": Mapping RNA-Seq reads to the genome...\n" if ($v > 2);
     foreach (keys(%rnaseq_libs)) {
-#         $string = join ",", @{$rnaseq_libs{$_}};
+        
         print LOG "\# "
             . (localtime)
             . ": Mapping $_ ...\n" if ($v > 1);
