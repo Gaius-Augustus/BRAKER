@@ -130,10 +130,11 @@ def print_gc_range(content_dic):
         all_slices += g
     if not numpy_imported:
         all_slices.sort()
-    gc_range = []
-    for p in config['percentiles']:
-        gc_range.append(get_percentile(all_slices, p))
-        print(f'{p}-percentile:{config["delimiter"]}{gc_range[-1]}')
+    if all_slices:
+        gc_range = []
+        for p in config['percentiles']:
+            gc_range.append(get_percentile(all_slices, p))
+            print(f'{p}-percentile:{config["delimiter"]}{gc_range[-1]}')
 
 def get_percentile(array, q):
     if numpy_imported:
