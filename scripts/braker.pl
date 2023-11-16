@@ -774,7 +774,7 @@ $pubs{'blast2'} = "\nCamacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoul
 $pubs{'gm-es'} = "\nLomsadze, A., Ter-Hovhannisyan, V., Chernoff, Y. O., & Borodovsky, M. (2005). Gene identification in novel eukaryotic genomes by self-training algorithm. Nucleic acids research, 33(20), 6494-6506.\n";
 $pubs{'gm-et'} = "\nLomsadze, A., Burns, P. D., & Borodovsky, M. (2014). Integration of mapped RNA-Seq reads into automatic training of eukaryotic gene finding algorithm. Nucleic acids research, 42(15), e119-e119.\n";
 $pubs{'gm-ep'} = "\nBruna, T., Lomsadze, A., & Borodovsky, M. (2020). GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026.\n";
-$pubs{'gm-etp'} = "\nBruna, T., Lomsadze, A., & Borodovsky, M. (2023). GeneMark-ETP: Automatic Gene Finding in Eukaryotic Genomes in Consistence with Extrinsic Data. bioRxiv, 2023-01.\n";
+$pubs{'gm-etp'} = "\nBruna, T., Lomsadze, A., & Borodovsky, M. (2023). GeneMark-ETP: Automatic Gene Finding in Eukaryotic Genomes in Consistence with Extrinsic Data. bioRxiv, https://doi.org/10.1101/2023.01.13.524024.\n";
 $pubs{'gm-fungus'} = "\nTer-Hovhannisyan, V., Lomsadze, A., Chernoff, Y. O., & Borodovsky, M. (2008). Gene prediction in novel fungal genomes using an ab initio algorithm with unsupervised training. Genome research, 18(12), 1979-1990.\n";
 $pubs{'samtools'} = "\nLi, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., ... & Durbin, R. (2009). The sequence alignment/map format and SAMtools. Bioinformatics, 25(16), 2078-2079.\n";
 $pubs{'bamtools'} = "\nBarnett, D. W., Garrison, E. K., Quinlan, A. R., Strömberg, M. P., & Marth, G. T. (2011). BamTools: a C++ API and toolkit for analyzing and managing BAM files. Bioinformatics, 27(12), 1691-1692.\n";
@@ -788,6 +788,8 @@ $pubs{'sratoolkit'} = "\nSRA Toolkit Development Team (2020). SRA Toolkit. https
 $pubs{'hisat2'} = "\nKim, D., Paggi, J. M., Park, C., Bennett, C., & Salzberg, S. L. (2019). Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype. Nature biotechnology, 37(8):907-915.\n";
 $pubs{'stringtie'} = "\nKovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.\n";
 $pubs{'gffread'} = "\nPertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.\n";
+$pubs{'tsebra'} = "\nGabriel, L., Hoff, K. J., Bruna, T., Borodovsky, M., & Stanke, M. (2021). TSEBRA: transcript selector for BRAKER. BMC Bioinformatics, 22:566.\n";
+$pubs{'braker3'} = "\nGabriel, L., Bruna, T., Hoff, K. J., Ebel, M., Lomsadze, A., Borodovsky, M., & Stanke, M. (2023). BRAKER3: Fully Automated Genome Annotation Using RNA-Seq and Protein Evidence with GeneMark-ETP, AUGUSTUS and TSEBRA. bioRxiv, https://doi.org/10.1101/2023.06.10.544449.\n";
 
 
 # Make paths to input files absolute ###########################################
@@ -1422,7 +1424,7 @@ if (%rnaseq_libs) {
     make_bam_file();
 }
 
-# make hints from protein data if EPmode/ETPömode
+# make hints from protein data if EPmode/ETPmode
 if( !$ETPmode && @prot_seq_files ){
     run_prothint();
 }
@@ -1474,6 +1476,7 @@ if ($ETPmode) {
     # AUGUSTUS as well
     create_evidence_gff();
     GeneMark_ETP();
+    print CITE $pubs{'braker3'}; $pubs{'braker3'} = "";
 }
 
 if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
@@ -8325,6 +8328,7 @@ sub merge_transcript_sets_with_tsebra {
     if ($nice) {
         $cmdString .= "nice ";
     }
+    print CITE $pubs{'tsebra'}; $pubs{'tsebra'} = "";
     $cmdString .= "$TSEBRA_PATH/tsebra.py ";
     $arg_str = join(',', @gene_sets);
     if ( !$arg_str eq "" ){
