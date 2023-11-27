@@ -4448,7 +4448,7 @@ sub make_bam_file {
             . ": Converting SAM file into a sorted BAM file for $_.\n" if ($v > 1);
         $errorfile = "$errorfilesDir/samtools.$_.stderr";
         $stdoutfile = "$errorfilesDir/samtools.$_.stdout";
-        $cmdString = "samtools sort -o $map_dir/$_.bam -@ $CPU $map_dir/$_.sam"
+        $cmdString = "$SAMTOOLS_PATH//samtools sort -o $map_dir/$_.bam -\@ $CPU $map_dir/$_.sam"
                 . " 1> $stdoutfile 2> $errorfile";
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0
@@ -5386,7 +5386,7 @@ sub GeneMark_ETP {
                 }
                 $errorfile = "$errorfilesDir/samtools.sort.$lib.stderr";
                 $stdoutfile = "$errorfilesDir/samtools.sort.$lib.stdout";
-                $cmdString = "samtools sort $_ -\@ ".($CPU-1)." -o $genemarkDir/etp_data/".$lib.".bam"
+                $cmdString = "$SAMTOOLS_PATH/samtools sort $_ -\@ ".($CPU-1)." -o $genemarkDir/etp_data/".$lib.".bam"
                     . " 1> $stdoutfile 2> $errorfile";
                 # $cmdString = "ln -s $_ $genemarkDir/etp_data/".$lib.".bam";
                 print LOG "$cmdString\n" if ($v > 3);
