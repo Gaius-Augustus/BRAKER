@@ -761,6 +761,8 @@ can either extract RNA-Seq spliced alignment information from `bam` files, or it
            --bam=file1.bam,file2.bam
     ```
 
+    Please note that we generally assume that bam files were generated with HiSat2 because that is the aligner that would also be executed by BRAKER3 with fastq input. If you want for some reason to generate the bam files with STAR, use the option `--outSAMstrandField intronMotif` of STAR to produce files that are compatible wiht StringTie in BRAKER3.
+
 -   In order to run BRAKER with RNA-Seq spliced alignment information that has already been extracted, run:
 
     ```
