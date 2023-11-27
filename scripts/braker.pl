@@ -808,6 +808,9 @@ $pubs{'stringtie'} = "\nKovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Sa
 $pubs{'gffread'} = "\nPertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.\n";
 $pubs{'tsebra'} = "\nGabriel, L., Hoff, K. J., Bruna, T., Borodovsky, M., & Stanke, M. (2021). TSEBRA: transcript selector for BRAKER. BMC Bioinformatics, 22:566.\n";
 $pubs{'braker3'} = "\nGabriel, L., Bruna, T., Hoff, K. J., Ebel, M., Lomsadze, A., Borodovsky, M., & Stanke, M. (2023). BRAKER3: Fully Automated Genome Annotation Using RNA-Seq and Protein Evidence with GeneMark-ETP, AUGUSTUS and TSEBRA. bioRxiv, https://doi.org/10.1101/2023.06.10.544449.\n";
+$pubs{'busco'} = "\nSimao, F. A., Waterhouse, R. M., Ioannidis, P., Kriventseva, E. V., & Zdobnov, E. M. (2015). BUSCO: assessing genome assembly and annotation completeness with single-copy orthologs. Bioinformatics, 31(19), 3210-3212.\n";
+$pubs{'miniprot'} = "\nLi, H. (2023). Protein-to-genome alignment with miniprot. Bioinformatics, 30(1):btad014.\n";
+$pubs{'compleasm'} = "\nHuang, N., & Li, H. (2023). compleasm: a faster and more accurate reimplementation of BUSCO. Bioinformatics 39(10):btad595.\n";
 
 
 # Make paths to input files absolute ###########################################
@@ -877,7 +880,9 @@ set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
 fix_AUGUSTUS_CONFIG_PATH();
 set_PYTHON3_PATH();
-set_COMPLEASM_PATH();
+if (defined($busco_lineage)){
+    set_COMPLEASM_PATH(); # todo: make sure that compleasm to hints actually passes the path, or make the hints script a hints parser, only
+}
 
 if($UTR eq "on" || $addUTR eq "on"){
     set_JAVA_PATH();
@@ -1364,7 +1369,7 @@ if (@prot_seq_files) {
     my @tmp_prot_seq;
     foreach (@prot_seq_files) {
         push(@tmp_prot_seq, $_);
-        check_fasta_headers($_, 0);
+        check_fasta_headers($_, 0); # todo: this generates a header map that looks like it's genome headers, needs to be fixed
     }
     @prot_seq_files = @tmp_prot_seq;
 }
@@ -1446,6 +1451,11 @@ if (%rnaseq_libs) {
 # make hints from protein data if EPmode/ETPmode
 if( !$ETPmode && @prot_seq_files ){
     run_prothint();
+}
+
+# make BUSCO hints with compleasm
+if (defined($busco_lineage)) {
+    make_compleasm_hints();
 }
 
 # make hints from RNA-Seq
@@ -4493,6 +4503,52 @@ sub make_bam_file {
                 . __LINE__ ."\nCouldn't create BAM file for $_!\n");
         }
     }
+}
+
+#################### make_compleasm_hints ######################################
+# * make hints from compleasm with BUSCOs
+# * this will only pick up BUSCOs without frameshift that are complete/duplicated
+# * the hints are trimmed by 3 nt on each end, converted to CDSpart
+# * M hints (enforced in prediction)
+################################################################################
+
+sub make_compleasm_hints {
+    print LOG "\# "
+        . (localtime)
+        . ": Running compleasm and converting the output to hints\n" if ($v > 2);
+    my $compleasm_hints = "$otherfilesDir/compleasm_hints.gff";
+    # call compleasm_to_hints.py from Augustus scripts
+    $string = find(
+        "compleasm_to_hints.py", $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH,  $AUGUSTUS_CONFIG_PATH
+    );
+    $errorfile = "$errorfilesDir/compleasm_to_hints.stderr";
+    $cmdString = "$string -p $COMPLEASM_PATH/compleasm.py -g $genome -d $busco_lineage -t $CPU "
+        . "-o $compleasm_hints 1> $errorfile 2>&1";
+    open(CHINTS, "<", $compleasm_hints) or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__
+        . " at line ". __LINE__
+        . "\nFailed to open $compleasm_hints!\n");
+    open(HINTS, ">>", "$otherfilesDir/hintsfile.gff") or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
+
+    while(<CHINTS>){
+        print HINTS $_;
+    }
+    close(CHINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__
+        . " at line ". __LINE__
+        . "\nFailed to open $compleasm_hints!\n");
+
+    close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile.gff!\n");
+
+    print LOG "\# " . (localtime)
+        . ": Generating hints from compleasm (genome level) finished.\n" if ($v > 2);
 }
 
 ####################### make_rnaseq_hints ######################################
