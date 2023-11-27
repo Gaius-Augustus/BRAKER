@@ -4513,6 +4513,9 @@ sub make_bam_file {
 ################################################################################
 
 sub make_compleasm_hints {
+    print CITE $pubs{'busco'}; $pubs{'busco'} = "";
+    print CITE $pubs{'miniprot'}; $pubs{'miniprot'} = "";
+    print CITE $pubs{'compleasm'}; $pubs{'compleasm'} = "";
     print LOG "\# "
         . (localtime)
         . ": Running compleasm and converting the output to hints\n" if ($v > 2);
