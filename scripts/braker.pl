@@ -2064,10 +2064,10 @@ sub set_SRATOOLS_PATH {
                     \@required_files, 'exit');
 }
 
-####################### set_compleasm_PATH #####################################
+####################### set_COMPLEASM_PATH #####################################
 # * set path to compleasm
 ################################################################################
-sub set_compleasm_PATH {
+sub set_COMPLEASM_PATH {
     my @required_files = ('compleasm.py');
     $COMPLEASM_PATH = set_software_PATH($compleasm_path, "COMPLEASM_PATH",
                     \@required_files, 'exit');
@@ -4525,6 +4525,13 @@ sub make_compleasm_hints {
     $errorfile = "$errorfilesDir/compleasm_to_hints.stderr";
     $cmdString = "$string -p $COMPLEASM_PATH/compleasm.py -g $genome -d $busco_lineage -t $CPU "
         . "-o $compleasm_hints 1> $errorfile 2>&1";
+    # execute the command string
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nFailed to execute: $cmdString!\n");
+
     open(CHINTS, "<", $compleasm_hints) or
         clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
         $useexisting, "ERROR in file " . __FILE__
