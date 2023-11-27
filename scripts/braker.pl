@@ -144,6 +144,16 @@ FREQUENTLY USED OPTIONS
 --makehub                           Create track data hub with make_hub.py
                                     for visualizing BRAKER results with the
                                     UCSC GenomeBrowser
+--busco_lineage=lineage             If you provide a BUSCO lineage, BRAKER will
+                                    run compleasm on genome level to generate hints
+                                    from BUSCO to enhance BUSCO discovery in the
+                                    protein set. Also, if you provide a BUSCO
+                                    lineage, BRAKER will run compleasm to assess
+                                    the protein sets that go into TSEBRA combination,
+                                    and will determine the TSEBRA mode to maximize
+                                    BUSCO. Do not provide a busco_lineage if you
+                                    want to determina natural BUSCO sensivity of
+                                    BRAKER!
 --email                             E-mail address for creating track data hub
 --version                           Print version number of braker.pl
 --help                              Print this help message
@@ -206,6 +216,9 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
 --BLAST_PATH=/path/to/blastall      Set path to NCBI blastall and formatdb
                                     executables if not specified as
                                     environment variable. Has higher priority
+                                    than environment variable.
+--COMPLEASM_PATH=/path/to/compleasm Set path to compleasm (if not specified as
+                                    environment variable). Has higher priority
                                     than environment variable.
 --PYTHON3_PATH=/path/to             Set path to python3 executable (if not
                                     specified as envirnonment variable and if
@@ -602,6 +615,9 @@ my ( $target_1, $target_2, $target_3, $target_4, $target_5) = 0;
 my @prot_seq_files;   # variable to store protein sequence file name
 my $DIAMOND_PATH; # path to diamond, alternative to BLAST
 my $diamond_path; # command line argument value for $DIAMOND_PATH
+my $COMPLEASM_PATH; # path to compleasm
+my $compleasm_path; # command line argument value for $COMPLEASM_PATH
+my $busco_lineage;
 my $BLAST_PATH; # path to blastall and formatdb ncbi blast executable
 my $blast_path; # command line argument value for $BLAST_PATH
 my $python3_path; # command line argument value for $PYTHON3_PATH
@@ -690,6 +706,8 @@ GetOptions(
     'optCfgFile=s'                 => \$optCfgFile,
     'overwrite!'                   => \$overwrite,
     'SAMTOOLS_PATH=s'              => \$SAMTOOLS_PATH_OP,
+    'COMPLEASM_PATH=s'             => \$compleasm_path,
+    'busco_lineage=s'              => \$busco_lineage,
     'skipGeneMark-ES!'             => \$skipGeneMarkES,
     'skipGeneMark-ET!'             => \$skipGeneMarkET,
     'skipGeneMark-EP!'             => \$skipGeneMarkEP,
@@ -859,6 +877,7 @@ set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
 fix_AUGUSTUS_CONFIG_PATH();
 set_PYTHON3_PATH();
+set_COMPLEASM_PATH();
 
 if($UTR eq "on" || $addUTR eq "on"){
     set_JAVA_PATH();
@@ -2032,6 +2051,15 @@ sub set_BAMTOOLS_PATH {
 sub set_SRATOOLS_PATH {
     my @required_files = ('fastq-dump', 'prefetch');
     $SRATOOLS_PATH = set_software_PATH($sratools_path, "SRATOOLS_PATH",
+                    \@required_files, 'exit');
+}
+
+####################### set_compleasm_PATH #####################################
+# * set path to compleasm
+################################################################################
+sub set_compleasm_PATH {
+    my @required_files = ('compleasm.py');
+    $COMPLEASM_PATH = set_software_PATH($compleasm_path, "COMPLEASM_PATH",
                     \@required_files, 'exit');
 }
 
