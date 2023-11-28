@@ -5340,7 +5340,7 @@ sub GeneMark_ETP {
         if (!@bam) {
             clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
-                . __LINE__ ."\nFailed to find RNA-Seq data for GeneMark-ETP.\n");
+                . __LINE__ ."\nFailed to find RNA-Seq data for GeneMark-ETP. Note: GeneMark-ETP cannot be invoked with a hints file!\n");
         } elsif (! @prot_seq_files) {
             clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
