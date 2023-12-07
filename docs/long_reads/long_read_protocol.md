@@ -1,10 +1,12 @@
 # Long-Read Integration Using BRAKER, GeneMarkS-T and TSEBRA
 
+> :warning: Parts of this protocol are outdated (in particular, the cupcake part). We will likely not update this protocol.
+
 ## Introduction
 
 The following instructions are a prelimary protocol for producing a BRAKER<sup name="a1">[1](#ref1)</sup><sup name="a2">[2](#ref2)</sup><sup name="a3">[3](#ref3)</sup> gene set that integrates extrinsic evidence from <ins>long-read RNA-Seq</ins> (PacBio ccs), short-read RNA-seq (Illumina) and a large database of protein sequences (e.g. OrthoDB <sup name="a9">[9](#ref9)</sup> clade) into a single prediction. 
 
-> :warning: This protocol was developed for presentation of intermediate results at **The Plant and Animal Genome Conference XXIX** (2022) in San Diego. Significant changes are expected prior publication in a peer reviewed scientific journal. For preliminary accuracy results, see https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/slides/slides_PAG2022.pdf (will be made available after January 9th 2022).
+> :warning: This protocol was developed for presentation of intermediate results at **The Plant and Animal Genome Conference XXIX** (2022) in San Diego. Significant changes are expected prior publication in a peer reviewed scientific journal. For preliminary accuracy results, see https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/slides/slides_PAG2022.pdf.
 
 ## Installation
 
