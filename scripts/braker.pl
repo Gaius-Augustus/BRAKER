@@ -1566,6 +1566,10 @@ if ( $addUTR eq "on"){
     merge_transcript_sets("on");
 }
 
+if ( $busco_lineage ) {
+    best_by_compleasm();
+}
+
 if ( $gff3 != 0) {
     all_preds_gtf2gff3();
 }
@@ -9918,6 +9922,35 @@ sub all_preds_gtf2gff3 {
     }
 }
 
+##################### best_by_compleasm #########################################
+# select best gene set by BUSCO completeness via compleasm
+#  * run best_by_compleasm.py (from TSEBRA)
+#  * if better gene set is found:
+#  * generate protein & codingseq file
+#  * generate gff3 file
+#  * move the original braker gene set into a subfolder original_braker
+#################################################################################
+
+sub best_by_compleasm {
+    print LOG "\# " . (localtime) . ": selecting best gene set by BUSCO "
+        . "completeness via compleasm.\n" if ($v > 2);
+    my $getAnno = find(
+        "getAnnoFastaFromJoingenes.py",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    my $cmdStr = $PYTHON3_PATH . "$TSEBRA_PATH/best_by_compleasm.py -m $otherfilesDir/bbc "
+                . "-d $otherfilesDir -g $genome -t $CPU -p $busco_lineage "
+                . "-y $TSEBRA_PATH/tsebra.py -f $getAnno "
+                . "1> $otherfilesDir/best_by_compleasm.log "
+                . "2> $errorfilesDir/best_by_compleasm.err";
+    system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+    if(-e "$otherfilesDir/better.gtf"){
+
+    }
+}
+
 ####################### make_hub ################################################
 # create track data hub for visualizing BRAKER results with the UCSC Genome
 # Browser using make_hub.py
@@ -10097,3 +10130,4 @@ sub clean_up {
         print LOG $loginfo;
     }
 }
+
