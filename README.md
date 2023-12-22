@@ -700,6 +700,12 @@ Add the resulting folder compleasm_kit to your `$PATH` variable, e.g.:
 export PATH=$PATH:/your/path/to/compleasm_kit
 ```
 
+Compleasm requires pandas, which can be installed with:
+
+```
+pip install pandas
+```
+
 System dependencies
 -------------------
 BRAKER (braker.pl) uses getconf to see how many threads can be run on your system. On Ubuntu, you can install it with:
