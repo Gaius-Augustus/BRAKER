@@ -5438,7 +5438,7 @@ sub GeneMark_ETP {
         if (!@bam) {
             clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
-                . __LINE__ ."\nFailed to find RNA-Seq data for GeneMark-ETP.\n");
+                . __LINE__ ."\nFailed to find RNA-Seq data for GeneMark-ETP. Note: GeneMark-ETP cannot be invoked with a hints file!\n");
         } elsif (! @prot_seq_files) {
             clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -6082,7 +6082,10 @@ sub training_augustus {
                 . (localtime)
                 . ": creating softlink from $gmGtf to $trainGenesGtf.\n"
                 if ($v > 3);
-            $cmdString = "ln -s $gmGtf $trainGenesGtf";
+            # shorten the $gmGtf path to avoid problems with absolute softlink
+            my @pp = split(/\//, $gmGtf);
+            my $gmGtfShort = $pp[-2]."/".$pp[-1];
+            $cmdString = "ln -s $gmGtfShort $trainGenesGtf";
             print LOG "$cmdString\n" if ($v > 3);
             system($cmdString) == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",

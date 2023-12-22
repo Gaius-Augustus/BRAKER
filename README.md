@@ -202,6 +202,8 @@ bash /opt/BRAKER/example/docker-tests/test3.sh # BRAKER3
 ```
 :warning: The container does not include Java/GUSHR/anything UTR related because we are currently not maintaining UTR prediction with BRAKER. It's buggy and unstable. Do not use it.
 
+:warning: Users have reported that you need to manually copy the AUGUSTUS_CONFIG_PATH contents to a writable location before running our containers from Nextflow. Afterwards, you need to specify the writable AUGUSTUS_CONFIG_PATH as command line argument to BRAKER in Nextflow.
+
 Good luck ;-)
 
 Installation
