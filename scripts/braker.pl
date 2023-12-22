@@ -4531,7 +4531,7 @@ sub make_compleasm_hints {
         $AUGUSTUS_SCRIPTS_PATH,  $AUGUSTUS_CONFIG_PATH
     );
     $errorfile = "$errorfilesDir/compleasm_to_hints.stderr";
-    $cmdString = "$string -p $COMPLEASM_PATH/compleasm.py -g $genome -d $busco_lineage -t $CPU "
+    $cmdString = "$PYTHON3_PATH/python3 $string -p $COMPLEASM_PATH/compleasm.py -g $genome -d $busco_lineage -t $CPU "
         . "-o $compleasm_hints 1> $errorfile 2>&1";
     # execute the command string
     print LOG "$cmdString\n" if ($v > 3);
@@ -5635,7 +5635,7 @@ sub get_etp_hints_for_Augustus {
         "get_etp_hints.py",    $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
-    $cmdString .= "python3 $string --genemark_scripts $GENEMARK_PATH --out $hintsfile ";
+    $cmdString .= "$PYTHON3_PATH/python3 $string --genemark_scripts $GENEMARK_PATH --out $hintsfile ";
     if (defined($etpplus_dir)) {
         $cmdString .= "--etp_wdir $etpplus_dir ";
     } else {
