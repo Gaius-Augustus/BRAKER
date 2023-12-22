@@ -5984,7 +5984,10 @@ sub training_augustus {
                 . (localtime)
                 . ": creating softlink from $gmGtf to $trainGenesGtf.\n"
                 if ($v > 3);
-            $cmdString = "ln -s $gmGtf $trainGenesGtf";
+            # shorten the $gmGtf path to avoid problems with absolute softlink
+            my @pp = split(/\//, $gmGtf);
+            my $gmGtfShort = $pp[-2]."/".$pp[-1];
+            $cmdString = "ln -s $gmGtfShort $trainGenesGtf";
             print LOG "$cmdString\n" if ($v > 3);
             system($cmdString) == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
