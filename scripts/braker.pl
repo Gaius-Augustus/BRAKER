@@ -768,7 +768,7 @@ if ($printVersion) {
     exit(0);
 }
 
-if( $soft_off ) {
+if( $soft_off == 1 ) {
     $soft_mask = 0;
 }
 
@@ -3293,8 +3293,8 @@ sub check_options {
             = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "--UTR=on has been set but --softmasking has not been enabled. "
-            . "A softmasked genome file and the option --softmasking and a "
+            . "--UTR=on has been set and --softmasking_off has been enabled. "
+            . "A softmasked genome file and the not the option --softmask_off and a "
             . "bam file must be provided in order to run --UTR=on (in contrast "
             . "to other modes, where a hints file can replace the alignment "
             . "file, the bam file is strictly required for UTR training).\n";
