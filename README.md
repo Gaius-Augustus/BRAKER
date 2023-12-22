@@ -248,6 +248,8 @@ At the time of release, this BRAKER version was tested with:
 
 -   GFFRead 0.12.7  <sup name="a26">[R18](#f18)</sup>
 
+-   compleasm 0.2.4 <sup name="a27">[R27](#f27)</sup>
+
 BRAKER
 -------
 
@@ -1324,6 +1326,13 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     - Keilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.
 
+-   If BRAKER was called with a BUSCO partition, cite:
+
+    - Simão, F. A., Waterhouse, R. M., Ioannidis, P., Kriventseva, E. V., & Zdobnov, E. M. (2015). BUSCO: assessing genome assembly and annotation completeness with single-copy orthologs. Bioinformatics, 31(19), 3210-3212.
+
+    - Li, H. (2023). Protein-to-genome alignment with miniprot. Bioinformatics, 39(1), btad014.
+
+    - Huang, N., & Li, H. (2023). compleasm: a faster and more accurate reimplementation of BUSCO. Bioinformatics, 39(10), btad595.
 
 License
 =======
@@ -1400,3 +1409,5 @@ Oxford University Press: 2078--9.[↩](#a6)
 <b id="f25">[R25]</b> Kovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.[↩](#a25)
 
 <b id="f26">[R26]</b> Pertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.[↩](#a26)
+
+<b id="f27">[R27]</b> Huang, N., & Li, H. (2023). compleasm: a faster and more accurate reimplementation of BUSCO. Bioinformatics, 39(10), btad595.[↩](#a27)
