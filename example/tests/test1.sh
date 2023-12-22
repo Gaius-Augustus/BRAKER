@@ -19,4 +19,4 @@ fi
 
 export GENEMARK_PATH=$GENEMARK_PATH/gmes
 
-( time braker.pl --genome=../genome.fa --bam=../RNAseq.bam --workingdir=$wd --threads 8 --gm_max_intergenic 10000 --skipOptimize ) &> test1.log
+( time braker.pl --genome=../genome.fa --bam=../RNAseq.bam --workingdir=$wd --threads 11 --gm_max_intergenic 10000 --skipOptimize --busco_lineage eukaryota_odb10 ) &> test1.log
