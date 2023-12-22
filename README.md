@@ -290,7 +290,7 @@ For GeneMark-ETP, used when protein and RNA-Seq is supplied:
 
 On Ubuntu, for example, install the modules with CPANminus<sup name="g4">[F4](#g4)</sup>: `sudo cpanm Module::Name`, e.g. `sudo cpanm Hash::Merge`.
 
-BRAKER also uses a Perl module `helpMod.pm` that is not available on CPAN. This module is part of the BRAKER release and does not require separate installation.
+BRAKER also uses a Perl module `helpMod_braker.pm` that is not available on CPAN. This module is part of the BRAKER release and does not require separate installation.
 
 If you do not have root permissions on the Linux machine, try setting up an **Anaconda** (<https://www.anaconda.com/distribution/>) environment as follows:
 
@@ -336,7 +336,7 @@ BRAKER is a collection of Perl and Python scripts and a Perl module. The main sc
 
 -   `startAlign.pl`
 
--   `helpMod.pm`
+-   `helpMod_braker.pm`
 
 -   `findGenesInIntrons.pl`
 
