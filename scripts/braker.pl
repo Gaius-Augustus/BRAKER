@@ -9942,7 +9942,7 @@ sub best_by_compleasm {
         "getAnnoFastaFromJoingenes.py",      $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
-    my $cmdStr = $PYTHON3_PATH . "$TSEBRA_PATH/best_by_compleasm.py -m $otherfilesDir/bbc "
+    my $cmdStr = "$PYTHON3_PATH/python3 $TSEBRA_PATH/best_by_compleasm.py -m $otherfilesDir/bbc "
                 . "-d $otherfilesDir -g $genome -t $CPU -p $busco_lineage "
                 . "-y $TSEBRA_PATH/tsebra.py -f $getAnno "
                 . "1> $otherfilesDir/best_by_compleasm.log "
