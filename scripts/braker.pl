@@ -7781,9 +7781,9 @@ sub run_augustus_jobs {
         print LOG "\# " . (localtime) . ": Running AUGUSTUS job $cJobs\n"
             if ($v > 3);
         $cmdString = "$_";
-        print LOG "$cmdString\n" if ($v > 3);
+        print LOG "bash $cmdString\n" if ($v > 3);
         my $pid = $pm->start and next;
-        system("$cmdString") == 0
+        system("bash $cmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString!\n");
         $pm->finish;
