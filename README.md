@@ -224,8 +224,6 @@ At the time of release, this BRAKER version was tested with:
 
 -   SAMTOOLS 1.7-4-g93586ed<sup name="a6">[R6](#f6)</sup>
 
--   ProtHint 2.6.0
-
 -   Spaln 2.3.3d <sup name="a8">[R8, ](#f8)</sup><sup name="a9">[R9, ](#f9)</sup><sup name="a10">[R10](#f10)</sup>
 
 -   NCBI BLAST+ 2.2.31+ <sup name="a12">[R12, ](#f12)</sup><sup name="a13">[R13](#f13)</sup>
@@ -280,15 +278,12 @@ installed:
 
 -   `File::HomeDir`
 
-For ProtHint, used when protein input is supplied, also install:
-
--   `threads`
-
 For GeneMark-ETP, used when protein and RNA-Seq is supplied:
 
 -   `YAML::XS`
 -   `Data::Dumper`
 -   `Thread::Queue`
+-   `threads`
 
 On Ubuntu, for example, install the modules with CPANminus<sup name="g4">[F4](#g4)</sup>: `sudo cpanm Module::Name`, e.g. `sudo cpanm Hash::Merge`.
 
@@ -394,13 +389,7 @@ BRAKER calls upon various bioinformatics software tools that are not part of BRA
 
 ### Mandatory tools
 
-#### GeneMark-EX
-
-*For BRAKER run with only RNA-Seq (BRAKER1) or protein (BRAKER2) data:*
-
-Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/GeneMark/license_download.cgi> (the GeneMark-ES/ET/EP) option. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
-
-*For BRAKER run with RNA-Seq and protein data (BRAKER3):*
+#### GeneMark-ETP
 
 Download GeneMark-ETP<sup name="g1">[F1](#g1)</sup> from <http://github.com/gatech-genemark/GeneMark-ETP> or <https://topaz.gatech.edu/GeneMark/etp.for_braker.tar.gz>. Unpack and install GeneMark-ETP as described in GeneMark-ETP’s `README` file.
 
@@ -422,7 +411,7 @@ perl change_path_in_perl_scripts.pl "/usr/bin/env perl"
 
 You can check whether GeneMark-ES/ET/EP is installed properly by running the `check_install.bash` and/or executing examples in `GeneMark-E-tests` directory.
 
-ToDo: Add section about installation of GeneMark-ETP, when it is available.
+GeneMark-ETP is downward compatible, i.e. it covers the functionality of GeneMark-EP and GeneMark-ET in BRAKER, too.
 
 #### AUGUSTUS
 
@@ -446,6 +435,8 @@ session:
 ```
 
 In order to make the variable available to all Bash sessions, add the above line to a startup script, e.g. `~/.bashrc`.
+
+Please have a look at the [Dockerfile](Dockerfile) in case you want to install AUGUSTUS as Debian package. A number of scripts needs to be patched, then.
 
 ##### Important:
 
@@ -530,26 +521,6 @@ If already in your `$PATH` variable, BRAKER will find blastp, automatically. Oth
 ```
 
 Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the environment variable for all bash sessions.
-
-#### ProtHint
-
-ProtHint is a pipeline for generating hints for GeneMark-ES/ET/EP/ETP and AUGUSTUS from proteins of any evolutionary distance. If protein sequences are given on input, BRAKER runs ProtHint automatically. Alternatively, ProtHint can be executed as a separate step during data preparation. ProtHint is available from <https://github.com/gatech-genemark/ProtHint>. Download as follows:
-
-    git clone https://github.com/gatech-genemark/ProtHint.git
-
-or by getting the latest release from https://github.com/gatech-genemark/ProtHint/releases.
-
-ProtHint has software requirements of its own. In addition to the Perl modules required by BRAKER, it needs
-
-```
-threads
-```
-
-You can easily verify ProtHint's installation by running the test in https://github.com/gatech-genemark/ProtHint/tree/master/example.
-
-ProtHint requires DIAMOND and Spaln, both of which come with ProtHint's installation. ProtHint's requirement of GeneMark-ES will already be fulfilled if you installed BRAKER dependencies above. For further installation instructions, please check <https://github.com/gatech-genemark/ProtHint>.
-
-If already in your `$PATH` variable, BRAKER will find prothint.py, automatically. Otherwise, BRAKER will try to locate the prothint.py executable by using an environment variable `$PROTHINT_PATH`. Alternatively, this can be supplied as a command line argument `--PROTHINT_PATH=/your/path/to/ProtHint/bin`.
 
 ### Mandatory tools for BRAKER3
 
@@ -719,6 +690,19 @@ BRAKER (braker.pl) uses getconf to see how many threads can be run on your syste
 
 ```
 sudo apt-get install libc-bin
+```
+#### compleasm
+
+If you want to run TSEBRA within BRAKER in a BUSCO completeness depending mode, you need to install [compleasm](https://github.com/huangnengCSU/compleasm).
+
+```
+wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.4/compleasm-0.2.4_x64-linux.tar.bz2
+tar -xvjf compleasm-0.2.4_x64-linux.tar.bz2 && \
+```
+
+Add the resulting folder compleasm_kit to your $PATH variable, e.g.:
+```
+export PATH=$PATH:/your/path/to/compleasm_kit
 ```
 
 Running BRAKER
@@ -899,7 +883,7 @@ Specifies the maximum number of threads that can be used during computation. BRA
 
 ### --fungus
 
-GeneMark-EX option: run algorithm with branch point model. Use this option if you genome is a fungus.
+GeneMark-ETP option: run algorithm with branch point model. Use this option if you genome is a fungus.
 
 
 ### --useexisting
