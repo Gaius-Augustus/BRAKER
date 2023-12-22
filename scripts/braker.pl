@@ -39,7 +39,7 @@ use File::Spec::Functions qw(rel2abs);
 use File::Basename qw(dirname basename fileparse);
 use File::Copy;
 
-use helpMod
+use helpMod_braker
     qw( find checkFile formatDetector relToAbs setParInConfig addParToConfig uptodate gtf2fasta clean_abort );
 use Term::ANSIColor qw(:constants);
 
@@ -65,8 +65,9 @@ INPUT FILE OPTIONS
 --prot_seq=prot.fa                  A protein sequence file in multi-fasta
                                     format used to generate protein hints.
                                     Unless otherwise specified, braker.pl will
-                                    run in "EP mode" which uses ProtHint to
-                                    generate protein hints and GeneMark-EP+ to
+                                    run in "EP mode" or "ETP mode which uses 
+                                    ProtHint to generate protein hints and 
+                                    GeneMark-EP+ or GeneMark-ETP to
                                     train AUGUSTUS.
 --hints=hints.gff                   Alternatively to calling braker.pl with a
                                     bam or protein fasta file, it is possible to
