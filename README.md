@@ -602,14 +602,16 @@ cdbfasta and cdbyank are required by BRAKER for correcting AUGUSTUS genes with i
 
 On Ubuntu, install cdbfasta with:
 
-    `sudo apt-get install cdbfasta`
+```
+    sudo apt-get install cdbfasta
+```
 
 For other systems, you can for example obtain cdbfasta from <https://github.com/gpertea/cdbfasta>, e.g.:
 
 ```
-        git clone https://github.com/gpertea/cdbfasta.git`
-        cd cdbfasta
-        make all
+    git clone https://github.com/gpertea/cdbfasta.git
+    cd cdbfasta
+    make all
 ```
 
 On Ubuntu, cdbfasta and cdbyank will be in your `$PATH` variable after installation, and BRAKER will automatically locate them. However, you have the option to specify the `cdbfasta` and `cdbyank` binary location in two other ways:
@@ -617,7 +619,7 @@ On Ubuntu, cdbfasta and cdbyank will be in your `$PATH` variable after installat
 1.  Export an environment variable `$CDBTOOLS_PATH`, e.g. in your `~/.bashrc` file:
 
 ```
-        export CDBTOOLS_PATH=/path/to/cdbtools/
+    export CDBTOOLS_PATH=/path/to/cdbtools/
 ```
 
 2.  Specify the command line option `--CDBTOOLS_PATH=/path/to/cdbtools/` to `braker.pl`.
@@ -637,7 +639,7 @@ This tool is only required if you want either add UTRs (from RNA-Seq data) to pr
 GUSHR is available for download at https://github.com/Gaius-Augustus/GUSHR. Obtain it by typing:
 
 ```
-    git clone https://github.com/Gaius-Augustus/GUSHR.git
+git clone https://github.com/Gaius-Augustus/GUSHR.git
 ```
 
 GUSHR executes a GeMoMa jar file <sup name="a19">[R19, ](#f19)</sup> <sup name="a20">[R20, ](#f20)</sup> <sup name="a21">[R21](#f21)</sup>, and this jar file requires Java 1.8. On Ubuntu, you can install Java 1.8 with the following command:
@@ -684,13 +686,6 @@ A precompiled version of HISAT2 can be downloaded from <http://daehwankimlab.git
 
 BRAKER will try to find executable HISAT2 binaries (hisat2, hisat2-build) by using an environment variable `$HISAT2_PATH`. Alternatively, this can be supplied as command line argument (`--HISAT2_PATH=/your/path/to/HISAT2/`). BRAKER can also try to guess the location of HISAT2 on your system if the executables are in your `$PATH` variable.
 
-System dependencies
--------------------
-BRAKER (braker.pl) uses getconf to see how many threads can be run on your system. On Ubuntu, you can install it with:
-
-```
-sudo apt-get install libc-bin
-```
 #### compleasm
 
 If you want to run TSEBRA within BRAKER in a BUSCO completeness depending mode, you need to install [compleasm](https://github.com/huangnengCSU/compleasm).
@@ -700,10 +695,19 @@ wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.4/compleas
 tar -xvjf compleasm-0.2.4_x64-linux.tar.bz2 && \
 ```
 
-Add the resulting folder compleasm_kit to your $PATH variable, e.g.:
+Add the resulting folder compleasm_kit to your `$PATH` variable, e.g.:
 ```
 export PATH=$PATH:/your/path/to/compleasm_kit
 ```
+
+System dependencies
+-------------------
+BRAKER (braker.pl) uses getconf to see how many threads can be run on your system. On Ubuntu, you can install it with:
+
+```
+sudo apt-get install libc-bin
+```
+
 
 Running BRAKER
 ===============
