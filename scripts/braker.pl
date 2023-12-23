@@ -9950,8 +9950,57 @@ sub best_by_compleasm {
     system("$cmdStr") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdStr\n");
-    if(-e "$otherfilesDir/better.gtf"){
-
+    open(CLOG, "<", "$otherfilesDir/best_by_compleasm.log") or die("ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $otherfilesDir/best_by_compleasm.log!\n");
+    my $last_line;
+    $last_line = $_ while (<CLOG>);  # Read in the last line.
+    close(CLOG) or die("ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/best_by_compleasm.log!\n");
+    if($last_line =! m/braker\.gtf/){
+        print LOG "\# " . (localtime) . ": best gene set found by compleasm "
+            . "is not the original braker gene set.\n" if ($v > 2);
+        # create a directory $otherfilesDir/braker_original
+        mkdir("$otherfilesDir/braker_original") or die("ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not create directory $otherfilesDir/braker_original!\n");
+        # mv $otherfilesDir/braker.gtf to $otherfilesDir/braker_original/braker.gtf
+        $cmdStr = "mv $otherfilesDir/braker.gtf $otherfilesDir/braker_original/braker.gtf";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/braker.aa to $otherfilesDir/braker_original/braker.aa
+        $cmdStr = "mv $otherfilesDir/braker.aa $otherfilesDir/braker_original/braker.aa";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/braker.codingseq to $otherfilesDir/braker_original/braker.codingseq
+        $cmdStr = "mv $otherfilesDir/braker.codingseq $otherfilesDir/braker_original/braker.codingseq";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/bbc/better.gtf to $otherfilesDir/braker.gtf
+        $cmdStr = "mv $otherfilesDir/bbc/better.gtf $otherfilesDir/braker.gtf";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/bbc/better.aa to $otherfilesDir/braker.aa
+        $cmdStr = "mv $otherfilesDir/bbc/better.aa $otherfilesDir/braker.aa";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/bbc/better.codingseq to $otherfilesDir/braker.codingseq
+        $cmdStr = "mv $otherfilesDir/bbc/better.codingseq $otherfilesDir/braker.codingseq";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
     }
 }
 
