@@ -14,7 +14,7 @@
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
 #                                                                                                  #
-# *EX = ES/ET/EP/ETP, currently distributed as GeneMark-ES/ET                                      #
+# *EX = ES/ET/EP/ETP, currently distributed as GeneMark-ETP                                        #
 ####################################################################################################
 
 use Getopt::Long;
@@ -474,7 +474,7 @@ ENDUSAGE
 # Declartion of global variables ###############################################
 
 my $v = 4; # determines what is printed to log
-my $version = "3.0.6";
+my $version = "3.0.7";
 my $rootDir;
 my $logString = "";          # stores log messages produced before opening log file
 $logString .= "\#**********************************************************************************\n";
