@@ -9953,12 +9953,17 @@ sub best_by_compleasm {
     open(CLOG, "<", "$otherfilesDir/best_by_compleasm.log") or die("ERROR in file "
         . __FILE__ . " at line " . __LINE__
         . "\nCould not open file $otherfilesDir/best_by_compleasm.log!\n");
-    my $last_line;
-    $last_line = $_ while (<CLOG>);  # Read in the last line.
+    my $best_gene_set = "braker.gtf";
+    while(<CLOG>){
+        chomp;
+        if ( m/The new best BRAKER gene set is (\S+)/ ) {
+            $best_gene_set = $1;
+        }
+    }
     close(CLOG) or die("ERROR in file "
         . __FILE__ . " at line " . __LINE__
         . "\nCould not close file $otherfilesDir/best_by_compleasm.log!\n");
-    if($last_line =! m/braker\.gtf/){
+    if(not($best_gene_set =~ m/braker\.gtf/)){
         print LOG "\# " . (localtime) . ": best gene set found by compleasm "
             . "is not the original braker gene set.\n" if ($v > 2);
         # create a directory $otherfilesDir/braker_original
