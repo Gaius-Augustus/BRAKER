@@ -9947,6 +9947,7 @@ sub best_by_compleasm {
                 . "-y $TSEBRA_PATH/tsebra.py -f $getAnno "
                 . "1> $otherfilesDir/best_by_compleasm.log "
                 . "2> $errorfilesDir/best_by_compleasm.err";
+    print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
     system("$cmdStr") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdStr\n");
