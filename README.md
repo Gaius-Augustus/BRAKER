@@ -1212,6 +1212,10 @@ Common problems
 
     When providing paths to software to BRAKER, please use absolute, non-abbreviated paths. For example, BRAKER might have problems with `--SAMTOOLS_PATH=./samtools/` or `--SAMTOOLS_PATH=~/samtools/`. Please use `SAMTOOLS_PATH=/full/absolute/path/to/samtools/`, instead. This applies to all path specifications as command line options to `braker.pl`. Relative paths and absolute paths will not pose problems if you export a bash variable, instead, or if you append the location of tools to your $PATH variable.
 
+-   *GeneMark-ETP in BRAKER dies with '/scratch/11232323': No such file or directory.*
+
+    This appears to be related to sorting large files, and it's a system configuration depending problem. Solve it with `export TMPDIR=/tmp/` before calling BRAKER via Singularity.
+
 -   *BRAKER cannot find the Augustus script XYZ...*
 
     Update Augustus from github with `git clone https://github.com/Gaius-Augustus/Augustus.git`. Do not use Augustus from other sources. BRAKER is highly dependent on an up-to-date Augustus. Augustus releases happen rather rarely, updates to the Augustus scripts folder occur rather frequently.
