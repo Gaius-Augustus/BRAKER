@@ -329,24 +329,20 @@ def compute_utr_features(tsebra_gtf):
                     # Check for UTR based on strand
                     if strand == "+":
                         if start < cds_start:
-                            utr5 = "\t".join(fields[:2] + ["five_prime_UTR"] + fields[3:])
-                            utr5 = utr5.replace(str(end), str(cds_start - 1))
+                            utr5 = "\t".join(fields[:2] + ["five_prime_UTR"] + [fields[3]] + [str(cds_start - 1)] + fields[5:])
                             utr_features.append(utr5)
 
                         if end > cds_end:
-                            utr3 = "\t".join(fields[:2] + ["three_prime_UTR"] + fields[3:])
-                            utr3 = utr3.replace(str(start), str(cds_end + 1))
+                            utr3 = "\t".join(fields[:2] + ["three_prime_UTR"] + [fields[3]] + [str(cds_end + 1)] + fields[5:])
                             utr_features.append(utr3)
                     
                     elif strand == "-":
                         if end > cds_end:
-                            utr5 = "\t".join(fields[:2] + ["five_prime_UTR"] + fields[3:])
-                            utr5 = utr5.replace(str(start), str(cds_end + 1))
+                            utr5 = "\t".join(fields[:2] + ["five_prime_UTR"] + [str(cds_end + 1)] + fields[4:])
                             utr_features.append(utr5)
 
                         if start < cds_start:
-                            utr3 = "\t".join(fields[:2] + ["three_prime_UTR"] + fields[3:])
-                            utr3 = utr3.replace(str(end), str(cds_start - 1))
+                            utr3 = "\t".join(fields[:2] + ["three_prime_UTR"] + [fields[3]] + [str(cds_start - 1)] + fields[5:])
                             utr_features.append(utr3)
                 
         # Add the computed UTR features to the list of features for this transcript
