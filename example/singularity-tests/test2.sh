@@ -47,7 +47,7 @@ if [ -d $wd ]; then
     rm -r $wd
 fi
 
-singularity exec -B ${PWD}:${PWD} ${BRAKER_SIF} braker.pl --genome=/opt/BRAKER/example/genome.fa --prot_seq=/opt/BRAKER/example/proteins.fa --workingdir=${wd} --threads 8 --gm_max_intergenic 10000 --skipOptimize
+singularity exec -B ${PWD}:${PWD} ${BRAKER_SIF} braker.pl --genome=/opt/BRAKER/example/genome.fa --prot_seq=/opt/BRAKER/example/proteins.fa --workingdir=${wd} --threads 8 --gm_max_intergenic 10000 --skipOptimize --busco_lineage eukaryota_odb10 &> test2.log
             # Important: the options --gm_max_intergenic 10000 --skipOptimize should never be applied to a real life run!!!
             # They were only introduced to speed up the test. Please delete them from the script if you use it for real data analysis.
 
