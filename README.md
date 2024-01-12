@@ -85,6 +85,7 @@ Contents
         -   [--addUTR=on](#--addutron)
         -   [--stranded=+,-,.,...](#--stranded-)
 	    -   [--makehub --email=your@mail.de](#--makehub---emailyourmailde)
+        -   [--busco_lineage lineage](#--busco-lineage)
 -   [Output of BRAKER](#output-of-braker)
 -   [Example data](#example-data)
     -   [Data description](#data-description)
@@ -688,7 +689,7 @@ BRAKER will try to find executable HISAT2 binaries (hisat2, hisat2-build) by usi
 
 #### compleasm
 
-If you want to run TSEBRA within BRAKER in a BUSCO completeness depending mode, you need to install [compleasm](https://github.com/huangnengCSU/compleasm).
+If you want to run TSEBRA within BRAKER in a BUSCO completeness maximizing mode, you need to install [compleasm](https://github.com/huangnengCSU/compleasm).
 
 ```
 wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.4/compleasm-0.2.4_x64-linux.tar.bz2
@@ -873,6 +874,32 @@ Examples of how you could run BRAKER in ETPmode:
 ### BRAKER with short and long read RNA-Seq and protein data
 
 A preliminary protocol for integration of assembled subreads from PacBio ccs sequencing in combination with short read Illumina RNA-Seq and protein database is described at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/long_reads/long_read_protocol.md
+
+### BRAKER with long read RNA-Seq (only) and protien data
+
+We forked GeneMark-ETP and hard coded that StringTie will perform long read assembly in that particular version. If you want to use this 'fast-hack' version for BRAKER, you have to prepare the BAM file with long read to genome spliced alignments outside of BRAKER, e.g.:
+
+```
+T=48 # adapt to your number of threads
+minimap2 -t${T} -ax splice:hq -uf genome.fa isoseq.fa > isoseq.sam     
+Samtools view -bS --threads ${T} isoseq.sam -o isoseq.bam
+``
+
+Pull the adapted container:
+
+```
+singularity build braker3_lr.sif docker://teambraker/braker3:isoseq
+```
+
+Calling BRAKER3 with a BAM file of spliced-aligned IsoSeq Reads:
+
+```
+singularity exec -B ${PWD}:${PWD} braker3_lr.sif braker.pl --genome=genome.fa --prot_seq=protein_db.fa –-bam=isoseq.bam --threads=${T} 
+```
+
+**Warning** Do NOT mix short read and long read data in this BRAKER/GeneMark-ETP variant!
+
+**Warning** The accuracy of gene prediction here heavily depends on the depth of your isoseq data. We verified with PacBio HiFi reads from 2022 that given sufficient completeness of the assembled transcriptome you will reach similar results as with short reads. However, we also observed a drop in accuracy compared to short reads when using other long read data sets with higher error rates and less sequencing depth.
 
 Description of selected BRAKER command line options
 ----------------------------------------------------
