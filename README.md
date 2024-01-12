@@ -875,15 +875,15 @@ Examples of how you could run BRAKER in ETPmode:
 
 A preliminary protocol for integration of assembled subreads from PacBio ccs sequencing in combination with short read Illumina RNA-Seq and protein database is described at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/long_reads/long_read_protocol.md
 
-### BRAKER with long read RNA-Seq (only) and protien data
+### BRAKER with long read RNA-Seq (only) and protein data
 
 We forked GeneMark-ETP and hard coded that StringTie will perform long read assembly in that particular version. If you want to use this 'fast-hack' version for BRAKER, you have to prepare the BAM file with long read to genome spliced alignments outside of BRAKER, e.g.:
 
 ```
 T=48 # adapt to your number of threads
 minimap2 -t${T} -ax splice:hq -uf genome.fa isoseq.fa > isoseq.sam     
-Samtools view -bS --threads ${T} isoseq.sam -o isoseq.bam
-``
+samtools view -bS --threads ${T} isoseq.sam -o isoseq.bam
+```
 
 Pull the adapted container:
 
