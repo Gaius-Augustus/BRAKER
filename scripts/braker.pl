@@ -14,7 +14,7 @@
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
 #                                                                                                  #
-# *EX = ES/ET/EP/ETP, currently distributed as GeneMark-ES/ET                                      #
+# *EX = ES/ET/EP/ETP, currently distributed as GeneMark-ETP                                        #
 ####################################################################################################
 
 use Getopt::Long;
@@ -145,6 +145,16 @@ FREQUENTLY USED OPTIONS
 --makehub                           Create track data hub with make_hub.py
                                     for visualizing BRAKER results with the
                                     UCSC GenomeBrowser
+--busco_lineage=lineage             If you provide a BUSCO lineage, BRAKER will
+                                    run compleasm on genome level to generate hints
+                                    from BUSCO to enhance BUSCO discovery in the
+                                    protein set. Also, if you provide a BUSCO
+                                    lineage, BRAKER will run compleasm to assess
+                                    the protein sets that go into TSEBRA combination,
+                                    and will determine the TSEBRA mode to maximize
+                                    BUSCO. Do not provide a busco_lineage if you
+                                    want to determina natural BUSCO sensivity of
+                                    BRAKER!
 --email                             E-mail address for creating track data hub
 --version                           Print version number of braker.pl
 --help                              Print this help message
@@ -207,6 +217,9 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
 --BLAST_PATH=/path/to/blastall      Set path to NCBI blastall and formatdb
                                     executables if not specified as
                                     environment variable. Has higher priority
+                                    than environment variable.
+--COMPLEASM_PATH=/path/to/compleasm Set path to compleasm (if not specified as
+                                    environment variable). Has higher priority
                                     than environment variable.
 --PYTHON3_PATH=/path/to             Set path to python3 executable (if not
                                     specified as envirnonment variable and if
@@ -461,7 +474,7 @@ ENDUSAGE
 # Declartion of global variables ###############################################
 
 my $v = 4; # determines what is printed to log
-my $version = "3.0.6";
+my $version = "3.0.7";
 my $rootDir;
 my $logString = "";          # stores log messages produced before opening log file
 $logString .= "\#**********************************************************************************\n";
@@ -603,6 +616,9 @@ my ( $target_1, $target_2, $target_3, $target_4, $target_5) = 0;
 my @prot_seq_files;   # variable to store protein sequence file name
 my $DIAMOND_PATH; # path to diamond, alternative to BLAST
 my $diamond_path; # command line argument value for $DIAMOND_PATH
+my $COMPLEASM_PATH; # path to compleasm
+my $compleasm_path; # command line argument value for $COMPLEASM_PATH
+my $busco_lineage;
 my $BLAST_PATH; # path to blastall and formatdb ncbi blast executable
 my $blast_path; # command line argument value for $BLAST_PATH
 my $python3_path; # command line argument value for $PYTHON3_PATH
@@ -691,6 +707,8 @@ GetOptions(
     'optCfgFile=s'                 => \$optCfgFile,
     'overwrite!'                   => \$overwrite,
     'SAMTOOLS_PATH=s'              => \$SAMTOOLS_PATH_OP,
+    'COMPLEASM_PATH=s'             => \$compleasm_path,
+    'busco_lineage=s'              => \$busco_lineage,
     'skipGeneMark-ES!'             => \$skipGeneMarkES,
     'skipGeneMark-ET!'             => \$skipGeneMarkET,
     'skipGeneMark-EP!'             => \$skipGeneMarkEP,
@@ -751,7 +769,7 @@ if ($printVersion) {
     exit(0);
 }
 
-if( $soft_off ) {
+if( $soft_off == 1 ) {
     $soft_mask = 0;
 }
 
@@ -791,6 +809,9 @@ $pubs{'stringtie'} = "\nKovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Sa
 $pubs{'gffread'} = "\nPertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.\n";
 $pubs{'tsebra'} = "\nGabriel, L., Hoff, K. J., Bruna, T., Borodovsky, M., & Stanke, M. (2021). TSEBRA: transcript selector for BRAKER. BMC Bioinformatics, 22:566.\n";
 $pubs{'braker3'} = "\nGabriel, L., Bruna, T., Hoff, K. J., Ebel, M., Lomsadze, A., Borodovsky, M., & Stanke, M. (2023). BRAKER3: Fully Automated Genome Annotation Using RNA-Seq and Protein Evidence with GeneMark-ETP, AUGUSTUS and TSEBRA. bioRxiv, https://doi.org/10.1101/2023.06.10.544449.\n";
+$pubs{'busco'} = "\nSimao, F. A., Waterhouse, R. M., Ioannidis, P., Kriventseva, E. V., & Zdobnov, E. M. (2015). BUSCO: assessing genome assembly and annotation completeness with single-copy orthologs. Bioinformatics, 31(19), 3210-3212.\n";
+$pubs{'miniprot'} = "\nLi, H. (2023). Protein-to-genome alignment with miniprot. Bioinformatics, 30(1):btad014.\n";
+$pubs{'compleasm'} = "\nHuang, N., & Li, H. (2023). compleasm: a faster and more accurate reimplementation of BUSCO. Bioinformatics 39(10):btad595.\n";
 
 
 # Make paths to input files absolute ###########################################
@@ -860,6 +881,9 @@ set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
 fix_AUGUSTUS_CONFIG_PATH();
 set_PYTHON3_PATH();
+if (defined($busco_lineage)){
+    set_COMPLEASM_PATH(); # todo: make sure that compleasm to hints actually passes the path, or make the hints script a hints parser, only
+}
 
 if($UTR eq "on" || $addUTR eq "on"){
     set_JAVA_PATH();
@@ -1346,7 +1370,7 @@ if (@prot_seq_files) {
     my @tmp_prot_seq;
     foreach (@prot_seq_files) {
         push(@tmp_prot_seq, $_);
-        check_fasta_headers($_, 0);
+        check_fasta_headers($_, 0); # todo: this generates a header map that looks like it's genome headers, needs to be fixed
     }
     @prot_seq_files = @tmp_prot_seq;
 }
@@ -1428,6 +1452,11 @@ if (%rnaseq_libs) {
 # make hints from protein data if EPmode/ETPmode
 if( !$ETPmode && @prot_seq_files ){
     run_prothint();
+}
+
+# make BUSCO hints with compleasm
+if (defined($busco_lineage)) {
+    make_compleasm_hints();
 }
 
 # make hints from RNA-Seq
@@ -1536,6 +1565,10 @@ if ( $UTR eq "on" && @bam) {
 if ( $addUTR eq "on"){
     add_utr_to_augustus(); # only runs GUSHR
     merge_transcript_sets("on");
+}
+
+if ( $busco_lineage ) {
+    best_by_compleasm();
 }
 
 if ( $gff3 != 0) {
@@ -2033,6 +2066,15 @@ sub set_BAMTOOLS_PATH {
 sub set_SRATOOLS_PATH {
     my @required_files = ('fastq-dump', 'prefetch');
     $SRATOOLS_PATH = set_software_PATH($sratools_path, "SRATOOLS_PATH",
+                    \@required_files, 'exit');
+}
+
+####################### set_COMPLEASM_PATH #####################################
+# * set path to compleasm
+################################################################################
+sub set_COMPLEASM_PATH {
+    my @required_files = ('compleasm.py');
+    $COMPLEASM_PATH = set_software_PATH($compleasm_path, "COMPLEASM_PATH",
                     \@required_files, 'exit');
 }
 
@@ -3252,8 +3294,8 @@ sub check_options {
             = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "--UTR=on has been set but --softmasking has not been enabled. "
-            . "A softmasked genome file and the option --softmasking and a "
+            . "--UTR=on has been set and --softmasking_off has been enabled. "
+            . "A softmasked genome file and the not the option --softmask_off and a "
             . "bam file must be provided in order to run --UTR=on (in contrast "
             . "to other modes, where a hints file can replace the alignment "
             . "file, the bam file is strictly required for UTR training).\n";
@@ -4468,6 +4510,62 @@ sub make_bam_file {
     }
 }
 
+#################### make_compleasm_hints ######################################
+# * make hints from compleasm with BUSCOs
+# * this will only pick up BUSCOs without frameshift that are complete/duplicated
+# * the hints are trimmed by 3 nt on each end, converted to CDSpart
+# * M hints (enforced in prediction)
+################################################################################
+
+sub make_compleasm_hints {
+    print CITE $pubs{'busco'}; $pubs{'busco'} = "";
+    print CITE $pubs{'miniprot'}; $pubs{'miniprot'} = "";
+    print CITE $pubs{'compleasm'}; $pubs{'compleasm'} = "";
+    print LOG "\# "
+        . (localtime)
+        . ": Running compleasm and converting the output to hints\n" if ($v > 2);
+    my $compleasm_hints = "$otherfilesDir/compleasm_hints.gff";
+    # call compleasm_to_hints.py from Augustus scripts
+    $string = find(
+        "compleasm_to_hints.py", $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH,  $AUGUSTUS_CONFIG_PATH
+    );
+    $errorfile = "$errorfilesDir/compleasm_to_hints.stderr";
+    $cmdString = "$PYTHON3_PATH/python3 $string -p $COMPLEASM_PATH/compleasm.py -g $genome -d $busco_lineage -t $CPU "
+        . "-o $compleasm_hints 1> $errorfile 2>&1";
+    # execute the command string
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nFailed to execute: $cmdString!\n");
+
+    open(CHINTS, "<", $compleasm_hints) or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__
+        . " at line ". __LINE__
+        . "\nFailed to open $compleasm_hints!\n");
+    open(HINTS, ">>", "$otherfilesDir/hintsfile.gff") or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
+
+    while(<CHINTS>){
+        print HINTS $_;
+    }
+    close(CHINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__
+        . " at line ". __LINE__
+        . "\nFailed to open $compleasm_hints!\n");
+
+    close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile.gff!\n");
+
+    print LOG "\# " . (localtime)
+        . ": Generating hints from compleasm (genome level) finished.\n" if ($v > 2);
+}
+
 ####################### make_rnaseq_hints ######################################
 # * make hints from BAM files
 # * merge hints files from different BAM files
@@ -5537,7 +5635,7 @@ sub get_etp_hints_for_Augustus {
         "get_etp_hints.py",    $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
-    $cmdString .= "python3 $string --genemark_scripts $GENEMARK_PATH --out $hintsfile ";
+    $cmdString .= "$PYTHON3_PATH/python3 $string --genemark_scripts $GENEMARK_PATH --out $hintsfile ";
     if (defined($etpplus_dir)) {
         $cmdString .= "--etp_wdir $etpplus_dir ";
     } else {
@@ -7687,9 +7785,9 @@ sub run_augustus_jobs {
         print LOG "\# " . (localtime) . ": Running AUGUSTUS job $cJobs\n"
             if ($v > 3);
         $cmdString = "$_";
-        print LOG "$cmdString\n" if ($v > 3);
+        print LOG "bash $cmdString\n" if ($v > 3);
         my $pid = $pm->start and next;
-        system("$cmdString") == 0
+        system("bash $cmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString!\n");
         $pm->finish;
@@ -9828,6 +9926,90 @@ sub all_preds_gtf2gff3 {
     }
 }
 
+##################### best_by_compleasm #########################################
+# select best gene set by BUSCO completeness via compleasm
+#  * run best_by_compleasm.py (from TSEBRA)
+#  * if better gene set is found:
+#  * generate protein & codingseq file
+#  * generate gff3 file
+#  * move the original braker gene set into a subfolder original_braker
+#################################################################################
+
+sub best_by_compleasm {
+    print LOG "\# " . (localtime) . ": selecting best gene set by BUSCO "
+        . "completeness via compleasm.\n" if ($v > 2);
+    my $getAnno = find(
+        "getAnnoFastaFromJoingenes.py",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    my $cmdStr = "$PYTHON3_PATH/python3 $TSEBRA_PATH/best_by_compleasm.py -m $otherfilesDir/bbc "
+                . "-d $otherfilesDir -g $genome -t $CPU -p $busco_lineage "
+                . "-y $TSEBRA_PATH/tsebra.py -f $getAnno "
+                . "1> $otherfilesDir/best_by_compleasm.log "
+                . "2> $errorfilesDir/best_by_compleasm.err";
+    print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+    system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+    open(CLOG, "<", "$otherfilesDir/best_by_compleasm.log") or die("ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $otherfilesDir/best_by_compleasm.log!\n");
+    my $best_gene_set = "braker.gtf";
+    while(<CLOG>){
+        chomp;
+        if ( m/The new best BRAKER gene set is (\S+)/ ) {
+            $best_gene_set = $1;
+        }
+    }
+    close(CLOG) or die("ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/best_by_compleasm.log!\n");
+    if(not($best_gene_set =~ m/braker\.gtf/)){
+        print LOG "\# " . (localtime) . ": best gene set found by compleasm "
+            . "is not the original braker gene set.\n" if ($v > 2);
+        # create a directory $otherfilesDir/braker_original
+        mkdir("$otherfilesDir/braker_original") or die("ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not create directory $otherfilesDir/braker_original!\n");
+        # mv $otherfilesDir/braker.gtf to $otherfilesDir/braker_original/braker.gtf
+        $cmdStr = "mv $otherfilesDir/braker.gtf $otherfilesDir/braker_original/braker.gtf";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/braker.aa to $otherfilesDir/braker_original/braker.aa
+        $cmdStr = "mv $otherfilesDir/braker.aa $otherfilesDir/braker_original/braker.aa";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/braker.codingseq to $otherfilesDir/braker_original/braker.codingseq
+        $cmdStr = "mv $otherfilesDir/braker.codingseq $otherfilesDir/braker_original/braker.codingseq";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/bbc/better.gtf to $otherfilesDir/braker.gtf
+        $cmdStr = "mv $otherfilesDir/bbc/better.gtf $otherfilesDir/braker.gtf";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/bbc/better.aa to $otherfilesDir/braker.aa
+        $cmdStr = "mv $otherfilesDir/bbc/better.aa $otherfilesDir/braker.aa";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/bbc/better.codingseq to $otherfilesDir/braker.codingseq
+        $cmdStr = "mv $otherfilesDir/bbc/better.codingseq $otherfilesDir/braker.codingseq";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+    }
+}
+
 ####################### make_hub ################################################
 # create track data hub for visualizing BRAKER results with the UCSC Genome
 # Browser using make_hub.py
@@ -10007,3 +10189,4 @@ sub clean_up {
         print LOG $loginfo;
     }
 }
+

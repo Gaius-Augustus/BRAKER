@@ -46,7 +46,7 @@ if [ -d $wd ]; then
 fi
 
 singularity exec -B ${PWD}:${PWD} ${BRAKER_SIF} braker.pl --genome=/opt/BRAKER/example/genome.fa --prot_seq=/opt/BRAKER/example/proteins.fa --bam=/opt/BRAKER/example/RNAseq.bam --workingdir=${wd} \
-	    --threads 8 --gm_max_intergenic 10000 --skipOptimize
+	    --threads 8 --gm_max_intergenic 10000 --skipOptimize --busco_lineage eukaryota_odb10 &> test3.log
 
 	    # Important: the options --gm_max_intergenic 10000 --skipOptimize should never be applied to a real life run!!!                                   
-            # They were only introduced to speed up the test. Please delete them from the script if you use it for real data analysis. 
+        # They were only introduced to speed up the test. Please delete them from the script if you use it for real data analysis. 

@@ -105,7 +105,7 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"genes.gtf", "genes_in_gb.gtf", "gff2gbSmallDNA.utr.stdout", "hints.job.lst", "merged.bam", "merged.s.bam", "merged.wig", 
 	"randomSplit_utr1.log", "randomSplit_utr2.log", "rnaseq2utr.stdout", "rnaseq.utr.hints", "samtools_sort_before_wig.stdout",
 	"singlecds.hints", "stops.and.starts.gff", "train.gb.test", "train.gb.train", "train.gb.train.test",
-	"train.gb.train.train", "traingenes.good.fa", "traingenes.gtf", "utr.aa2nonred.stdout",
+	"train.gb.train.train", "traingenes.good.fa", "utr.aa2nonred.stdout",
 	"utr.gb", "utr.gb.test", "utr.gb.train", "utr.gb.train.test", "utr.gb.train.train", "utr_genes_in_gb.fa",
 	"utr_genes_in_gb.nr.fa", "utr.nonred.loci.lst", "utrs.gff", "downsample_traingenes.log", "firstetraining.stdout", 
 	"secondetraining.stdout", "startAlign_gth.log", "protein_alignment_gth.gff3", "ex1.cfg", "getAnnoFastaFromJoingenes.augustus.hints.stdout", 
@@ -115,7 +115,7 @@ my @files = ("firsttest.stdout", "genome.fa", "getAnnoFasta.augustus.ab_initio.s
 	"getAnnoFastaFromJoingenes.augustus.hints_.stdout", "startAlign.stdout", "augustus.hints_iter1.aa", "augustus.hints_iter1.codingseq",
 	"augustus.hints_iter1.gff", "augustus.hints_iter1.gtf", "augustus.tmp1.gff", "augustus.tmp2.gff", "cmd.log", "etrain.bad.lst", "gene_stat.yaml",
 	"good_genes.lst", "hintsfile_iter1.gff", "nonred.loci.lst", "nuc.fasta", "prevHints.gff", "proteins.fa", "seed_proteins.faa",
-        "train.f.gb", "traingenes.good.gtf", "traingenes.good.nr.fa", "uniqueSeeds.gtf", "braker.gtf_temp", "genemark_hintsfile.gff", "gc_content.out", "evidence.gff", "genemark_evidence.gff");
+    "compleasm_hints.gff", "train.f.gb", "traingenes.good.nr.fa", "uniqueSeeds.gtf", "braker.gtf_temp", "genemark_hintsfile.gff", "gc_content.out", "evidence.gff", "genemark_evidence.gff");
 
 my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneMark-ES/run",
 	"GeneMark-ET/data", "GeneMark-ET/info", "GeneMark-ET/output", "GeneMark-ET/run",
@@ -127,7 +127,7 @@ my @dirs = ("GeneMark-ES/data", "GeneMark-ES/info", "GeneMark-ES/output", "GeneM
     "GeneMark-ETP/proteins.fa/nonhc/for_prothint", "GeneMark-ETP/proteins.fa/nonhc/pred_m",
     "GeneMark-ETP/proteins.fa/nonhc/regions", "GeneMark-ETP/proteins.fa/etr", "GeneMark-ETP/proteins.fa/nonhc/hc", 
     "GeneMark-ETP/rnaseq/hints/proteins.fa/prothint/diamond", "rnaseq/", "GeneMark-ETP/data",
-    "genome_split", "Spaln", "augustus_tmp", "augustus_files_hints", "diamond");
+    "genome_split", "Spaln", "augustus_tmp", "augustus_files_hints", "diamond", "mb_downloads");
 
 foreach(@files){
 	if(-e $wdir."/".$_){
