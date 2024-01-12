@@ -1001,7 +1001,7 @@ BRAKER produces several important output files in the working directory.
 
        * in ETPmode: Final gene set of BRAKER consisting of genes predicted by AUGUSTUS and GeneMark-ETP that were combined and filtered by TSEBRA.
 
-        * otherwise: Union of augustus.hints.gtf and reliable GeneMark-ES/ET/EP/ETP predictions (genes fully supported by external evidence). In `--esmode`, this is the union of augustus.ab_initio.gtf and all GeneMark-ES genes. Thus, this set is generally more sensitive (more genes correctly predicted) and can be less specific (more false-positive predictions can be present). This output is not necessarily better than augustus.hints.gtf, and it is not recommended to use it if BRAKER was run in ESmode.
+        * otherwise: Union of augustus.hints.gtf and reliable GeneMark-ES/ET/EP predictions (genes fully supported by external evidence). In `--esmode`, this is the union of augustus.ab_initio.gtf and all GeneMark-ES genes. Thus, this set is generally more sensitive (more genes correctly predicted) and can be less specific (more false-positive predictions can be present). This output is not necessarily better than augustus.hints.gtf, and it is not recommended to use it if BRAKER was run in ESmode.
 
 -   braker.codingseq: Final gene set with coding sequences in FASTA format
 
@@ -1014,6 +1014,10 @@ BRAKER produces several important output files in the working directory.
 -   GeneMark-E*/genemark.gtf: Genes predicted by GeneMark-ES/ET/EP/EP+/ETP in GTF-format.
 
 -   hintsfile.gff: The extrinsic evidence data extracted from RNAseq.bam and/or protein data.
+
+-   braker_original/*: Genes predicted by BRAKER (TSEBRA merge) before compleasm was used to improve BUSCO completeness
+
+-   bbc/*: output folder of best_by_compleasm.py script from TSEBRA that is used to improve BUSCO completeness in the final output of BRAKER
 
 Output files may be present with the following name endings and formats:
 
@@ -1086,7 +1090,7 @@ Testing BRAKER with RNA-Seq data
 
 The following command will run the pipeline according to Figure [3](#fig2):
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --threads N
+    braker.pl --genome genome.fa --bam RNAseq.bam --threads N --busco_lineage=lineage_odb10
 
 This test is implemented in `test1.sh`, expected runtime is ~20 minutes.
 
@@ -1096,7 +1100,7 @@ Testing BRAKER with proteins
 The following command will run the pipeline according to Figure [4](#fig3):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --threads N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --threads N --busco_lineage=lineage_odb10
 
 
 This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
@@ -1108,13 +1112,13 @@ The following command will run a pipeline that first trains GeneMark-ETP with pr
 
 Run with local RNA-Seq file:
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --threads N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --threads N --busco_lineage=lineage_odb10
 
 This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
 
 Download RNA-Seq library from Sequence Read Archive (~1gb):
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --rnaseq_sets_ids ERR5767212 --threads N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --rnaseq_sets_ids ERR5767212 --threads N --busco_lineage=lineage_odb10
 
 This test is implemented in `test3_4.sh`, expected runtime is ~35 minutes.
 
