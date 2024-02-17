@@ -4508,6 +4508,11 @@ sub make_bam_file {
                 . __LINE__ ."\nCouldn't create BAM file for $_!\n");
         }
     }
+    # return to workDir
+    chdir($otherfilesDir) or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to change to directory $workDir!\n");
 }
 
 #################### make_compleasm_hints ######################################
