@@ -217,7 +217,7 @@ Supported software versions
 
 At the time of release, this BRAKER version was tested with:
 
--   AUGUSTUS 3.4.0 <sup name="g2">[F2](#g2)</sup>
+-   AUGUSTUS 3.5.0 <sup name="g2">[F2](#g2)</sup>
 
 -   GeneMark-ETP (source see Dockerfile)
 
@@ -247,7 +247,7 @@ At the time of release, this BRAKER version was tested with:
 
 -   GFFRead 0.12.7  <sup name="a26">[R18](#f18)</sup>
 
--   compleasm 0.2.4 <sup name="a27">[R27](#f27)</sup>
+-   compleasm 0.2.5 <sup name="a27">[R27](#f27)</sup>
 
 BRAKER
 -------
