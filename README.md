@@ -1281,6 +1281,9 @@ Common problems
 
     AUGUSTUS within BRAKER can predict alternative splicing isoforms. Also the merge of the AUGUSTUS and GeneMark gene set by TSEBRA within BRAKER may result in additional isoforms for a single gene. The BUSCO duplicates usually come from alternative splicing isoforms, i.e. they are expected.
 
+-   *Augustus and/or etraining within BRAKER complain that the file `aug_cmdln_parameters.json` is missing. Even though I am using the latest Singularity container!*
+
+    BRAKER copies the AUGUSTUS_CONFIG_PATH folder to a writable location. In older versions of Augustus, that file was indeed not existing. If the local writable copy of a folder already exists, BRAKER will not re-copy it. Simply delete the old folder. (It is often `~/.augustus`, so you can simply do `rm -rf ~/.augustus`; the folder might be residing in $PWD if your home directory was not writable).
 
 Citing BRAKER and software called by BRAKER
 =============================================
