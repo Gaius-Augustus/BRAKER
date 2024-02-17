@@ -4524,6 +4524,11 @@ sub make_compleasm_hints {
     print LOG "\# "
         . (localtime)
         . ": Running compleasm and converting the output to hints\n" if ($v > 2);
+    # change to $workDir
+    chdir($otherfilesDir) or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to change to directory $otherfilesDir!\n");
     my $compleasm_hints = "$otherfilesDir/compleasm_hints.gff";
     # call compleasm_to_hints.py from Augustus scripts
     $string = find(
