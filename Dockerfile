@@ -157,12 +157,6 @@ RUN cd /opt && \
 
 ENV PATH=${PATH}:/opt/MakeHub
 
-# augustus
-
-ENV AUGUSTUS_CONFIG_PATH=/usr/share/augustus/config/
-ENV AUGUSTUS_BIN_PATH=/usr/bin/
-ENV AUGUSTUS_SCRIPTS_PATH=/usr/share/augustus/scripts/
-
 # perl dependencies of BRAKER and GeneMark-ETP+
 
 RUn apt update && \
