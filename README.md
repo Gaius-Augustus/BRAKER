@@ -54,6 +54,10 @@ Related Software
 ================
 The Transcript Selector for BRAKER (TSEBRA) is available at https://github.com/Gaius-Augustus/TSEBRA .
 
+GeneMark-ETP, one of the gene finders at the core of BRAKER, is available at https://github.com/gatech-genemark/GeneMark-ETP .
+
+AUGUSTUS, the second gene finder at the core of BRAKER, is available at https://github.com/Gaius-Augustus/Augustus .
+
 GALBA, a BRAKER pipeline spin-off for using Miniprot or GenomeThreader to generate training genes, is available at https://github.com/Gaius-Augustus/GALBA .
 
 Contents
