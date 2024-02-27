@@ -48,7 +48,7 @@ Figure 1: Current BRAKER authors, from left to right: Mario Stanke, Alexandre Lo
 Funding
 =======
 
-The development of BRAKER was supported by the National Institutes of Health (NIH) [GM128145 to M.B. and M.S.].
+The development of BRAKER1, BRAKER2, and BRAKER3 was supported by the National Institutes of Health (NIH) [GM128145 to M.B. and M.S.]. Development of BRAKER3 was partially funded by Project Data Competency granted to K.J.H. and M.S. by the government of Mecklenburg-Vorpommern, Germany.
 
 Related Software
 ================
