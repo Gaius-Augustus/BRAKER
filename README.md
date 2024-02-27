@@ -12,15 +12,21 @@ BRAKER3 is now in https://usegalaxy.eu/
 Contacts for Repository 
 ========================
 
-Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
+TSEBRA & BRAKER3 related:
 
-Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624, [![https://twitter.com/katharina_hoff](https://img.shields.io/twitter/follow/katharina_hoff)](https://twitter.com/katharina_hoff)
+   * Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
 
-Mark Borodovsky, Georgia Tech, U.S.A., borodovsky@gatech.edu
+BRAKER & AUGUSTUS related:
 
-Tomas Bruna, Joint Genome Institute, U.S.A., bruna.tomas@gmail.com
+   * Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624, [![https://twitter.com/katharina_hoff](https://img.shields.io/twitter/follow/katharina_hoff)](https://twitter.com/katharina_hoff)
 
-Alexandre Lomsazde, Georgia Tech, U.S.A., alexandre.lomsadze@bme.gatech.edu
+GeneMark related:
+
+   * Mark Borodovsky, Georgia Tech, U.S.A., borodovsky@gatech.edu
+
+   * Tomas Bruna, Joint Genome Institute, U.S.A., bruna.tomas@gmail.com
+
+   * Alexandre Lomsazde, Georgia Tech, U.S.A., alexandre.lomsadze@bme.gatech.edu
 
 Core Authors of BRAKER
 =================
