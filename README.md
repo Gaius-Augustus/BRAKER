@@ -21,7 +21,7 @@ Mark Borodovsky, Georgia Tech, U.S.A., borodovsky@gatech.edu
 
 Tomas Bruna, Joint Genome Institute, U.S.A., bruna.tomas@gmail.com
 
-Authors of BRAKER
+Core Authors of BRAKER
 =================
 
 <b id="aff1">[a]</b> University of Greifswald, Institute for Mathematics and Computer Science, Walther-Rathenau-Str. 47, 17489 Greifswald, Germany
@@ -36,7 +36,7 @@ Authors of BRAKER
 
 ![braker2-team-2\[fig10\]](docs/figs/mario.png)![braker2-team-1\[fig11\]](docs/figs/alex-katharina-tomas.png)![braker2-team-3\[fig12\]](docs/figs/lars.jpg)![braker2-team-4\[fig13\]](docs/figs/mark.png)
 
-Figure 1: Current BRAKER authors, from left to right: Mario Stanke, Alexandre Lomsadze, Katharina J. Hoff, Tomas Bruna, Lars Gabriel, and Mark Borodovsky.
+Figure 1: Current BRAKER authors, from left to right: Mario Stanke, Alexandre Lomsadze, Katharina J. Hoff, Tomas Bruna, Lars Gabriel, and Mark Borodovsky. We acknowledge that a larger community of scientists contributed to the BRAKER code (e.g. via pull requests).
 
 Funding
 =======
