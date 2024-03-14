@@ -179,8 +179,6 @@ Container
 
 We are aware that the "manual" installation of BRAKER3 and all its dependencies is tedious and really challenging without root permissions. Therefore, we provide a Docker container that has been developed to be run with Singularity. All information on this container can be found at https://hub.docker.com/r/teambraker/braker3
 
-This container has currently the following shortcoming: as RNA-Seq input, we have only tested bam-files, not fastq files or SRA IDs. We might improve this in the future.
-
 In short, build it as follows:
 
 ```
