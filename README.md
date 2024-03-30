@@ -1483,4 +1483,4 @@ Oxford University Press: 2078--9.[↩](#a6)
 
 <b id="f27">[R27]</b> Huang, N., & Li, H. (2023). compleasm: a faster and more accurate reimplementation of BUSCO. Bioinformatics, 39(10), btad595.[↩](#a27)
 
-<b id="f28">[R28]</b> Bruna, T., Gabriel, L. & Hoff, K. J. (2024). Protein-to-genome alignment with miniprotNavigating Eukaryotic Genome Annotation Pipelines: A Route Map to BRAKER, Galba, and TSEBRA. arXiv, https://doi.org/10.48550/arXiv.2403.19416 .[↩](#a28)
+<b id="f28">[R28]</b> Bruna, T., Gabriel, L. & Hoff, K. J. (2024). Navigating Eukaryotic Genome Annotation Pipelines: A Route Map to BRAKER, Galba, and TSEBRA. arXiv, https://doi.org/10.48550/arXiv.2403.19416 .[↩](#a28)
