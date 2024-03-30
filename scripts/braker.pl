@@ -812,6 +812,7 @@ $pubs{'braker3'} = "\nGabriel, L., Bruna, T., Hoff, K. J., Ebel, M., Lomsadze, A
 $pubs{'busco'} = "\nSimao, F. A., Waterhouse, R. M., Ioannidis, P., Kriventseva, E. V., & Zdobnov, E. M. (2015). BUSCO: assessing genome assembly and annotation completeness with single-copy orthologs. Bioinformatics, 31(19), 3210-3212.\n";
 $pubs{'miniprot'} = "\nLi, H. (2023). Protein-to-genome alignment with miniprot. Bioinformatics, 30(1):btad014.\n";
 $pubs{'compleasm'} = "\nHuang, N., & Li, H. (2023). compleasm: a faster and more accurate reimplementation of BUSCO. Bioinformatics 39(10):btad595.\n";
+$pubs{'braker-c-i'} = "\nBruna, T., Gabriel, L., & Hoff, K. J. (2024). Navigating Eukaryotic Genome Annotation Pipelines: A Route Map to BRAKER, Galba, and TSEBRA. arXiv preprint at https://doi.org/10.48550/arXiv.2403.19416.\n";
 $pubs{'makehub'} = "\nHoff, K. J. (2019). MakeHub: fully automated generation of UCSC genome browser assembly hubs. Genomics, Proteomics and Bioinformatics, 17(5), 546-549.\n";
 
 
@@ -4527,6 +4528,7 @@ sub make_compleasm_hints {
     print CITE $pubs{'busco'}; $pubs{'busco'} = "";
     print CITE $pubs{'miniprot'}; $pubs{'miniprot'} = "";
     print CITE $pubs{'compleasm'}; $pubs{'compleasm'} = "";
+    print CITE $pubs{'braker-c-i'}; $pubs{'braker-c-i'} = "";
     print LOG "\# "
         . (localtime)
         . ": Running compleasm and converting the output to hints\n" if ($v > 2);
