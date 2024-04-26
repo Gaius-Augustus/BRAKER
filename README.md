@@ -1294,6 +1294,8 @@ Common problems
 
     BRAKER copies the AUGUSTUS_CONFIG_PATH folder to a writable location. In older versions of Augustus, that file was indeed not existing. If the local writable copy of a folder already exists, BRAKER will not re-copy it. Simply delete the old folder. (It is often `~/.augustus`, so you can simply do `rm -rf ~/.augustus`; the folder might be residing in $PWD if your home directory was not writable).
 
+-   *I sit behind a firewall, compleasm cannot download the BUSCO files, what can I do?* See Issue https://github.com/Gaius-Augustus/BRAKER/issues/785#issuecomment-2079787188
+
 Citing BRAKER and software called by BRAKER
 =============================================
 
