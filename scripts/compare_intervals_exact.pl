@@ -362,7 +362,7 @@ sub RemoveOverlapping
 		while( $i < $size_aa && $j < $size_bb )
 		{
 			# i.R < j.L
-			if ( $aa->{$key}[$i][1] < $bb->{$key}[$j][1] )
+			if ( $aa->{$key}[$i][1] < $bb->{$key}[$j][0] )
 			{
 				$i += 1;
 				next;
