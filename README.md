@@ -407,17 +407,11 @@ In order to set the environment variable for your current Bash session, type:
 
 Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.
 
-Perl scripts within GeneMark-ES/ET/EP/ETP are configured with default Perl location at `/usr/bin/perl`.
-
-If you are running GeneMark-ES/ET/EP/ETP in an Anaconda environment (or want to use Perl from the `$PATH` variable for any other reason), modify the shebang of all GeneMark-ES/ET/EP/ETP scripts with the following command located inside GeneMark-ES/ET/EP/ETP folder:
-
-```
-perl change_path_in_perl_scripts.pl "/usr/bin/env perl"
-```
-
 You can check whether GeneMark-ES/ET/EP is installed properly by running the `check_install.bash` and/or executing examples in `GeneMark-E-tests` directory.
 
 GeneMark-ETP is downward compatible, i.e. it covers the functionality of GeneMark-EP and GeneMark-ET in BRAKER, too.
+
+Warning: installing GeneMark-ETP for BRAKER in conda environments has lead to multiple problems reported by users (Issues!). We can not offer support for conda installations. Please use the singularity image instead.
 
 #### AUGUSTUS
 
