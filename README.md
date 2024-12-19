@@ -335,13 +335,9 @@ Subsequently install BRAKER and other software "as usual" while being in your co
 
 BRAKER is a collection of Perl and Python scripts and a Perl module. The main script that will be called in order to run BRAKER is `braker.pl`. Additional Perl and Python components are:
 
--   `align2hints.pl`
-
 -   `filterGenemark.pl`
 
 -   `filterIntronsFindStrand.pl`
-
--   `startAlign.pl`
 
 -   `helpMod_braker.pm`
 
