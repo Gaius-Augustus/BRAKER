@@ -18,7 +18,7 @@ TSEBRA & BRAKER3 related:
 
 BRAKER & AUGUSTUS related:
 
-   * Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624, [![https://twitter.com/katharina_hoff](https://img.shields.io/twitter/follow/katharina_hoff)](https://twitter.com/katharina_hoff)
+   * Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624
 
 GeneMark related:
 
