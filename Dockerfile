@@ -134,7 +134,7 @@ ENV PATH=${PATH}:/opt/Augustus/scripts/:/opt/Augustus/bin/
 
 # tsebra
 RUN cd /opt && \
-    git clone https://github.com/Gaius-Augustus/TSEBRA
+    git clone    https://github.com/Gaius-Augustus/TSEBRA
 
 ENV PATH=${PATH}:/opt/TSEBRA/bin
 
@@ -192,9 +192,9 @@ USER root
 
 # compleasm
 RUN cd /opt && \
-    wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.5/compleasm-0.2.5_x64-linux.tar.bz2 && \
-    tar -xvjf compleasm-0.2.5_x64-linux.tar.bz2 && \
-    rm compleasm-0.2.5_x64-linux.tar.bz2
+    wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.7/compleasm-0.2.7_x64-linux.tar.bz2 && \
+    tar -xvjf compleasm-0.2.7_x64-linux.tar.bz2 && \
+    rm compleasm-0.2.7_x64-linux.tar.bz2
 
 # braker including RNAseq test file
 
