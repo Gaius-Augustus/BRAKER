@@ -142,7 +142,6 @@ ENV PATH=${PATH}:/opt/TSEBRA/bin
 RUN cd /opt && \
     git clone https://github.com/Gaius-Augustus/MakeHub.git && \
     cd MakeHub && \
-    git checkout braker3 && \
     wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v369/bedToBigBed && \
     wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v369/genePredCheck && \
     wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v369/faToTwoBit && \
@@ -174,6 +173,10 @@ USER ${NB_UID}
 RUN mamba install --quiet -c bioconda -c anaconda --yes \
     biopython && \
     mamba clean  --all -f -y && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+
+RUN pip install intervaltree matplotlib && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
