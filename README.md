@@ -5,6 +5,8 @@
 News
 ====
 
+BRAKER is deprecated. **Try BRAKER4: https://github.com/Gaius-Augustus/BRAKER4**
+
 Here is a recording of the first BGA23 workshop session on BRAKER. If learning by watching videos is easy for you, consider watching that: https://www.youtube.com/watch?v=UXTkJ4mUkyg
 
 BRAKER3 is now in https://usegalaxy.eu/ 
