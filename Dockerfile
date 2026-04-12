@@ -117,7 +117,7 @@ RUn apt update && \
 USER ${NB_UID}
 
 # only python installations can be done as a normal user
-RUN mamba install --quiet -c bioconda -c anaconda --yes \
+RUN mamba install --quiet -c bioconda -c conda-forge --yes \
     biopython && \
     mamba clean  --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
@@ -170,17 +170,18 @@ RUN apt update && \
 	
 USER ${NB_UID}
 
-RUN mamba install --quiet -c bioconda -c anaconda --yes \
+RUN mamba install --quiet -c bioconda -c conda-forge --yes \
     biopython && \
     mamba clean  --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
+
 RUN pip install intervaltree matplotlib && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
-RUN mamba install --quiet -c anaconda --yes \
+RUN mamba install --quiet -c conda-forge --yes \
     pandas && \
     mamba clean  --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
