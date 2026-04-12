@@ -134,7 +134,7 @@ ENV PATH=${PATH}:/opt/Augustus/scripts/:/opt/Augustus/bin/
 
 # tsebra
 RUN cd /opt && \
-    git clone https://github.com/Gaius-Augustus/TSEBRA
+    git clone    https://github.com/Gaius-Augustus/TSEBRA
 
 ENV PATH=${PATH}:/opt/TSEBRA/bin
 
@@ -142,7 +142,6 @@ ENV PATH=${PATH}:/opt/TSEBRA/bin
 RUN cd /opt && \
     git clone https://github.com/Gaius-Augustus/MakeHub.git && \
     cd MakeHub && \
-    git checkout braker3 && \
     wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v369/bedToBigBed && \
     wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v369/genePredCheck && \
     wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v369/faToTwoBit && \
@@ -177,6 +176,11 @@ RUN mamba install --quiet -c bioconda -c conda-forge --yes \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
+
+RUN pip install intervaltree matplotlib && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+
 RUN mamba install --quiet -c conda-forge --yes \
     pandas && \
     mamba clean  --all -f -y && \
@@ -189,9 +193,9 @@ USER root
 
 # compleasm
 RUN cd /opt && \
-    wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.5/compleasm-0.2.5_x64-linux.tar.bz2 && \
-    tar -xvjf compleasm-0.2.5_x64-linux.tar.bz2 && \
-    rm compleasm-0.2.5_x64-linux.tar.bz2
+    wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.7/compleasm-0.2.7_x64-linux.tar.bz2 && \
+    tar -xvjf compleasm-0.2.7_x64-linux.tar.bz2 && \
+    rm compleasm-0.2.7_x64-linux.tar.bz2
 
 # braker including RNAseq test file
 

@@ -296,9 +296,34 @@ def merge_features(tsebra_gtf, stringtie_gtf, selected_transcripts):
     return tsebra_gtf
 
 
+def _make_utr_feature(fields, utr_type, utr_start, utr_end):
+    """
+    Create a UTR feature line with explicit start/end coordinates.
+
+    Avoids the string-replace bug where coordinates could be replaced
+    in the wrong column or produce inverted coordinates (start > end).
+
+    Returns None if the resulting UTR would be invalid (start > end).
+    """
+    if utr_start > utr_end:
+        return None
+    new_fields = list(fields)
+    new_fields[2] = utr_type
+    new_fields[3] = str(utr_start)
+    new_fields[4] = str(utr_end)
+    return "\t".join(new_fields)
+
+
 def compute_utr_features(tsebra_gtf):
     """
     Compute the UTR features for each transcript in tsebra_gtf based on strand information.
+
+    Bug fixes vs. original BRAKER version (github.com/Gaius-Augustus/BRAKER/issues/867):
+    - Use explicit coordinate assignment instead of string replace to avoid
+      replacing coordinates in wrong columns and producing inverted ranges
+    - Skip UTR features where start > end
+    - Collect StringTie exons to remove in a separate pass to avoid
+      modifying the list while iterating (which skips elements)
 
     Args:
     - tsebra_gtf (dict): Dictionary with transcript IDs as keys and lists of GTF feature lines as values.
@@ -309,7 +334,7 @@ def compute_utr_features(tsebra_gtf):
     for transcript_id, features in tsebra_gtf.items():
         # Sort features by start position
         features.sort(key=lambda x: int(x.split('\t')[3]))
-        
+
         utr_features = []
         for feature in features:
             fields = feature.split('\t')
@@ -321,7 +346,7 @@ def compute_utr_features(tsebra_gtf):
             # If feature is an exon, check if there are overlapping CDS features
             if feature_type == "exon":
                 overlapping_cds = [f for f in features if f.split('\t')[2] == "CDS" and int(f.split('\t')[3]) <= end and int(f.split('\t')[4]) >= start]
-                
+
                 if overlapping_cds:
                     cds_start = int(overlapping_cds[0].split('\t')[3])
                     cds_end = int(overlapping_cds[0].split('\t')[4])
@@ -329,36 +354,37 @@ def compute_utr_features(tsebra_gtf):
                     # Check for UTR based on strand
                     if strand == "+":
                         if start < cds_start:
-                            utr5 = "\t".join(fields[:2] + ["five_prime_UTR"] + fields[3:])
-                            utr5 = utr5.replace(str(end), str(cds_start - 1))
-                            utr_features.append(utr5)
+                            utr = _make_utr_feature(fields, "five_prime_UTR", start, cds_start - 1)
+                            if utr:
+                                utr_features.append(utr)
 
                         if end > cds_end:
-                            utr3 = "\t".join(fields[:2] + ["three_prime_UTR"] + fields[3:])
-                            utr3 = utr3.replace(str(start), str(cds_end + 1))
-                            utr_features.append(utr3)
-                    
+                            utr = _make_utr_feature(fields, "three_prime_UTR", cds_end + 1, end)
+                            if utr:
+                                utr_features.append(utr)
+
                     elif strand == "-":
                         if end > cds_end:
-                            utr5 = "\t".join(fields[:2] + ["five_prime_UTR"] + fields[3:])
-                            utr5 = utr5.replace(str(start), str(cds_end + 1))
-                            utr_features.append(utr5)
+                            utr = _make_utr_feature(fields, "five_prime_UTR", cds_end + 1, end)
+                            if utr:
+                                utr_features.append(utr)
 
                         if start < cds_start:
-                            utr3 = "\t".join(fields[:2] + ["three_prime_UTR"] + fields[3:])
-                            utr3 = utr3.replace(str(end), str(cds_start - 1))
-                            utr_features.append(utr3)
-                
+                            utr = _make_utr_feature(fields, "three_prime_UTR", start, cds_start - 1)
+                            if utr:
+                                utr_features.append(utr)
+
         # Add the computed UTR features to the list of features for this transcript
         features.extend(utr_features)
         features.sort(key=lambda x: int(x.split('\t')[3]))
 
-        # Modify StringTie exons to UTR features if needed
+        # Modify StringTie exons to UTR features if needed.
+        # First pass: determine UTR type and collect indices to remove.
         seen_cds = False
+        to_remove = []
         for idx, feature in enumerate(features):
             fields = feature.split('\t')
             start = int(fields[3])
-            end = int(fields[4])
             strand = fields[6]
             featuretype = fields[2]
             if featuretype == "CDS":
@@ -371,23 +397,26 @@ def compute_utr_features(tsebra_gtf):
                 utr_type = "three_prime_UTR"
             else:
                 utr_type = "five_prime_UTR"
-            
-            if "StringTie" in fields[1]:  # Assuming this condition identifies StringTie exons
+
+            if "StringTie" in fields[1]:
                 # Check if it has the same start as any of its neighbors
                 same_start = False
                 for offset in [-1, 1]:
-                    if idx + offset >= 0 and idx + offset < len(features):
+                    if 0 <= idx + offset < len(features):
                         neighbor = features[idx + offset].split('\t')
                         if int(neighbor[3]) == start:
                             same_start = True
                             break
-                
+
                 if same_start:
-                    # Remove the StringTie feature
-                    features.pop(idx)
+                    to_remove.append(idx)
                 else:
                     fields[2] = utr_type
                     features[idx] = "\t".join(fields)
+
+        # Second pass: remove marked features in reverse order to preserve indices
+        for idx in reversed(to_remove):
+            features.pop(idx)
 
     return tsebra_gtf
 
