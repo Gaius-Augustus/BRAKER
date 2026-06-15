@@ -1,7 +1,7 @@
 # Distributed under the terms of the Modified BSD License.
 ARG OWNER=jupyter
 ARG BASE_CONTAINER=$OWNER/minimal-notebook
-FROM $BASE_CONTAINER as base
+FROM $BASE_CONTAINER AS base
 
 # Fix: https://github.com/hadolint/hadolint/wiki/DL4006
 # Fix: https://github.com/koalaman/shellcheck/wiki/SC3014
@@ -99,7 +99,7 @@ RUN apt update && \
     fix-permissions "${AUGUSTUS_CONFIG_PATH}"
 
 # perl & dependencies
-RUn apt update && \
+RUN apt update && \
     apt install -yq libyaml-perl \
                     libhash-merge-perl \
                     libparallel-forkmanager-perl \
@@ -158,7 +158,7 @@ ENV PATH=${PATH}:/opt/MakeHub
 
 # perl dependencies of BRAKER and GeneMark-ETP+
 
-RUn apt update && \
+RUN apt update && \
     apt install -yq libyaml-perl libhash-merge-perl libparallel-forkmanager-perl libscalar-util-numeric-perl libclass-data-inheritable-perl libexception-class-perl libtest-pod-perl libfile-which-perl libmce-perl libthread-queue-perl libmath-utils-perl libscalar-list-utils-perl && \
     apt clean all
     
@@ -193,9 +193,9 @@ USER root
 
 # compleasm
 RUN cd /opt && \
-    wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.7/compleasm-0.2.7_x64-linux.tar.bz2 && \
-    tar -xvjf compleasm-0.2.7_x64-linux.tar.bz2 && \
-    rm compleasm-0.2.7_x64-linux.tar.bz2
+    wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.8/compleasm-0.2.8_x64-linux.tar.bz2 && \
+    tar -xvjf compleasm-0.2.8_x64-linux.tar.bz2 && \
+    rm compleasm-0.2.8_x64-linux.tar.bz2
 
 # braker including RNAseq test file
 
