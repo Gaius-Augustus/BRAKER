@@ -14,7 +14,7 @@
 # This script is under the Artistic Licence                                                        #
 # (http://www.opensource.org/licenses/artistic-license.php)                                        #
 #                                                                                                  #
-# *EX = ES/ET/EP/ETP, currently distributed as GeneMark-ES/ET                                      #
+# *EX = ES/ET/EP/ETP, currently distributed as GeneMark-ETP                                        #
 ####################################################################################################
 
 use Getopt::Long;
@@ -39,7 +39,7 @@ use File::Spec::Functions qw(rel2abs);
 use File::Basename qw(dirname basename fileparse);
 use File::Copy;
 
-use helpMod
+use helpMod_braker
     qw( find checkFile formatDetector relToAbs setParInConfig addParToConfig uptodate gtf2fasta clean_abort );
 use Term::ANSIColor qw(:constants);
 
@@ -65,8 +65,9 @@ INPUT FILE OPTIONS
 --prot_seq=prot.fa                  A protein sequence file in multi-fasta
                                     format used to generate protein hints.
                                     Unless otherwise specified, braker.pl will
-                                    run in "EP mode" which uses ProtHint to
-                                    generate protein hints and GeneMark-EP+ to
+                                    run in "EP mode" or "ETP mode which uses 
+                                    ProtHint to generate protein hints and 
+                                    GeneMark-EP+ or GeneMark-ETP to
                                     train AUGUSTUS.
 --hints=hints.gff                   Alternatively to calling braker.pl with a
                                     bam or protein fasta file, it is possible to
@@ -141,19 +142,19 @@ FREQUENTLY USED OPTIONS
                                     accuracy than HMM parameters.
 --keepCrf                           keep CRF parameters even if they are not
                                     better than HMM parameters
---UTR=on                            create UTR training examples from RNA-Seq
-                                    coverage data; requires options
-                                    --bam=rnaseq.bam.
-                                    Alternatively, if UTR parameters already
-                                    exist, training step will be skipped and
-                                    those pre-existing parameters are used.
---addUTR=on                         Adds UTRs from RNA-Seq coverage data to
-                                    augustus.hints.gtf file. Does not perform
-                                    training of AUGUSTUS or gene prediction with
-                                    AUGUSTUS and UTR parameters.
 --makehub                           Create track data hub with make_hub.py
                                     for visualizing BRAKER results with the
                                     UCSC GenomeBrowser
+--busco_lineage=lineage             If you provide a BUSCO lineage, BRAKER will
+                                    run compleasm on genome level to generate hints
+                                    from BUSCO to enhance BUSCO discovery in the
+                                    protein set. Also, if you provide a BUSCO
+                                    lineage, BRAKER will run compleasm to assess
+                                    the protein sets that go into TSEBRA combination,
+                                    and will determine the TSEBRA mode to maximize
+                                    BUSCO. Do not provide a busco_lineage if you
+                                    want to determina natural BUSCO sensivity of
+                                    BRAKER!
 --email                             E-mail address for creating track data hub
 --version                           Print version number of braker.pl
 --help                              Print this help message
@@ -216,6 +217,9 @@ CONFIGURATION OPTIONS (TOOLS CALLED BY BRAKER)
 --BLAST_PATH=/path/to/blastall      Set path to NCBI blastall and formatdb
                                     executables if not specified as
                                     environment variable. Has higher priority
+                                    than environment variable.
+--COMPLEASM_PATH=/path/to/compleasm Set path to compleasm (if not specified as
+                                    environment variable). Has higher priority
                                     than environment variable.
 --PYTHON3_PATH=/path/to             Set path to python3 executable (if not
                                     specified as envirnonment variable and if
@@ -424,6 +428,20 @@ DEVELOPMENT OPTIONS (PROBABLY STILL DYSFUNCTIONAL)
                                     that the GeneMark-ETP step can be skipped.
                                     In this case, use training.gtf from that run as
                                     argument.
+--UTR=on                            create UTR training examples from RNA-Seq
+                                    coverage data; requires options
+                                    --bam=rnaseq.bam.
+                                    Alternatively, if UTR parameters already
+                                    exist, training step will be skipped and
+                                    those pre-existing parameters are used.
+				    DO NOT USE IN CONTAINER!
+				    TRY NOT TO USE AT ALL!
+--addUTR=on                         Adds UTRs from RNA-Seq coverage data to
+                                    augustus.hints.gtf file. Does not perform
+                                    training of AUGUSTUS or gene prediction with
+                                    AUGUSTUS and UTR parameters.
+				    DO NOT USE IN CONTAINER!
+				    TRY NOT TO USE AT ALL!
 
 
 EXAMPLE
@@ -456,7 +474,7 @@ ENDUSAGE
 # Declartion of global variables ###############################################
 
 my $v = 4; # determines what is printed to log
-my $version = "3.0.0";
+my $version = "3.0.8";
 my $rootDir;
 my $logString = "";          # stores log messages produced before opening log file
 $logString .= "\#**********************************************************************************\n";
@@ -598,6 +616,9 @@ my ( $target_1, $target_2, $target_3, $target_4, $target_5) = 0;
 my @prot_seq_files;   # variable to store protein sequence file name
 my $DIAMOND_PATH; # path to diamond, alternative to BLAST
 my $diamond_path; # command line argument value for $DIAMOND_PATH
+my $COMPLEASM_PATH; # path to compleasm
+my $compleasm_path; # command line argument value for $COMPLEASM_PATH
+my $busco_lineage;
 my $BLAST_PATH; # path to blastall and formatdb ncbi blast executable
 my $blast_path; # command line argument value for $BLAST_PATH
 my $python3_path; # command line argument value for $PYTHON3_PATH
@@ -686,6 +707,8 @@ GetOptions(
     'optCfgFile=s'                 => \$optCfgFile,
     'overwrite!'                   => \$overwrite,
     'SAMTOOLS_PATH=s'              => \$SAMTOOLS_PATH_OP,
+    'COMPLEASM_PATH=s'             => \$compleasm_path,
+    'busco_lineage=s'              => \$busco_lineage,
     'skipGeneMark-ES!'             => \$skipGeneMarkES,
     'skipGeneMark-ET!'             => \$skipGeneMarkET,
     'skipGeneMark-EP!'             => \$skipGeneMarkEP,
@@ -746,7 +769,7 @@ if ($printVersion) {
     exit(0);
 }
 
-if( $soft_off ) {
+if( $soft_off == 1 ) {
     $soft_mask = 0;
 }
 
@@ -756,7 +779,7 @@ if($nocleanup){
 
 # Define publications to be cited ##############################################
 # braker1, braker2, braker-whole, aug-cdna, aug-hmm, diamond, blast1, blast2,
-# gm-es, gm-et, gm-ep, gm-fungus, samtools, bamtools, spaln,
+# gm-es, gm-et, gm-ep, gm-etp, gm-fungus, samtools, bamtools, spaln,
 # spaln2, makehub, bedtools, sratoolkit, hisat2, stringtie, gffread
 my %pubs;
 $pubs{'braker1'} = "\nHoff, K. J., Lange, S., Lomsadze, A., Borodovsky, M., & Stanke, M. (2016). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5), 767-769.\n";
@@ -770,6 +793,7 @@ $pubs{'blast2'} = "\nCamacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoul
 $pubs{'gm-es'} = "\nLomsadze, A., Ter-Hovhannisyan, V., Chernoff, Y. O., & Borodovsky, M. (2005). Gene identification in novel eukaryotic genomes by self-training algorithm. Nucleic acids research, 33(20), 6494-6506.\n";
 $pubs{'gm-et'} = "\nLomsadze, A., Burns, P. D., & Borodovsky, M. (2014). Integration of mapped RNA-Seq reads into automatic training of eukaryotic gene finding algorithm. Nucleic acids research, 42(15), e119-e119.\n";
 $pubs{'gm-ep'} = "\nBruna, T., Lomsadze, A., & Borodovsky, M. (2020). GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026.\n";
+$pubs{'gm-etp'} = "\nBruna, T., Lomsadze, A., & Borodovsky, M. (2023). GeneMark-ETP: Automatic Gene Finding in Eukaryotic Genomes in Consistence with Extrinsic Data. bioRxiv, https://doi.org/10.1101/2023.01.13.524024.\n";
 $pubs{'gm-fungus'} = "\nTer-Hovhannisyan, V., Lomsadze, A., Chernoff, Y. O., & Borodovsky, M. (2008). Gene prediction in novel fungal genomes using an ab initio algorithm with unsupervised training. Genome research, 18(12), 1979-1990.\n";
 $pubs{'samtools'} = "\nLi, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., ... & Durbin, R. (2009). The sequence alignment/map format and SAMtools. Bioinformatics, 25(16), 2078-2079.\n";
 $pubs{'bamtools'} = "\nBarnett, D. W., Garrison, E. K., Quinlan, A. R., Strömberg, M. P., & Marth, G. T. (2011). BamTools: a C++ API and toolkit for analyzing and managing BAM files. Bioinformatics, 27(12), 1691-1692.\n";
@@ -778,11 +802,18 @@ $pubs{'spaln2'} = "\nIwata, H., & Gotoh, O. (2012). Benchmarking spliced alignme
 $pubs{'gemoma1'} = "\nKeilwagen, J., Hartung, F., Grau, J. (2019) GeMoMa: Homology-based gene prediction utilizing intron position conservation and RNA-seq data. Methods Mol Biol. 1962:161-177, doi: 10.1007/978-1-4939-9173-0_9.\n";
 $pubs{'gemoma2'} = "\nKeilwagen, J., Wenk, M., Erickson, J.L., Schattat, M.H., Grau, J., Hartung F. (2016) Using intron position conservation for homology-based gene prediction. Nucleic Acids Research, 44(9):e89.\n";
 $pubs{'gemoma3'} = "\nKeilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.\n";
-$pubs{'bedtools'} = "Quinlan, A. R. (2014). BEDTools: the Swiss‐army tool for genome feature analysis. Current protocols in bioinformatics, 47(1):11-12.\n";
-$pubs{'sratoolkit'} = "SRA Toolkit Development Team (2020). SRA Toolkit. https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software.\n";
-$pubs{'hisat2'} = "Kim, D., Paggi, J. M., Park, C., Bennett, C., & Salzberg, S. L. (2019). Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype. Nature biotechnology, 37(8):907-915.\n";
-$pubs{'stringtie'} = "Kovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.\n";
-$pubs{'gffread'} = "Pertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.\n";
+$pubs{'bedtools'} = "\nQuinlan, A. R. (2014). BEDTools: the Swiss‐army tool for genome feature analysis. Current protocols in bioinformatics, 47(1):11-12.\n";
+$pubs{'sratoolkit'} = "\nSRA Toolkit Development Team (2020). SRA Toolkit. https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software.\n";
+$pubs{'hisat2'} = "\nKim, D., Paggi, J. M., Park, C., Bennett, C., & Salzberg, S. L. (2019). Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype. Nature biotechnology, 37(8):907-915.\n";
+$pubs{'stringtie'} = "\nKovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.\n";
+$pubs{'gffread'} = "\nPertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.\n";
+$pubs{'tsebra'} = "\nGabriel, L., Hoff, K. J., Bruna, T., Borodovsky, M., & Stanke, M. (2021). TSEBRA: transcript selector for BRAKER. BMC Bioinformatics, 22:566.\n";
+$pubs{'braker3'} = "\nGabriel, L., Bruna, T., Hoff, K. J., Ebel, M., Lomsadze, A., Borodovsky, M., & Stanke, M. (2023). BRAKER3: Fully Automated Genome Annotation Using RNA-Seq and Protein Evidence with GeneMark-ETP, AUGUSTUS and TSEBRA. bioRxiv, https://doi.org/10.1101/2023.06.10.544449.\n";
+$pubs{'busco'} = "\nSimao, F. A., Waterhouse, R. M., Ioannidis, P., Kriventseva, E. V., & Zdobnov, E. M. (2015). BUSCO: assessing genome assembly and annotation completeness with single-copy orthologs. Bioinformatics, 31(19), 3210-3212.\n";
+$pubs{'miniprot'} = "\nLi, H. (2023). Protein-to-genome alignment with miniprot. Bioinformatics, 30(1):btad014.\n";
+$pubs{'compleasm'} = "\nHuang, N., & Li, H. (2023). compleasm: a faster and more accurate reimplementation of BUSCO. Bioinformatics 39(10):btad595.\n";
+$pubs{'braker-c-i'} = "\nBruna, T., Gabriel, L., & Hoff, K. J. (2024). Navigating Eukaryotic Genome Annotation Pipelines: A Route Map to BRAKER, Galba, and TSEBRA. arXiv preprint at https://doi.org/10.48550/arXiv.2403.19416.\n";
+$pubs{'makehub'} = "\nHoff, K. J. (2019). MakeHub: fully automated generation of UCSC genome browser assembly hubs. Genomics, Proteomics and Bioinformatics, 17(5), 546-549.\n";
 
 
 # Make paths to input files absolute ###########################################
@@ -852,6 +883,9 @@ set_AUGUSTUS_BIN_PATH();
 set_AUGUSTUS_SCRIPTS_PATH();
 fix_AUGUSTUS_CONFIG_PATH();
 set_PYTHON3_PATH();
+if (defined($busco_lineage)){
+    set_COMPLEASM_PATH(); # todo: make sure that compleasm to hints actually passes the path, or make the hints script a hints parser, only
+}
 
 if($UTR eq "on" || $addUTR eq "on"){
     set_JAVA_PATH();
@@ -1080,7 +1114,7 @@ if ($skipGeneMarkET && $EPmode == 0 && $ETPmode == 0 && $ESmode == 0 &&
         if (-e "$etpplus_dir/training.gtf") {
             $traingtf = "$etpplus_dir/training.gtf";
         }elsif (-e "$etpplus_dir/proteins.fa/model/training.gtf"){
-            $traingtf = "$etpplus_dir/proteins.fa/training.gtf";
+            $traingtf = "$etpplus_dir/proteins.fa/model/training.gtf";
         }
     }
     if (not(-e $traingtf) || not(-e $geneMarkGtf) ) {
@@ -1338,7 +1372,7 @@ if (@prot_seq_files) {
     my @tmp_prot_seq;
     foreach (@prot_seq_files) {
         push(@tmp_prot_seq, $_);
-        check_fasta_headers($_, 0);
+        check_fasta_headers($_, 0); # todo: this generates a header map that looks like it's genome headers, needs to be fixed
     }
     @prot_seq_files = @tmp_prot_seq;
 }
@@ -1417,9 +1451,14 @@ if (%rnaseq_libs) {
     make_bam_file();
 }
 
-# make hints from protein data if EPmode/ETPömode
+# make hints from protein data if EPmode/ETPmode
 if( !$ETPmode && @prot_seq_files ){
     run_prothint();
+}
+
+# make BUSCO hints with compleasm
+if (defined($busco_lineage)) {
+    make_compleasm_hints();
 }
 
 # make hints from RNA-Seq
@@ -1469,6 +1508,7 @@ if ($ETPmode) {
     # AUGUSTUS as well
     create_evidence_gff();
     GeneMark_ETP();
+    print CITE $pubs{'braker3'}; $pubs{'braker3'} = "";
 }
 
 if ( $skipAllTraining == 0 && not ( defined($AUGUSTUS_hints_preds) ) ) {
@@ -1527,6 +1567,10 @@ if ( $UTR eq "on" && @bam) {
 if ( $addUTR eq "on"){
     add_utr_to_augustus(); # only runs GUSHR
     merge_transcript_sets("on");
+}
+
+if ( $busco_lineage ) {
+    best_by_compleasm();
 }
 
 if ( $gff3 != 0) {
@@ -1887,10 +1931,9 @@ sub set_AUGUSTUS_CONFIG_PATH {
             = "\# "
             . (localtime)
             . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "AUGUSTUS_CONFIG_PATH/species (in this case ";
-        $prtStr .= "\# " . (localtime) . ":"
-         . "$AUGUSTUS_CONFIG_PATH/species) is not writeable. BRAKER will "
-         . "try to copy the AUGUSTUS config directory to a writeable location.\n";
+            . "AUGUSTUS_CONFIG_PATH/species (in this case "
+            . "$AUGUSTUS_CONFIG_PATH/species) is not writeable. BRAKER will "
+            . "try to copy the AUGUSTUS config directory to a writeable location.\n";
         $logString .= $prtStr;
         print STDERR $logString;
     }
@@ -2028,6 +2071,15 @@ sub set_SRATOOLS_PATH {
                     \@required_files, 'exit');
 }
 
+####################### set_COMPLEASM_PATH #####################################
+# * set path to compleasm
+################################################################################
+sub set_COMPLEASM_PATH {
+    my @required_files = ('compleasm.py');
+    $COMPLEASM_PATH = set_software_PATH($compleasm_path, "COMPLEASM_PATH",
+                    \@required_files, 'exit');
+}
+
 ######################### set_HISAT2_PATH ######################################
 # * set path to hisat2
 ################################################################################
@@ -2041,8 +2093,6 @@ sub set_HISAT2_PATH {
 
 ####################### set_GENEMARK_PATH ######################################
 # * set path to gmes_petap.pl (or to gmetp.pl in ETPmode)
-# * be aware that GeneMark requires a valid license key file, usually placed
-#   home directory as invisible file .gm_key
 # * and set \$GENEMARK_PATH as their parent directory
 ################################################################################
 
@@ -2291,7 +2341,7 @@ sub set_JAVA_PATH {
     $JAVA_PATH = set_software_PATH($java_path, "JAVA_PATH",
                     \@required_files, 'exit');
 
-    $cmdString = "java -version 2>&1 | grep \"openjdk version\" | awk -F[\"\.] -v OFS=. '{print \$2,\$3}'";
+    $cmdString = "java -version 2>&1 | awk -F['\"''.'] -v OFS=. '/version/ {print $2,$3}'";
     my @javav = `$cmdString` or die("Failed to execute: $cmdString");
     if(not ($javav[0] =~ m/1\.8/ )){
         $prtStr = "\# " . (localtime) . " ERROR: in file " . __FILE__
@@ -2843,7 +2893,7 @@ sub find_tsebra_cfg {
 # * priority in descending order: BAM, paired (_1/_2), paired(_R1/_R2), unpaired
 ################################################################################
 sub check_rnaseq_sets{
-    my $fastq_file_extensions = "fastq|fq|fasta|fa";
+    my $fastq_file_extensions = "fastq|fq|fasta|fa|fastq.gz|fq.gz|fasta.gz|fa.gz";
     my @dir_content;
     $logString
         .= "\# "
@@ -2890,7 +2940,7 @@ sub check_rnaseq_sets{
 
         # search for paired or unpaired RNA-Sets in FASTQ format
         # check if there are multiple RNA-Seq sets
-        @candidate_files = grep(/$rna_set(_1|_R1|).($fastq_file_extensions)$/, @dir_content);
+        @candidate_files = grep(/$rna_set(_1|_R1|).($fastq_file_extensions)$/, @dir_content);        
         if ($#candidate_files > 1) {
             $logString .= "\# " . (localtime)
             . " WARNING: Found more than one RNA-Seq Library in FASTQ format for $rna_set."
@@ -2904,10 +2954,8 @@ sub check_rnaseq_sets{
             @candidate_files = grep(/${rna_set}${e}.($fastq_file_extensions)$/, @dir_content);
             if (not ($e eq "")) {
                 foreach my $file (@candidate_files) {
-
                     my $ext1 = $e =~ s/1/2/r;
-                    my ($ext2) = $file =~ /(\.[^.]+)$/;
-                    my @candidate_pairs = grep(/${rna_set}${ext1}${ext2}/, @current_files);
+                    my @candidate_pairs = grep(/${rna_set}${ext1}.($fastq_file_extensions)$/, @current_files);                    
                     if (@candidate_pairs) {
                         @curr_rna_lib = ($file, $candidate_pairs[0]);
                         $logString .= "\# " . (localtime)
@@ -3248,8 +3296,8 @@ sub check_options {
             = "\# "
             . (localtime)
             . ": ERROR: in file " . __FILE__ ." at line ". __LINE__ ."\n"
-            . "--UTR=on has been set but --softmasking has not been enabled. "
-            . "A softmasked genome file and the option --softmasking and a "
+            . "--UTR=on has been set and --softmasking_off has been enabled. "
+            . "A softmasked genome file and the not the option --softmask_off and a "
             . "bam file must be provided in order to run --UTR=on (in contrast "
             . "to other modes, where a hints file can replace the alignment "
             . "file, the bam file is strictly required for UTR training).\n";
@@ -4412,7 +4460,7 @@ sub make_bam_file {
         . (localtime)
         . ": Mapping RNA-Seq reads to the genome...\n" if ($v > 2);
     foreach (keys(%rnaseq_libs)) {
-#         $string = join ",", @{$rnaseq_libs{$_}};
+        
         print LOG "\# "
             . (localtime)
             . ": Mapping $_ ...\n" if ($v > 1);
@@ -4445,7 +4493,7 @@ sub make_bam_file {
             . ": Converting SAM file into a sorted BAM file for $_.\n" if ($v > 1);
         $errorfile = "$errorfilesDir/samtools.$_.stderr";
         $stdoutfile = "$errorfilesDir/samtools.$_.stdout";
-        $cmdString = "samtools sort -o $map_dir/$_.bam -@ $CPU $map_dir/$_.sam"
+        $cmdString = "$SAMTOOLS_PATH//samtools sort -o $map_dir/$_.bam -\@ $CPU $map_dir/$_.sam"
                 . " 1> $stdoutfile 2> $errorfile";
         print LOG "$cmdString\n" if ($v > 3);
         system("$cmdString") == 0
@@ -4462,6 +4510,73 @@ sub make_bam_file {
                 . __LINE__ ."\nCouldn't create BAM file for $_!\n");
         }
     }
+    # return to workDir
+    chdir($otherfilesDir) or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to change to directory $workDir!\n");
+}
+
+#################### make_compleasm_hints ######################################
+# * make hints from compleasm with BUSCOs
+# * this will only pick up BUSCOs without frameshift that are complete/duplicated
+# * the hints are trimmed by 3 nt on each end, converted to CDSpart
+# * M hints (enforced in prediction)
+################################################################################
+
+sub make_compleasm_hints {
+    print CITE $pubs{'busco'}; $pubs{'busco'} = "";
+    print CITE $pubs{'miniprot'}; $pubs{'miniprot'} = "";
+    print CITE $pubs{'compleasm'}; $pubs{'compleasm'} = "";
+    print CITE $pubs{'braker-c-i'}; $pubs{'braker-c-i'} = "";
+    print LOG "\# "
+        . (localtime)
+        . ": Running compleasm and converting the output to hints\n" if ($v > 2);
+    # change to $workDir
+    chdir($otherfilesDir) or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nFailed to change to directory $otherfilesDir!\n");
+    my $compleasm_hints = "$otherfilesDir/compleasm_hints.gff";
+    # call compleasm_to_hints.py from Augustus scripts
+    $string = find(
+        "compleasm_to_hints.py", $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH,  $AUGUSTUS_CONFIG_PATH
+    );
+    $errorfile = "$errorfilesDir/compleasm_to_hints.stderr";
+    $cmdString = "$PYTHON3_PATH/python3 $string -p $COMPLEASM_PATH/compleasm.py -g $genome -d $busco_lineage -t $CPU "
+        . "-o $compleasm_hints 1> $errorfile 2>&1";
+    # execute the command string
+    print LOG "$cmdString\n" if ($v > 3);
+    system("$cmdString") == 0
+        or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+            $useexisting, "ERROR in file " . __FILE__ ." at line "
+            . __LINE__ ."\nFailed to execute: $cmdString!\n");
+
+    open(CHINTS, "<", $compleasm_hints) or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__
+        . " at line ". __LINE__
+        . "\nFailed to open $compleasm_hints!\n");
+    open(HINTS, ">>", "$otherfilesDir/hintsfile.gff") or
+        clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to open file $otherfilesDir/hintsfile.gff!\n");
+
+    while(<CHINTS>){
+        print HINTS $_;
+    }
+    close(CHINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__
+        . " at line ". __LINE__
+        . "\nFailed to open $compleasm_hints!\n");
+
+    close(HINTS) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
+        $useexisting, "ERROR in file " . __FILE__ ." at line "
+        . __LINE__ ."\nfailed to close file $otherfilesDir/hintsfile.gff!\n");
+
+    print LOG "\# " . (localtime)
+        . ": Generating hints from compleasm (genome level) finished.\n" if ($v > 2);
 }
 
 ####################### make_rnaseq_hints ######################################
@@ -5140,9 +5255,7 @@ sub GeneMark_ES {
             system("$perlCmdString") == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
-                    . __LINE__ ."\nFailed to execute: $perlCmdString\n"
-                    . "The most common problem is an expired or not "
-                    . "present file ~/.gm_key!\n");
+                    . __LINE__ ."\nFailed to execute: $perlCmdString !\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
@@ -5221,9 +5334,7 @@ sub GeneMark_ET {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n"
-                    . "Failed to execute: $perlCmdString\n"
-                    . "The most common problem is an expired or not "
-                    . "present file ~/.gm_key!\n");
+                    . "Failed to execute: $perlCmdString !\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
@@ -5304,9 +5415,7 @@ sub GeneMark_EP {
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n"
-                    . "Failed to execute: $perlCmdString\n"
-                    . "The most common problem is an expired or not "
-                    . "present file ~/.gm_key!\n");
+                    . "Failed to execute: $perlCmdString !\n");
             $cmdString = "cd $rootDir";
             print LOG "\# "
                 . (localtime)
@@ -5330,9 +5439,7 @@ sub GeneMark_EP {
 
 sub GeneMark_ETP {
     print LOG "\# " . (localtime) . ": Running GeneMark-ETP\n" if ($v > 2);
-    print CITE $pubs{'gm-et'}; $pubs{'gm-et'} = "";
-    print CITE $pubs{'gm-ep'}; $pubs{'gm-ep'} = "";
-    print CITE $pubs{'gm-es'}; $pubs{'gm-es'} = "";
+    print CITE $pubs{'gm-etp'}; $pubs{'gm-etp'} = "";
     print CITE $pubs{'diamond'}; $pubs{'diamond'} = "";
     print CITE $pubs{'spaln'}; $pubs{'spaln'} = "";
     print CITE $pubs{'spaln2'}; $pubs{'spaln2'} = "";
@@ -5345,7 +5452,7 @@ sub GeneMark_ETP {
         if (!@bam) {
             clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
-                . __LINE__ ."\nFailed to find RNA-Seq data for GeneMark-ETP.\n");
+                . __LINE__ ."\nFailed to find RNA-Seq data for GeneMark-ETP. Note: GeneMark-ETP cannot be invoked with a hints file!\n");
         } elsif (! @prot_seq_files) {
             clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5391,7 +5498,7 @@ sub GeneMark_ETP {
                 }
                 $errorfile = "$errorfilesDir/samtools.sort.$lib.stderr";
                 $stdoutfile = "$errorfilesDir/samtools.sort.$lib.stdout";
-                $cmdString = "samtools sort $_ -o $genemarkDir/etp_data/".$lib.".bam"
+                $cmdString = "$SAMTOOLS_PATH/samtools sort $_ -\@ ".($CPU-1)." -o $genemarkDir/etp_data/".$lib.".bam"
                     . " 1> $stdoutfile 2> $errorfile";
                 # $cmdString = "ln -s $_ $genemarkDir/etp_data/".$lib.".bam";
                 print LOG "$cmdString\n" if ($v > 3);
@@ -5401,7 +5508,7 @@ sub GeneMark_ETP {
                         . __LINE__ ."\nFailed to execute: $cmdString!\n");
             }
 
-            # concatenate protein files
+            # concatenate protein files and remove '.' at the end of sequences
             open(PROT_ALL, ">", $protein_file) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                 $useexisting, "ERROR in file " . __FILE__ ." at line "
                 . __LINE__ ."\nfailed to open file $protein_file!\n");
@@ -5409,8 +5516,12 @@ sub GeneMark_ETP {
                     open(PROT, "<", $_) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                         $useexisting, "ERROR in file " . __FILE__ ." at line "
                         . __LINE__ ."\nfailed to open file $_!\n");
-                    while(<PROT>){
-                        print PROT_ALL $_;
+                    while(my $line = <PROT>){
+                        # remove dots at end of sequences
+                        if ($line !~ /^>/ && $line =~ /\.$/) {
+                            $line =~ s/\.$//;
+                        }
+                        print PROT_ALL $line;
                     }
                     close(PROT) or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
                         $useexisting, "ERROR in file " . __FILE__ ." at line "
@@ -5466,8 +5577,9 @@ sub GeneMark_ETP {
                     $useexisting, "ERROR in file " . __FILE__ ." at line "
                     . __LINE__ ."\nFailed to execute: $perlCmdString\n"
                     . "Failed to execute: $perlCmdString\n"
-                    . "The most common problem is an expired or not "
-                    . "present file ~/.gm_key!\n");
+                    . "The most common problem is that GeneMark-ETP "
+                    . "didn't receive enough evidence from the input data, "
+                    . "in this case, see errors/GeneMark-ETP.stderr!\n");
             print LOG "\# "
                 . (localtime)
                 . ": change to working directory $rootDir\n"
@@ -5506,6 +5618,18 @@ sub GeneMark_ETP {
         . "\nfailed to execute: $cmdString!\n");
 
     sortGeneMark("$genemarkDir/training.gtf");
+
+    if ( ! -e "$genemarkDir/genemark.gtf" )
+    {
+        $cmdString = "ln -sf $geneMarkGtf $genemarkDir/genemark.gtf";
+        print LOG "\# "
+        . (localtime)
+        . ": link GeneMark-ETP genes to $genemarkDir/genemark.gtf\n" if ($v > 3);
+        print LOG "$cmdString\n" if ($v > 3);
+        system("$cmdString") == 0
+        or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nfailed to execute: $cmdString!\n");
+    }
 }
 
 ####################### get_etp_hints_for_Augustus #############################
@@ -5524,7 +5648,7 @@ sub get_etp_hints_for_Augustus {
         "get_etp_hints.py",    $AUGUSTUS_BIN_PATH,
         $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
     );
-    $cmdString .= "python3 $string --genemark_scripts $GENEMARK_PATH --out $hintsfile ";
+    $cmdString .= "$PYTHON3_PATH/python3 $string --genemark_scripts $GENEMARK_PATH --out $hintsfile ";
     if (defined($etpplus_dir)) {
         $cmdString .= "--etp_wdir $etpplus_dir ";
     } else {
@@ -5972,7 +6096,10 @@ sub training_augustus {
                 . (localtime)
                 . ": creating softlink from $gmGtf to $trainGenesGtf.\n"
                 if ($v > 3);
-            $cmdString = "ln -s $gmGtf $trainGenesGtf";
+            # shorten the $gmGtf path to avoid problems with absolute softlink
+            my @pp = split(/\//, $gmGtf);
+            my $gmGtfShort = $pp[-2]."/".$pp[-1];
+            $cmdString = "ln -s $gmGtfShort $trainGenesGtf";
             print LOG "$cmdString\n" if ($v > 3);
             system($cmdString) == 0
                 or clean_abort("$AUGUSTUS_CONFIG_PATH/species/$species",
@@ -7023,7 +7150,7 @@ sub fix_ifs_genes{
     }
     $cmdStr .= " > $otherfilesDir/fix_in_frame_stop_codon_genes_".$label.".log "
             ."2> $errorfilesDir/fix_in_frame_stop_codon_genes_".$label.".err";
-    print LOG $cmdStr . "\n"  if ($v > 3);
+    print LOG $cmdStr . "\n"  if ($v > 2);
     system("$cmdStr") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdStr\n");
@@ -7671,9 +7798,9 @@ sub run_augustus_jobs {
         print LOG "\# " . (localtime) . ": Running AUGUSTUS job $cJobs\n"
             if ($v > 3);
         $cmdString = "$_";
-        print LOG "$cmdString\n" if ($v > 3);
+        print LOG "bash $cmdString\n" if ($v > 3);
         my $pid = $pm->start and next;
-        system("$cmdString") == 0
+        system("bash $cmdString") == 0
             or die("ERROR in file " . __FILE__ ." at line ". __LINE__
             . "\nFailed to execute: $cmdString!\n");
         $pm->finish;
@@ -7974,7 +8101,7 @@ sub clean_aug_jobs {
             }
         }
     } else {
-        # moving files for AUGUSTUS prallelization to a separate folder
+        # moving files for AUGUSTUS parallelization to a separate folder
         print LOG "\# " . (localtime) . ": moving files from AUGUSTUS "
             . "parallelization to directory "
             . "$otherfilesDir/augustus_files_$hintId\n" if ($v > 3);
@@ -8284,7 +8411,7 @@ sub merge_transcript_sets_with_tsebra {
     my $tsebra_cfg = $_[3];
     my $output = $_[4];
     my $rename = $_[5];
-    #my $localUtr = shift;
+    my $filter_se = $_[6];
 
     print LOG "\# " . (localtime) . ": Trying to create combined gene set "
                                   . "with TSEBRA...\n" if ($v > 3);
@@ -8316,6 +8443,7 @@ sub merge_transcript_sets_with_tsebra {
     if ($nice) {
         $cmdString .= "nice ";
     }
+    print CITE $pubs{'tsebra'}; $pubs{'tsebra'} = "";
     $cmdString .= "$TSEBRA_PATH/tsebra.py ";
     $arg_str = join(',', @gene_sets);
     if ( !$arg_str eq "" ){
@@ -8328,6 +8456,9 @@ sub merge_transcript_sets_with_tsebra {
     $arg_str = join(',', @hintfiles);
     if ( !$arg_str eq "" ){
         $cmdString .= "--hintfiles $arg_str ";
+    }
+    if ( !$filter_se eq "" ){
+        $cmdString .= "--filter_single_exon_genes ";
     }
     $cmdString .= "--cfg $tsebra_cfg --out $output -q 2>$errorfile";
     print LOG "$cmdString\n" if ($v > 3);
@@ -9646,37 +9777,19 @@ sub merge_transcript_sets {
             "$genemarkDir/genemark.gtf");
         @forced_gene_sets = ("$genemarkDir/training.gtf");
         @hintfiles = ($hintsfile);
-        merge_transcript_sets_with_tsebra(
-            \@gene_sets, \@forced_gene_sets, \@hintfiles,
-            "braker3.cfg", "$otherfilesDir/braker$genesetId.gtf", "rename");
 
         # filter TSEBRA output for species with 'large' genomes
         if ($genome_size > 300000000){
-            $cmdString = "mv $otherfilesDir/braker$genesetId.gtf "
-                . "$otherfilesDir/braker$genesetId.unsupported.gtf";
-            print LOG "\# "
-              . (localtime)
-              . ": move TSBERA output $otherfilesDir/braker$genesetId.gtf to "
-                  . "$otherfilesDir/braker$genesetId.unsupported.gtf\n" if ($v > 3);
-            print LOG "$cmdString\n" if ($v > 3);
-            system("$cmdString") == 0
-              or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-                  . "\nfailed to execute: $cmdString!\n");
-
-            $cmdString = "$GENEMARK_PATH/selectSupportedSubsets.py "
-                . "$otherfilesDir/braker$genesetId.unsupported.gtf "
-                . "$hintsfile --fullSupport /dev/null --anySupport "
-                . "$otherfilesDir/braker$genesetId.gtf --noSupport /dev/null "
-                . "1> $otherfilesDir/selectSupportedSubsets.stdout "
-                . "2> $errorfilesDir/selectSupportedSubsets.stderr";
-            print LOG "\# "
-              . (localtime)
-              . ": Filter TSEBRA result:\n" if ($v > 3);
-            print LOG "$cmdString\n" if ($v > 3);
-            system("$cmdString") == 0
-              or die("ERROR in file " . __FILE__ ." at line ". __LINE__
-                  . "\nfailed to execute: $cmdString!\n");
+            merge_transcript_sets_with_tsebra(
+                \@gene_sets, \@forced_gene_sets, \@hintfiles,
+                "braker3.cfg", "$otherfilesDir/braker$genesetId.gtf", "rename",
+                "filter_single_exons");
+        } else {
+            merge_transcript_sets_with_tsebra(
+                \@gene_sets, \@forced_gene_sets, \@hintfiles,
+                "braker3.cfg", "$otherfilesDir/braker$genesetId.gtf", "rename", "");
         }
+        
     } elsif($ESmode == 1) {
         # exists only without utr
         if( (-e "$genemarkDir/genemark.gtf") and
@@ -9785,7 +9898,7 @@ sub gtf2gff3 {
         }
         $perlCmdString .= "cat $gtf | $perl -ne 'if(m/\\tAUGUSTUS\\t/ or "
                        .  "m/\\tAnnotationFinalizer\\t/ or m/\\tGUSHR\\t/ or "
-                       .  "m/\\tGeneMark\.hmm\\t/) {"
+                       .  "m/\\tGeneMark\.hmm\\t/ or m/\\tGeneMark\.hmm3\\t/ or m/\\tgmst\\t/) {"
                        .  "print \$_;}' | $perl $string --gff3 --out=$gff3 "
                        .  ">> $otherfilesDir/gtf2gff3.log "
                        .  "2>> $errorfilesDir/gtf2gff3.err";
@@ -9823,6 +9936,90 @@ sub all_preds_gtf2gff3 {
             $gff3 =~ s/\.gtf/\.gff3/;
             gtf2gff3($gtf, $gff3);
         }
+    }
+}
+
+##################### best_by_compleasm #########################################
+# select best gene set by BUSCO completeness via compleasm
+#  * run best_by_compleasm.py (from TSEBRA)
+#  * if better gene set is found:
+#  * generate protein & codingseq file
+#  * generate gff3 file
+#  * move the original braker gene set into a subfolder original_braker
+#################################################################################
+
+sub best_by_compleasm {
+    print LOG "\# " . (localtime) . ": selecting best gene set by BUSCO "
+        . "completeness via compleasm.\n" if ($v > 2);
+    my $getAnno = find(
+        "getAnnoFastaFromJoingenes.py",      $AUGUSTUS_BIN_PATH,
+        $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH
+    );
+    my $cmdStr = "$PYTHON3_PATH/python3 $TSEBRA_PATH/best_by_compleasm.py -m $otherfilesDir/bbc "
+                . "-d $otherfilesDir -g $genome -t $CPU -p $busco_lineage "
+                . "-y $TSEBRA_PATH/tsebra.py -f $getAnno "
+                . "1> $otherfilesDir/best_by_compleasm.log "
+                . "2> $errorfilesDir/best_by_compleasm.err";
+    print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+    system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+    open(CLOG, "<", "$otherfilesDir/best_by_compleasm.log") or die("ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not open file $otherfilesDir/best_by_compleasm.log!\n");
+    my $best_gene_set = "braker.gtf";
+    while(<CLOG>){
+        chomp;
+        if ( m/The new best BRAKER gene set is (\S+)/ ) {
+            $best_gene_set = $1;
+        }
+    }
+    close(CLOG) or die("ERROR in file "
+        . __FILE__ . " at line " . __LINE__
+        . "\nCould not close file $otherfilesDir/best_by_compleasm.log!\n");
+    if(not($best_gene_set =~ m/braker\.gtf/)){
+        print LOG "\# " . (localtime) . ": best gene set found by compleasm "
+            . "is not the original braker gene set.\n" if ($v > 2);
+        # create a directory $otherfilesDir/braker_original
+        mkdir("$otherfilesDir/braker_original") or die("ERROR in file "
+            . __FILE__ . " at line " . __LINE__
+            . "\nCould not create directory $otherfilesDir/braker_original!\n");
+        # mv $otherfilesDir/braker.gtf to $otherfilesDir/braker_original/braker.gtf
+        $cmdStr = "mv $otherfilesDir/braker.gtf $otherfilesDir/braker_original/braker.gtf";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/braker.aa to $otherfilesDir/braker_original/braker.aa
+        $cmdStr = "mv $otherfilesDir/braker.aa $otherfilesDir/braker_original/braker.aa";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/braker.codingseq to $otherfilesDir/braker_original/braker.codingseq
+        $cmdStr = "mv $otherfilesDir/braker.codingseq $otherfilesDir/braker_original/braker.codingseq";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/bbc/better.gtf to $otherfilesDir/braker.gtf
+        $cmdStr = "mv $otherfilesDir/bbc/better.gtf $otherfilesDir/braker.gtf";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/bbc/better.aa to $otherfilesDir/braker.aa
+        $cmdStr = "mv $otherfilesDir/bbc/better.aa $otherfilesDir/braker.aa";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
+        # mv $otherfilesDir/bbc/better.codingseq to $otherfilesDir/braker.codingseq
+        $cmdStr = "mv $otherfilesDir/bbc/better.codingseq $otherfilesDir/braker.codingseq";
+        print LOG "\# " . (localtime) . ": $cmdStr\n" if ($v > 2);
+        system("$cmdStr") == 0
+            or die("ERROR in file " . __FILE__ ." at line ". __LINE__
+            . "\nFailed to execute: $cmdStr\n");
     }
 }
 
@@ -10005,3 +10202,4 @@ sub clean_up {
         print LOG $loginfo;
     }
 }
+

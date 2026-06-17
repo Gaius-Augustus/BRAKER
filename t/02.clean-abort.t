@@ -16,10 +16,10 @@ BEGIN {
 }
 
 use lib 'scripts';
-use helpMod;
+use helpMod_braker;
 
 subtest 'Directory removed by clean_abort' => sub {
-  helpMod->import('clean_abort');
+  helpMod_braker->import('clean_abort');
 
   my $dir = tempdir('util.XXXXX', TMPDIR => 1);
   open my $fh, '>', File::Spec->catfile($dir, 'test.cfg');
@@ -38,7 +38,7 @@ subtest 'Directory removed by clean_abort' => sub {
 };
 
 subtest 'Directory is not removed by clean_abort' => sub {
-  helpMod->import('clean_abort');
+  helpMod_braker->import('clean_abort');
 
   my $dir = tempdir('util.XXXXX', TMPDIR => 1, CLEANUP => 1);
   open my $fh, '>', File::Spec->catfile($dir, 'test.cfg');

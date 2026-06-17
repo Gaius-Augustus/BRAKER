@@ -4,7 +4,7 @@ if [ -d $wd ]; then
     rm -r $wd
 fi
 
-# The expected runtime of this test is ~20 minutes.
+# The expected runtime of this test is ~3 minutes.
 
 # --gm_max_intergenic 10000 option is used here only to make the test run faster.
 # It is not recommended to use this option in real BRAKER runs. The speed increase
@@ -18,4 +18,4 @@ fi
 
 export GENEMARK_PATH=$GENEMARK_PATH/gmes
 
-( time braker.pl --genome=../genome.fa --prot_seq=../proteins.fa --workingdir=$wd --threads=8 --gm_max_intergenic 10000 --skipOptimize ) &> test2.log
+( time braker.pl --genome=/opt/BRAKER/example/genome.fa --prot_seq=/opt/BRAKER/example/proteins.fa --workingdir=$wd --threads=8 --gm_max_intergenic 10000 --skipOptimize --busco_lineage eukaryota_odb10 ) &> test2.log

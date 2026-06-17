@@ -1,22 +1,37 @@
-
+![Docker Pulls](https://img.shields.io/docker/pulls/teambraker/braker3) 
 
 # BRAKER User Guide
 
-<u>Contacts for Github Repository of BRAKER at
-https://github.com/Gaius-Augustus/BRAKER:</u>
+News
+====
 
-Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
+BRAKER is deprecated. **Try BRAKER4: https://github.com/Gaius-Augustus/BRAKER4**
 
-Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624
+Here is a recording of the first BGA23 workshop session on BRAKER. If learning by watching videos is easy for you, consider watching that: https://www.youtube.com/watch?v=UXTkJ4mUkyg
 
-Mark Borodovsky, Georgia Tech, U.S.A., borodovsky@gatech.edu
+BRAKER3 is now in https://usegalaxy.eu/ 
 
-Tomas Bruna, Joint Genome Institute, U.S.A., bruna.tomas@gmail.com
+Contacts for Repository 
+========================
 
-Authors of BRAKER
+TSEBRA & BRAKER3 related:
+
+   * Lars Gabriel, University of Greifswald, Germany, lars.gabriel@uni-greifswald.de
+
+BRAKER & AUGUSTUS related:
+
+   * Katharina J. Hoff, University of Greifswald, Germany, katharina.hoff@uni-greifswald.de, +49 3834 420 4624
+
+GeneMark related:
+
+   * Mark Borodovsky, Georgia Tech, U.S.A., borodovsky@gatech.edu
+
+   * Tomas Bruna, Joint Genome Institute, U.S.A., bruna.tomas@gmail.com
+
+   * Alexandre Lomsazde, Georgia Tech, U.S.A., alexandre.lomsadze@bme.gatech.edu
+
+Core Authors of BRAKER
 =================
-
-Lars Gabriel<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>, Katharina J. Hoff<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>, Simone Lange<sup name="aff1">[a](#aff1)</sup>, Alexandre Lomsadze<sup name="aff3">[c](#aff3)</sup>, Tomas Bruna<sup name="aff3">[c](#aff3)</sup>, Mark Borodovsky<sup name="aff3">[c, ](#aff3)</sup><sup name="aff4">[d, ](#aff4)</sup><sup name="aff5">[e](#aff5)</sup>, Mario Stanke<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>
 
 <b id="aff1">[a]</b> University of Greifswald, Institute for Mathematics and Computer Science, Walther-Rathenau-Str. 47, 17489 Greifswald, Germany
 
@@ -30,16 +45,20 @@ Lars Gabriel<sup name="aff1">[a, ](#aff1)</sup><sup name="aff2">[b](#aff2)</sup>
 
 ![braker2-team-2\[fig10\]](docs/figs/mario.png)![braker2-team-1\[fig11\]](docs/figs/alex-katharina-tomas.png)![braker2-team-3\[fig12\]](docs/figs/lars.jpg)![braker2-team-4\[fig13\]](docs/figs/mark.png)
 
-Figure 1: Current BRAKER authors, from left to right: Mario Stanke, Alexandre Lomsadze, Katharina J. Hoff, Tomas Bruna, Lars Gabriel, and Mark Borodovsky.
+Figure 1: Current BRAKER authors, from left to right: Mario Stanke, Alexandre Lomsadze, Katharina J. Hoff, Tomas Bruna, Lars Gabriel, and Mark Borodovsky. We acknowledge that a larger community of scientists contributed to the BRAKER code (e.g. via pull requests).
 
 Funding
 =======
 
-The development of BRAKER was supported by the National Institutes of Health (NIH) [GM128145 to M.B. and M.S.].
+The development of BRAKER1, BRAKER2, and BRAKER3 was supported by the National Institutes of Health (NIH) [GM128145 to M.B. and M.S.]. Development of BRAKER3 was partially funded by Project Data Competency granted to K.J.H. and M.S. by the government of Mecklenburg-Vorpommern, Germany.
 
 Related Software
 ================
 The Transcript Selector for BRAKER (TSEBRA) is available at https://github.com/Gaius-Augustus/TSEBRA .
+
+GeneMark-ETP, one of the gene finders at the core of BRAKER, is available at https://github.com/gatech-genemark/GeneMark-ETP .
+
+AUGUSTUS, the second gene finder at the core of BRAKER, is available at https://github.com/Gaius-Augustus/Augustus .
 
 GALBA, a BRAKER pipeline spin-off for using Miniprot or GenomeThreader to generate training genes, is available at https://github.com/Gaius-Augustus/GALBA .
 
@@ -51,6 +70,7 @@ Contents
 -   [What is BRAKER?](#what-is-braker)
 -   [Keys to successful gene prediction](#keys-to-successful-gene-prediction)
 -   [Overview of modes for running BRAKER](#overview-of-modes-for-running-braker)
+-   [Container](#container)
 -   [Installation](#installation)
     -   [Supported software versions](#supported-software-versions)
     -   [BRAKER](#braker)
@@ -78,6 +98,7 @@ Contents
         -   [--addUTR=on](#--addutron)
         -   [--stranded=+,-,.,...](#--stranded-)
 	    -   [--makehub --email=your@mail.de](#--makehub---emailyourmailde)
+        -   [--busco_lineage lineage](#--busco-lineage)
 -   [Output of BRAKER](#output-of-braker)
 -   [Example data](#example-data)
     -   [Data description](#data-description)
@@ -102,7 +123,7 @@ With this goal in mind, we have developed BRAKER1<sup name="a1">[R1](#f1)</sup><
 
 However, the quality of RNA-Seq data that is available for annotating a novel genome is variable, and in some cases, RNA-Seq data is not available, at all.
 
-BRAKER2 is an extension of BRAKER1 which allows for **fully automated training** of the gene prediction tools GeneMark-EX <sup name="a14">[R14, ](#f14)</sup><sup name="a15">[R15, ](#f15)<sup name="a17">[R17, ](#f17)</sup></sup><sup name="g1">[F1](#g1)</sup> and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the **prediction**.
+BRAKER2 is an extension of BRAKER1 which allows for **fully automated training** of the gene prediction tools GeneMark-ES/ET/EP/ETP <sup name="a14">[R14, ](#f14)</sup><sup name="a15">[R15, ](#f15)<sup name="a17">[R17, ](#f17)</sup></sup><sup name="g1">[F1](#g1)</sup> and AUGUSTUS from RNA-Seq and/or protein homology information, and that integrates the extrinsic evidence from RNA-Seq and protein homology information into the **prediction**.
 
 In contrast to other available methods that rely on protein homology information, BRAKER2 reaches high gene prediction accuracy even in the absence of the annotation of very closely related species and in the absence of RNA-Seq data.
 
@@ -117,16 +138,16 @@ Keys to successful gene prediction
 
 -   Use simple scaffold names in the genome file (e.g. ```>contig1``` will work better than ```>contig1my custom species namesome putative function /more/information/  and lots of special characters %&!*(){}```). Make the scaffold names in all your fasta files simple before running any alignment program.
 
--   In order to predict genes accurately in a novel genome, the genome should be masked for repeats. This will avoid the prediction of false positive gene structures in repetitive and low complexitiy regions. Repeat masking is also essential for mapping RNA-Seq data to a genome with some tools (other RNA-Seq mappers, such as HISAT2, ignore masking information). In case of GeneMark-EX and AUGUSTUS, softmasking (i.e. putting repeat regions into lower case letters and all other regions into upper case letters) leads to better results than hardmasking (i.e. replacing letters in repetitive regions by the letter `N` for unknown nucleotide).
+-   In order to predict genes accurately in a novel genome, the genome should be masked for repeats. This will avoid the prediction of false positive gene structures in repetitive and low complexitiy regions. Repeat masking is also essential for mapping RNA-Seq data to a genome with some tools (other RNA-Seq mappers, such as HISAT2, ignore masking information). In case of GeneMark-ES/ET/EP/ETP and AUGUSTUS, softmasking (i.e. putting repeat regions into lower case letters and all other regions into upper case letters) leads to better results than hardmasking (i.e. replacing letters in repetitive regions by the letter `N` for unknown nucleotide).
 
--   Many genomes have gene structures that will be predicted accurately with standard parameters of GeneMark-EX and AUGUSTUS within BRAKER. However, some genomes have clade-specific features, i.e. special branch point model in fungi, or non-standard splice-site patterns. Please read the options section \[options\] in order to determine whether any of the custom options may improve gene prediction accuracy in the genome of your target species.
+-   Many genomes have gene structures that will be predicted accurately with standard parameters of GeneMark-ES/ET/EP/ETP and AUGUSTUS within BRAKER. However, some genomes have clade-specific features, i.e. special branch point model in fungi, or non-standard splice-site patterns. Please read the options section \[options\] in order to determine whether any of the custom options may improve gene prediction accuracy in the genome of your target species.
 
 -   Always check gene prediction results before further usage! You can e.g. use a genome browser for visual inspection of gene models in context with extrinsic evidence data. BRAKER supports the generation of track data hubs for the UCSC Genome Browser with MakeHub for this purpose.
 
 Overview of modes for running BRAKER
 ====================================
 
-BRAKER mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq and/or protein spliced alignment information) supported training of GeneMark-EX<sup name="g1">[F1]</sup> and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER. In the following, we give an overview of possible input files and pipelines:
+BRAKER mainly features semi-unsupervised, extrinsic evidence data (RNA-Seq and/or protein spliced alignment information) supported training of GeneMark-ES/ET/EP/ETP<sup name="g1">[F1]</sup> and subsequent training of AUGUSTUS with integration of extrinsic evidence in the final gene prediction step. However, there are now a number of additional pipelines included in BRAKER. In the following, we give an overview of possible input files and pipelines:
 
 -   Genome file, only. In this mode, GeneMark-ES is trained on the genome sequence, alone. Long genes predicted by GeneMark-ES are selected for training AUGUSTUS. Final predictions by AUGUSTUS are *ab initio*. This approach will likely yield lower prediction accuracy than all other here described pipelines. (see Figure [2](#fig1)),
 
@@ -143,7 +164,7 @@ Figure 2: BRAKER pipeline A: training GeneMark-ES on genome data, only; *ab init
 Figure 3: BRAKER pipeline B: training GeneMark-ET supported by RNA-Seq spliced alignment information, prediction with AUGUSTUS with that same spliced alignment information.
 
 
--   Genome file and database of proteins that may be of **unknown** evolutionary distance to the target species (see Figure [4](#fig3)); this approach is particularly suitable if no RNA-Seq data is available. This method will work better with proteins from species that are rather close to the target species, but accuracy will drop only very little if the reference proteins are more distant from the target species. **Important:** This approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database. BRAKER has been tested with OrthoDB <sup name="a19">[R19](#f19)</sup>, successfully. The ProtHint <sup name="a18">[R18](#f18)</sup> protein mapping pipeline for generating required hints for BRAKER is available for download at <https://github.com/gatech-genemark/ProtHint>, the instructions on how to prepare the OrthoDB input proteins are documented at https://github.com/gatech-genemark/ProtHint#protein-database-preparation. You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction.
+-   Genome file and database of proteins that may be of **unknown** evolutionary distance to the target species (see Figure [4](#fig3)); this approach is particularly suitable if no RNA-Seq data is available. This method will work better with proteins from species that are rather close to the target species, but accuracy will drop only very little if the reference proteins are more distant from the target species. **Important:** This approach requires a database of protein families, i.e. many representatives of each protein family must be present in the database. BRAKER has been tested with OrthoDB <sup name="a19">[R19](#f19)</sup>, successfully. The ProtHint <sup name="a18">[R18](#f18)</sup> protein mapping pipeline for generating required hints for BRAKER is available for download at <https://github.com/gatech-genemark/ProtHint>, the software on how to prepare the OrthoDB input proteins is available at https://github.com/tomasbruna/orthodb-clades. You may add proteins of a closely related species to the OrthoDB fasta file in order to incorporate additional evidence into gene prediction. We provide pre-partitioned OrthoDB v.11 clades for download at https://bioinf.uni-greifswald.de/bioinf/partitioned_odb11/ , and OrthoDB v.12 clades at https://bioinf.uni-greifswald.de/bioinf/partitioned_odb12/.
 
 ![braker2-main-c\[fig3\]](docs/figs/braker2_ep.png)
 
@@ -160,8 +181,6 @@ Container
 
 We are aware that the "manual" installation of BRAKER3 and all its dependencies is tedious and really challenging without root permissions. Therefore, we provide a Docker container that has been developed to be run with Singularity. All information on this container can be found at https://hub.docker.com/r/teambraker/braker3
 
-This container has currently two shortcomings: (a) GeneMark-ETP is not in the container and needs to be installed into your home directory on the host (when using Singularity, otherwise, you have to install it into the Docker container), (b) as RNA-Seq input, we have only tested bam-files, not fastq files or SRA IDs. We will improve this in the future.
-
 In short, build it as follows:
 
 ```
@@ -171,24 +190,33 @@ singularity build braker3.sif docker://teambraker/braker3:latest
 Execute with:
 
 ```
-singularity exec braker3.sif print_braker3_setup.py
 singularity exec braker3.sif braker.pl
 ```
 
 Test with:
 
 ```
-singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test1.sh
-singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test2.sh
-singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test3.sh
-export ETP=/your/path/to/GeneMark-ETP/bin # may need to modify
+singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test1.sh .
+singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test2.sh .
+singularity exec -B $PWD:$PWD braker3.sif cp /opt/BRAKER/example/singularity-tests/test3.sh .
 export BRAKER_SIF=/your/path/to/braker3.sif # may need to modify
 bash test1.sh
 bash test2.sh
 bash test3.sh
 ```
-Good luck ;-)
+Few users want to run their analysis inside Docker (since root permissions are required). However, if that's your goal, you can run and test the container as follows
 
+```
+sudo docker run --user 1000:100 --rm -it teambraker/braker3:latest bash
+bash /opt/BRAKER/example/docker-tests/test1.sh # BRAKER1
+bash /opt/BRAKER/example/docker-tests/test2.sh # BRAKER2
+bash /opt/BRAKER/example/docker-tests/test3.sh # BRAKER3
+```
+:warning: The container does not include Java/GUSHR/anything UTR related because we are currently not maintaining UTR prediction with BRAKER. It's buggy and unstable. Do not use it.
+
+:warning: Users have reported that you need to manually copy the AUGUSTUS_CONFIG_PATH contents to a writable location before running our containers from Nextflow. Afterwards, you need to specify the writable AUGUSTUS_CONFIG_PATH as command line argument to BRAKER in Nextflow.
+
+Good luck ;-)
 
 Installation
 ============
@@ -200,15 +228,13 @@ Supported software versions
 
 At the time of release, this BRAKER version was tested with:
 
--   AUGUSTUS 3.4.0 <sup name="g2">[F2](#g2)</sup>
+-   AUGUSTUS 3.5.0 <sup name="g2">[F2](#g2)</sup>
 
--   GeneMark-ES/ET/EP 4.64_lic
+-   GeneMark-ETP (source see Dockerfile)
 
 -   BAMTOOLS 2.5.1<sup name="a5">[R5](#f5)</sup>
 
 -   SAMTOOLS 1.7-4-g93586ed<sup name="a6">[R6](#f6)</sup>
-
--   ProtHint 2.6.0
 
 -   Spaln 2.3.3d <sup name="a8">[R8, ](#f8)</sup><sup name="a9">[R9, ](#f9)</sup><sup name="a10">[R10](#f10)</sup>
 
@@ -231,6 +257,8 @@ At the time of release, this BRAKER version was tested with:
 -   StringTie2 2.2.1 <sup name="a25">[R17](#f17)</sup>
 
 -   GFFRead 0.12.7  <sup name="a26">[R18](#f18)</sup>
+
+-   compleasm 0.2.5 <sup name="a27">[R27](#f27)</sup>
 
 BRAKER
 -------
@@ -262,19 +290,16 @@ installed:
 
 -   `File::HomeDir`
 
-For ProtHint, used when protein input is supplied, also install:
-
--   `threads`
-
 For GeneMark-ETP, used when protein and RNA-Seq is supplied:
 
 -   `YAML::XS`
 -   `Data::Dumper`
 -   `Thread::Queue`
+-   `threads`
 
 On Ubuntu, for example, install the modules with CPANminus<sup name="g4">[F4](#g4)</sup>: `sudo cpanm Module::Name`, e.g. `sudo cpanm Hash::Merge`.
 
-BRAKER also uses a Perl module `helpMod.pm` that is not available on CPAN. This module is part of the BRAKER release and does not require separate installation.
+BRAKER also uses a Perl module `helpMod_braker.pm` that is not available on CPAN. This module is part of the BRAKER release and does not require separate installation.
 
 If you do not have root permissions on the Linux machine, try setting up an **Anaconda** (<https://www.anaconda.com/distribution/>) environment as follows:
 
@@ -312,15 +337,11 @@ Subsequently install BRAKER and other software "as usual" while being in your co
 
 BRAKER is a collection of Perl and Python scripts and a Perl module. The main script that will be called in order to run BRAKER is `braker.pl`. Additional Perl and Python components are:
 
--   `align2hints.pl`
-
 -   `filterGenemark.pl`
 
 -   `filterIntronsFindStrand.pl`
 
--   `startAlign.pl`
-
--   `helpMod.pm`
+-   `helpMod_braker.pm`
 
 -   `findGenesInIntrons.pl`
 
@@ -376,43 +397,23 @@ BRAKER calls upon various bioinformatics software tools that are not part of BRA
 
 ### Mandatory tools
 
-#### GeneMark-EX
-
-*For BRAKER run with only RNA-Seq (BRAKER1) or protein (BRAKER2) data:*
-
-Download GeneMark-EX<sup name="g1">[F1](#g1)</sup> from <http://exon.gatech.edu/GeneMark/license_download.cgi> (the GeneMark-ES/ET/EP) option. Unpack and install GeneMark-EX as described in GeneMark-EX’s `README` file.
-
-*For BRAKER run with RNA-Seq and protein data (BRAKER3):*
+#### GeneMark-ETP
 
 Download GeneMark-ETP<sup name="g1">[F1](#g1)</sup> from <http://github.com/gatech-genemark/GeneMark-ETP> or <https://topaz.gatech.edu/GeneMark/etp.for_braker.tar.gz>. Unpack and install GeneMark-ETP as described in GeneMark-ETP’s `README` file.
 
-If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl` or `gmetp.pl` automatically. Otherwise, BRAKER can find GeneMark-EX executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark-EX_executables/`).
+If already contained in your `$PATH` variable, BRAKER will guess the location of `gmes_petap.pl` or `gmetp.pl` automatically. Otherwise, BRAKER can find GeneMark-ES/ET/EP/ETP executables either by locating them in an environment variable `GENEMARK_PATH`, or by taking a command line argument (`--GENEMARK_PATH=/your_path_to_GeneMark_executables/`).
 
 In order to set the environment variable for your current Bash session, type:
 
-    export GENEMARK_PATH=/your_path_to_GeneMark-EX_executables/
+    export GENEMARK_PATH=/your_path_to_GeneMark_executables/
 
 Add the above lines to a startup script (e.g. `~/.bashrc`) in order to make it available to all bash sessions.
 
-**Important:** GeneMark-EX will only run if a valid key file resides in your home directory. The key file will expire after 200 days, which means that you have to download a new GeneMark-EX release and a new key file after 200 days. The key file is downloaded as ```gm_key.gz```. Unpack the key file and move it to a hidden file **in your home directory** as follows:
-
-```
-cd # change to your home directory
-gunzip gm_key_64.gz
-mv gm_key_64 .gm_key
-```
-
-Perl scripts within GeneMark-EX are configured with default Perl location at `/usr/bin/perl`.
-
-If you are running GeneMark-EX in an Anaconda environment (or want to use Perl from the `$PATH` variable for any other reason), modify the shebang of all GeneMark-EX scripts with the following command located inside GeneMark-EX folder:
-
-```
-perl change_path_in_perl_scripts.pl "/usr/bin/env perl"
-```
-
 You can check whether GeneMark-ES/ET/EP is installed properly by running the `check_install.bash` and/or executing examples in `GeneMark-E-tests` directory.
 
-ToDo: Add section about installation of GeneMark-ETP, when it is available.
+GeneMark-ETP is downward compatible, i.e. it covers the functionality of GeneMark-EP and GeneMark-ET in BRAKER, too.
+
+Warning: installing GeneMark-ETP for BRAKER in conda environments has lead to multiple problems reported by users (Issues!). We can not offer support for conda installations. Please use the singularity image instead.
 
 #### AUGUSTUS
 
@@ -436,6 +437,8 @@ session:
 ```
 
 In order to make the variable available to all Bash sessions, add the above line to a startup script, e.g. `~/.bashrc`.
+
+Please have a look at the [Dockerfile](Dockerfile) in case you want to install AUGUSTUS as Debian package. A number of scripts needs to be patched, then.
 
 ##### Important:
 
@@ -521,26 +524,6 @@ If already in your `$PATH` variable, BRAKER will find blastp, automatically. Oth
 
 Add the above line to a startup script (e.g. `~/.bashrc`) in order to set the environment variable for all bash sessions.
 
-#### ProtHint
-
-ProtHint is a pipeline for generating hints for GeneMark-EX and AUGUSTUS from proteins of any evolutionary distance. If protein sequences are given on input, BRAKER runs ProtHint automatically. Alternatively, ProtHint can be executed as a separate step during data preparation. ProtHint is available from <https://github.com/gatech-genemark/ProtHint>. Download as follows:
-
-    git clone https://github.com/gatech-genemark/ProtHint.git
-
-or by getting the latest release from https://github.com/gatech-genemark/ProtHint/releases.
-
-ProtHint has software requirements of its own. In addition to the Perl modules required by BRAKER, it needs
-
-```
-threads
-```
-
-You can easily verify ProtHint's installation by running the test in https://github.com/gatech-genemark/ProtHint/tree/master/example.
-
-ProtHint requires DIAMOND and Spaln, both of which come with ProtHint's installation. ProtHint's requirement of GeneMark-ES will already be fulfilled if you installed BRAKER dependencies above. For further installation instructions, please check <https://github.com/gatech-genemark/ProtHint>.
-
-If already in your `$PATH` variable, BRAKER will find prothint.py, automatically. Otherwise, BRAKER will try to locate the prothint.py executable by using an environment variable `$PROTHINT_PATH`. Alternatively, this can be supplied as a command line argument `--PROTHINT_PATH=/your/path/to/ProtHint/bin`.
-
 ### Mandatory tools for BRAKER3
 
 Following tools are required by GeneMark-ETP and it will try to locate them in your `$PATH` variable. So make sure to add their location to your `$PATH`, e.g.:
@@ -621,14 +604,16 @@ cdbfasta and cdbyank are required by BRAKER for correcting AUGUSTUS genes with i
 
 On Ubuntu, install cdbfasta with:
 
-    `sudo apt-get install cdbfasta`
+```
+    sudo apt-get install cdbfasta
+```
 
 For other systems, you can for example obtain cdbfasta from <https://github.com/gpertea/cdbfasta>, e.g.:
 
 ```
-        git clone https://github.com/gpertea/cdbfasta.git`
-        cd cdbfasta
-        make all
+    git clone https://github.com/gpertea/cdbfasta.git
+    cd cdbfasta
+    make all
 ```
 
 On Ubuntu, cdbfasta and cdbyank will be in your `$PATH` variable after installation, and BRAKER will automatically locate them. However, you have the option to specify the `cdbfasta` and `cdbyank` binary location in two other ways:
@@ -636,7 +621,7 @@ On Ubuntu, cdbfasta and cdbyank will be in your `$PATH` variable after installat
 1.  Export an environment variable `$CDBTOOLS_PATH`, e.g. in your `~/.bashrc` file:
 
 ```
-        export CDBTOOLS_PATH=/path/to/cdbtools/
+    export CDBTOOLS_PATH=/path/to/cdbtools/
 ```
 
 2.  Specify the command line option `--CDBTOOLS_PATH=/path/to/cdbtools/` to `braker.pl`.
@@ -656,7 +641,7 @@ This tool is only required if you want either add UTRs (from RNA-Seq data) to pr
 GUSHR is available for download at https://github.com/Gaius-Augustus/GUSHR. Obtain it by typing:
 
 ```
-    git clone https://github.com/Gaius-Augustus/GUSHR.git
+git clone https://github.com/Gaius-Augustus/GUSHR.git
 ```
 
 GUSHR executes a GeMoMa jar file <sup name="a19">[R19, ](#f19)</sup> <sup name="a20">[R20, ](#f20)</sup> <sup name="a21">[R21](#f21)</sup>, and this jar file requires Java 1.8. On Ubuntu, you can install Java 1.8 with the following command:
@@ -703,6 +688,26 @@ A precompiled version of HISAT2 can be downloaded from <http://daehwankimlab.git
 
 BRAKER will try to find executable HISAT2 binaries (hisat2, hisat2-build) by using an environment variable `$HISAT2_PATH`. Alternatively, this can be supplied as command line argument (`--HISAT2_PATH=/your/path/to/HISAT2/`). BRAKER can also try to guess the location of HISAT2 on your system if the executables are in your `$PATH` variable.
 
+#### compleasm
+
+If you want to run TSEBRA within BRAKER in a BUSCO completeness maximizing mode, you need to install [compleasm](https://github.com/huangnengCSU/compleasm).
+
+```
+wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.4/compleasm-0.2.4_x64-linux.tar.bz2
+tar -xvjf compleasm-0.2.4_x64-linux.tar.bz2 && \
+```
+
+Add the resulting folder compleasm_kit to your `$PATH` variable, e.g.:
+```
+export PATH=$PATH:/your/path/to/compleasm_kit
+```
+
+Compleasm requires pandas, which can be installed with:
+
+```
+pip install pandas
+```
+
 System dependencies
 -------------------
 BRAKER (braker.pl) uses getconf to see how many threads can be run on your system. On Ubuntu, you can install it with:
@@ -710,6 +715,7 @@ BRAKER (braker.pl) uses getconf to see how many threads can be run on your syste
 ```
 sudo apt-get install libc-bin
 ```
+
 
 Running BRAKER
 ===============
@@ -754,6 +760,8 @@ can either extract RNA-Seq spliced alignment information from `bam` files, or it
         braker.pl --species=yourSpecies --genome=genome.fasta \
            --bam=file1.bam,file2.bam
     ```
+
+    Please note that we generally assume that bam files were generated with HiSat2 because that is the aligner that would also be executed by BRAKER3 with fastq input. If you want for some reason to generate the bam files with STAR, use the option `--outSAMstrandField intronMotif` of STAR to produce files that are compatible wiht StringTie in BRAKER3.
 
 -   In order to run BRAKER with RNA-Seq spliced alignment information that has already been extracted, run:
 
@@ -842,6 +850,10 @@ You may additionally include bam files from unstranded libraries. Those files wi
 
 The native mode for running BRAKER with RNA-Seq and protein data. This will call GeneMark-ETP, which will use RNA-Seq and protein hints for training GeneMark-ETP. Subsequently, AUGUSTUS is trained on 'high-confindent' genes (genes with very high extrinsic evidence support) from the GeneMark-ETP prediction and a set of genes is predicted by AUGUSTUS. In a last step, the predictions of AUGUSTUS and GeneMark-ETP are combined using TSEBRA.
 
+**Alignment of RNA-Seq reads**
+
+GeneMark-ETP utilizes Stringtie2 to assemble RNA-Seq data, which requires that the aligned reads (BAM files) contain the XS (strand) tag for spliced reads. Therefore, if you align your reads with HISAT2, you must enable the --dta option, or if you use STAR, you must use the --outSAMstrandField intronMotif option. TopHat alignments include this tag by default.
+
 To call the pipeline in this mode, you have to provide it with a protein database using `--prot_seq` (as described in [BRAKER with protein data](#braker-with-protein-data)), and RNA-Seq data either by their SRA ID so that they are downloaded by BRAKER, as unaligned reads in `FASTQ` format, and/or as aligned reads in `bam` format (as described in [BRAKER with RNA-Seq data](#braker-with-rna-seq-data)). You could also specify already processed extrinsic evidence using the `--hints` option. However, this is not recommend for a normal BRAKER run in ETPmode, as these hints won't be used in the GeneMark-ETP step. Only use `--hints` when you want to skip the GenMark-ETP step!
 
 Examples of how you could run BRAKER in ETPmode:
@@ -864,6 +876,32 @@ Examples of how you could run BRAKER in ETPmode:
 
 A preliminary protocol for integration of assembled subreads from PacBio ccs sequencing in combination with short read Illumina RNA-Seq and protein database is described at https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/long_reads/long_read_protocol.md
 
+### BRAKER with long read RNA-Seq (only) and protein data
+
+We forked GeneMark-ETP and hard coded that StringTie will perform long read assembly in that particular version. If you want to use this 'fast-hack' version for BRAKER, you have to prepare the BAM file with long read to genome spliced alignments outside of BRAKER, e.g.:
+
+```
+T=48 # adapt to your number of threads
+minimap2 -t${T} -ax splice:hq -uf genome.fa isoseq.fa > isoseq.sam     
+samtools view -bS --threads ${T} isoseq.sam -o isoseq.bam
+```
+
+Pull the adapted container:
+
+```
+singularity build braker3_lr.sif docker://teambraker/braker3:isoseq
+```
+
+Calling BRAKER3 with a BAM file of spliced-aligned IsoSeq Reads:
+
+```
+singularity exec -B ${PWD}:${PWD} braker3_lr.sif braker.pl --genome=genome.fa --prot_seq=protein_db.fa –-bam=isoseq.bam --threads=${T} 
+```
+
+**Warning** Do NOT mix short read and long read data in this BRAKER/GeneMark-ETP variant!
+
+**Warning** The accuracy of gene prediction here heavily depends on the depth of your isoseq data. We verified with PacBio HiFi reads from 2022 that given sufficient completeness of the assembled transcriptome you will reach similar results as with short reads. However, we also observed a drop in accuracy compared to short reads when using other long read data sets with higher error rates and less sequencing depth.
+
 Description of selected BRAKER command line options
 ----------------------------------------------------
 
@@ -883,7 +921,7 @@ Specifies the maximum number of threads that can be used during computation. BRA
 
 ### --fungus
 
-GeneMark-EX option: run algorithm with branch point model. Use this option if you genome is a fungus.
+GeneMark-ETP option: run algorithm with branch point model. Use this option if you genome is a fungus.
 
 
 ### --useexisting
@@ -939,7 +977,21 @@ If `--makehub` and `--email=your@mail.de` (with your valid e-mail adress) are pr
 
 ### --gc_probability=DECIMAL
 
-By default, GeneMark-EX uses a probability of 0.001 for predicting the donor splice site pattern GC (instead of GT). It may make sense to increase this value for species where this donor splice site is more common. For example, in the species *Emiliania huxleyi*, about 50% of donor splice sites have the pattern GC (https://media.nature.com/original/nature-assets/nature/journal/v499/n7457/extref/nature12221-s2.pdf, page 5).
+By default, GeneMark-ES/ET/EP/ETP uses a probability of 0.001 for predicting the donor splice site pattern GC (instead of GT). It may make sense to increase this value for species where this donor splice site is more common. For example, in the species *Emiliania huxleyi*, about 50% of donor splice sites have the pattern GC (https://media.nature.com/original/nature-assets/nature/journal/v499/n7457/extref/nature12221-s2.pdf, page 5).
+
+### --busco_lineage=lineage
+
+Use a species-specific lineage, e.g. arthropoda_odb10 for an arthropod. BRAKER does not support auto-typing of the lineage.
+
+Specifying a BUSCO-lineage invokes two changes in BRAKER <sup name="a28">[R28](#f28)</sup>: 
+
+1. BRAKER will run compleasm with the specified lineage in genome mode and convert the detected BUSCO matches into hints for AUGUSTUS. This may increase the number of BUSCOs in the augustus.hints.gtf file slightly.
+
+2. BRAKER will invoke best_by_compleasm.py to check whether the braker.gtf file that is by default generated by TSEBRA has the lowest amount of missing BUSCOs compared to the augustus.hints.gtf and the genemark.gtf file. If not, the following decision schema is applied to re-run TSEBRA to minimize the missing BUSCOs in the final output of BRAKER (always braker.gtf). If an alternative and better gene set is created, the original braker.gtf gene set is moved to a directory called braker_original. Information on what happened during the best_by_compleasm.py run is written to the file best_by_compleasm.log.
+
+![best_by_busco\[fig14\]](docs/figs/best_by_compleasm.jpg)
+
+Please note that using BUSCO to assess the quality of a gene set, in particular when comparing BRAKER to other pipelines, does not make sense once you specified a BUSCO lineage. We recommend that you use other measures to assess the quality of your gene set, e.g. by comparing it to a reference gene set or running OMArk.
 
 Output of BRAKER
 =================
@@ -948,9 +1000,9 @@ BRAKER produces several important output files in the working directory.
 
 -   braker.gtf: Final gene set of BRAKER. This file may contain different contents depending on how you called BRAKER
 
-       * in ETPmode: Final gene set of BRAKER consisting of genes predicted by AUGUSTUS and GeneMark-ETP that were combined and filtered by TSEBRA.
+    * in ETPmode: Final gene set of BRAKER consisting of genes predicted by AUGUSTUS and GeneMark-ETP that were combined and filtered by TSEBRA.
 
-        * otherwise: Union of augustus.hints.gtf and reliable GeneMark-EX predictions (genes fully supported by external evidence). In `--esmode`, this is the union of augustus.ab_initio.gtf and all GeneMark-ES genes. Thus, this set is generally more sensitive (more genes correctly predicted) and can be less specific (more false-positive predictions can be present). This output is not necessarily better than augustus.hints.gtf, and it is not recommended to use it if BRAKER was run in ESmode.
+    * otherwise: Union of augustus.hints.gtf and reliable GeneMark-ES/ET/EP predictions (genes fully supported by external evidence). In `--esmode`, this is the union of augustus.ab_initio.gtf and all GeneMark-ES genes. Thus, this set is generally more sensitive (more genes correctly predicted) and can be less specific (more false-positive predictions can be present). This output is not necessarily better than augustus.hints.gtf, and it is not recommended to use it if BRAKER was run in ESmode.
 
 -   braker.codingseq: Final gene set with coding sequences in FASTA format
 
@@ -963,6 +1015,10 @@ BRAKER produces several important output files in the working directory.
 -   GeneMark-E*/genemark.gtf: Genes predicted by GeneMark-ES/ET/EP/EP+/ETP in GTF-format.
 
 -   hintsfile.gff: The extrinsic evidence data extracted from RNAseq.bam and/or protein data.
+
+-   braker_original/*: Genes predicted by BRAKER (TSEBRA merge) before compleasm was used to improve BUSCO completeness
+
+-   bbc/*: output folder of best_by_compleasm.py script from TSEBRA that is used to improve BUSCO completeness in the final output of BRAKER
 
 Output files may be present with the following name endings and formats:
 
@@ -1019,7 +1075,7 @@ List of files:
 
 The below given commands assume that you configured all paths to tools by exporting bash variables or that you have the necessary tools in your $PATH.
 
-The example data set also contains scripts `tests/test*.sh` that will execute below listed commands for testing BRAKER with the example data set. You find example results of AUGUSTUS and GeneMark-EX in the folder `results/test*`. Be aware that BRAKER contains several parts where random variables are used, i.e. results that you obtain when running the tests may not be exactly identical. To compare your test results with the reference ones, you can use the [compare_intervals_exact.pl](https://github.com/Gaius-Augustus/BRAKER/blob/master/scripts/compare_intervals_exact.pl) script as follows:
+The example data set also contains scripts `tests/test*.sh` that will execute below listed commands for testing BRAKER with the example data set. You find example results of AUGUSTUS and GeneMark-ES/ET/EP/ETP in the folder `results/test*`. Be aware that BRAKER contains several parts where random variables are used, i.e. results that you obtain when running the tests may not be exactly identical. To compare your test results with the reference ones, you can use the [compare_intervals_exact.pl](https://github.com/Gaius-Augustus/BRAKER/blob/master/scripts/compare_intervals_exact.pl) script as follows:
 
     # Compare CDS features
     compare_intervals_exact.pl --f1 augustus.hints.gtf --f2 ../../results/test${N}/augustus.hints.gtf --verbose
@@ -1035,7 +1091,7 @@ Testing BRAKER with RNA-Seq data
 
 The following command will run the pipeline according to Figure [3](#fig2):
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --threads N
+    braker.pl --genome genome.fa --bam RNAseq.bam --threads N --busco_lineage=lineage_odb10
 
 This test is implemented in `test1.sh`, expected runtime is ~20 minutes.
 
@@ -1045,7 +1101,7 @@ Testing BRAKER with proteins
 The following command will run the pipeline according to Figure [4](#fig3):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --threads N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --threads N --busco_lineage=lineage_odb10
 
 
 This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
@@ -1057,13 +1113,13 @@ The following command will run a pipeline that first trains GeneMark-ETP with pr
 
 Run with local RNA-Seq file:
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --threads N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --threads N --busco_lineage=lineage_odb10
 
 This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
 
 Download RNA-Seq library from Sequence Read Archive (~1gb):
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --rnaseq_sets_ids ERR5767212 --threads N
+    braker.pl --genome genome.fa --prot_seq proteins.fa --rnaseq_sets_ids ERR5767212 --threads N --busco_lineage=lineage_odb10
 
 This test is implemented in `test3_4.sh`, expected runtime is ~35 minutes.
 
@@ -1125,10 +1181,10 @@ If you have access to an existing BRAKER output that contains hintsfiles that we
 
 The hints can be given to BRAKER with `--hints ${BRAKER_OLD}/hintsfile.gff` option. This is illustrated in the test files `test1_restart1.sh`,  `test2_restart1.sh`, `test4_restart1.sh`. The other modes (for which this test is missing) cannot be restarted in this way.
 
-Option 2: starting BRAKER after GeneMark-EX had finished, before training AUGUSTUS
+Option 2: starting BRAKER after GeneMark-ES/ET/EP/ETP had finished, before training AUGUSTUS
 ----------------------------------------------------------------------------------
 
-The GeneMark result can be given to BRAKER with `--geneMarkGtf ${BRAKER_OLD}/GeneMark-EX/genemark.gtf` option if BRAKER is run in ETmode or EPmode. This is illustrated in the test files `test1_restart2.sh`, `test2_restart2.sh`, `test5_restart2.sh`.
+The GeneMark result can be given to BRAKER with `--geneMarkGtf ${BRAKER_OLD}/GeneMark*/genemark.gtf` option if BRAKER is run in ETmode or EPmode. This is illustrated in the test files `test1_restart2.sh`, `test2_restart2.sh`, `test5_restart2.sh`.
 
 In ETPmode, you can either provide BRAKER with the results of the GeneMarkETP step manually, with `--geneMarkGtf ${BRAKER_OLD}/GeneMark-ETP/proteins.fa/genemark.gtf`, `--traingenes ${BRAKER_OLD}/GeneMark-ETP/training.gtf`, and `--hints ${BRAKER_OLD}/hintsfile.gff` (see `test3_restart1.sh` for an example), or you can specify the previous GeneMark-ETP results with the option `--gmetp_results_dir ${BRAKER_OLD}/GeneMark-ETP/` so that BRAKER can search for the files automatically (see `test3_restart2.sh` for an example).
 
@@ -1140,7 +1196,7 @@ The trained species parameters for AGUSTUS can be passed with `--skipAllTraining
 Bug reporting
 =============
 
-Before reporting bugs, please check that you are using the most recent versions of GeneMark-EX, AUGUSTUS and BRAKER. Also, check the list of [Common problems](#common-problems), and the Issue list on GitHub before reporting bugs. We do monitor open issues on GitHub. Sometimes, we are unable to help you, immediately, but we try hard to solve your problems.
+Before reporting bugs, please check that you are using the most recent versions of GeneMark-ES/ET/EP/ETP, AUGUSTUS and BRAKER. Also, check the list of [Common problems](#common-problems), and the Issue list on GitHub before reporting bugs. We do monitor open issues on GitHub. Sometimes, we are unable to help you, immediately, but we try hard to solve your problems.
 
 Reporting bugs on GitHub
 ------------------------
@@ -1190,15 +1246,17 @@ Common problems
 
 -   *GeneMark fails!*
 
-    (a) GeneMark requires a valid hidden key file in your home directory (`~/.gm_key`). The file expires after 200 days. Please check whether you have a valid key file before reporting an issue about this. Also, BRAKER may issue a WARNING that GeneMark is likely going to fail due to limited extrinsic evidence. If you see that warning, please don't open an issue but try a different approach towards annotating your genome. For example, you can add more evidence data, you can try the protein mapping pipeline approach, you can try running `--esmode` without extrinsic evidence, ...
+    (a) GeneMark by default only uses contigs longer than 50k for training. If you have a highly fragmented assembly, this might lead to "no data" for training. You can override the default minimal length by setting the BRAKER argument `--min_contig=10000`.
 
-    (b) GeneMark by default only uses contigs longer than 50k for training. If you have a highly fragmented assembly, this might lead to "no data" for training. You can override the default minimal length by setting the BRAKER argument `--min_contig=10000`.
-
-    (c) see "[something] failed to execute" below.
+    (b) see "[something] failed to execute" below.
 
 -   *[something] failed to execute!*
 
     When providing paths to software to BRAKER, please use absolute, non-abbreviated paths. For example, BRAKER might have problems with `--SAMTOOLS_PATH=./samtools/` or `--SAMTOOLS_PATH=~/samtools/`. Please use `SAMTOOLS_PATH=/full/absolute/path/to/samtools/`, instead. This applies to all path specifications as command line options to `braker.pl`. Relative paths and absolute paths will not pose problems if you export a bash variable, instead, or if you append the location of tools to your $PATH variable.
+
+-   *GeneMark-ETP in BRAKER dies with '/scratch/11232323': No such file or directory.*
+
+    This appears to be related to sorting large files, and it's a system configuration depending problem. Solve it with `export TMPDIR=/tmp/` before calling BRAKER via Singularity.
 
 -   *BRAKER cannot find the Augustus script XYZ...*
 
@@ -1220,6 +1278,15 @@ Common problems
 
      BRAKER is a joint project between teams from University of Greifswald and Georgia Tech. While the group of Mark Bordovsky from Georgia Tech contributes GeneMark expertise, the group of Mario Stanke from University of Greifswald contributes AUGUSTUS expertise. Using GenomeThreader to build training genes for AUGUSTUS in BRAKER circumvents execution of GeneMark. Thus, the GenomeThreader mode is strictly speaking not part of the BRAKER project. The previous functionality of BRAKER with GenomeThreader has been moved to GALBA at <https://github.com/Gaius-Augustus/GALBA>. Note that GALBA has also undergone extension for using Miniprot instead of GenomeThreader.
 
+-   *My BRAKER gene set has too many BUSCO duplicates!*
+
+    AUGUSTUS within BRAKER can predict alternative splicing isoforms. Also the merge of the AUGUSTUS and GeneMark gene set by TSEBRA within BRAKER may result in additional isoforms for a single gene. The BUSCO duplicates usually come from alternative splicing isoforms, i.e. they are expected.
+
+-   *Augustus and/or etraining within BRAKER complain that the file `aug_cmdln_parameters.json` is missing. Even though I am using the latest Singularity container!*
+
+    BRAKER copies the AUGUSTUS_CONFIG_PATH folder to a writable location. In older versions of Augustus, that file was indeed not existing. If the local writable copy of a folder already exists, BRAKER will not re-copy it. Simply delete the old folder. (It is often `~/.augustus`, so you can simply do `rm -rf ~/.augustus`; the folder might be residing in $PWD if your home directory was not writable).
+
+-   *I sit behind a firewall, compleasm cannot download the BUSCO files, what can I do?* See Issue https://github.com/Gaius-Augustus/BRAKER/issues/785#issuecomment-2079787188
 
 Citing BRAKER and software called by BRAKER
 =============================================
@@ -1228,15 +1295,47 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
 -   Always cite:
 
-    -   Bruna, T., Hoff, K.J., Lomsadze, A., Stanke, M., & Borodovsky, M. (2021). BRAKER2: Automatic Eukaryotic Genome Annotation with GeneMark-EP+ and AUGUSTUS Supported by a Protein Database. NAR Genomics and Bioinformatics 3(1):lqaa108, doi: 10.1093/nargab/lqaa108.
-
-    -   Hoff, K.J., Lomsadze, A., Borodovsky, M. and Stanke, M. (2019). Whole-Genome Annotation with BRAKER. Methods Mol Biol. 1962:65-95, doi: 10.1007/978-1-4939-9173-0_5.
-
-    -   Hoff, K.J., Lange, S., Lomsadze, A., Borodovsky, M. and Stanke, M. (2016). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5):767-769.
-
     -   Stanke, M., Diekhans, M., Baertsch, R. and Haussler, D. (2008). Using native and syntenically mapped cDNA alignments to improve de novo gene finding. Bioinformatics, doi: 10.1093/bioinformatics/btn013.
 
     -   Stanke. M., Schöffmann, O., Morgenstern, B. and Waack, S. (2006). Gene prediction in eukaryotes with a generalized hidden Markov model that uses hints from external sources. BMC Bioinformatics 7, 62.
+
+-   If you provided any kind of evidence for BRAKER, cite:
+
+    -   Gabriel, L., Bruna, T., Hoff, K. J., Borodovsky, M., Stanke, M. (2021) TSEBRA: transcript selector for BRAKER. BMC Bioinformatics 22, 1-12.
+
+-   If you provided both short read RNA-Seq evidence and a large database of proteins, cite:
+
+    -   Gabriel, L., Bruna, T., Hoff, K. J., Ebel, M., Lomsadze, A., Borodovsky, M., Stanke, M. (2024). BRAKER3: Fully Automated Genome Annotation Using RNA-Seq and Protein Evidence with GeneMark-ETP, AUGUSTUS and TSEBRA. Genome Research, doi:10.1101/gr.278090.123
+
+    -   Brůna, T., Lomsadze, A., & Borodovsky, M. (2024). GeneMark-ETP significantly improves the accuracy of automatic annotation of large eukaryotic genomes. Genome Research, doi:10.1101/gr.278373.123.
+
+    -   Kovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.
+
+    -   Pertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.
+
+    -   Quinlan, A. R. (2014). BEDTools: the Swiss‐army tool for genome feature analysis. Current protocols in bioinformatics, 47(1):11-12.
+
+-   If the only source of evidence for BRAKER was a large database of protein sequences, cite:
+
+    -   Bruna, T., Hoff, K.J., Lomsadze, A., Stanke, M., & Borodovsky, M. (2021). BRAKER2: Automatic Eukaryotic Genome Annotation with GeneMark-EP+ and AUGUSTUS Supported by a Protein Database. NAR Genomics and Bioinformatics 3(1):lqaa108, doi: 10.1093/nargab/lqaa108.
+
+-   If the only source of evidence for BRAKER was RNA-Seq data, cite:
+
+    -   Hoff, K.J., Lange, S., Lomsadze, A., Borodovsky, M. and Stanke, M. (2016). BRAKER1: unsupervised RNA-Seq-based genome annotation with GeneMark-ET and AUGUSTUS. Bioinformatics, 32(5):767-769.
+
+    -   Lomsadze, A., Paul D.B., and Mark B. (2014) Integration of Mapped Rna-Seq Reads into Automatic Training of Eukaryotic Gene Finding Algorithm. Nucleic Acids Research 42(15): e119--e119
+
+-   If you called BRAKER3 with an IsoSeq BAM file, or if you envoked the `--busco_lineage` option, cite:
+
+    -   Bruna, T., Gabriel, L., Hoff, K. J. (2024). Navigating Eukaryotic Genome Annotation Pipelines: A Route Map to BRAKER, Galba, and TSEBRA. arXiv, doi: 10.48550/arXiv.2403.19416 .
+
+-   If you called BRAKER with the `--busco_lineage` option, in addition, cite:
+
+    - Simão, F. A., Waterhouse, R. M., Ioannidis, P., Kriventseva, E. V., & Zdobnov, E. M. (2015). BUSCO: assessing genome assembly and annotation completeness with single-copy orthologs. Bioinformatics, 31(19), 3210-3212.
+
+    - Li, H. (2023). Protein-to-genome alignment with miniprot. Bioinformatics, 39(1), btad014.
+
+    - Huang, N., & Li, H. (2023). compleasm: a faster and more accurate reimplementation of BUSCO. Bioinformatics, 39(10), btad595.
 
 -   If any kind of AUGUSTUS training was performed by BRAKER, check carefully whether you configured BRAKER to use NCBI BLAST or DIAMOND. One of them was used to filter out redundant training gene structures.
 
@@ -1256,7 +1355,9 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Ter-Hovhannisyan, V., Lomsadze, A., Chernoff, Y.O. and Borodovsky, M. (2008). Gene prediction in novel fungal genomes using an ab initio algorithm with unsupervised training. Genome research, pages gr--081612, 2008.
 
--  If BRAKER was run with proteins, please cite all tools that are used by the ProtHint pipeline to generate hints:
+    -   Hoff, K.J., Lomsadze, A., Borodovsky, M. and Stanke, M. (2019). Whole-Genome Annotation with BRAKER. Methods Mol Biol. 1962:65-95, doi: 10.1007/978-1-4939-9173-0_5.
+
+-  If BRAKER was run with proteins as source of evidence, please cite all tools that are used by the ProtHint pipeline to generate hints:
 
     -   Bruna, T., Lomsadze, A., & Borodovsky, M. (2020). GeneMark-EP+: eukaryotic gene prediction with self-training in the space of genes and proteins. NAR Genomics and Bioinformatics, 2(2), lqaa026.
 
@@ -1274,10 +1375,6 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Barnett, D.W., Garrison, E.K., Quinlan, A.R., Strömberg, M.P. and Marth G.T. (2011). BamTools: a C++ API and toolkit for analyzing and managing BAM files. Bioinformatics, 27(12):1691-2
 
--   If BRAKER used RNA-Seq alignments for generating a training gene set, cite GeneMark-ET:
-
-    -   Lomsadze, A., Paul D.B., and Mark B. (2014) Integration of Mapped Rna-Seq Reads into Automatic Training of Eukaryotic Gene Finding Algorithm. Nucleic Acids Research 42(15): e119--e119
-
 -   If BRAKER downloaded RNA-Seq libraries from SRA using their IDs, cite SRA, SRA toolkit, and HISAT2:
 
     -   Leinonen, R., Sugawara, H., Shumway, M., & International Nucleotide Sequence Database Collaboration. (2010). The sequence read archive. Nucleic acids research, 39(suppl_1), D19-D21.
@@ -1290,19 +1387,9 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
 
     -   Kim, D., Paggi, J. M., Park, C., Bennett, C., & Salzberg, S. L. (2019). Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype. Nature biotechnology, 37(8):907-915.    
 
--  If BRAKER was run with RNA-Seq data and proteins, please cite GeneMark-ETP and all tools that it uses:
-
-    -   ToDo add reference to ETP paper, when it is available
-
-    -   Kovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.
-
-    -   Pertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.
-
-    -   Quinlan, A. R. (2014). BEDTools: the Swiss‐army tool for genome feature analysis. Current protocols in bioinformatics, 47(1):11-12.
-
 -   If BRAKER called MakeHub for creating a track data hub for visualization of BRAKER results with the UCSC Genome Browser, cite:
 
-    -   Hoff, K.J. (2019) MakeHub: Fully automated generation of UCSC Genome Browser Assembly Hubs. Genomics, Proteomics and Bioinformatics, in press 2020, preprint on bioarXive, doi: <https://doi.org/10.1101/550145>.
+    -   Hoff, K. J. (2019). MakeHub: fully automated generation of UCSC genome browser assembly hubs. Genomics, Proteomics and Bioinformatics, 17(5), 546-549.
 
 -   If BRAKER called GUSHR for generating UTRs, cite:
 
@@ -1311,7 +1398,6 @@ Since BRAKER is a pipeline that calls several Bioinformatics tools, publication 
     - Keilwagen, J., Wenk, M., Erickson, J.L., Schattat, M.H., Grau, J., Hartung F. (2016) Using intron position conservation for homology-based gene prediction. Nucleic Acids Research, 44(9):e89.
 
     - Keilwagen, J., Hartung, F., Paulini, M., Twardziok, S.O., Grau, J. (2018) Combining RNA-seq data and homology-based gene prediction for plants, animals and fungi. BMC Bioinformatics, 19(1):189.
-
 
 License
 =======
@@ -1388,3 +1474,7 @@ Oxford University Press: 2078--9.[↩](#a6)
 <b id="f25">[R25]</b> Kovaka, S., Zimin, A. V., Pertea, G. M., Razaghi, R., Salzberg, S. L., & Pertea, M. (2019). Transcriptome assembly from long-read RNA-seq alignments with StringTie2. Genome biology, 20(1):1-13.[↩](#a25)
 
 <b id="f26">[R26]</b> Pertea, G., & Pertea, M. (2020). GFF utilities: GffRead and GffCompare. F1000Research, 9.[↩](#a26)
+
+<b id="f27">[R27]</b> Huang, N., & Li, H. (2023). compleasm: a faster and more accurate reimplementation of BUSCO. Bioinformatics, 39(10), btad595.[↩](#a27)
+
+<b id="f28">[R28]</b> Bruna, T., Gabriel, L. & Hoff, K. J. (2024). Navigating Eukaryotic Genome Annotation Pipelines: A Route Map to BRAKER, Galba, and TSEBRA. arXiv, https://doi.org/10.48550/arXiv.2403.19416 .[↩](#a28)
