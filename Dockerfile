@@ -221,8 +221,12 @@ RUN cd /opt && \
     mv GeneMark-ETP ETP && \
     chmod a+x /opt/ETP/bin/*py /opt/ETP/bin/*pl /opt/ETP/tools/*
 
+# include EukSpecies-BRAKER2 because we use this container for braker-snake to prepare annotations
+RUN cd /opt && \
+    git clone https://github.com/gatech-genemark/EukSpecies-BRAKER2.git
+
 ENV GENEMARK_PATH=/opt/ETP/bin
-ENV PATH=${PATH}:/opt/ETP/bin:/opt/ETP/tools:/opt/ETP/bin/gmes/ProtHint/bin:/opt/ETP/bin/gmes:/opt/compleasm_kit
+ENV PATH=${PATH}:/opt/ETP/bin:/opt/ETP/tools:/opt/ETP/bin/gmes/ProtHint/bin:/opt/ETP/bin/gmes:/opt/compleasm_kit:/opt/EukSpecies-BRAKER2/bin
 
 USER ${NB_UID}
 
