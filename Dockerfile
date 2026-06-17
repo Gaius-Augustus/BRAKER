@@ -138,6 +138,11 @@ RUN cd /opt && \
 
 ENV PATH=${PATH}:/opt/TSEBRA/bin
 
+# install genometools
+RUN apt update && \
+    apt install -yq genometools libgenometools0 libgenometools0-dev && \
+    apt clean all
+
 # makehub
 RUN cd /opt && \
     git clone https://github.com/Gaius-Augustus/MakeHub.git && \
@@ -193,9 +198,9 @@ USER root
 
 # compleasm
 RUN cd /opt && \
-    wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.7/compleasm-0.2.7_x64-linux.tar.bz2 && \
-    tar -xvjf compleasm-0.2.7_x64-linux.tar.bz2 && \
-    rm compleasm-0.2.7_x64-linux.tar.bz2
+    wget https://github.com/huangnengCSU/compleasm/releases/download/v0.2.8/compleasm-0.2.8_x64-linux.tar.bz2 && \
+    tar -xvjf compleasm-0.2.8_x64-linux.tar.bz2 && \
+    rm compleasm-0.2.8_x64-linux.tar.bz2
 
 # braker including RNAseq test file
 
@@ -209,15 +214,19 @@ ENV PATH=${PATH}:/opt/BRAKER/scripts
 
 # include ETP
 RUN cd /opt && \
-    git clone https://github.com/KatharinaHoff/GeneMark-ETP.git && \
-#    cd GeneMark-ETP && \ # these lines are for the isoseq container
-#    git checkout longread_experimental_dev && \
-#    cd .. && \
+    git  clone https://github.com/Gaius-Augustus/GeneMark-ETP-co-assembly.git && \
+    mv GeneMark-ETP-co-assembly GeneMark-ETP && \
+    cd GeneMark-ETP && \
+    cd .. && \
     mv GeneMark-ETP ETP && \
     chmod a+x /opt/ETP/bin/*py /opt/ETP/bin/*pl /opt/ETP/tools/*
 
+# include EukSpecies-BRAKER2 because we use this container for braker-snake to prepare annotations
+RUN cd /opt && \
+    git clone https://github.com/gatech-genemark/EukSpecies-BRAKER2.git
+
 ENV GENEMARK_PATH=/opt/ETP/bin
-ENV PATH=${PATH}:/opt/ETP/bin:/opt/ETP/tools:/opt/ETP/bin/gmes/ProtHint/bin:/opt/ETP/bin/gmes:/opt/compleasm_kit
+ENV PATH=${PATH}:/opt/ETP/bin:/opt/ETP/tools:/opt/ETP/bin/gmes/ProtHint/bin:/opt/ETP/bin/gmes:/opt/compleasm_kit:/opt/EukSpecies-BRAKER2/bin
 
 USER ${NB_UID}
 
