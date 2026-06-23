@@ -1250,6 +1250,8 @@ Common problems
 
     (b) see "[something] failed to execute" below.
 
+	(c) We implemented a Snakemake worfklow to "rescue" BRAKER3 (short read RNAseq & protein input) runs where GeneMark-ETP died. In some cases this can help you obtain an annotation. However, the resulting annotation is an AUGUSTUS-only annotation, i.e. the accuracy should be lower than native BRAKER3 accuracy. See: https://github.com/KatharinaHoff/resuscitate-BRAKER3-snake
+
 -   *[something] failed to execute!*
 
     When providing paths to software to BRAKER, please use absolute, non-abbreviated paths. For example, BRAKER might have problems with `--SAMTOOLS_PATH=./samtools/` or `--SAMTOOLS_PATH=~/samtools/`. Please use `SAMTOOLS_PATH=/full/absolute/path/to/samtools/`, instead. This applies to all path specifications as command line options to `braker.pl`. Relative paths and absolute paths will not pose problems if you export a bash variable, instead, or if you append the location of tools to your $PATH variable.
