@@ -1,0 +1,19 @@
+# Python environment of the teambraker/braker3 container, managed with pixi
+# (https://pixi.sh). Installed by the Dockerfile with `pixi install --locked`
+# into /opt/pixi-env; /opt/conda links to that environment so that scripts
+# and workflows that put /opt/conda/bin on PATH keep working.
+#
+# Update the lock file after changing this manifest:  pixi lock
+
+[workspace]
+name = "braker3-container"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.11.*"
+biopython = "1.87.*"
+numpy = "2.1.*"
+pandas = "2.3.*"
+matplotlib-base = "3.10.*"
+intervaltree = "3.2.*"
