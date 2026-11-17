@@ -154,7 +154,11 @@ FREQUENTLY USED OPTIONS
                                     and will determine the TSEBRA mode to maximize
                                     BUSCO. Do not provide a busco_lineage if you
                                     want to determina natural BUSCO sensivity of
-                                    BRAKER!
+                                    BRAKER! Format: lineage_odb12, e.g.
+                                    eukaryota_odb12. compleasm supports only
+                                    OrthoDB v12 here, so a lineage without
+                                    suffix or with another version (e.g.
+                                    _odb10) is run as lineage_odb12.
 --email                             E-mail address for creating track data hub
 --version                           Print version number of braker.pl
 --help                              Print this help message
@@ -885,6 +889,7 @@ fix_AUGUSTUS_CONFIG_PATH();
 set_PYTHON3_PATH();
 if (defined($busco_lineage)){
     set_COMPLEASM_PATH(); # todo: make sure that compleasm to hints actually passes the path, or make the hints script a hints parser, only
+    check_busco_lineage();
 }
 
 if($UTR eq "on" || $addUTR eq "on"){
@@ -1926,7 +1931,7 @@ sub set_AUGUSTUS_CONFIG_PATH {
                     \@required_files, 'exit', \@alt_locations, $aug_conf_err);
 
     # check whether config path is writable
-    if ( not( -w "$AUGUSTUS_CONFIG_PATH/species" ) ) {
+    if ( not( dir_is_writable("$AUGUSTUS_CONFIG_PATH/species") ) ) {
         $prtStr
             = "\# "
             . (localtime)
@@ -2001,7 +2006,7 @@ sub set_AUGUSTUS_SCRIPTS_PATH {
 ################################################################################  
 
 sub fix_AUGUSTUS_CONFIG_PATH {
-    if ( not( -w "$AUGUSTUS_CONFIG_PATH/species" ) ) {    
+    if ( not( dir_is_writable("$AUGUSTUS_CONFIG_PATH/species") ) ) {
         # check whether config path is writable                                                                                                                                                             
         $prtStr
             = "\# "
@@ -2031,7 +2036,7 @@ sub fix_AUGUSTUS_CONFIG_PATH {
         # modify augustus config path to new location                                                                                                                                                        
         $AUGUSTUS_CONFIG_PATH = $ENV{'HOME'}."/.augustus";
         $augustus_cfg_path = $AUGUSTUS_CONFIG_PATH;
-	if ( not ( -w "$AUGUSTUS_CONFIG_PATH/species" ) ) {
+	if ( not ( dir_is_writable("$AUGUSTUS_CONFIG_PATH/species") ) ) {
 	    # in a location where every user has permission, make config path writable
 	    $cmdString = "chmod u+w $AUGUSTUS_CONFIG_PATH/species";
 	    $prtStr = "\# "
@@ -2048,6 +2053,55 @@ sub fix_AUGUSTUS_CONFIG_PATH {
 	        .$ENV{'HOME'}."/.augustus because BRAKER requires a writable location!\n";
 	$logString .= $prtStr;
     }
+}
+
+####################### check_busco_lineage ####################################
+# * the container ships compleasm 0.2.8, which downloads OrthoDB v12 lineages
+#   by default; its protein mode (used by best_by_compleasm.py) cannot read
+#   OrthoDB v10 lineages (KeyError on the BUSCO ids). Use the v12 lineage of
+#   the same clade instead of any other version, and say so.
+################################################################################
+
+sub check_busco_lineage {
+    my $orig = $busco_lineage;
+    my $name = $busco_lineage;
+    my $odb  = "";
+    if ( $busco_lineage =~ m/^(.+)_(odb[\d.]+)$/ ) {
+        $name = $1;
+        $odb  = $2;
+    }
+    if ( $odb ne "odb12" ) {
+        $busco_lineage = $name . "_odb12";
+        if ( $odb ne "" ) {
+            $prtStr = "\# "
+                . (localtime)
+                . ": WARNING: in file " . __FILE__ ." at line ". __LINE__ ."\n"
+                . "BUSCO lineage $orig is OrthoDB $odb. compleasm in this "
+                . "BRAKER version supports OrthoDB odb12 only. BRAKER will use "
+                . "$busco_lineage instead.\n";
+            $logString .= $prtStr;
+            print STDERR $prtStr;
+        }
+    }
+}
+
+####################### dir_is_writable ########################################
+# * returns 1 if a file can be created in the given directory, 0 otherwise
+# * Perl's -w only looks at the permission bits. In a Singularity/Apptainer
+#   image the file system is read-only, so a directory with mode a+w is
+#   reported as writable although nothing can be written there.
+################################################################################
+
+sub dir_is_writable {
+    my $dir = shift;
+    return 0 if ( not( -d $dir ) );
+    my $probe = "$dir/.braker_write_test.$$." . int( rand(1000000000) );
+    if ( open( my $fh, ">", $probe ) ) {
+        close($fh);
+        unlink($probe);
+        return 1;
+    }
+    return 0;
 }
 
 ####################### set_BAMTOOLS_PATH ######################################
@@ -5985,7 +6039,7 @@ sub new_species {
         )
     {
         if ( -d "$AUGUSTUS_CONFIG_PATH/species" ) {
-            if ( -w "$AUGUSTUS_CONFIG_PATH/species" ) {
+            if ( dir_is_writable("$AUGUSTUS_CONFIG_PATH/species") ) {
                 $string = find(
                     "new_species.pl",       $AUGUSTUS_BIN_PATH,
                     $AUGUSTUS_SCRIPTS_PATH, $AUGUSTUS_CONFIG_PATH

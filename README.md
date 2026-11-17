@@ -981,7 +981,7 @@ By default, GeneMark-ES/ET/EP/ETP uses a probability of 0.001 for predicting the
 
 ### --busco_lineage=lineage
 
-Use a species-specific lineage, e.g. arthropoda_odb10 for an arthropod. BRAKER does not support auto-typing of the lineage.
+Use a species-specific lineage, e.g. arthropoda_odb12 for an arthropod. BRAKER does not support auto-typing of the lineage.
 
 Specifying a BUSCO-lineage invokes two changes in BRAKER <sup name="a28">[R28](#f28)</sup>: 
 
@@ -1091,7 +1091,7 @@ Testing BRAKER with RNA-Seq data
 
 The following command will run the pipeline according to Figure [3](#fig2):
 
-    braker.pl --genome genome.fa --bam RNAseq.bam --threads N --busco_lineage=lineage_odb10
+    braker.pl --genome genome.fa --bam RNAseq.bam --threads N --busco_lineage=lineage_odb12
 
 This test is implemented in `test1.sh`, expected runtime is ~20 minutes.
 
@@ -1101,7 +1101,7 @@ Testing BRAKER with proteins
 The following command will run the pipeline according to Figure [4](#fig3):
 
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --threads N --busco_lineage=lineage_odb10
+    braker.pl --genome genome.fa --prot_seq proteins.fa --threads N --busco_lineage=lineage_odb12
 
 
 This test is implemented in `test2.sh`, expected runtime is ~20 minutes.
@@ -1113,13 +1113,13 @@ The following command will run a pipeline that first trains GeneMark-ETP with pr
 
 Run with local RNA-Seq file:
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --threads N --busco_lineage=lineage_odb10
+    braker.pl --genome genome.fa --prot_seq proteins.fa --bam ../RNAseq.bam --threads N --busco_lineage=lineage_odb12
 
 This test is implemented in `test3.sh`, expected runtime is ~20 minutes.
 
 Download RNA-Seq library from Sequence Read Archive (~1gb):
 
-    braker.pl --genome genome.fa --prot_seq proteins.fa --rnaseq_sets_ids ERR5767212 --threads N --busco_lineage=lineage_odb10
+    braker.pl --genome genome.fa --prot_seq proteins.fa --rnaseq_sets_ids ERR5767212 --threads N --busco_lineage=lineage_odb12
 
 This test is implemented in `test3_4.sh`, expected runtime is ~35 minutes.
 
