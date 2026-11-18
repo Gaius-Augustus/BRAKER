@@ -12,20 +12,17 @@ jobs:
     strategy:
       matrix:
         perl-version:
-          - '5.16'
-          - '5.18'
-          - '5.20'
           - '5.22'
           - '5.30'
-          - '5.32'
+          - '5.36'
+          - '5.42'
+          - '5.44'
     container:
       image: perl:${{ matrix.perl-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: perl -V
         run: perl -V
-      - name: Fix ExtUtils::MakeMaker (for Perl 5.16 and 5.18)
-        run: cpanm -n App::cpanminus ExtUtils::MakeMaker
       - name: Install dependencies
         run: |
           cpanm -n --installdeps .
