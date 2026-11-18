@@ -10,9 +10,10 @@ jobs:
   perl:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         perl-version:
-          - '5.22'
+          - '5.26'
           - '5.30'
           - '5.36'
           - '5.42'
